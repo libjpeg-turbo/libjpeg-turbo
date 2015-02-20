@@ -537,6 +537,10 @@ case "$host_cpu" in
     RPMARCH=i386
     DEBARCH=i386
     ;;
+  *)
+    RPMARCH=`uname -m`
+    DEBARCH=$RPMARCH
+    ;;
 esac
 
 AC_SUBST(RPMARCH)
