@@ -9,7 +9,7 @@ if(POLICY CMP0022)
 endif()
 
 project(libjpeg-turbo C)
-set(VERSION 1.3.90)
+set(VERSION 1.4.80)
 
 if(CYGWIN OR NOT CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
   execute_process(COMMAND "date" "+%Y%m%d" OUTPUT_VARIABLE BUILD)
@@ -53,10 +53,13 @@ option(WITH_MEM_SRCDST "Include in-memory source/destination manager functions w
 option(WITH_TURBOJPEG "Include the TurboJPEG wrapper library and associated test programs" TRUE)
 option(WITH_JAVA "Build Java wrapper for the TurboJPEG library" FALSE)
 option(WITH_12BIT "Encode/decode JPEG images with 12-bit samples (implies WITH_SIMD=0 WITH_TURBOJPEG=0 WITH_ARITH_ENC=0 WITH_ARITH_DEC=0)" FALSE)
+option(ENABLE_STATIC "Build static libraries" TRUE)
+option(ENABLE_SHARED "Build shared libraries" TRUE)
 
 if(WITH_12BIT)
   set(WITH_SIMD FALSE)
   set(WITH_TURBOJPEG FALSE)
+  set(WITH_JAVA FALSE)
   set(WITH_ARITH_ENC FALSE)
   set(WITH_ARITH_DEC FALSE)
   set(BITS_IN_JSAMPLE 12)
@@ -119,14 +122,18 @@ else()
 endif()
 
 if(MSVC)
-  # Use the static C library for all build types
-  foreach(var CMAKE_C_FLAGS CMAKE_C_FLAGS_DEBUG CMAKE_C_FLAGS_RELEASE
-    CMAKE_C_FLAGS_MINSIZEREL CMAKE_C_FLAGS_RELWITHDEBINFO)
-    if(${var} MATCHES "/MD")
-      string(REGEX REPLACE "/MD" "/MT" ${var} "${${var}}")
-    endif()
-  endforeach()
-
+  option(WITH_CRT_DLL
+    "Link all libjpeg-turbo libraries and executables with the C run-time DLL (msvcr*.dll) instead of the static C run-time library (libcmt*.lib.)  The default is to use the C run-time DLL only with the libraries and executables that need it."
+    FALSE)
+  if(NOT WITH_CRT_DLL)
+    # Use the static C library for all build types
+    foreach(var CMAKE_C_FLAGS CMAKE_C_FLAGS_DEBUG CMAKE_C_FLAGS_RELEASE
+      CMAKE_C_FLAGS_MINSIZEREL CMAKE_C_FLAGS_RELWITHDEBINFO)
+      if(${var} MATCHES "/MD")
+        string(REGEX REPLACE "/MD" "/MT" ${var} "${${var}}")
+      endif()
+    endforeach()
+  endif()
   add_definitions(-W3 -wd4996)
 endif()
 
@@ -216,16 +223,21 @@ endif()
 
 if(WITH_JAVA)
   add_subdirectory(java)
+  set(ENABLE_SHARED TRUE)
 endif()
 
-add_subdirectory(sharedlib)
-
-add_library(jpeg-static STATIC ${JPEG_SOURCES} ${SIMD_OBJS})
-if(NOT MSVC)
-  set_target_properties(jpeg-static PROPERTIES OUTPUT_NAME jpeg)
+if(ENABLE_SHARED)
+  add_subdirectory(sharedlib)
 endif()
-if(WITH_SIMD)
-  add_dependencies(jpeg-static simd)
+
+if(ENABLE_STATIC OR WITH_TURBOJPEG)
+  add_library(jpeg-static STATIC ${JPEG_SOURCES} ${SIMD_OBJS})
+  if(NOT MSVC)
+    set_target_properties(jpeg-static PROPERTIES OUTPUT_NAME jpeg)
+  endif()
+  if(WITH_SIMD)
+    add_dependencies(jpeg-static simd)
+  endif()
 endif()
 
 if(WITH_TURBOJPEG)
@@ -235,63 +247,69 @@ if(WITH_TURBOJPEG)
     include_directories(${JAVA_INCLUDE_PATH} ${JAVA_INCLUDE_PATH2})
   endif()
 
-  add_library(turbojpeg SHARED ${TURBOJPEG_SOURCES})
-  set_target_properties(turbojpeg PROPERTIES DEFINE_SYMBOL DLLDEFINE)
-  if(MINGW)
-    set_target_properties(turbojpeg PROPERTIES LINK_FLAGS -Wl,--kill-at)
+  if(ENABLE_SHARED)
+    add_library(turbojpeg SHARED ${TURBOJPEG_SOURCES})
+    set_target_properties(turbojpeg PROPERTIES DEFINE_SYMBOL DLLDEFINE)
+    if(MINGW)
+      set_target_properties(turbojpeg PROPERTIES LINK_FLAGS -Wl,--kill-at)
+    endif()
+    target_link_libraries(turbojpeg jpeg-static)
+    set_target_properties(turbojpeg PROPERTIES LINK_INTERFACE_LIBRARIES "")
+
+    add_executable(tjunittest tjunittest.c tjutil.c)
+    target_link_libraries(tjunittest turbojpeg)
+
+    add_executable(tjbench tjbench.c bmp.c tjutil.c rdbmp.c rdppm.c wrbmp.c
+      wrppm.c)
+    target_link_libraries(tjbench turbojpeg jpeg-static)
+    set_property(TARGET tjbench PROPERTY COMPILE_FLAGS
+      "-DBMP_SUPPORTED -DPPM_SUPPORTED")
   endif()
-  target_link_libraries(turbojpeg jpeg-static)
-  set_target_properties(turbojpeg PROPERTIES LINK_INTERFACE_LIBRARIES "")
 
-  add_library(turbojpeg-static STATIC ${JPEG_SOURCES} ${SIMD_OBJS}
-    turbojpeg.c transupp.c jdatadst-tj.c jdatasrc-tj.c)
-  if(NOT MSVC)
-    set_target_properties(turbojpeg-static PROPERTIES OUTPUT_NAME turbojpeg)
+  if(ENABLE_STATIC)
+    add_library(turbojpeg-static STATIC ${JPEG_SOURCES} ${SIMD_OBJS}
+      turbojpeg.c transupp.c jdatadst-tj.c jdatasrc-tj.c)
+    if(NOT MSVC)
+      set_target_properties(turbojpeg-static PROPERTIES OUTPUT_NAME turbojpeg)
+    endif()
+    if(WITH_SIMD)
+      add_dependencies(turbojpeg-static simd)
+    endif()
+
+    add_executable(tjunittest-static tjunittest.c tjutil.c)
+    target_link_libraries(tjunittest-static turbojpeg-static)
+
+    add_executable(tjbench-static tjbench.c bmp.c tjutil.c rdbmp.c rdppm.c
+      wrbmp.c wrppm.c)
+    target_link_libraries(tjbench-static turbojpeg-static jpeg-static)
+    set_property(TARGET tjbench-static PROPERTY COMPILE_FLAGS
+      "-DBMP_SUPPORTED -DPPM_SUPPORTED")
   endif()
-  if(WITH_SIMD)
-    add_dependencies(turbojpeg-static simd)
-  endif()
-
-  add_executable(tjunittest tjunittest.c tjutil.c)
-  target_link_libraries(tjunittest turbojpeg)
-
-  add_executable(tjunittest-static tjunittest.c tjutil.c)
-  target_link_libraries(tjunittest-static turbojpeg-static)
-
-  add_executable(tjbench tjbench.c bmp.c tjutil.c rdbmp.c rdppm.c wrbmp.c
-    wrppm.c)
-  target_link_libraries(tjbench turbojpeg jpeg-static)
-  set_property(TARGET tjbench PROPERTY COMPILE_FLAGS
-    "-DBMP_SUPPORTED -DPPM_SUPPORTED")
-
-  add_executable(tjbench-static tjbench.c bmp.c tjutil.c rdbmp.c rdppm.c wrbmp.c
-    wrppm.c)
-  target_link_libraries(tjbench-static turbojpeg-static jpeg-static)
-  set_property(TARGET tjbench-static PROPERTY COMPILE_FLAGS
-    "-DBMP_SUPPORTED -DPPM_SUPPORTED")
 endif()
 
 if(WITH_12BIT)
   set(COMPILE_FLAGS "-DGIF_SUPPORTED -DPPM_SUPPORTED -DUSE_SETMODE")
 else()
   set(COMPILE_FLAGS "-DBMP_SUPPORTED -DGIF_SUPPORTED -DPPM_SUPPORTED -DTARGA_SUPPORTED -DUSE_SETMODE")
-	set(CJPEG_BMP_SOURCES rdbmp.c rdtarga.c)
-	set(DJPEG_BMP_SOURCES wrbmp.c wrtarga.c)
+  set(CJPEG_BMP_SOURCES rdbmp.c rdtarga.c)
+  set(DJPEG_BMP_SOURCES wrbmp.c wrtarga.c)
 endif()
 
-add_executable(cjpeg-static cjpeg.c cdjpeg.c rdgif.c rdppm.c rdswitch.c
-  ${CJPEG_BMP_SOURCES})
-set_property(TARGET cjpeg-static PROPERTY COMPILE_FLAGS ${COMPILE_FLAGS})
-target_link_libraries(cjpeg-static jpeg-static)
+if(ENABLE_STATIC)
+  add_executable(cjpeg-static cjpeg.c cdjpeg.c rdgif.c rdppm.c rdswitch.c
+    ${CJPEG_BMP_SOURCES})
+  set_property(TARGET cjpeg-static PROPERTY COMPILE_FLAGS ${COMPILE_FLAGS})
+  target_link_libraries(cjpeg-static jpeg-static)
 
-add_executable(djpeg-static djpeg.c cdjpeg.c rdcolmap.c rdswitch.c wrgif.c
-  wrppm.c ${DJPEG_BMP_SOURCES})
-set_property(TARGET djpeg-static PROPERTY COMPILE_FLAGS ${COMPILE_FLAGS})
-target_link_libraries(djpeg-static jpeg-static)
+  add_executable(djpeg-static djpeg.c cdjpeg.c rdcolmap.c rdswitch.c wrgif.c
+    wrppm.c ${DJPEG_BMP_SOURCES})
+  set_property(TARGET djpeg-static PROPERTY COMPILE_FLAGS ${COMPILE_FLAGS})
+  target_link_libraries(djpeg-static jpeg-static)
 
-add_executable(jpegtran-static jpegtran.c cdjpeg.c rdswitch.c transupp.c)
-target_link_libraries(jpegtran-static jpeg-static)
-set_property(TARGET jpegtran-static PROPERTY COMPILE_FLAGS "-DUSE_SETMODE")
+  add_executable(jpegtran-static jpegtran.c cdjpeg.c rdswitch.c transupp.c)
+  target_link_libraries(jpegtran-static jpeg-static)
+  set_property(TARGET jpegtran-static PROPERTY COMPILE_FLAGS "-DUSE_SETMODE")
+endif()
 
 add_executable(rdjpgcom rdjpgcom.c)
 
@@ -338,6 +356,10 @@ if(WITH_12BIT)
   set(MD5_PPM_420M_ISLOW_3_8 343d19015531b7bbe746124127244fa8)
   set(MD5_PPM_420M_ISLOW_1_4 35fd59d866e44659edfa3c18db2a3edb)
   set(MD5_PPM_420M_ISLOW_1_8 ccaed48ac0aedefda5d4abe4013f4ad7)
+  set(MD5_PPM_420_ISLOW_SKIP15_31 86664cd9dc956536409e44e244d20a97)
+  set(MD5_PPM_420_ISLOW_PROG_STRIP71_132 a5c3706bb2e59bd01786b1181f67f97c)
+  set(MD5_PPM_444_ISLOW_SKIP1_6 ef63901f71ef7a75cd78253fc0914f84)
+  set(MD5_PPM_444_ISLOW_PROG_STRIP13_110 6d228f8d05381d8639f3d078b91b2ee0)
   set(MD5_JPEG_CROP cdb35ff4b4519392690ea040c56ea99c)
 else()
   set(TESTORIG testorig.jpg)
@@ -387,6 +409,13 @@ else()
   set(MD5_BMP_420_ISLOW_565D 6bde71526acc44bcff76f696df8638d2)
   set(MD5_BMP_420M_ISLOW_565 8dc0185245353cfa32ad97027342216f)
   set(MD5_BMP_420M_ISLOW_565D d1be3a3339166255e76fa50a0d70d73e)
+  set(MD5_PPM_420_ISLOW_SKIP15_31 c4c65c1e43d7275cd50328a61e6534f0)
+  set(MD5_PPM_420_ISLOW_ARI_SKIP16_139 087c6b123db16ac00cb88c5b590bb74a)
+  set(MD5_PPM_420_ISLOW_PROG_STRIP71_132 a7f2ba6ea335f03549888bed66a89fae)
+  set(MD5_PPM_420_ISLOW_ARI_STRIP4_56 0e5e44a39b94817917a1bac72903246b)
+  set(MD5_PPM_444_ISLOW_SKIP1_6 5606f86874cf26b8fcee1117a0a436a6)
+  set(MD5_PPM_444_ISLOW_PROG_STRIP13_110 40b5d9742558dca6229d7332fc2dda07)
+  set(MD5_PPM_444_ISLOW_ARI_STRIP0_36 9aceb5b9449c900b892a1d2fe39351b4)
   set(MD5_JPEG_CROP b4197f377e621c4e9b1d20471432610d)
 endif()
 
@@ -417,7 +446,15 @@ if(WITH_JAVA)
       TJUnitTest -bi -yuv -noyuvpad)
 endif()
 
-foreach(libtype shared static)
+set(TEST_LIBTYPES "")
+if(ENABLE_SHARED)
+  set(TEST_LIBTYPES ${TEST_LIBTYPES} shared)
+endif()
+if(ENABLE_STATIC)
+  set(TEST_LIBTYPES ${TEST_LIBTYPES} static)
+endif()
+
+foreach(libtype ${TEST_LIBTYPES})
   if(libtype STREQUAL "shared")
     set(dir sharedlib/)
   else()
@@ -557,7 +594,7 @@ foreach(libtype shared static)
   add_test(djpeg${suffix}-gray-islow-rgb
     ${dir}djpeg${suffix} -dct int -rgb -outfile testout_gray_islow_rgb.ppm
       testout_gray_islow.jpg)
-  add_test(cjpeg${suffix}-gray-islow-rgb-cmp
+  add_test(djpeg${suffix}-gray-islow-rgb-cmp
     ${CMAKE_COMMAND} -DMD5=${MD5_PPM_GRAY_ISLOW_RGB}
       -DFILE=testout_gray_islow_rgb.ppm
       -P ${CMAKE_SOURCE_DIR}/cmakescripts/md5cmp.cmake)
@@ -627,7 +664,7 @@ foreach(libtype shared static)
         -P ${CMAKE_SOURCE_DIR}/cmakescripts/md5cmp.cmake)
     # CC: YCC->RGB  SAMP: fullsize  FDCT: islow  ENT: prog arith
     add_test(cjpeg${suffix}-444-islow-progari
-      ${dir}cjpeg${suffix} -sample 1x1 -dct int -progressive -arithmetic
+      ${dir}cjpeg${suffix} -sample 1x1 -dct int -prog -arithmetic
         -outfile testout_444_islow_progari.jpg
         ${CMAKE_SOURCE_DIR}/testimages/testorig.ppm)
     add_test(cjpeg${suffix}-444-islow-progari-cmp
@@ -637,10 +674,10 @@ foreach(libtype shared static)
   endif()
   if(WITH_ARITH_DEC)
     # CC: RGB->YCC  SAMP: h2v2 merged  IDCT: ifast  ENT: arith
-    add_test(cjpeg${suffix}-420m-ifast-ari
+    add_test(djpeg${suffix}-420m-ifast-ari
       ${dir}djpeg${suffix} -fast -ppm -outfile testout_420m_ifast_ari.ppm
         ${CMAKE_SOURCE_DIR}/testimages/testimgari.jpg)
-    add_test(cjpeg${suffix}-420m-ifast-ari-cmp
+    add_test(djpeg${suffix}-420m-ifast-ari-cmp
       ${CMAKE_COMMAND} -DMD5=${MD5_PPM_420M_IFAST_ARI}
         -DFILE=testout_420m_ifast_ari.ppm
         -P ${CMAKE_SOURCE_DIR}/cmakescripts/md5cmp.cmake)
@@ -731,6 +768,93 @@ foreach(libtype shared static)
         -DFILE=testout_420m_islow_565D.bmp
         -P ${CMAKE_SOURCE_DIR}/cmakescripts/md5cmp.cmake)
   endif()
+
+  # Partial decode tests.  These tests are designed to cover all of the
+  # possible code paths in jpeg_skip_scanlines().
+
+  # Context rows: Yes  Intra-iMCU row: Yes  iMCU row prefetch: No   ENT: huff
+  add_test(djpeg${suffix}-420-islow-skip15_31
+    ${dir}djpeg${suffix} -dct int -skip 15,31 -ppm
+      -outfile testout_420_islow_skip15,31.ppm
+      ${CMAKE_SOURCE_DIR}/testimages/${TESTORIG})
+  add_test(djpeg${suffix}-420-islow-skip15_31-cmp
+    ${CMAKE_COMMAND} -DMD5=${MD5_PPM_420_ISLOW_SKIP15_31}
+      -DFILE=testout_420_islow_skip15,31.ppm
+      -P ${CMAKE_SOURCE_DIR}/cmakescripts/md5cmp.cmake)
+  # Context rows: Yes  Intra-iMCU row: No   iMCU row prefetch: Yes  ENT: arith
+  if(WITH_ARITH_DEC)
+    add_test(djpeg${suffix}-420-islow-ari-skip16_139
+      ${dir}djpeg${suffix} -dct int -skip 16,139 -ppm
+        -outfile testout_420_islow_ari_skip16,139.ppm
+        ${CMAKE_SOURCE_DIR}/testimages/testimgari.jpg)
+    add_test(djpeg${suffix}-420-islow-ari_skip16_139-cmp
+      ${CMAKE_COMMAND} -DMD5=${MD5_PPM_420_ISLOW_ARI_SKIP16_139}
+        -DFILE=testout_420_islow_ari_skip16,139.ppm
+        -P ${CMAKE_SOURCE_DIR}/cmakescripts/md5cmp.cmake)
+  endif()
+  # Context rows: Yes  Intra-iMCU row: No   iMCU row prefetch: No   ENT: prog huff
+  add_test(cjpeg${suffix}-420-islow-prog
+    ${dir}cjpeg${suffix} -dct int -prog -outfile testout_420_islow_prog.jpg
+      ${CMAKE_SOURCE_DIR}/testimages/testorig.ppm)
+  add_test(djpeg${suffix}-420-islow-prog-strip71_132
+    ${dir}djpeg${suffix} -dct int -strip 71,132 -ppm
+      -outfile testout_420_islow_strip71,132.ppm testout_420_islow_prog.jpg)
+  add_test(djpeg${suffix}-420-islow-prog-strip71_132-cmp
+    ${CMAKE_COMMAND} -DMD5=${MD5_PPM_420_ISLOW_PROG_STRIP71_132}
+      -DFILE=testout_420_islow_strip71,132.ppm
+      -P ${CMAKE_SOURCE_DIR}/cmakescripts/md5cmp.cmake)
+  # Context rows: Yes  Intra-iMCU row: No   iMCU row prefetch: No   ENT: arith
+  if(WITH_ARITH_DEC)
+    add_test(djpeg${suffix}-420-islow-ari-strip4_56
+      ${dir}djpeg${suffix} -dct int -strip 4,56 -ppm
+        -outfile testout_420_islow_ari_strip4,56.ppm
+        ${CMAKE_SOURCE_DIR}/testimages/testimgari.jpg)
+    add_test(djpeg${suffix}-420-islow-ari-strip4_56-cmp
+      ${CMAKE_COMMAND} -DMD5=${MD5_PPM_420_ISLOW_ARI_STRIP4_56}
+        -DFILE=testout_420_islow_ari_strip4,56.ppm
+        -P ${CMAKE_SOURCE_DIR}/cmakescripts/md5cmp.cmake)
+  endif()
+  # Context rows: No   Intra-iMCU row: Yes  ENT: huff
+  add_test(cjpeg${suffix}-444-islow
+    ${dir}cjpeg${suffix} -dct int -sample 1x1 -outfile testout_444_islow.jpg
+      ${CMAKE_SOURCE_DIR}/testimages/testorig.ppm)
+  add_test(djpeg${suffix}-444-islow-skip1_6
+    ${dir}djpeg${suffix} -dct int -skip 1,6 -ppm
+      -outfile testout_444_islow_skip1,6.ppm testout_444_islow.jpg)
+  add_test(djpeg${suffix}-444-islow-skip1_6-cmp
+    ${CMAKE_COMMAND} -DMD5=${MD5_PPM_444_ISLOW_SKIP1_6}
+      -DFILE=testout_444_islow_skip1,6.ppm
+      -P ${CMAKE_SOURCE_DIR}/cmakescripts/md5cmp.cmake)
+  # Context rows: No   Intra-iMCU row: No   ENT: prog huff
+  add_test(cjpeg${suffix}-444-islow-prog
+    ${dir}cjpeg${suffix} -dct int -prog -sample 1x1
+      -outfile testout_444_islow_prog.jpg
+      ${CMAKE_SOURCE_DIR}/testimages/testorig.ppm)
+  add_test(djpeg${suffix}-444-islow-prog-strip13_110
+    ${dir}djpeg${suffix} -dct int -strip 13,110 -ppm
+      -outfile testout_444_islow_prog_strip13,110.ppm testout_444_islow_prog.jpg)
+  add_test(djpeg${suffix}-444-islow-prog_strip13_110-cmp
+    ${CMAKE_COMMAND} -DMD5=${MD5_PPM_444_ISLOW_PROG_STRIP13_110}
+      -DFILE=testout_444_islow_prog_strip13,110.ppm
+      -P ${CMAKE_SOURCE_DIR}/cmakescripts/md5cmp.cmake)
+  # Context rows: No   Intra-iMCU row: No   ENT: arith
+  if(WITH_ARITH_ENC)
+    add_test(cjpeg${suffix}-444-islow-ari
+      ${dir}cjpeg${suffix} -dct int -arithmetic -sample 1x1
+        -outfile testout_444_islow_ari.jpg
+        ${CMAKE_SOURCE_DIR}/testimages/testorig.ppm)
+    if(WITH_ARITH_DEC)
+      add_test(djpeg${suffix}-444-islow-ari-strip0_36
+        ${dir}djpeg${suffix} -dct int -strip 0,36 -ppm
+          -outfile testout_444_islow_ari_strip0,36.ppm
+          testout_444_islow_ari.jpg)
+      add_test(djpeg${suffix}-444-islow-ari-strip0_36-cmp
+        ${CMAKE_COMMAND} -DMD5=${MD5_PPM_444_ISLOW_ARI_STRIP0_36}
+          -DFILE=testout_444_islow_ari_strip0,36.ppm
+          -P ${CMAKE_SOURCE_DIR}/cmakescripts/md5cmp.cmake)
+    endif()
+  endif()
+
   add_test(jpegtran${suffix}-crop
     ${dir}jpegtran${suffix} -crop 120x90+20+50 -transpose -perfect
       -outfile testout_crop.jpg ${CMAKE_SOURCE_DIR}/testimages/${TESTORIG})
@@ -790,13 +914,35 @@ add_custom_target(installer
   SOURCES libjpeg-turbo.nsi)
 
 if(WITH_TURBOJPEG)
-  set(TURBOJPEG_TARGETS turbojpeg turbojpeg-static tjbench)
+  if(ENABLE_SHARED)
+    install(TARGETS turbojpeg tjbench
+      ARCHIVE DESTINATION lib
+      LIBRARY DESTINATION lib
+      RUNTIME DESTINATION bin)
+  endif()
+  if(ENABLE_STATIC)
+    install(TARGETS turbojpeg-static ARCHIVE DESTINATION lib)
+    if(NOT ENABLE_SHARED)
+      install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/tjbench-static.exe
+        DESTINATION bin RENAME tjbench.exe)
+    endif()
+  endif()
+  install(FILES ${CMAKE_SOURCE_DIR}/turbojpeg.h DESTINATION include)
 endif()
-install(TARGETS jpeg-static rdjpgcom wrjpgcom ${TURBOJPEG_TARGETS}
-  ARCHIVE DESTINATION lib
-  LIBRARY DESTINATION lib
-  RUNTIME DESTINATION bin
-)
+
+if(ENABLE_STATIC)
+  install(TARGETS jpeg-static ARCHIVE DESTINATION lib)
+  if(NOT ENABLE_SHARED)
+    install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/cjpeg-static.exe
+      DESTINATION bin RENAME cjpeg.exe)
+    install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/djpeg-static.exe
+      DESTINATION bin RENAME djpeg.exe)
+    install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/jpegtran-static.exe
+      DESTINATION bin RENAME jpegtran.exe)
+  endif()
+endif()
+
+install(TARGETS rdjpgcom wrjpgcom RUNTIME DESTINATION bin)
 
 install(FILES ${CMAKE_SOURCE_DIR}/README ${CMAKE_SOURCE_DIR}/README-turbo.txt
   ${CMAKE_SOURCE_DIR}/example.c ${CMAKE_SOURCE_DIR}/libjpeg.txt
@@ -806,4 +952,4 @@ install(FILES ${CMAKE_SOURCE_DIR}/README ${CMAKE_SOURCE_DIR}/README-turbo.txt
 
 install(FILES ${CMAKE_BINARY_DIR}/jconfig.h ${CMAKE_SOURCE_DIR}/jerror.h
   ${CMAKE_SOURCE_DIR}/jmorecfg.h ${CMAKE_SOURCE_DIR}/jpeglib.h
-  ${CMAKE_SOURCE_DIR}/turbojpeg.h DESTINATION include)
+  DESTINATION include)

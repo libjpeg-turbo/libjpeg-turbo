@@ -158,17 +158,17 @@ dist_man1_MANS = cjpeg.1 djpeg.1 jpegtran.1 rdjpgcom.1 wrjpgcom.1
 DOCS= coderules.txt jconfig.txt change.log rdrle.c wrrle.c BUILDING.txt \
 	ChangeLog.txt
 
-docdir = $(datadir)/doc
 dist_doc_DATA = README README-turbo.txt libjpeg.txt structure.txt usage.txt \
 	wizard.txt
 
-exampledir = $(datadir)/doc
+exampledir = $(docdir)
 dist_example_DATA = example.c
 
 
 EXTRA_DIST = win release $(DOCS) testimages CMakeLists.txt \
 	sharedlib/CMakeLists.txt cmakescripts libjpeg.map.in doc doxygen.config \
-	doxygen-extra.css jccolext.c jdcolext.c jdcol565.c jdmrgext.c jstdhuff.c
+	doxygen-extra.css jccolext.c jdcolext.c jdcol565.c jdmrgext.c jdmrg565.c \
+	jstdhuff.c
 
 dist-hook:
 	rm -rf `find $(distdir) -name .svn`
@@ -191,8 +191,13 @@ MD5_JPEG_GRAY_ISLOW = 235c90707b16e2e069f37c888b2636d9
 MD5_PPM_GRAY_ISLOW = 7213c10af507ad467da5578ca5ee1fca
 MD5_PPM_GRAY_ISLOW_RGB = e96ee81c30a6ed422d466338bd3de65d
 MD5_JPEG_420S_IFAST_OPT = 7af8e60be4d9c227ec63ac9b6630855e
-MD5_JPEG_3x2_FLOAT_PROG = a8c17daf77b457725ec929e215b603f8
-MD5_PPM_3x2_FLOAT = 42876ab9e5c2f76a87d08db5fbd57956
+MD5_JPEG_3x2_FLOAT_PROG_SSE = a8c17daf77b457725ec929e215b603f8
+MD5_PPM_3x2_FLOAT_SSE = 42876ab9e5c2f76a87d08db5fbd57956
+MD5_JPEG_3x2_FLOAT_PROG_32BIT = a8c17daf77b457725ec929e215b603f8
+MD5_PPM_3x2_FLOAT_32BIT = 42876ab9e5c2f76a87d08db5fbd57956
+MD5_PPM_3x2_FLOAT_64BIT = d6fbc71153b3d8ded484dbc17c7b9cf4
+MD5_JPEG_3x2_IFAST_PROG = 1396cc2b7185cfe943d408c9d305339e
+MD5_PPM_3x2_IFAST = 3975985ef6eeb0a2cdc58daa651ccc00
 MD5_PPM_420M_ISLOW_2_1 = 4ca6be2a6f326ff9eaab63e70a8259c0
 MD5_PPM_420M_ISLOW_15_8 = 12aa9f9534c1b3d7ba047322226365eb
 MD5_PPM_420M_ISLOW_13_8 = f7e22817c7b25e1393e4ec101e9d4e96
@@ -205,6 +210,10 @@ MD5_PPM_420M_ISLOW_1_2 = b419124dd5568b085787234866102866
 MD5_PPM_420M_ISLOW_3_8 = 343d19015531b7bbe746124127244fa8
 MD5_PPM_420M_ISLOW_1_4 = 35fd59d866e44659edfa3c18db2a3edb
 MD5_PPM_420M_ISLOW_1_8 = ccaed48ac0aedefda5d4abe4013f4ad7
+MD5_PPM_420_ISLOW_SKIP15_31 = 86664cd9dc956536409e44e244d20a97
+MD5_PPM_420_ISLOW_PROG_STRIP71_132 = a5c3706bb2e59bd01786b1181f67f97c
+MD5_PPM_444_ISLOW_SKIP1_6 = ef63901f71ef7a75cd78253fc0914f84
+MD5_PPM_444_ISLOW_PROG_STRIP13_110 = 6d228f8d05381d8639f3d078b91b2ee0
 MD5_JPEG_CROP = cdb35ff4b4519392690ea040c56ea99c
 
 else
@@ -229,13 +238,13 @@ MD5_BMP_GRAY_ISLOW_565 = 12f78118e56a2f48b966f792fedf23cc
 MD5_BMP_GRAY_ISLOW_565D = bdbbd616441a24354c98553df5dc82db
 MD5_JPEG_420S_IFAST_OPT = 388708217ac46273ca33086b22827ed8
 # See README-turbo.txt for more details on why this next bit is necessary.
-if WITH_SSE_FLOAT_DCT
-MD5_JPEG_3x2_FLOAT_PROG = 343e3f8caf8af5986ebaf0bdc13b5c71
-MD5_PPM_3x2_FLOAT = 1a75f36e5904d6fc3a85a43da9ad89bb
-else
-MD5_JPEG_3x2_FLOAT_PROG = 9bca803d2042bd1eb03819e2bf92b3e5
-MD5_PPM_3x2_FLOAT = f6bfab038438ed8f5522fbd33595dcdc
-endif
+MD5_JPEG_3x2_FLOAT_PROG_SSE = 343e3f8caf8af5986ebaf0bdc13b5c71
+MD5_PPM_3x2_FLOAT_SSE = 1a75f36e5904d6fc3a85a43da9ad89bb
+MD5_JPEG_3x2_FLOAT_PROG_32BIT = 9bca803d2042bd1eb03819e2bf92b3e5
+MD5_PPM_3x2_FLOAT_32BIT = f6bfab038438ed8f5522fbd33595dcdc
+MD5_PPM_3x2_FLOAT_64BIT = 0e917a34193ef976b679a6b069b1be26
+MD5_JPEG_3x2_IFAST_PROG = 1ee5d2c1a77f2da495f993c8c7cceca5
+MD5_PPM_3x2_IFAST = fd283664b3b49127984af0a7f118fccd
 MD5_JPEG_420_ISLOW_ARI = e986fb0a637a8d833d96e8a6d6d84ea1
 MD5_JPEG_444_ISLOW_PROGARI = 0a8f1c8f66e113c3cf635df0a475a617
 MD5_PPM_420M_IFAST_ARI = 72b59a99bcf1de24c5b27d151bde2437
@@ -257,11 +266,21 @@ MD5_BMP_420_ISLOW_565 = bf9d13e16c4923b92e1faa604d7922cb
 MD5_BMP_420_ISLOW_565D = 6bde71526acc44bcff76f696df8638d2
 MD5_BMP_420M_ISLOW_565 = 8dc0185245353cfa32ad97027342216f
 MD5_BMP_420M_ISLOW_565D =d1be3a3339166255e76fa50a0d70d73e
+MD5_PPM_420_ISLOW_SKIP15_31 = c4c65c1e43d7275cd50328a61e6534f0
+MD5_PPM_420_ISLOW_ARI_SKIP16_139 = 087c6b123db16ac00cb88c5b590bb74a
+MD5_PPM_420_ISLOW_PROG_STRIP71_132 = a7f2ba6ea335f03549888bed66a89fae
+MD5_PPM_420_ISLOW_ARI_STRIP4_56 = 0e5e44a39b94817917a1bac72903246b
+MD5_PPM_444_ISLOW_SKIP1_6 = 5606f86874cf26b8fcee1117a0a436a6
+MD5_PPM_444_ISLOW_PROG_STRIP13_110 = 40b5d9742558dca6229d7332fc2dda07
+MD5_PPM_444_ISLOW_ARI_STRIP0_36 = 9aceb5b9449c900b892a1d2fe39351b4
 MD5_JPEG_CROP = b4197f377e621c4e9b1d20471432610d
 
 endif
 
-test: testclean all
+.PHONY: test
+test: tjquicktest tjbittest bittest
+
+tjquicktest: testclean all
 
 if WITH_TURBOJPEG
 if WITH_JAVA
@@ -278,6 +297,66 @@ endif
 	./tjunittest -yuv -alloc
 	./tjunittest -yuv -noyuvpad
 endif
+	echo GREAT SUCCESS!
+
+tjbittest: testclean all
+
+if WITH_TURBOJPEG
+
+MD5_PPM_GRAY_TILE = 89d3ca21213d9d864b50b4e4e7de4ca6
+MD5_PPM_420_8x8_TILE = 847fceab15c5b7b911cb986cf0f71de3
+MD5_PPM_420_16x16_TILE = ca45552a93687e078f7137cc4126a7b0
+MD5_PPM_420_32x32_TILE = d8676f1d6b68df358353bba9844f4a00
+MD5_PPM_420_64x64_TILE = 4e4c1a3d7ea4bace4f868bcbe83b7050
+MD5_PPM_420_128x128_TILE = f24c3429c52265832beab9df72a0ceae
+MD5_PPM_420M_8x8_TILE = bc25320e1f4c31ce2e610e43e9fd173c
+MD5_PPM_420M_TILE = 75ffdf14602258c5c189522af57fa605
+MD5_PPM_422_8x8_TILE = d83dacd9fc73b0a6f10c09acad64eb1e
+MD5_PPM_422_16x16_TILE = 35077fb610d72dd743b1eb0cbcfe10fb
+MD5_PPM_422_32x32_TILE = e6902ed8a449ecc0f0d6f2bf945f65f7
+MD5_PPM_422_64x64_TILE = 2b4502a8f316cedbde1da7bce3d2231e
+MD5_PPM_422_128x128_TILE = f0b5617d578f5e13c8eee215d64d4877
+MD5_PPM_422M_8x8_TILE = 828941d7f41cd6283abd6beffb7fd51d
+MD5_PPM_422M_TILE = e877ae1324c4a280b95376f7f018172f
+MD5_PPM_444_TILE = 7964e41e67cfb8d0a587c0aa4798f9c3
+
+# Test compressing from/decompressing to an arbitrary subregion of a larger
+# image buffer
+	cp $(srcdir)/testimages/testorig.ppm testout_tile.ppm
+	./tjbench testout_tile.ppm 95 -rgb -quiet -tile -benchtime 0.01 >/dev/null 2>&1
+	for i in 8 16 32 64 128; do \
+		md5/md5cmp $(MD5_PPM_GRAY_TILE) testout_tile_GRAY_Q95_$$i\x$$i.ppm; \
+	done
+	md5/md5cmp $(MD5_PPM_420_8x8_TILE) testout_tile_420_Q95_8x8.ppm
+	md5/md5cmp $(MD5_PPM_420_16x16_TILE) testout_tile_420_Q95_16x16.ppm
+	md5/md5cmp $(MD5_PPM_420_32x32_TILE) testout_tile_420_Q95_32x32.ppm
+	md5/md5cmp $(MD5_PPM_420_64x64_TILE) testout_tile_420_Q95_64x64.ppm
+	md5/md5cmp $(MD5_PPM_420_128x128_TILE) testout_tile_420_Q95_128x128.ppm
+	md5/md5cmp $(MD5_PPM_422_8x8_TILE) testout_tile_422_Q95_8x8.ppm
+	md5/md5cmp $(MD5_PPM_422_16x16_TILE) testout_tile_422_Q95_16x16.ppm
+	md5/md5cmp $(MD5_PPM_422_32x32_TILE) testout_tile_422_Q95_32x32.ppm
+	md5/md5cmp $(MD5_PPM_422_64x64_TILE) testout_tile_422_Q95_64x64.ppm
+	md5/md5cmp $(MD5_PPM_422_128x128_TILE) testout_tile_422_Q95_128x128.ppm
+	for i in 8 16 32 64 128; do \
+		md5/md5cmp $(MD5_PPM_444_TILE) testout_tile_444_Q95_$$i\x$$i.ppm; \
+	done
+	rm testout_tile_GRAY_* testout_tile_420_* testout_tile_422_* testout_tile_444_*
+
+	./tjbench testout_tile.ppm 95 -rgb -fastupsample -quiet -tile -benchtime 0.01 >/dev/null 2>&1
+	md5/md5cmp $(MD5_PPM_420M_8x8_TILE) testout_tile_420_Q95_8x8.ppm
+	for i in 16 32 64 128; do \
+		md5/md5cmp $(MD5_PPM_420M_TILE) testout_tile_420_Q95_$$i\x$$i.ppm; \
+	done
+	md5/md5cmp $(MD5_PPM_422M_8x8_TILE) testout_tile_422_Q95_8x8.ppm
+	for i in 16 32 64 128; do \
+		md5/md5cmp $(MD5_PPM_422M_TILE) testout_tile_422_Q95_$$i\x$$i.ppm; \
+	done
+	rm testout_tile_GRAY_* testout_tile_420_* testout_tile_422_* testout_tile_444_* testout_tile.ppm
+	echo GREAT SUCCESS!
+
+endif
+
+bittest: testclean all
 
 # These tests are carefully crafted to provide full coverage of as many of the
 # underlying algorithms as possible (including all of the SIMD-accelerated
@@ -369,13 +448,46 @@ endif
 	md5/md5cmp $(MD5_JPEG_420S_IFAST_OPT) testout_420s_ifast_opt.jpg
 	rm testout_420s_ifast_opt.jpg
 
+# The output of the floating point tests is not validated by default, because
+# the output differs depending on the type of floating point math used, and
+# this is only deterministic if the DCT/IDCT are implemented using SIMD
+# instructions on a particular platform.  Pass one of the following on the make
+# command line to validate the floating point tests against one of the expected # results:
+#
+# FLOATTEST=sse  validate against the expected results from the libjpeg-turbo
+#                SSE SIMD extensions
+# FLOATTEST=32bit  validate against the expected results from the C code
+#                  when running on a 32-bit FPU (or when SSE is being used for
+#                  floating point math, which is generally the default with
+#                  x86-64 compilers)
+# FLOATTEST=64bit  validate against the exepected results from the C code
+#                  when running on a 64-bit FPU
+
 # CC: RGB->YCC  SAMP: fullsize/int  FDCT: float  ENT: prog huff
 	./cjpeg -sample 3x2 -dct float -prog -outfile testout_3x2_float_prog.jpg $(srcdir)/testimages/testorig.ppm
-	md5/md5cmp $(MD5_JPEG_3x2_FLOAT_PROG) testout_3x2_float_prog.jpg
+	if [ "${FLOATTEST}" = "sse" ]; then \
+		md5/md5cmp $(MD5_JPEG_3x2_FLOAT_PROG_SSE) testout_3x2_float_prog.jpg; \
+	elif [ "${FLOATTEST}" = "32bit" -o "${FLOATTEST}" = "64bit" ]; then \
+		md5/md5cmp $(MD5_JPEG_3x2_FLOAT_PROG_32BIT) testout_3x2_float_prog.jpg; \
+	fi
 # CC: YCC->RGB  SAMP: fullsize/int  IDCT: float  ENT: prog huff
 	./djpeg -dct float -outfile testout_3x2_float.ppm testout_3x2_float_prog.jpg
-	md5/md5cmp $(MD5_PPM_3x2_FLOAT) testout_3x2_float.ppm
+	if [ "${FLOATTEST}" = "sse" ]; then \
+		md5/md5cmp $(MD5_PPM_3x2_FLOAT_SSE) testout_3x2_float.ppm; \
+	elif [ "${FLOATTEST}" = "32bit" ]; then \
+		md5/md5cmp $(MD5_PPM_3x2_FLOAT_32BIT) testout_3x2_float.ppm; \
+	elif [ "${FLOATTEST}" = "64bit" ]; then \
+		md5/md5cmp $(MD5_PPM_3x2_FLOAT_64BIT) testout_3x2_float.ppm; \
+	fi
 	rm testout_3x2_float.ppm testout_3x2_float_prog.jpg
+
+# CC: RGB->YCC  SAMP: fullsize/int  FDCT: ifast  ENT: prog huff
+	./cjpeg -sample 3x2 -dct fast -prog -outfile testout_3x2_ifast_prog.jpg $(srcdir)/testimages/testorig.ppm
+	md5/md5cmp $(MD5_JPEG_3x2_IFAST_PROG) testout_3x2_ifast_prog.jpg
+# CC: YCC->RGB  SAMP: fullsize/int  IDCT: ifast  ENT: prog huff
+	./djpeg -dct fast -outfile testout_3x2_ifast.ppm testout_3x2_ifast_prog.jpg
+	md5/md5cmp $(MD5_PPM_3x2_IFAST) testout_3x2_ifast.ppm
+	rm testout_3x2_ifast.ppm testout_3x2_ifast_prog.jpg
 
 if WITH_ARITH_ENC
 # CC: YCC->RGB  SAMP: fullsize/h2v2  FDCT: islow  ENT: arith
@@ -386,7 +498,7 @@ if WITH_ARITH_ENC
 	md5/md5cmp $(MD5_JPEG_420_ISLOW_ARI) testout_420_islow_ari.jpg
 	rm testout_420_islow_ari.jpg
 # CC: YCC->RGB  SAMP: fullsize  FDCT: islow  ENT: prog arith
-	./cjpeg -sample 1x1 -dct int -progressive -arithmetic -outfile testout_444_islow_progari.jpg $(srcdir)/testimages/testorig.ppm
+	./cjpeg -sample 1x1 -dct int -prog -arithmetic -outfile testout_444_islow_progari.jpg $(srcdir)/testimages/testorig.ppm
 	md5/md5cmp $(MD5_JPEG_444_ISLOW_PROGARI) testout_444_islow_progari.jpg
 	rm testout_444_islow_progari.jpg
 endif
@@ -472,9 +584,55 @@ else
 	rm testout_420m_islow_565D.bmp
 endif
 
+# Partial decode tests.  These tests are designed to cover all of the possible
+# code paths in jpeg_skip_scanlines().
+
+# Context rows: Yes  Intra-iMCU row: Yes  iMCU row prefetch: No   ENT: huff
+	./djpeg -dct int -skip 15,31 -ppm -outfile testout_420_islow_skip15,31.ppm $(srcdir)/testimages/$(TESTORIG)
+	md5/md5cmp $(MD5_PPM_420_ISLOW_SKIP15_31) testout_420_islow_skip15,31.ppm
+	rm testout_420_islow_skip15,31.ppm
+# Context rows: Yes  Intra-iMCU row: No   iMCU row prefetch: Yes  ENT: arith
+if WITH_ARITH_DEC
+	./djpeg -dct int -skip 16,139 -ppm -outfile testout_420_islow_ari_skip16,139.ppm $(srcdir)/testimages/testimgari.jpg
+	md5/md5cmp $(MD5_PPM_420_ISLOW_ARI_SKIP16_139) testout_420_islow_ari_skip16,139.ppm
+	rm testout_420_islow_ari_skip16,139.ppm
+endif
+# Context rows: Yes  Intra-iMCU row: No   iMCU row prefetch: No   ENT: prog huff
+	./cjpeg -dct int -prog -outfile testout_420_islow_prog.jpg $(srcdir)/testimages/testorig.ppm
+	./djpeg -dct int -strip 71,132 -ppm -outfile testout_420_islow_prog_strip71,132.ppm testout_420_islow_prog.jpg
+	md5/md5cmp $(MD5_PPM_420_ISLOW_PROG_STRIP71_132) testout_420_islow_prog_strip71,132.ppm
+	rm testout_420_islow_prog_strip71,132.ppm testout_420_islow_prog.jpg
+# Context rows: Yes  Intra-iMCU row: No   iMCU row prefetch: No   ENT: arith
+if WITH_ARITH_DEC
+	./djpeg -dct int -strip 4,56 -ppm -outfile testout_420_islow_ari_strip4,56.ppm $(srcdir)/testimages/testimgari.jpg
+	md5/md5cmp $(MD5_PPM_420_ISLOW_ARI_STRIP4_56) testout_420_islow_ari_strip4,56.ppm
+	rm testout_420_islow_ari_strip4,56.ppm
+endif
+# Context rows: No   Intra-iMCU row: Yes  ENT: huff
+	./cjpeg -dct int -sample 1x1 -outfile testout_444_islow.jpg $(srcdir)/testimages/testorig.ppm
+	./djpeg -dct int -skip 1,6 -ppm -outfile testout_444_islow_skip1,6.ppm testout_444_islow.jpg
+	md5/md5cmp $(MD5_PPM_444_ISLOW_SKIP1_6) testout_444_islow_skip1,6.ppm
+	rm testout_444_islow_skip1,6.ppm testout_444_islow.jpg
+# Context rows: No   Intra-iMCU row: No   ENT: prog huff
+	./cjpeg -dct int -prog -sample 1x1 -outfile testout_444_islow_prog.jpg $(srcdir)/testimages/testorig.ppm
+	./djpeg -dct int -strip 13,110 -ppm -outfile testout_444_islow_prog_strip13,110.ppm testout_444_islow_prog.jpg
+	md5/md5cmp $(MD5_PPM_444_ISLOW_PROG_STRIP13_110) testout_444_islow_prog_strip13,110.ppm
+	rm testout_444_islow_prog_strip13,110.ppm testout_444_islow_prog.jpg
+# Context rows: No   Intra-iMCU row: No   ENT: arith
+if WITH_ARITH_ENC
+	./cjpeg -dct int -arithmetic -sample 1x1 -outfile testout_444_islow_ari.jpg $(srcdir)/testimages/testorig.ppm
+if WITH_ARITH_DEC
+	./djpeg -dct int -strip 0,36 -ppm -outfile testout_444_islow_ari_strip0,36.ppm testout_444_islow_ari.jpg
+	md5/md5cmp $(MD5_PPM_444_ISLOW_ARI_STRIP0_36) testout_444_islow_ari_strip0,36.ppm
+	rm testout_444_islow_ari_strip0,36.ppm
+endif
+	rm testout_444_islow_ari.jpg
+endif
+
 	./jpegtran -crop 120x90+20+50 -transpose -perfect -outfile testout_crop.jpg $(srcdir)/testimages/$(TESTORIG)
 	md5/md5cmp $(MD5_JPEG_CROP) testout_crop.jpg
 	rm testout_crop.jpg
+	echo GREAT SUCCESS!
 
 
 testclean:
@@ -583,12 +741,12 @@ udmg: all pkgscripts/makemacpkg pkgscripts/uninstall
 	sh pkgscripts/makemacpkg -build32 ${BUILDDIR32}
 
 iosdmg: all pkgscripts/makemacpkg pkgscripts/uninstall
-	sh pkgscripts/makemacpkg -build32 ${BUILDDIR32} -buildarmv6 ${BUILDDIRARMV6} -buildarmv7 ${BUILDDIRARMV7} -buildarmv7s ${BUILDDIRARMV7S}
+	sh pkgscripts/makemacpkg -build32 ${BUILDDIR32} -buildarmv6 ${BUILDDIRARMV6} -buildarmv7 ${BUILDDIRARMV7} -buildarmv7s ${BUILDDIRARMV7S} -buildarmv8 ${BUILDDIRARMV8} -lipo "${LIPO}"
 
 else
 
 iosdmg: all pkgscripts/makemacpkg pkgscripts/uninstall
-	sh pkgscripts/makemacpkg -buildarmv6 ${BUILDDIRARMV6} -buildarmv7 ${BUILDDIRARMV7} -buildarmv7s ${BUILDDIRARMV7S}
+	sh pkgscripts/makemacpkg -buildarmv6 ${BUILDDIRARMV6} -buildarmv7 ${BUILDDIRARMV7} -buildarmv7s ${BUILDDIRARMV7S} -buildarmv8 ${BUILDDIRARMV8} -lipo "${LIPO}"
 
 endif
 

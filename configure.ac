@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.56])
-AC_INIT([libjpeg-turbo], [1.3.90])
+AC_INIT([libjpeg-turbo], [1.4.80])
 BUILD=`date +%Y%m%d`
 
 AM_INIT_AUTOMAKE([-Wall foreign dist-bzip2])
@@ -39,11 +39,18 @@ DATADIR=`eval echo $DATADIR`
 if test "$DATADIR" = "/opt/libjpeg-turbo/share"; then
   datarootdir='${prefix}'
 fi
+DOCDIR=`eval echo ${docdir}`
+DOCDIR=`eval echo $DOCDIR`
+if test "$DOCDIR" = "/opt/libjpeg-turbo/doc/libjpeg-turbo"; then
+  docdir='${datadir}/doc'
+fi
 
 old_exec_prefix=${exec_prefix}
 if test "x$exec_prefix" = "xNONE"; then
   exec_prefix=${prefix}
 fi
+
+AC_CHECK_SIZEOF(size_t)
 
 if test "x${libdir}" = 'x${exec_prefix}/lib' -o "x${libdir}" = 'x${prefix}/lib'; then
   LIBDIR=`eval echo ${libdir}`
@@ -53,10 +60,9 @@ if test "x${libdir}" = 'x${exec_prefix}/lib' -o "x${libdir}" = 'x${prefix}/lib';
       darwin*)
         ;;
       *)
-        AC_CHECK_SIZEOF(long)
-        if test "${ac_cv_sizeof_long}" = "8"; then
+        if test "${ac_cv_sizeof_size_t}" = "8"; then
           libdir='${exec_prefix}/lib64'
-        elif test "${ac_cv_sizeof_long}" = "4"; then
+        elif test "${ac_cv_sizeof_size_t}" = "4"; then
           libdir='${exec_prefix}/lib32'
         fi
         ;;
@@ -183,7 +189,7 @@ fi
 RPM_CONFIG_ARGS=
 
 # Memory source/destination managers
-SO_AGE=0
+SO_AGE=1
 MEM_SRCDST_FUNCTIONS=
 if test "x${with_jpeg8}" != "xyes"; then
   AC_MSG_CHECKING([whether to include in-memory source/destination managers])
@@ -194,7 +200,7 @@ if test "x${with_jpeg8}" != "xyes"; then
     AC_MSG_RESULT(yes)
     AC_DEFINE([MEM_SRCDST_SUPPORTED], [1],
       [Support in-memory source/destination managers])
-    SO_AGE=1
+    SO_AGE=2
     MEM_SRCDST_FUNCTIONS="global:  jpeg_mem_dest;  jpeg_mem_src;";
   else
     AC_MSG_RESULT(no)
@@ -437,7 +443,11 @@ if test "x${with_simd}" != "xno"; then
       AC_MSG_RESULT([yes (arm)])
       AC_MSG_CHECKING([if the assembler is GNU-compatible and can be used])
       AC_CHECK_COMPATIBLE_ARM_ASSEMBLER_IFELSE(
-        [AC_MSG_RESULT([yes])
+        [if test "x$ac_use_gas_preprocessor" = "xyes"; then
+           AC_MSG_RESULT([yes (with gas-preprocessor)])
+         else
+           AC_MSG_RESULT([yes])
+         fi
          simd_arch=arm],
         [AC_MSG_RESULT([no])
          with_simd=no])
@@ -453,7 +463,11 @@ if test "x${with_simd}" != "xno"; then
       AC_MSG_RESULT([yes (arm64)])
       AC_MSG_CHECKING([if the assembler is GNU-compatible and can be used])
       AC_CHECK_COMPATIBLE_ARM64_ASSEMBLER_IFELSE(
-        [AC_MSG_RESULT([yes])
+        [if test "x$ac_use_gas_preprocessor" = "xyes"; then
+           AC_MSG_RESULT([yes (with gas-preprocessor)])
+         else
+           AC_MSG_RESULT([yes])
+         fi
          simd_arch=aarch64],
         [AC_MSG_RESULT([no])
          with_simd=no])
@@ -481,6 +495,10 @@ if test "x${with_simd}" != "xno"; then
         fi
       fi
       ;;
+    powerpc*)
+      AC_MSG_RESULT([yes (powerpc)])
+      simd_arch=powerpc
+      ;;
     *)
       AC_MSG_RESULT([no ("$host_cpu")])
       with_simd=no;
@@ -506,6 +524,7 @@ AM_CONDITIONAL([SIMD_X86_64], [test "x$simd_arch" = "xx86_64"])
 AM_CONDITIONAL([SIMD_ARM], [test "x$simd_arch" = "xarm"])
 AM_CONDITIONAL([SIMD_ARM_64], [test "x$simd_arch" = "xaarch64"])
 AM_CONDITIONAL([SIMD_MIPS], [test "x$simd_arch" = "xmips"])
+AM_CONDITIONAL([SIMD_POWERPC], [test "x$simd_arch" = "xpowerpc"])
 AM_CONDITIONAL([X86_64], [test "x$host_cpu" = "xx86_64" -o "x$host_cpu" = "xamd64"])
 AM_CONDITIONAL([WITH_TURBOJPEG], [test "x$with_turbojpeg" != "xno"])
 
@@ -524,7 +543,16 @@ case "$host_cpu" in
     RPMARCH=i386
     DEBARCH=i386
     ;;
+  *)
+    RPMARCH=`uname -m`
+    DEBARCH=$RPMARCH
+    ;;
 esac
+
+if test "${docdir}" = ""; then
+  docdir=${datadir}/doc
+  AC_SUBST(docdir)
+fi
 
 AC_SUBST(RPMARCH)
 AC_SUBST(RPM_CONFIG_ARGS)
