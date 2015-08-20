@@ -45,3 +45,5 @@
 #endif
 
 extern double gettime(void);
+
+extern void *reallocarray(void *optr, size_t nmemb, size_t size);
