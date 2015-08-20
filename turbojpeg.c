@@ -782,7 +782,7 @@ DLLEXPORT int DLLCALL tjCompress2(tjhandle handle, const unsigned char *srcBuf,
 		return -1;
 
 	jpeg_start_compress(cinfo, TRUE);
-	if((row_pointer=(JSAMPROW *)malloc(sizeof(JSAMPROW)*height))==NULL)
+	if((row_pointer=(JSAMPROW *)reallocarray(NULL, height, sizeof(JSAMPROW)))==NULL)
 		_throw("tjCompress2(): Memory allocation failure");
 	for(i=0; i<height; i++)
 	{
@@ -909,7 +909,7 @@ DLLEXPORT int DLLCALL tjEncodeYUVPlanes(tjhandle handle,
 	pw0=PAD(width, cinfo->max_h_samp_factor);
 	ph0=PAD(height, cinfo->max_v_samp_factor);
 
-	if((row_pointer=(JSAMPROW *)malloc(sizeof(JSAMPROW)*ph0))==NULL)
+	if((row_pointer=(JSAMPROW *)reallocarray(NULL, ph0, sizeof(JSAMPROW)))==NULL)
 		_throw("tjEncodeYUVPlanes(): Memory allocation failure");
 	for(i=0; i<height; i++)
 	{
@@ -951,7 +951,7 @@ DLLEXPORT int DLLCALL tjEncodeYUVPlanes(tjhandle handle,
 		}
 		pw[i]=pw0*compptr->h_samp_factor/cinfo->max_h_samp_factor;
 		ph[i]=ph0*compptr->v_samp_factor/cinfo->max_v_samp_factor;
-		outbuf[i]=(JSAMPROW *)malloc(sizeof(JSAMPROW)*ph[i]);
+		outbuf[i]=(JSAMPROW *)reallocarray(NULL, ph[i], sizeof(JSAMPROW));
 		if(!outbuf[i]) _throw("tjEncodeYUVPlanes(): Memory allocation failure");
 		ptr=dstPlanes[i];
 		for(row=0; row<ph[i]; row++)
@@ -1109,7 +1109,7 @@ DLLEXPORT int DLLCALL tjCompressFromYUVPlanes(tjhandle handle,
 		if(iw[i]!=pw[i] || ih!=ph[i]) usetmpbuf=1;
 		th[i]=compptr->v_samp_factor*DCTSIZE;
 		tmpbufsize+=iw[i]*th[i];
-		if((inbuf[i]=(JSAMPROW *)malloc(sizeof(JSAMPROW)*ph[i]))==NULL)
+		if((inbuf[i]=(JSAMPROW *)reallocarray(NULL, ph[i], sizeof(JSAMPROW)))==NULL)
 			_throw("tjCompressFromYUVPlanes(): Memory allocation failure");
 		ptr=(JSAMPLE *)srcPlanes[i];
 		for(row=0; row<ph[i]; row++)
@@ -1120,12 +1120,12 @@ DLLEXPORT int DLLCALL tjCompressFromYUVPlanes(tjhandle handle,
 	}
 	if(usetmpbuf)
 	{
-		if((_tmpbuf=(JSAMPLE *)malloc(sizeof(JSAMPLE)*tmpbufsize))==NULL)
+		if((_tmpbuf=(JSAMPLE *)reallocarray(NULL, tmpbufsize, sizeof(JSAMPLE)))==NULL)
 			_throw("tjCompressFromYUVPlanes(): Memory allocation failure");
 		ptr=_tmpbuf;
 		for(i=0; i<cinfo->num_components; i++)
 		{
-			if((tmpbuf[i]=(JSAMPROW *)malloc(sizeof(JSAMPROW)*th[i]))==NULL)
+			if((tmpbuf[i]=(JSAMPROW *)reallocarray(NULL, th[i], sizeof(JSAMPROW)))==NULL)
 				_throw("tjCompressFromYUVPlanes(): Memory allocation failure");
 			for(row=0; row<th[i]; row++)
 			{
@@ -1597,7 +1597,7 @@ DLLEXPORT int DLLCALL tjDecodeYUVPlanes(tjhandle handle,
 	}
 	#endif
 
-	if((row_pointer=(JSAMPROW *)malloc(sizeof(JSAMPROW)*ph0))==NULL)
+	if((row_pointer=(JSAMPROW *)reallocarray(NULL, ph0, sizeof(JSAMPROW)))==NULL)
 		_throw("tjDecodeYUVPlanes(): Memory allocation failure");
 	for(i=0; i<height; i++)
 	{
@@ -1624,7 +1624,7 @@ DLLEXPORT int DLLCALL tjDecodeYUVPlanes(tjhandle handle,
 		}
 		pw[i]=pw0*compptr->h_samp_factor/dinfo->max_h_samp_factor;
 		ph[i]=ph0*compptr->v_samp_factor/dinfo->max_v_samp_factor;
-		inbuf[i]=(JSAMPROW *)malloc(sizeof(JSAMPROW)*ph[i]);
+		inbuf[i]=(JSAMPROW *)reallocarray(NULL, ph[i], sizeof(JSAMPROW));
 		if(!inbuf[i]) _throw("tjDecodeYUVPlanes(): Memory allocation failure");
 		ptr=(JSAMPLE *)srcPlanes[i];
 		for(row=0; row<ph[i]; row++)
@@ -1788,7 +1788,7 @@ DLLEXPORT int DLLCALL tjDecompressToYUVPlanes(tjhandle handle,
 		if(iw[i]!=pw[i] || ih!=ph[i]) usetmpbuf=1;
 		th[i]=compptr->v_samp_factor*dctsize;
 		tmpbufsize+=iw[i]*th[i];
-		if((outbuf[i]=(JSAMPROW *)malloc(sizeof(JSAMPROW)*ph[i]))==NULL)
+		if((outbuf[i]=(JSAMPROW *)reallocarray(NULL, ph[i], sizeof(JSAMPROW)))==NULL)
 			_throw("tjDecompressToYUVPlanes(): Memory allocation failure");
 		ptr=dstPlanes[i];
 		for(row=0; row<ph[i]; row++)
@@ -1799,12 +1799,12 @@ DLLEXPORT int DLLCALL tjDecompressToYUVPlanes(tjhandle handle,
 	}
 	if(usetmpbuf)
 	{
-		if((_tmpbuf=(JSAMPLE *)malloc(sizeof(JSAMPLE)*tmpbufsize))==NULL)
+		if((_tmpbuf=(JSAMPLE *)reallocarray(NULL, tmpbufsize, sizeof(JSAMPLE)))==NULL)
 			_throw("tjDecompressToYUVPlanes(): Memory allocation failure");
 		ptr=_tmpbuf;
 		for(i=0; i<dinfo->num_components; i++)
 		{
-			if((tmpbuf[i]=(JSAMPROW *)malloc(sizeof(JSAMPROW)*th[i]))==NULL)
+			if((tmpbuf[i]=(JSAMPROW *)reallocarray(NULL, th[i], sizeof(JSAMPROW)))==NULL)
 				_throw("tjDecompressToYUVPlanes(): Memory allocation failure");
 			for(row=0; row<th[i]; row++)
 			{
@@ -1994,7 +1994,7 @@ DLLEXPORT int DLLCALL tjTransform(tjhandle handle,
 
 	jpeg_mem_src_tj(dinfo, jpegBuf, jpegSize);
 
-	if((xinfo=(jpeg_transform_info *)malloc(sizeof(jpeg_transform_info)*n))
+	if((xinfo=(jpeg_transform_info *)reallocarray(NULL, n, sizeof(jpeg_transform_info)))
 		==NULL)
 		_throw("tjTransform(): Memory allocation failure");
 	MEMZERO(xinfo, sizeof(jpeg_transform_info)*n);

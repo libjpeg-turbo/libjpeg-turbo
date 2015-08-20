@@ -1058,15 +1058,15 @@ JNIEXPORT jintArray JNICALL Java_org_libjpegturbo_turbojpeg_TJTransformer_transf
 	if(n!=(*env)->GetArrayLength(env, tobjs))
 		_throwarg("Mismatch between size of transforms array and destination buffers array");
 
-	if((dstBufs=(unsigned char **)malloc(sizeof(unsigned char *)*n))==NULL)
+	if((dstBufs=(unsigned char **)reallocarray(NULL, n, sizeof(unsigned char *)))==NULL)
 		_throwmem();
-	if((jdstBufs=(jbyteArray *)malloc(sizeof(jbyteArray)*n))==NULL)
+	if((jdstBufs=(jbyteArray *)reallocarray(NULL, n, sizeof(jbyteArray)))==NULL)
 		_throwmem();
-	if((dstSizes=(unsigned long *)malloc(sizeof(unsigned long)*n))==NULL)
+	if((dstSizes=(unsigned long *)reallocarray(NULL, n, sizeof(unsigned long)))==NULL)
 		_throwmem();
-	if((t=(tjtransform *)malloc(sizeof(tjtransform)*n))==NULL)
+	if((t=(tjtransform *)reallocarray(NULL, n, sizeof(tjtransform)))==NULL)
 		_throwmem();
-	if((params=(JNICustomFilterParams *)malloc(sizeof(JNICustomFilterParams)*n))
+	if((params=(JNICustomFilterParams *)reallocarray(NULL, n, sizeof(JNICustomFilterParams)))
 		==NULL)
 		_throwmem();
 	for(i=0; i<n; i++)
