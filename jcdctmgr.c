@@ -395,25 +395,30 @@ quantize (JCOEFPTR coef_block, DCTELEM * divisors, DCTELEM * workspace)
 
 #if BITS_IN_JSAMPLE == 8
 
-  UDCTELEM recip, corr, shift;
+  DCTELEM shift;
+  UDCTELEM recip, corr;
   UDCTELEM2 product;
 
   for (i = 0; i < DCTSIZE2; i++) {
     temp = workspace[i];
-    recip = divisors[i + DCTSIZE2 * 0];
-    corr =  divisors[i + DCTSIZE2 * 1];
     shift = divisors[i + DCTSIZE2 * 3];
-
-    if (temp < 0) {
-      temp = -temp;
-      product = (UDCTELEM2)(temp + corr) * recip;
-      product >>= shift + sizeof(DCTELEM)*8;
-      temp = product;
-      temp = -temp;
-    } else {
-      product = (UDCTELEM2)(temp + corr) * recip;
-      product >>= shift + sizeof(DCTELEM)*8;
-      temp = product;
+    /* When shift is negative (-1), the original divisor was 1, so
+     * the coefficient can be left unchanged.
+     */
+    if (shift >= 0) {
+      recip = divisors[i + DCTSIZE2 * 0];
+      corr =  divisors[i + DCTSIZE2 * 1];
+      if (temp < 0) {
+        temp = -temp;
+        product = (UDCTELEM2)(temp + corr) * recip;
+        product >>= shift + sizeof(DCTELEM)*8;
+        temp = product;
+        temp = -temp;
+      } else {
+        product = (UDCTELEM2)(temp + corr) * recip;
+        product >>= shift + sizeof(DCTELEM)*8;
+        temp = product;
+      }
     }
     output_ptr[i] = (JCOEF) temp;
   }
