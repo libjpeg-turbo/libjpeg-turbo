@@ -162,7 +162,9 @@ typedef long INT32;
  * images up to 64K*64K due to 16-bit fields in SOF markers.  Therefore
  * "unsigned int" is sufficient on all machines.  However, if you need to
  * handle larger images and you don't mind deviating from the spec, you
- * can change this datatype.
+ * can change this datatype. Note that changing this type will require
+ * potentially updating the assembly code to correctly use the new type
+ * size.
  */
 
 typedef unsigned int JDIMENSION;
