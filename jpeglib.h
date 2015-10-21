@@ -7,6 +7,7 @@
  * libjpeg-turbo Modifications:
  * Copyright (C) 2009-2011, 2013-2014, D. R. Commander.
  * Copyright (C) 2015, Google, Inc.
+ * Copyright (C) 2015, Intel Corporation.
  * For conditions of distribution and use, see the accompanying README file.
  *
  * This file defines the application interface for the JPEG library.
@@ -1108,6 +1109,16 @@ struct jpeg_color_quantizer { long dummy; };
 #include "jpegint.h"            /* fetch private declarations */
 #include "jerror.h"             /* fetch error codes too */
 #endif
+
+/*
+ * Defined for AVX2,AVX3,AVX3.1 SIMD 
+ */
+typedef enum {
+  JSIMD_LEN_LESS_256,        /* SIMD register length less then 256  */
+  JSIMD_LEN_256,             /* 256 bit SIMD regiter length, fg AVX/AVX2    */
+  JSIMD_LEN_512,             /* 512 bit SIMD regiter length, fg AVX3      */
+  JSIMD_LEN_1024,            /* 1024 bit SIMD regiter length, fg AVX3.1   */
+} JSIMD_REGISTER_LEN;
 
 #ifdef __cplusplus
 #ifndef DONT_USE_EXTERN_C

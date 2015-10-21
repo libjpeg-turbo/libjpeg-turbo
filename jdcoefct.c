@@ -6,6 +6,7 @@
  * libjpeg-turbo Modifications:
  * Copyright 2009 Pierre Ossman <ossman@cendio.se> for Cendio AB
  * Copyright (C) 2010, D. R. Commander.
+ * Copyright (C) 2015, Intel Corporation.
  * For conditions of distribution and use, see the accompanying README file.
  *
  * This file contains the coefficient buffer controller for decompression.
@@ -24,6 +25,10 @@
 /* Forward declarations */
 METHODDEF(int) decompress_onepass
         (j_decompress_ptr cinfo, JSAMPIMAGE output_buf);
+METHODDEF(int) decompress_simd256_onepass
+        (j_decompress_ptr cinfo, JSAMPIMAGE output_buf);
+LOCAL(boolean) simd256_ok (j_decompress_ptr cinfo);
+
 #ifdef D_MULTISCAN_FILES_SUPPORTED
 METHODDEF(int) decompress_data
         (j_decompress_ptr cinfo, JSAMPIMAGE output_buf);
@@ -34,6 +39,103 @@ METHODDEF(int) decompress_smooth_data
         (j_decompress_ptr cinfo, JSAMPIMAGE output_buf);
 #endif
 
+LOCAL(boolean) simd256_ok (j_decompress_ptr cinfo)
+{
+  boolean enable = TRUE;
+  int ci;
+  jpeg_component_info *compptr;
+  JSIMD_REGISTER_LEN simd_len = JSIMD_LEN_LESS_256;
+
+  char *env=NULL;
+  if((env=getenv("JSIMD_LENGTH_256"))!=NULL && strlen(env)>0
+      && !strcmp(env, "1"))
+  {
+    simd_len = JSIMD_LEN_256;
+  }
+  if((env=getenv("JSIMD_LENGTH_512"))!=NULL && strlen(env)>0
+      && !strcmp(env, "1"))
+  {
+    simd_len = JSIMD_LEN_512;
+  }
+  if((env=getenv("JSIMD_LENGTH_1024"))!=NULL && strlen(env)>0
+      && !strcmp(env, "1"))
+  {
+    simd_len = JSIMD_LEN_1024;
+  }
+
+ 	for (ci = 0; ci < cinfo->comps_in_scan; ci++) {
+		compptr = cinfo->cur_comp_info[ci];
+    if(compptr->_DCT_scaled_size != 8)
+      enable = FALSE;
+  }
+
+  if(simd_len != JSIMD_LEN_256 )
+    enable = FALSE;
+
+  if( cinfo->dct_method == JDCT_FLOAT)
+    enable = FALSE;
+
+  return enable;
+}
+
+LOCAL(void)
+fill_SIMD256_buffer(j_decompress_ptr cinfo)
+{
+	my_coef_ptr coef = (my_coef_ptr) cinfo->coef;
+	int ci;
+	jpeg_component_info *compptr;
+	int blkn = 0; /* BLK index for buffer pool */
+	int blkmcu = 0;/* BLK index for MCU block */
+	int i;
+
+	for(i=0;i<D_MAX_BLOCKS_IN_MCU;i++)
+		coef->SIMD256_buffer[0][i] = coef->SIMD256_buffer[1][i] = 0;
+
+	for (ci = 0; ci < cinfo->comps_in_scan; ci++) {
+		compptr = cinfo->cur_comp_info[ci];
+		coef->SIMD256_comp_buffer[ci][0][0] = 0;
+		coef->SIMD256_comp_buffer[ci][0][1] = 0;
+		coef->SIMD256_comp_buffer[ci][1][0] = 0;
+		coef->SIMD256_comp_buffer[ci][1][1] = 0;
+
+		if(compptr->MCU_width==1)
+		{
+			coef->SIMD256_comp_buffer[ci][0][0] = coef->MCU_buffer[blkn];
+			coef->SIMD256_comp_buffer[ci][1][0] = coef->MCU_buffer[blkn+1];
+			coef->SIMD256_buffer[0][blkmcu] = coef->MCU_buffer[blkn];
+			coef->SIMD256_buffer[1][blkmcu] = coef->MCU_buffer[blkn+1];
+			if(compptr->MCU_height == 2)
+			{
+				coef->SIMD256_comp_buffer[ci][0][1] = coef->MCU_buffer[blkn+2];
+				coef->SIMD256_comp_buffer[ci][1][1] = coef->MCU_buffer[blkn+3];
+				coef->SIMD256_buffer[0][blkmcu+1] = coef->MCU_buffer[blkn+2];
+				coef->SIMD256_buffer[1][blkmcu+1] = coef->MCU_buffer[blkn+3];
+			}
+		}
+		else
+		{
+			coef->SIMD256_comp_buffer[ci][0][0] = coef->MCU_buffer[blkn];
+			coef->SIMD256_comp_buffer[ci][1][0] = 
+				coef->MCU_buffer[blkn+compptr->MCU_width*compptr->MCU_height];
+
+			for(i=0;i<compptr->MCU_height*compptr->MCU_width;i++)
+			{
+				coef->SIMD256_buffer[0][blkmcu+i] = coef->MCU_buffer[blkn+i];
+				coef->SIMD256_buffer[1][blkmcu+i] = 
+					coef->MCU_buffer[blkn+compptr->MCU_height*compptr->MCU_width+i];
+			}
+			if(compptr->MCU_height == 2)
+			{
+				coef->SIMD256_comp_buffer[ci][0][1] = 
+					coef->MCU_buffer[blkn+compptr->MCU_width];
+				coef->SIMD256_comp_buffer[ci][1][1] = 
+					coef->MCU_buffer[blkn+compptr->MCU_width*(1+compptr->MCU_height)];
+			}
+		}
+		blkmcu += compptr->MCU_height*compptr->MCU_width;
+		blkn += compptr->MCU_height*compptr->MCU_width*2;
+	}
+}
 
 /*
  * Initialize for an input processing pass.
@@ -43,6 +145,7 @@ METHODDEF(void)
 start_input_pass (j_decompress_ptr cinfo)
 {
   cinfo->input_iMCU_row = 0;
+  fill_SIMD256_buffer(cinfo);
   start_iMCU_row(cinfo);
 }
 
@@ -155,6 +258,119 @@ decompress_onepass (j_decompress_ptr cinfo, JSAMPIMAGE output_buf)
   return JPEG_SCAN_COMPLETED;
 }
 
+METHODDEF(int)
+decompress_simd256_onepass (j_decompress_ptr cinfo, JSAMPIMAGE output_buf)
+{
+	my_coef_ptr coef = (my_coef_ptr) cinfo->coef;
+	JDIMENSION MCU_col_num;       /* index of current MCU within row */
+	JDIMENSION last_MCU_col = cinfo->MCUs_per_row - 1;
+	JDIMENSION last_proc_col = last_MCU_col&(JDIMENSION)(-2);
+	JDIMENSION last_iMCU_row = cinfo->total_iMCU_rows - 1;
+	int ci, xindex, yindex, yoffset, useful_width;
+	JSAMPARRAY output_ptr;
+	JDIMENSION start_col, output_col;
+	jpeg_component_info *compptr;
+	inverse_DCT_method_ptr inverse_DCT;
+	int b_dual_codec ;
+	boolean ret;
+
+	/* Loop to process as much as one whole iMCU row */
+	for (yoffset = coef->MCU_vert_offset; yoffset < coef->MCU_rows_per_iMCU_row;
+			yoffset++) {
+		for (MCU_col_num = coef->MCU_ctr; MCU_col_num <= last_MCU_col;
+				MCU_col_num+=2) {
+			if( last_proc_col == last_MCU_col && MCU_col_num == last_proc_col)
+				b_dual_codec = 0;
+			else
+				b_dual_codec = 1;
+
+			/* Try to fetch an MCU.  Entropy decoder expects buffer to be zeroed. */
+			jzero_far((void *) coef->MCU_buffer[0],
+					(size_t) ( 2* cinfo->blocks_in_MCU * sizeof(JBLOCK)));
+
+			ret = (*cinfo->entropy->decode_mcu) (cinfo, coef->SIMD256_buffer[0]);
+			if(b_dual_codec)
+				ret &= (*cinfo->entropy->decode_mcu) (cinfo, coef->SIMD256_buffer[1]);
+			if (! ret)
+			{
+				/* Suspension forced; update state counters and exit */
+				coef->MCU_vert_offset = yoffset;
+				return JPEG_SUSPENDED;
+			}
+
+			for (ci = 0; ci < cinfo->comps_in_scan; ci++) {
+				compptr = cinfo->cur_comp_info[ci];
+				/* Don't bother to IDCT an uninteresting component. */
+				if (! compptr->component_needed) {
+					continue;
+				}
+				useful_width  = (MCU_col_num==last_proc_col)
+					?compptr->last_col_width:compptr->MCU_width;
+
+				inverse_DCT = cinfo->idct->inverse_DCT[compptr->component_index];
+				output_ptr = output_buf[compptr->component_index] +
+					yoffset * compptr->_DCT_scaled_size;
+				start_col = MCU_col_num * compptr->MCU_sample_width;
+				for (yindex = 0; yindex < compptr->MCU_height; yindex++) {
+					if (cinfo->input_iMCU_row < last_iMCU_row ||
+							yoffset+yindex < compptr->last_row_height) {
+						output_col = start_col;
+						if(b_dual_codec)
+						{
+              for (xindex = 0; xindex < compptr->MCU_width; xindex+=2) 
+                (*inverse_DCT) (cinfo, compptr,
+                    (JCOEFPTR) ((coef->SIMD256_comp_buffer[ci][0][yindex]+xindex)),
+                    output_ptr, 
+                    output_col+xindex*compptr->_DCT_scaled_size);
+              if(compptr->MCU_width>1)
+              {
+                for (xindex = 0; xindex < useful_width; xindex+=2) 
+                  (*inverse_DCT) (cinfo, compptr,
+                      (JCOEFPTR) ((coef->SIMD256_comp_buffer[ci][1][yindex]+xindex)),
+                      output_ptr, 
+                      output_col+xindex*compptr->_DCT_scaled_size
+                      + compptr->MCU_sample_width);
+              }
+						}
+						else
+						{
+							/*useful_width can be one of : 1 2 4 */
+							if(useful_width==1)
+							{
+								(*inverse_DCT) (cinfo, compptr,
+										(JCOEFPTR) ((coef->SIMD256_comp_buffer[ci][0][yindex])),
+										output_ptr, 
+										output_col|1); /* MAGIC bit */
+							}
+							else 
+              {
+								for (xindex = 0; xindex < useful_width; xindex+=2) 
+                {
+									(*inverse_DCT) (cinfo, compptr,
+											(JCOEFPTR) ((coef->SIMD256_comp_buffer[ci][0][yindex]+xindex)),
+											output_ptr, 
+											output_col+xindex*compptr->_DCT_scaled_size);
+								}
+							}
+						}
+					}
+					output_ptr += compptr->_DCT_scaled_size;
+				}
+			}
+		}
+		/* Completed an MCU row, but perhaps not an iMCU row */
+		coef->MCU_ctr = 0;
+	}
+	/* Completed the iMCU row, advance counters for next one */
+	cinfo->output_iMCU_row++;
+	if (++(cinfo->input_iMCU_row) < cinfo->total_iMCU_rows) {
+		start_iMCU_row(cinfo);
+		return JPEG_ROW_COMPLETED;
+	}
+	/* Completed the scan */
+	(*cinfo->inputctl->finish_input_pass) (cinfo);
+	return JPEG_SCAN_COMPLETED;
+}
 
 /*
  * Dummy consume-input routine for single-pass operation.
@@ -626,8 +842,7 @@ jinit_d_coef_controller (j_decompress_ptr cinfo, boolean need_full_buffer)
   coef->coef_bits_latch = NULL;
 #endif
 
-  /* Create the coefficient buffer. */
-  if (need_full_buffer) {
+  /* Create the coefficient buffer. */ if (need_full_buffer) {
 #ifdef D_MULTISCAN_FILES_SUPPORTED
     /* Allocate a full-image virtual array for each component, */
     /* padded to a multiple of samp_factor DCT blocks in each direction. */
@@ -664,12 +879,20 @@ jinit_d_coef_controller (j_decompress_ptr cinfo, boolean need_full_buffer)
 
     buffer = (JBLOCKROW)
       (*cinfo->mem->alloc_large) ((j_common_ptr) cinfo, JPOOL_IMAGE,
-                                  D_MAX_BLOCKS_IN_MCU * sizeof(JBLOCK));
-    for (i = 0; i < D_MAX_BLOCKS_IN_MCU; i++) {
+                                  2*D_MAX_BLOCKS_IN_MCU * sizeof(JBLOCK));
+    for (i = 0; i < 2*D_MAX_BLOCKS_IN_MCU; i++) {
       coef->MCU_buffer[i] = buffer + i;
     }
     coef->pub.consume_data = dummy_consume_data;
-    coef->pub.decompress_data = decompress_onepass;
+   
+    if(simd256_ok(cinfo))
+    {
+      coef->pub.decompress_data = decompress_simd256_onepass;
+    }
+    else
+    {
+      coef->pub.decompress_data = decompress_onepass;
+    }
     coef->pub.coef_arrays = NULL; /* flag for no virtual arrays */
   }
 

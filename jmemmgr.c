@@ -3,6 +3,7 @@
  *
  * This file was part of the Independent JPEG Group's software:
  * Copyright (C) 1991-1997, Thomas G. Lane.
+ * Copyright (C) 2015, Intel Corporation.
  * It was modified by The libjpeg-turbo Project to include only code and
  * information relevant to libjpeg-turbo.
  * For conditions of distribution and use, see the accompanying README file.
@@ -84,7 +85,7 @@ round_up_pow2 (size_t a, size_t b)
 #ifndef WITH_SIMD
 #define ALIGN_SIZE  sizeof(double)
 #else
-#define ALIGN_SIZE  16 /* Most SIMD implementations require this */
+#define ALIGN_SIZE  32 /* Most SIMD implementations require this */
 #endif
 #endif
 

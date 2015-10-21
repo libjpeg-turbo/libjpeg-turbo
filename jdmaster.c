@@ -7,6 +7,7 @@
  * libjpeg-turbo Modifications:
  * Copyright (C) 2009-2011, D. R. Commander.
  * Copyright (C) 2013, Linaro Limited.
+ * Copyright (C) 2015, Intel Corporation.
  * For conditions of distribution and use, see the accompanying README file.
  *
  * This file contains master control logic for the JPEG decompressor.
@@ -86,6 +87,7 @@ use_merged_upsample (j_decompress_ptr cinfo)
       cinfo->comp_info[2]._DCT_scaled_size != cinfo->_min_DCT_scaled_size)
     return FALSE;
   /* ??? also need to test for upsample-time rescaling, when & if supported */
+  printf("using merged upsampling\n");
   return TRUE;                  /* by golly, it'll work... */
 #else
   return FALSE;

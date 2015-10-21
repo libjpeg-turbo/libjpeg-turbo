@@ -5,6 +5,7 @@
  * Copyright (C) 1994-1997, Thomas G. Lane.
  * libjpeg-turbo Modifications:
  * Copyright 2009 Pierre Ossman <ossman@cendio.se> for Cendio AB
+ * Copyright 2015, Intel Corporation
  * For conditions of distribution and use, see the accompanying README file.
  */
 
@@ -38,7 +39,7 @@ typedef struct {
    * In multi-pass modes, this array points to the current MCU's blocks
    * within the virtual arrays; it is used only by the input side.
    */
-  JBLOCKROW MCU_buffer[D_MAX_BLOCKS_IN_MCU];
+  JBLOCKROW MCU_buffer[2*D_MAX_BLOCKS_IN_MCU];
 
   /* Temporary workspace for one MCU */
   JCOEF * workspace;
@@ -53,6 +54,9 @@ typedef struct {
   int * coef_bits_latch;
 #define SAVED_COEFS  6          /* we save coef_bits[0..5] */
 #endif
+
+	JBLOCKROW SIMD256_comp_buffer[MAX_COMPS_IN_SCAN][2][2]; /* [Col0-1][height0-1] */
+	JBLOCKROW SIMD256_buffer[2][D_MAX_BLOCKS_IN_MCU];
 } my_coef_controller;
 
 typedef my_coef_controller * my_coef_ptr;

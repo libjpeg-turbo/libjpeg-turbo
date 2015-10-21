@@ -3,6 +3,7 @@
 ;
 ; Copyright 2009 Pierre Ossman <ossman@cendio.se> for Cendio AB
 ; Copyright 2010 D. R. Commander
+; Copyright 2015 Intel Corporation
 ;
 ; Based on
 ; x86 SIMD extension for IJG JPEG library - version 1.02
@@ -158,6 +159,12 @@ section .note.GNU-stack noalloc noexec nowrite progbits
 %define XMMWORD                                 ; int128 (SSE register)
 %define SIZEOF_XMMWORD          SIZEOF_OWORD    ; sizeof(XMMWORD)
 %define XMMWORD_BIT             OWORD_BIT       ; sizeof(XMMWORD)*BYTE_BIT
+
+; For AVX/AVX2 instructions
+%define YMMWORD           			
+%define YMM_MMWORD           			
+%define SIZEOF_YMMWORD         	32 
+%define YMMWORD_BIT             256 
 
 ; Similar hacks for when we load a dword or MMWORD into an xmm# register
 %define XMM_DWORD

@@ -8,6 +8,7 @@
  * Copyright 2009 Pierre Ossman <ossman@cendio.se> for Cendio AB
  * Copyright (C) 2010, D. R. Commander.
  * Copyright (C) 2013, MIPS Technologies, Inc., California
+ * Copyright (C) 2015, Intel Corporation.
  * For conditions of distribution and use, see the accompanying README file.
  *
  * This file contains the inverse-DCT management logic.
@@ -101,6 +102,14 @@ start_pass (j_decompress_ptr cinfo)
   int method = 0;
   inverse_DCT_method_ptr method_ptr = NULL;
   JQUANT_TBL * qtbl;
+  JSIMD_REGISTER_LEN simd_len = JSIMD_LEN_LESS_256;
+  char *env=NULL;
+
+  if((env=getenv("JSIMD_LENGTH_256"))!=NULL && strlen(env)>0
+      && !strcmp(env, "1"))
+  {
+    simd_len = JSIMD_LEN_256;
+  }
 
   for (ci = 0, compptr = cinfo->comp_info; ci < cinfo->num_components;
        ci++, compptr++) {
@@ -152,7 +161,10 @@ start_pass (j_decompress_ptr cinfo)
 #ifdef DCT_ISLOW_SUPPORTED
       case JDCT_ISLOW:
         if (jsimd_can_idct_islow())
-          method_ptr = jsimd_idct_islow;
+          if(simd_len == JSIMD_LEN_256)
+            method_ptr = jsimd_simd256_idct_islow;
+          else
+            method_ptr = jsimd_idct_islow;
         else
           method_ptr = jpeg_idct_islow;
         method = JDCT_ISLOW;
@@ -161,7 +173,10 @@ start_pass (j_decompress_ptr cinfo)
 #ifdef DCT_IFAST_SUPPORTED
       case JDCT_IFAST:
         if (jsimd_can_idct_ifast())
-          method_ptr = jsimd_idct_ifast;
+          if(simd_len == JSIMD_LEN_256)
+            method_ptr = jsimd_simd256_idct_ifast;
+          else
+            method_ptr = jsimd_idct_ifast;
         else
           method_ptr = jpeg_idct_ifast;
         method = JDCT_IFAST;

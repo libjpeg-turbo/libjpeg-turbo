@@ -7,6 +7,7 @@
  * Copyright (C) 1999-2006, MIYASAKA Masaru.
  * Copyright 2009 Pierre Ossman <ossman@cendio.se> for Cendio AB
  * Copyright (C) 2011, 2014 D. R. Commander
+ * Copyright (C) 2015, Intel Corporation
  * For conditions of distribution and use, see the accompanying README file.
  *
  * This file contains the forward-DCT management logic.
@@ -26,7 +27,10 @@
 
 typedef void (*forward_DCT_method_ptr) (DCTELEM * data);
 typedef void (*float_DCT_method_ptr) (FAST_FLOAT * data);
-
+typedef void (*float_merged_DCT_method_ptr)
+    (JSAMPARRAY sample_data, JDIMENSION start_col,JCOEFPTR coef_block, FAST_FLOAT * divisors);
+typedef void (*merged_fdct_method_ptr)
+    (JSAMPARRAY sample_data, JDIMENSION start_col,JCOEFPTR coef_block, DCTELEM * divisors);
 typedef void (*convsamp_method_ptr) (JSAMPARRAY sample_data,
                                      JDIMENSION start_col,
                                      DCTELEM * workspace);
@@ -49,6 +53,7 @@ typedef struct {
   forward_DCT_method_ptr dct;
   convsamp_method_ptr convsamp;
   quantize_method_ptr quantize;
+  merged_fdct_method_ptr merged_dct;
 
   /* The actual post-DCT divisors --- not identical to the quant table
    * entries, because of scaling (especially for an unnormalized DCT).
@@ -62,6 +67,7 @@ typedef struct {
 #ifdef DCT_FLOAT_SUPPORTED
   /* Same as above for the floating-point case. */
   float_DCT_method_ptr float_dct;
+  float_merged_DCT_method_ptr float_merged_dct;
   float_convsamp_method_ptr float_convsamp;
   float_quantize_method_ptr float_quantize;
   FAST_FLOAT * float_divisors[NUM_QUANT_TBLS];
@@ -175,6 +181,11 @@ compute_reciprocal (UINT16 divisor, DCTELEM * dtbl)
   UDCTELEM c;
   int b, r;
 
+  static DCTELEM* base = 0;
+  int offset;
+  int row;
+  int col;
+
   b = flss(divisor) - 1;
   r  = sizeof(DCTELEM) * 8 + b;
 
@@ -197,6 +208,25 @@ compute_reciprocal (UINT16 divisor, DCTELEM * dtbl)
   dtbl[DCTSIZE2 * 1] = (DCTELEM) c;       /* correction + roundfactor */
   dtbl[DCTSIZE2 * 2] = (DCTELEM) (1 << (sizeof(DCTELEM)*8*2 - r));  /* scale */
   dtbl[DCTSIZE2 * 3] = (DCTELEM) r - sizeof(DCTELEM)*8; /* shift */
+
+  if(base==0)
+    base = dtbl+DCTSIZE2 * 4;
+  offset = dtbl-base+DCTSIZE2 * 4;
+  row = offset/DCTSIZE;
+  col = offset%DCTSIZE;
+
+  *(base+row*DCTSIZE*2+col+DCTSIZE) 
+    = *(base+row*DCTSIZE*2+col) = dtbl[DCTSIZE2 * 0];
+  *(base+row*DCTSIZE*2+col+DCTSIZE + DCTSIZE2*2) 
+    = *(base+row*DCTSIZE*2+col+DCTSIZE2*2) = dtbl[DCTSIZE2 * 1];
+  *(base+row*DCTSIZE*2+col+DCTSIZE + DCTSIZE2*4) 
+    = *(base+row*DCTSIZE*2+col+DCTSIZE2*4) = dtbl[DCTSIZE2 * 2];
+  *(base+row*DCTSIZE*2+col+DCTSIZE + DCTSIZE2*6) 
+    = *(base+row*DCTSIZE*2+col+DCTSIZE2*6) = dtbl[DCTSIZE2 * 3];
+
+  if(row*DCTSIZE+col ==DCTSIZE2-1)
+    base = 0;
+
 
   if(r <= 16) return 0;
   else return 1;
@@ -242,7 +272,7 @@ start_pass_fdctmgr (j_compress_ptr cinfo)
       if (fdct->divisors[qtblno] == NULL) {
         fdct->divisors[qtblno] = (DCTELEM *)
           (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_IMAGE,
-                                      (DCTSIZE2 * 4) * sizeof(DCTELEM));
+                                      (DCTSIZE2 * 4) * sizeof(DCTELEM) * 3);
       }
       dtbl = fdct->divisors[qtblno];
       for (i = 0; i < DCTSIZE2; i++) {
@@ -282,7 +312,7 @@ start_pass_fdctmgr (j_compress_ptr cinfo)
         if (fdct->divisors[qtblno] == NULL) {
           fdct->divisors[qtblno] = (DCTELEM *)
             (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_IMAGE,
-                                        (DCTSIZE2 * 4) * sizeof(DCTELEM));
+                                        (DCTSIZE2 * 4) * sizeof(DCTELEM) * 3);
         }
         dtbl = fdct->divisors[qtblno];
         for (i = 0; i < DCTSIZE2; i++) {
@@ -500,6 +530,39 @@ forward_DCT (j_compress_ptr cinfo, jpeg_component_info * compptr,
   }
 }
 
+METHODDEF(void)
+merged_forward_DCT (j_compress_ptr cinfo, jpeg_component_info * compptr,
+             JSAMPARRAY sample_data, JBLOCKROW coef_blocks,
+             JDIMENSION start_row, JDIMENSION start_col,
+             JDIMENSION num_blocks)
+/* This version is used for integer DCT implementations. */
+{
+  /* This routine is heavily used, so it's worth coding it tightly. */
+  my_fdct_ptr fdct = (my_fdct_ptr) cinfo->fdct;
+  DCTELEM * divisors = fdct->divisors[compptr->quant_tbl_no];
+  DCTELEM * workspace;
+  JDIMENSION bi;
+
+  /* Make sure the compiler doesn't look up these every pass */
+  forward_DCT_method_ptr do_dct = fdct->dct;
+  convsamp_method_ptr do_convsamp = fdct->convsamp;
+  quantize_method_ptr do_quantize = fdct->quantize;
+  merged_fdct_method_ptr do_merged_dct = fdct->merged_dct;
+  workspace = fdct->workspace;
+
+  sample_data += start_row;     /* fold in the vertical offset once */
+
+  for(bi = 0; bi+1 < num_blocks; bi+=2)
+    (*do_merged_dct)(sample_data, start_col+bi*DCTSIZE,coef_blocks[bi], divisors);
+
+  if(num_blocks%2) {
+    bi = num_blocks-1;
+    start_col += bi*DCTSIZE;
+    (*do_convsamp) (sample_data, start_col, workspace);
+    (*do_dct) (workspace);
+    (*do_quantize) (coef_blocks[bi], divisors, workspace);
+  }
+}
 
 #ifdef DCT_FLOAT_SUPPORTED
 
@@ -556,6 +619,25 @@ quantize_float (JCOEFPTR coef_block, FAST_FLOAT * divisors, FAST_FLOAT * workspa
   }
 }
 
+METHODDEF(void)
+merged_forward_DCT_float (j_compress_ptr cinfo, jpeg_component_info * compptr,
+                   JSAMPARRAY sample_data, JBLOCKROW coef_blocks,
+                   JDIMENSION start_row, JDIMENSION start_col,
+                   JDIMENSION num_blocks)
+/* This version is used for floating-point DCT implementations. */
+{
+  /* This routine is heavily used, so it's worth coding it tightly. */
+  my_fdct_ptr fdct = (my_fdct_ptr) cinfo->fdct;
+  FAST_FLOAT * divisors = fdct->float_divisors[compptr->quant_tbl_no];
+  JDIMENSION bi;
+
+  float_merged_DCT_method_ptr do_merged_dct = fdct->float_merged_dct;
+
+  sample_data += start_row;    
+
+  for (bi = 0; bi < num_blocks; bi++, start_col += DCTSIZE) 
+      (*do_merged_dct)(sample_data, start_col,coef_blocks[bi], divisors);
+}
 
 METHODDEF(void)
 forward_DCT_float (j_compress_ptr cinfo, jpeg_component_info * compptr,
@@ -569,7 +651,6 @@ forward_DCT_float (j_compress_ptr cinfo, jpeg_component_info * compptr,
   FAST_FLOAT * divisors = fdct->float_divisors[compptr->quant_tbl_no];
   FAST_FLOAT * workspace;
   JDIMENSION bi;
-
 
   /* Make sure the compiler doesn't look up these every pass */
   float_DCT_method_ptr do_dct = fdct->float_dct;
@@ -603,6 +684,8 @@ jinit_forward_dct (j_compress_ptr cinfo)
 {
   my_fdct_ptr fdct;
   int i;
+  JSIMD_REGISTER_LEN simd_len = JSIMD_LEN_LESS_256;
+  char *env=NULL;
 
   fdct = (my_fdct_ptr)
     (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_IMAGE,
@@ -610,33 +693,80 @@ jinit_forward_dct (j_compress_ptr cinfo)
   cinfo->fdct = (struct jpeg_forward_dct *) fdct;
   fdct->pub.start_pass = start_pass_fdctmgr;
 
+  if((env=getenv("JSIMD_LENGTH_256"))!=NULL && strlen(env)>0
+      && !strcmp(env, "1"))
+  {
+    simd_len = JSIMD_LEN_256;
+  }
+  if((env=getenv("JSIMD_LENGTH_512"))!=NULL && strlen(env)>0
+      && !strcmp(env, "1"))
+  {
+    simd_len = JSIMD_LEN_512;
+  }
+  if((env=getenv("JSIMD_LENGTH_1024"))!=NULL && strlen(env)>0
+      && !strcmp(env, "1"))
+  {
+    simd_len = JSIMD_LEN_1024;
+  }
+
   /* First determine the DCT... */
   switch (cinfo->dct_method) {
 #ifdef DCT_ISLOW_SUPPORTED
-  case JDCT_ISLOW:
-    fdct->pub.forward_DCT = forward_DCT;
-    if (jsimd_can_fdct_islow())
-      fdct->dct = jsimd_fdct_islow;
-    else
-      fdct->dct = jpeg_fdct_islow;
-    break;
+    case JDCT_ISLOW:
+      fdct->pub.forward_DCT = forward_DCT;
+
+      if (jsimd_can_fdct_islow())
+      {
+        if(simd_len == JSIMD_LEN_256)
+        {
+          fdct->pub.forward_DCT = merged_forward_DCT;
+          fdct->merged_dct = jsimd_fdct_merged_islow;
+        }
+        fdct->dct = jsimd_fdct_islow;
+      }
+      else
+      {
+        fdct->dct = jpeg_fdct_islow;
+      }
+      break;
 #endif
 #ifdef DCT_IFAST_SUPPORTED
   case JDCT_IFAST:
-    fdct->pub.forward_DCT = forward_DCT;
-    if (jsimd_can_fdct_ifast())
-      fdct->dct = jsimd_fdct_ifast;
-    else
-      fdct->dct = jpeg_fdct_ifast;
-    break;
+  fdct->pub.forward_DCT = forward_DCT;
+  if (jsimd_can_fdct_ifast())
+  {
+    if(simd_len == JSIMD_LEN_256)
+    {
+      fdct->pub.forward_DCT = merged_forward_DCT;
+      fdct->merged_dct = jsimd_fdct_merged_ifast;
+    }
+    fdct->dct = jsimd_fdct_ifast;
+  }
+  else
+  {
+    fdct->dct = jpeg_fdct_ifast;
+  }
+  break;
 #endif
 #ifdef DCT_FLOAT_SUPPORTED
   case JDCT_FLOAT:
     fdct->pub.forward_DCT = forward_DCT_float;
     if (jsimd_can_fdct_float())
-      fdct->float_dct = jsimd_fdct_float;
+    {
+      if(simd_len == JSIMD_LEN_256)
+      {
+        fdct->pub.forward_DCT = merged_forward_DCT_float;
+        fdct->float_merged_dct = jsimd_fdct_merged_float;
+      }
+      else
+      {
+        fdct->float_dct = jsimd_fdct_float;
+      }
+    }
     else
+    {
       fdct->float_dct = jpeg_fdct_float;
+    }
     break;
 #endif
   default:

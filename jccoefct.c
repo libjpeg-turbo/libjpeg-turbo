@@ -3,6 +3,7 @@
  *
  * This file was part of the Independent JPEG Group's software:
  * Copyright (C) 1994-1997, Thomas G. Lane.
+ * Copyright (C) 2015, Intel Corporation.
  * It was modified by The libjpeg-turbo Project to include only code and
  * information relevant to libjpeg-turbo.
  * For conditions of distribution and use, see the accompanying README file.
@@ -47,10 +48,15 @@ typedef struct {
    * MCU constructed and sent.  In multi-pass modes, this array points to the
    * current MCU's blocks within the virtual arrays.
    */
-  JBLOCKROW MCU_buffer[C_MAX_BLOCKS_IN_MCU];
+  JBLOCKROW MCU_buffer[C_MAX_BLOCKS_IN_MCU * 2];
 
   /* In multi-pass modes, we need a virtual block array for each component. */
   jvirt_barray_ptr whole_image[MAX_COMPONENTS];
+
+  /* Buffer for SIMD 256 */
+  JDIMENSION blockcnt[MAX_COMPS_IN_SCAN];
+  JBLOCKROW SIMD256_comp_buffer[MAX_COMPS_IN_SCAN][2][2];
+  JBLOCKROW SIMD256_buffer[2][C_MAX_BLOCKS_IN_MCU];
 } my_coef_controller;
 
 typedef my_coef_controller * my_coef_ptr;
@@ -58,6 +64,8 @@ typedef my_coef_controller * my_coef_ptr;
 
 /* Forward declarations */
 METHODDEF(boolean) compress_data
+        (j_compress_ptr cinfo, JSAMPIMAGE input_buf);
+METHODDEF(boolean) compress_simd256_data
         (j_compress_ptr cinfo, JSAMPIMAGE input_buf);
 #ifdef FULL_COEF_BUFFER_SUPPORTED
 METHODDEF(boolean) compress_first_pass
@@ -90,6 +98,67 @@ start_iMCU_row (j_compress_ptr cinfo)
   coef->MCU_vert_offset = 0;
 }
 
+LOCAL(void)
+fill_SIMD256_buffer(j_compress_ptr cinfo)
+{
+	/* Setup MCU_buffer */
+	my_coef_ptr coef = (my_coef_ptr) cinfo->coef;
+	int ci;
+	jpeg_component_info *compptr;
+	int blkn = 0; /* BLK index for buffer pool */
+	int blkmcu = 0;/* BLK index for MCU block */
+	int i;
+
+	for (ci = 0; ci < cinfo->comps_in_scan; ci++) {
+		compptr = cinfo->cur_comp_info[ci];
+		coef->SIMD256_comp_buffer[ci][0][0] = 0;
+		coef->SIMD256_comp_buffer[ci][0][1] = 0;
+		coef->SIMD256_comp_buffer[ci][1][0] = 0;
+		coef->SIMD256_comp_buffer[ci][1][1] = 0;
+
+		if(compptr->MCU_width==1)
+			coef->blockcnt[ci] = 2;
+		else
+			coef->blockcnt[ci] = compptr->MCU_width;
+
+		if(compptr->MCU_width==1)
+		{
+			coef->SIMD256_comp_buffer[ci][0][0] = coef->MCU_buffer[blkn];
+			coef->SIMD256_comp_buffer[ci][1][0] = coef->MCU_buffer[blkn+1];
+			coef->SIMD256_buffer[0][blkmcu] = coef->MCU_buffer[blkn];
+			coef->SIMD256_buffer[1][blkmcu] = coef->MCU_buffer[blkn+1];
+			if(compptr->MCU_height == 2)
+			{
+				coef->SIMD256_comp_buffer[ci][0][1] = coef->MCU_buffer[blkn+2];
+				coef->SIMD256_comp_buffer[ci][1][1] = coef->MCU_buffer[blkn+3];
+				coef->SIMD256_buffer[0][blkmcu+1] = coef->MCU_buffer[blkn+2];
+				coef->SIMD256_buffer[1][blkmcu+1] = coef->MCU_buffer[blkn+3];
+			}
+		}
+		else
+		{
+			coef->SIMD256_comp_buffer[ci][0][0] = coef->MCU_buffer[blkn];
+			coef->SIMD256_comp_buffer[ci][1][0] = 
+				coef->MCU_buffer[blkn+compptr->MCU_width*compptr->MCU_height];
+
+			for(i=0;i<compptr->MCU_height*compptr->MCU_width;i++)
+			{
+				coef->SIMD256_buffer[0][blkmcu+i] = coef->MCU_buffer[blkn+i];
+				coef->SIMD256_buffer[1][blkmcu+i] = 
+					coef->MCU_buffer[blkn+compptr->MCU_height*compptr->MCU_width+i];
+			}
+			if(compptr->MCU_height == 2)
+			{
+				coef->SIMD256_comp_buffer[ci][0][1] = 
+					coef->MCU_buffer[blkn+compptr->MCU_width];
+				coef->SIMD256_comp_buffer[ci][1][1] = 
+					coef->MCU_buffer[blkn+compptr->MCU_width*(1+compptr->MCU_height)];
+			}
+		}
+		blkmcu += compptr->MCU_height*compptr->MCU_width;
+		blkn += compptr->MCU_height*compptr->MCU_width*2;
+	}
+}
 
 /*
  * Initialize for a processing pass.
@@ -98,7 +167,10 @@ start_iMCU_row (j_compress_ptr cinfo)
 METHODDEF(void)
 start_pass_coef (j_compress_ptr cinfo, J_BUF_MODE pass_mode)
 {
+
   my_coef_ptr coef = (my_coef_ptr) cinfo->coef;
+  JSIMD_REGISTER_LEN simd_len = JSIMD_LEN_LESS_256;
+  char *env=NULL;
 
   coef->iMCU_row_num = 0;
   start_iMCU_row(cinfo);
@@ -106,8 +178,33 @@ start_pass_coef (j_compress_ptr cinfo, J_BUF_MODE pass_mode)
   switch (pass_mode) {
   case JBUF_PASS_THRU:
     if (coef->whole_image[0] != NULL)
-      ERREXIT(cinfo, JERR_BAD_BUFFER_MODE);
-    coef->pub.compress_data = compress_data;
+		ERREXIT(cinfo, JERR_BAD_BUFFER_MODE);
+
+	if((env=getenv("JSIMD_LENGTH_256"))!=NULL && strlen(env)>0
+		&& !strcmp(env, "1"))
+	{
+		simd_len = JSIMD_LEN_256;
+	}
+	if((env=getenv("JSIMD_LENGTH_512"))!=NULL && strlen(env)>0
+			&& !strcmp(env, "1"))
+	{
+		simd_len = JSIMD_LEN_512;
+	}
+	if((env=getenv("JSIMD_LENGTH_1024"))!=NULL && strlen(env)>0
+			&& !strcmp(env, "1"))
+	{
+		simd_len = JSIMD_LEN_1024;
+	}
+
+	if(simd_len == JSIMD_LEN_256)
+	{
+		fill_SIMD256_buffer(cinfo);
+		coef->pub.compress_data = compress_simd256_data;
+	}
+	else
+	{
+		coef->pub.compress_data = compress_data;
+	}
     break;
 #ifdef FULL_COEF_BUFFER_SUPPORTED
   case JBUF_SAVE_AND_PASS:
@@ -129,6 +226,127 @@ start_pass_coef (j_compress_ptr cinfo, J_BUF_MODE pass_mode)
 
 
 /*
+ * For 256 bit SIMD CPUs.
+ */
+METHODDEF(boolean)
+compress_simd256_data (j_compress_ptr cinfo, JSAMPIMAGE input_buf)
+{
+  my_coef_ptr coef = (my_coef_ptr) cinfo->coef;
+  JDIMENSION MCU_col_num;       /* index of current MCU within row */
+  JDIMENSION last_MCU_col = cinfo->MCUs_per_row - 1;
+  JDIMENSION last_proc_col = last_MCU_col&(JDIMENSION)(-2);
+  JDIMENSION last_iMCU_row = cinfo->total_iMCU_rows - 1;
+  JDIMENSION slowbcnt;
+  int bi, ci, yindex, yoffset;
+  JDIMENSION ypos, xpos;
+  jpeg_component_info *compptr;
+  int b_dual_codec = 0;
+  boolean ret;
+
+#define codec_indx b_dual_codec
+
+  /* Loop to write as much as one whole iMCU row */
+  for (yoffset = coef->MCU_vert_offset; yoffset < coef->MCU_rows_per_iMCU_row;
+       yoffset++) {
+    for (MCU_col_num = coef->mcu_ctr; MCU_col_num <= last_MCU_col;
+         MCU_col_num+=2) {
+
+      for (ci = 0; ci < cinfo->comps_in_scan; ci++) {
+        compptr = cinfo->cur_comp_info[ci];
+		if( last_proc_col == last_MCU_col && MCU_col_num == last_proc_col)
+			b_dual_codec = 0;
+		else
+			b_dual_codec = 1;
+
+		slowbcnt  = (MCU_col_num==last_proc_col)
+			?compptr->last_col_width:compptr->MCU_width;
+		xpos = MCU_col_num * compptr->MCU_sample_width;
+        ypos = yoffset * DCTSIZE; /* ypos == (yoffset+yindex) * DCTSIZE */
+        for (yindex = 0; yindex < compptr->MCU_height; yindex++) {
+          if (coef->iMCU_row_num < last_iMCU_row ||
+              yoffset+yindex < compptr->last_row_height) {
+
+			if(b_dual_codec)
+			{
+				/* 2 column DCT  */
+				(*cinfo->fdct->forward_DCT) (cinfo, compptr,
+						input_buf[compptr->component_index],
+						coef->SIMD256_comp_buffer[ci][0][yindex],
+						ypos, xpos, coef->blockcnt[ci]);
+				if(compptr->MCU_width>1)
+				{
+					(*cinfo->fdct->forward_DCT) (cinfo, compptr,
+							input_buf[compptr->component_index],
+							coef->SIMD256_comp_buffer[ci][1][yindex],
+							ypos, 
+							xpos+compptr->MCU_sample_width, 
+							coef->blockcnt[ci]);
+				}
+			}
+			else
+			{
+				(*cinfo->fdct->forward_DCT) (cinfo, compptr,
+						input_buf[compptr->component_index],
+						coef->SIMD256_comp_buffer[ci][0][yindex],
+						ypos, xpos, slowbcnt);
+			}
+
+			if (slowbcnt < compptr->MCU_width) {
+				/* Create some dummy blocks at the right edge of the image. */
+				jzero_far((void *) 
+						(coef->SIMD256_comp_buffer[ci][codec_indx][yindex]+slowbcnt),
+						(compptr->MCU_width - slowbcnt) * sizeof(JBLOCK));
+				for (bi = slowbcnt; bi < compptr->MCU_width; bi++) {
+					*(JCOEFPTR)(coef->SIMD256_comp_buffer[ci][codec_indx][yindex]+bi)
+						= *(JCOEFPTR)(coef->SIMD256_comp_buffer[ci][codec_indx][yindex]+bi-1);
+				}
+			}
+
+		  } else {
+			  /* Create a row of dummy blocks at the bottom of the image. */
+			  jzero_far((void *)
+					  coef->SIMD256_comp_buffer[ci][0][yindex],
+                      compptr->MCU_width * sizeof(JBLOCK));
+			  jzero_far((void *)
+					  coef->SIMD256_comp_buffer[ci][1][yindex],
+					  compptr->MCU_width * sizeof(JBLOCK));
+
+			  for (bi = 0; bi < compptr->MCU_width; bi++) {
+				  (coef->SIMD256_comp_buffer[ci][0][yindex]+bi)[0][0] 
+				   = (coef->SIMD256_comp_buffer[ci][0][yindex-1]+compptr->MCU_width-1)[0][0];
+			  }
+
+			  for (bi = 0; bi < compptr->MCU_width; bi++) {
+				  (coef->SIMD256_comp_buffer[ci][1][yindex]+bi)[0][0] 
+				   = (coef->SIMD256_comp_buffer[ci][1][yindex-1]+compptr->MCU_width-1)[0][0];
+			  }
+		  }
+          ypos += DCTSIZE;
+        }
+      }
+      /* Try to write the MCU.  In event of a suspension failure, we will
+       * re-DCT the MCU on restart (a bit inefficient, could be fixed...)
+       */
+	  ret = (*cinfo->entropy->encode_mcu) (cinfo, coef->SIMD256_buffer[0]);
+	  if(b_dual_codec)
+		  ret &= (*cinfo->entropy->encode_mcu) (cinfo,coef->SIMD256_buffer[1]);
+	  if (!ret){
+		  /* Suspension forced; update state counters and exit */
+		  coef->MCU_vert_offset = yoffset;
+		  coef->mcu_ctr = MCU_col_num;
+		  return FALSE;
+	  }
+    }
+    /* Completed an MCU row, but perhaps not an iMCU row */
+    coef->mcu_ctr = 0;
+  }
+  /* Completed the iMCU row, advance counters for next one */
+  coef->iMCU_row_num++;
+  start_iMCU_row(cinfo);
+  return TRUE;
+}
+
+/*
  * Process some data in the single-pass case.
  * We process the equivalent of one fully interleaved MCU row ("iMCU" row)
  * per call, ie, v_samp_factor block rows for each component in the image.
@@ -137,7 +355,6 @@ start_pass_coef (j_compress_ptr cinfo, J_BUF_MODE pass_mode)
  * NB: input_buf contains a plane for each component in image,
  * which we index according to the component's SOF position.
  */
-
 METHODDEF(boolean)
 compress_data (j_compress_ptr cinfo, JSAMPIMAGE input_buf)
 {
@@ -439,8 +656,8 @@ jinit_c_coef_controller (j_compress_ptr cinfo, boolean need_full_buffer)
 
     buffer = (JBLOCKROW)
       (*cinfo->mem->alloc_large) ((j_common_ptr) cinfo, JPOOL_IMAGE,
-                                  C_MAX_BLOCKS_IN_MCU * sizeof(JBLOCK));
-    for (i = 0; i < C_MAX_BLOCKS_IN_MCU; i++) {
+                                  2*C_MAX_BLOCKS_IN_MCU * sizeof(JBLOCK));
+    for (i = 0; i < 2*C_MAX_BLOCKS_IN_MCU; i++) {
       coef->MCU_buffer[i] = buffer + i;
     }
     coef->whole_image[0] = NULL; /* flag for no virtual arrays */
