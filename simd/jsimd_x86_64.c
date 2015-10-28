@@ -67,7 +67,6 @@ init_simd (void)
 	if ((env != NULL) && (strcmp(env, "1") == 0))
 		simd_support = 0;
 
-	printf("simd_support = %x\n",simd_support);
   if(simd_support & JSIMD_AVX2)
 		putenv("JSIMD_LENGTH_256=1");
   else
