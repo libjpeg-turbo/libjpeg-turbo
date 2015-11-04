@@ -44,6 +44,12 @@ typedef void (*float_quantize_method_ptr) (JCOEFPTR coef_block,
                                            FAST_FLOAT * divisors,
                                            FAST_FLOAT * workspace);
 
+METHODDEF(void)
+forward_DCT (j_compress_ptr cinfo, jpeg_component_info * compptr,
+             JSAMPARRAY sample_data, JBLOCKROW coef_blocks,
+             JDIMENSION start_row, JDIMENSION start_col,
+             JDIMENSION num_blocks);
+
 METHODDEF(void) quantize (JCOEFPTR, DCTELEM *, DCTELEM *);
 
 typedef struct {
@@ -278,8 +284,10 @@ start_pass_fdctmgr (j_compress_ptr cinfo)
       for (i = 0; i < DCTSIZE2; i++) {
 #if BITS_IN_JSAMPLE == 8
         if(!compute_reciprocal(qtbl->quantval[i] << 3, &dtbl[i])
-          && fdct->quantize == jsimd_quantize)
-          fdct->quantize = quantize;
+          && fdct->quantize == jsimd_quantize) {
+			  fdct->pub.forward_DCT = forward_DCT;
+			  fdct->quantize = quantize;
+		  }
 #else
         dtbl[i] = ((DCTELEM) qtbl->quantval[i]) << 3;
 #endif
@@ -321,8 +329,11 @@ start_pass_fdctmgr (j_compress_ptr cinfo)
             DESCALE(MULTIPLY16V16((INT32) qtbl->quantval[i],
                                   (INT32) aanscales[i]),
                     CONST_BITS-3), &dtbl[i])
-            && fdct->quantize == jsimd_quantize)
-            fdct->quantize = quantize;
+            && fdct->quantize == jsimd_quantize){
+
+			  fdct->pub.forward_DCT = forward_DCT;
+			  fdct->quantize = quantize;
+		  }
 #else
            dtbl[i] = (DCTELEM)
              DESCALE(MULTIPLY16V16((INT32) qtbl->quantval[i],
@@ -551,13 +562,15 @@ merged_forward_DCT (j_compress_ptr cinfo, jpeg_component_info * compptr,
   workspace = fdct->workspace;
 
   sample_data += start_row;     /* fold in the vertical offset once */
-
   for(bi = 0; bi+1 < num_blocks; bi+=2)
-    (*do_merged_dct)(sample_data, start_col+bi*DCTSIZE,coef_blocks[bi], divisors);
+  {
+	  (*do_merged_dct)(sample_data, start_col, coef_blocks[bi], divisors);
+	  start_col += 2*DCTSIZE;
+  }
+
 
   if(num_blocks%2) {
     bi = num_blocks-1;
-    start_col += bi*DCTSIZE;
     (*do_convsamp) (sample_data, start_col, workspace);
     (*do_dct) (workspace);
     (*do_quantize) (coef_blocks[bi], divisors, workspace);
