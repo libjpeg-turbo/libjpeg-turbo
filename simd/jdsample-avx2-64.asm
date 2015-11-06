@@ -112,12 +112,12 @@ EXTN(jsimd_h2v1_fancy_upsample_avx2):
         jmp     short .upsample
 
 .columnloop:
-        vmovdqa  ymm6, YMMWORD [rsi+1*SIZEOF_YMMWORD]
+        vmovdqu  ymm6, YMMWORD [rsi+1*SIZEOF_YMMWORD]
         vperm2i128 ymm8,ymm0,ymm6,0x20  
         vpslldq ymm6,ymm8,15      
 
 .upsample:
-        vmovdqa  ymm1, YMMWORD [rsi+0*SIZEOF_YMMWORD]
+        vmovdqu  ymm1, YMMWORD [rsi+0*SIZEOF_YMMWORD]
         vmovdqa  ymm2,ymm1
         vmovdqa  ymm3,ymm1               
 
@@ -168,8 +168,8 @@ EXTN(jsimd_h2v1_fancy_upsample_avx2):
         vpor     ymm2,ymm2,ymm3               
         vpor     ymm5,ymm5,ymm6               
 
-        vmovdqa  YMMWORD [rdi+0*SIZEOF_YMMWORD], ymm2
-        vmovdqa  YMMWORD [rdi+1*SIZEOF_YMMWORD], ymm5
+        vmovdqu  YMMWORD [rdi+0*SIZEOF_YMMWORD], ymm2
+        vmovdqu  YMMWORD [rdi+1*SIZEOF_YMMWORD], ymm5
 
         sub     rax, byte SIZEOF_YMMWORD
         add     rsi, byte 1*SIZEOF_YMMWORD      ; inptr
@@ -269,9 +269,9 @@ EXTN(jsimd_h2v2_fancy_upsample_avx2):
 .skip:
         ; -- process the first column block
 
-        vmovdqa  ymm0, YMMWORD [rbx+0*SIZEOF_YMMWORD]    
-        vmovdqa  ymm1, YMMWORD [rcx+0*SIZEOF_YMMWORD]    
-        vmovdqa  ymm2, YMMWORD [rsi+0*SIZEOF_YMMWORD]    
+        vmovdqu  ymm0, YMMWORD [rbx+0*SIZEOF_YMMWORD]    
+        vmovdqu  ymm1, YMMWORD [rcx+0*SIZEOF_YMMWORD]    
+        vmovdqu  ymm2, YMMWORD [rsi+0*SIZEOF_YMMWORD]    
 
         vpunpckhbw ymm4,ymm0,ymm13             
         vpunpcklbw ymm8,ymm0,ymm13             
@@ -296,10 +296,10 @@ EXTN(jsimd_h2v2_fancy_upsample_avx2):
         vpaddw   ymm2,ymm2,ymm0               
         vpaddw   ymm6,ymm6,ymm4               
 
-        vmovdqa  YMMWORD [rdx+0*SIZEOF_YMMWORD], ymm1    
-        vmovdqa  YMMWORD [rdx+1*SIZEOF_YMMWORD], ymm5    
-        vmovdqa  YMMWORD [rdi+0*SIZEOF_YMMWORD], ymm2
-        vmovdqa  YMMWORD [rdi+1*SIZEOF_YMMWORD], ymm6
+        vmovdqu  YMMWORD [rdx+0*SIZEOF_YMMWORD], ymm1    
+        vmovdqu  YMMWORD [rdx+1*SIZEOF_YMMWORD], ymm5    
+        vmovdqu  YMMWORD [rdi+0*SIZEOF_YMMWORD], ymm2
+        vmovdqu  YMMWORD [rdi+1*SIZEOF_YMMWORD], ymm6
 
         vpand    ymm1,ymm1,ymm15               
         vpand    ymm2,ymm2,ymm15               
@@ -326,9 +326,9 @@ EXTN(jsimd_h2v2_fancy_upsample_avx2):
         .columnloop:
         ; -- process the next column block
 
-        vmovdqa  ymm0, YMMWORD [rbx+1*SIZEOF_YMMWORD]    
-        vmovdqa  ymm1, YMMWORD [rcx+1*SIZEOF_YMMWORD]    
-        vmovdqa  ymm2, YMMWORD [rsi+1*SIZEOF_YMMWORD]    
+        vmovdqu  ymm0, YMMWORD [rbx+1*SIZEOF_YMMWORD]    
+        vmovdqu  ymm1, YMMWORD [rcx+1*SIZEOF_YMMWORD]    
+        vmovdqu  ymm2, YMMWORD [rsi+1*SIZEOF_YMMWORD]    
 
         vpunpckhbw ymm4,ymm0,ymm13             
         vpunpcklbw ymm8,ymm0,ymm13             
@@ -353,10 +353,10 @@ EXTN(jsimd_h2v2_fancy_upsample_avx2):
         vpaddw   ymm2,ymm2,ymm0               
         vpaddw   ymm6,ymm6,ymm4               
 
-        vmovdqa  YMMWORD [rdx+2*SIZEOF_YMMWORD], ymm1    
-        vmovdqa  YMMWORD [rdx+3*SIZEOF_YMMWORD], ymm5    
-        vmovdqa  YMMWORD [rdi+2*SIZEOF_YMMWORD], ymm2
-        vmovdqa  YMMWORD [rdi+3*SIZEOF_YMMWORD], ymm6
+        vmovdqu  YMMWORD [rdx+2*SIZEOF_YMMWORD], ymm1    
+        vmovdqu  YMMWORD [rdx+3*SIZEOF_YMMWORD], ymm5    
+        vmovdqu  YMMWORD [rdi+2*SIZEOF_YMMWORD], ymm2
+        vmovdqu  YMMWORD [rdi+3*SIZEOF_YMMWORD], ymm6
 
         vperm2i128 ymm1,ymm13,ymm1,0x20     
         vpslldq  ymm1,ymm1,14       
@@ -369,8 +369,8 @@ EXTN(jsimd_h2v2_fancy_upsample_avx2):
 .upsample:
         ; -- process the upper row
 
-        vmovdqa  ymm7, YMMWORD [rdx+0*SIZEOF_YMMWORD]
-        vmovdqa  ymm3, YMMWORD [rdx+1*SIZEOF_YMMWORD]
+        vmovdqu  ymm7, YMMWORD [rdx+0*SIZEOF_YMMWORD]
+        vmovdqu  ymm3, YMMWORD [rdx+1*SIZEOF_YMMWORD]
         vmovdqa  ymm0,ymm7               
         vmovdqa  ymm4,ymm3               
         vperm2i128 ymm8,ymm13,ymm0,0x03  
@@ -423,13 +423,13 @@ EXTN(jsimd_h2v2_fancy_upsample_avx2):
         vpor     ymm1,ymm1,ymm0               
         vpor     ymm5,ymm5,ymm2               
 
-        vmovdqa  YMMWORD [rdx+0*SIZEOF_YMMWORD], ymm1
-        vmovdqa  YMMWORD [rdx+1*SIZEOF_YMMWORD], ymm5
+        vmovdqu  YMMWORD [rdx+0*SIZEOF_YMMWORD], ymm1
+        vmovdqu  YMMWORD [rdx+1*SIZEOF_YMMWORD], ymm5
 
         ; -- process the lower row
 
-        vmovdqa  ymm6, YMMWORD [rdi+0*SIZEOF_YMMWORD]
-        vmovdqa  ymm4, YMMWORD [rdi+1*SIZEOF_YMMWORD]
+        vmovdqu  ymm6, YMMWORD [rdi+0*SIZEOF_YMMWORD]
+        vmovdqu  ymm4, YMMWORD [rdi+1*SIZEOF_YMMWORD]
 
         vmovdqa  ymm7,ymm6               
         vmovdqa  ymm3,ymm4               
@@ -488,8 +488,8 @@ EXTN(jsimd_h2v2_fancy_upsample_avx2):
         vpor     ymm1,ymm1,ymm7               
         vpor     ymm0,ymm0,ymm5               
 
-        vmovdqa  YMMWORD [rdi+0*SIZEOF_YMMWORD], ymm1
-        vmovdqa  YMMWORD [rdi+1*SIZEOF_YMMWORD], ymm0
+        vmovdqu  YMMWORD [rdi+0*SIZEOF_YMMWORD], ymm1
+        vmovdqu  YMMWORD [rdi+1*SIZEOF_YMMWORD], ymm0
 
         sub     rax, byte SIZEOF_YMMWORD
         add     rcx, byte 1*SIZEOF_YMMWORD      
@@ -572,22 +572,22 @@ EXTN(jsimd_h2v1_upsample_avx2):
     cmp   rax, byte SIZEOF_YMMWORD
     ja    near .above_16
 
-        vmovdqa  xmm0, XMMWORD [rsi+0*SIZEOF_YMMWORD]
+        vmovdqu  xmm0, XMMWORD [rsi+0*SIZEOF_YMMWORD]
         vpunpckhbw xmm1,xmm0,xmm0
         vpunpcklbw xmm0,xmm0,xmm0
-        vmovdqa  XMMWORD [rdi+0*SIZEOF_XMMWORD], xmm0
-        vmovdqa  XMMWORD [rdi+1*SIZEOF_XMMWORD], xmm1
+        vmovdqu  XMMWORD [rdi+0*SIZEOF_XMMWORD], xmm0
+        vmovdqu  XMMWORD [rdi+1*SIZEOF_XMMWORD], xmm1
     jmp   short .nextrow
 
 .above_16:
-        vmovdqa  ymm0, YMMWORD [rsi+0*SIZEOF_YMMWORD]
+        vmovdqu  ymm0, YMMWORD [rsi+0*SIZEOF_YMMWORD]
 
         vpermq     ymm0,ymm0,0xd8
         vpunpckhbw ymm1,ymm0,ymm0
         vpunpcklbw ymm0,ymm0,ymm0
 
-        vmovdqa  YMMWORD [rdi+0*SIZEOF_YMMWORD], ymm0
-        vmovdqa  YMMWORD [rdi+1*SIZEOF_YMMWORD], ymm1
+        vmovdqu  YMMWORD [rdi+0*SIZEOF_YMMWORD], ymm0
+        vmovdqu  YMMWORD [rdi+1*SIZEOF_YMMWORD], ymm1
 
         sub     rax, byte 2*SIZEOF_YMMWORD
         jz      short .nextrow
@@ -663,27 +663,27 @@ EXTN(jsimd_h2v2_upsample_avx2):
         cmp rax, byte SIZEOF_YMMWORD
         ja    short .above_16
 
-        vmovdqa  xmm0, XMMWORD [rsi+0*SIZEOF_XMMWORD]
+        vmovdqu  xmm0, XMMWORD [rsi+0*SIZEOF_XMMWORD]
         vpunpckhbw xmm1,xmm0,xmm0
         vpunpcklbw xmm0,xmm0,xmm0
-        vmovdqa  XMMWORD [rbx+0*SIZEOF_XMMWORD], xmm0
-        vmovdqa  XMMWORD [rbx+1*SIZEOF_XMMWORD], xmm1
-        vmovdqa  XMMWORD [rdi+0*SIZEOF_XMMWORD], xmm0
-        vmovdqa  XMMWORD [rdi+1*SIZEOF_XMMWORD], xmm1
+        vmovdqu  XMMWORD [rbx+0*SIZEOF_XMMWORD], xmm0
+        vmovdqu  XMMWORD [rbx+1*SIZEOF_XMMWORD], xmm1
+        vmovdqu  XMMWORD [rdi+0*SIZEOF_XMMWORD], xmm0
+        vmovdqu  XMMWORD [rdi+1*SIZEOF_XMMWORD], xmm1
 
         jmp   near .nextrow
 
 .above_16:
-        vmovdqa  ymm0, YMMWORD [rsi+0*SIZEOF_YMMWORD]
+        vmovdqu  ymm0, YMMWORD [rsi+0*SIZEOF_YMMWORD]
     
         vpermq     ymm0,ymm0,0xd8
         vpunpckhbw ymm1,ymm0,ymm0 
         vpunpcklbw ymm0,ymm0,ymm0 
 
-        vmovdqa  YMMWORD [rbx+0*SIZEOF_YMMWORD], ymm0
-        vmovdqa  YMMWORD [rbx+1*SIZEOF_YMMWORD], ymm1
-        vmovdqa  YMMWORD [rdi+0*SIZEOF_YMMWORD], ymm0
-        vmovdqa  YMMWORD [rdi+1*SIZEOF_YMMWORD], ymm1
+        vmovdqu  YMMWORD [rbx+0*SIZEOF_YMMWORD], ymm0
+        vmovdqu  YMMWORD [rbx+1*SIZEOF_YMMWORD], ymm1
+        vmovdqu  YMMWORD [rdi+0*SIZEOF_YMMWORD], ymm0
+        vmovdqu  YMMWORD [rdi+1*SIZEOF_YMMWORD], ymm1
 
         sub     rax, byte 2*SIZEOF_YMMWORD
         jz      short .nextrow

@@ -1,6 +1,5 @@
 /*
  * Copyright (C)2009-2014 D. R. Commander.  All Rights Reserved.
- * Copyright (C)2015, Intel Corporation.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -302,7 +301,7 @@ int checkBufYUV(unsigned char *buf, int w, int h, int subsamp,
 	int hsf=tjMCUWidth[subsamp]/8, vsf=tjMCUHeight[subsamp]/8;
 	int pw=PAD(w, hsf), ph=PAD(h, vsf);
 	int cw=pw/hsf, ch=ph/vsf;
-	int ypitch=PAD(PAD(pw, pad),16), uvpitch=PAD(PAD(cw, pad),16);
+	int ypitch=PAD(pw, pad), uvpitch=PAD(cw, pad);
 	int retval=1;
 	int halfway=16*sf.num/sf.denom;
 	int blocksize=8*sf.num/sf.denom;

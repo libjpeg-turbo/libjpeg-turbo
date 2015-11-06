@@ -345,7 +345,7 @@ EXTN(jsimd_rgb_gray_convert_avx2):
 
         vpsllw     ymm0,ymm0,BYTE_BIT
         vpor       ymm6,ymm6,ymm0             ; ymm6=Y
-        vmovdqa    YMMWORD [rdi], ymm6   ; Save Y
+        vmovdqu    YMMWORD [rdi], ymm6   ; Save Y
 
         sub     rcx, byte SIZEOF_YMMWORD
         add     rsi, RGB_PIXELSIZE*SIZEOF_YMMWORD  ; inptr

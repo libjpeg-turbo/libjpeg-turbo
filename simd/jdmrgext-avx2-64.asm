@@ -74,8 +74,8 @@ EXTN(jsimd_h2v1_merged_upsample_avx2):
 
 .columnloop:
 
-        vmovdqa    ymm6, YMMWORD [rbx]   ; ymm6=Cb(0123456789ABCDEF)
-        vmovdqa    ymm7, YMMWORD [rdx]   ; ymm7=Cr(0123456789ABCDEF)
+        vmovdqu    ymm6, YMMWORD [rbx]   ; ymm6=Cb(0123456789ABCDEF)
+        vmovdqu    ymm7, YMMWORD [rdx]   ; ymm7=Cr(0123456789ABCDEF)
 
         vpxor      ymm1,ymm1,ymm1             ; ymm1=(all 0's)
         vpcmpeqw   ymm3,ymm3,ymm3
@@ -166,7 +166,7 @@ EXTN(jsimd_h2v1_merged_upsample_avx2):
         vmovdqa  ymm4, YMMWORD [wk(0)]   ; ymm4=(B-Y)H
 
 .Yloop_1st:
-        vmovdqa  ymm7, YMMWORD [rsi]     ; ymm7=Y(0123456789ABCDEF)
+        vmovdqu  ymm7, YMMWORD [rsi]     ; ymm7=Y(0123456789ABCDEF)
 
         vpcmpeqw ymm6,ymm6,ymm6
         vpsrlw   ymm6,ymm6,BYTE_BIT           ; ymm6={0xFF 0x00 0xFF 0x00 ..}

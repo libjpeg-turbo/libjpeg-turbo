@@ -89,17 +89,17 @@ EXTN(jsimd_fdct_merged_ifast_avx2):
         mov     rbx, JSAMPROW [rsi+0*SIZEOF_JSAMPROW]   
         mov rdx, JSAMPROW [rsi+1*SIZEOF_JSAMPROW]       
 
-        vmovdqa    xmm0, XMM_MMWORD [rbx+rax*SIZEOF_JSAMPLE]       
+        vmovdqu    xmm0, XMM_MMWORD [rbx+rax*SIZEOF_JSAMPLE]       
 		vpermq	   ymm0, ymm0, 0x10
-        vmovdqa    xmm1, XMM_MMWORD [rdx+rax*SIZEOF_JSAMPLE]       
+        vmovdqu    xmm1, XMM_MMWORD [rdx+rax*SIZEOF_JSAMPLE]       
 		vpermq	   ymm1, ymm1, 0x10
 
         mov     rbx, JSAMPROW [rsi+2*SIZEOF_JSAMPROW]   
         mov     rdx, JSAMPROW [rsi+3*SIZEOF_JSAMPROW]   
 
-        vmovdqa    xmm2, XMM_MMWORD [rbx+rax*SIZEOF_JSAMPLE]       
+        vmovdqu    xmm2, XMM_MMWORD [rbx+rax*SIZEOF_JSAMPLE]       
 		vpermq	   ymm2, ymm2, 0x10
-        vmovdqa    xmm3, XMM_MMWORD [rdx+rax*SIZEOF_JSAMPLE]       
+        vmovdqu    xmm3, XMM_MMWORD [rdx+rax*SIZEOF_JSAMPLE]       
 		vpermq	   ymm3, ymm3, 0x10
 
         vpunpcklbw ymm0,ymm0,ymm14             
@@ -114,17 +114,17 @@ EXTN(jsimd_fdct_merged_ifast_avx2):
         mov     rbx, JSAMPROW [rsi+4*SIZEOF_JSAMPROW]   
         mov     rdx, JSAMPROW [rsi+5*SIZEOF_JSAMPROW]       
 
-        vmovdqa    xmm8, XMM_MMWORD [rbx+rax*SIZEOF_JSAMPLE]       
+        vmovdqu    xmm8, XMM_MMWORD [rbx+rax*SIZEOF_JSAMPLE]       
 		vpermq	   ymm8, ymm8, 0x10
-        vmovdqa    xmm9, XMM_MMWORD [rdx+rax*SIZEOF_JSAMPLE]       
+        vmovdqu    xmm9, XMM_MMWORD [rdx+rax*SIZEOF_JSAMPLE]       
 		vpermq	   ymm9, ymm9, 0x10
 
         mov     rbx, JSAMPROW [rsi+6*SIZEOF_JSAMPROW]   
         mov     rdx, JSAMPROW [rsi+7*SIZEOF_JSAMPROW]   
 
-        vmovdqa    xmm10, XMM_MMWORD [rbx+rax*SIZEOF_JSAMPLE]       
+        vmovdqu    xmm10, XMM_MMWORD [rbx+rax*SIZEOF_JSAMPLE]       
 		vpermq	   ymm10, ymm10, 0x10
-        vmovdqa    xmm11, XMM_MMWORD [rdx+rax*SIZEOF_JSAMPLE]       
+        vmovdqu    xmm11, XMM_MMWORD [rdx+rax*SIZEOF_JSAMPLE]       
 		vpermq	   ymm11, ymm11, 0x10
 
         vpunpcklbw ymm8,ymm8,ymm14             
@@ -308,14 +308,14 @@ EXTN(jsimd_fdct_merged_ifast_avx2):
 		vperm2i128 ymm2,ymm4,ymm5,0x31
 		vperm2i128 ymm3,ymm6,ymm7,0x31
 
-		vmovdqa  YMMWORD [YMMBLOCK(0,0,rdi,2*SIZEOF_DCTELEM)], ymm8
-        vmovdqa  YMMWORD [YMMBLOCK(1,0,rdi,2*SIZEOF_DCTELEM)], ymm9
-        vmovdqa  YMMWORD [YMMBLOCK(2,0,rdi,2*SIZEOF_DCTELEM)], ymm10
-        vmovdqa  YMMWORD [YMMBLOCK(3,0,rdi,2*SIZEOF_DCTELEM)], ymm11
-		vmovdqa  YMMWORD [YMMBLOCK(4,0,rdi,2*SIZEOF_DCTELEM)], ymm0
-        vmovdqa  YMMWORD [YMMBLOCK(5,0,rdi,2*SIZEOF_DCTELEM)], ymm1
-        vmovdqa  YMMWORD [YMMBLOCK(6,0,rdi,2*SIZEOF_DCTELEM)], ymm2
-        vmovdqa  YMMWORD [YMMBLOCK(7,0,rdi,2*SIZEOF_DCTELEM)], ymm3
+		vmovdqu  YMMWORD [YMMBLOCK(0,0,rdi,2*SIZEOF_DCTELEM)], ymm8
+        vmovdqu  YMMWORD [YMMBLOCK(1,0,rdi,2*SIZEOF_DCTELEM)], ymm9
+        vmovdqu  YMMWORD [YMMBLOCK(2,0,rdi,2*SIZEOF_DCTELEM)], ymm10
+        vmovdqu  YMMWORD [YMMBLOCK(3,0,rdi,2*SIZEOF_DCTELEM)], ymm11
+		vmovdqu  YMMWORD [YMMBLOCK(4,0,rdi,2*SIZEOF_DCTELEM)], ymm0
+        vmovdqu  YMMWORD [YMMBLOCK(5,0,rdi,2*SIZEOF_DCTELEM)], ymm1
+        vmovdqu  YMMWORD [YMMBLOCK(6,0,rdi,2*SIZEOF_DCTELEM)], ymm2
+        vmovdqu  YMMWORD [YMMBLOCK(7,0,rdi,2*SIZEOF_DCTELEM)], ymm3
 
 .exit:
 

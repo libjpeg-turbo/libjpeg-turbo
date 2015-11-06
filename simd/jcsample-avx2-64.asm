@@ -118,26 +118,26 @@ EXTN(jsimd_h2v1_downsample_avx2):
         ;rcx can possibly be 8,16,24
         cmp rcx,  24
         jne   .columnloop_r16
-        vmovdqa  ymm0, YMMWORD [rsi+0*SIZEOF_YMMWORD]
-        vmovdqa  xmm1, XMMWORD [rsi+1*SIZEOF_YMMWORD]
+        vmovdqu  ymm0, YMMWORD [rsi+0*SIZEOF_YMMWORD]
+        vmovdqu  xmm1, XMMWORD [rsi+1*SIZEOF_YMMWORD]
         mov     rcx, SIZEOF_YMMWORD
         jmp     short .downsample
 .columnloop_r16:
         cmp rcx,  16
         jne   .columnloop_r8
-        vmovdqa  ymm0, YMMWORD [rsi+0*SIZEOF_YMMWORD]
+        vmovdqu  ymm0, YMMWORD [rsi+0*SIZEOF_YMMWORD]
         vpxor ymm1,ymm1,ymm1
         mov     rcx, SIZEOF_YMMWORD
         jmp     short .downsample
 .columnloop_r8:
-        vmovdqa xmm0,XMMWORD[rsi+0*SIZEOF_YMMWORD]
+        vmovdqu xmm0,XMMWORD[rsi+0*SIZEOF_YMMWORD]
         vpxor ymm1,ymm1,ymm1
         mov     rcx, SIZEOF_YMMWORD
         jmp     short .downsample
 
 .columnloop:
-        vmovdqa  ymm0, YMMWORD [rsi+0*SIZEOF_YMMWORD]
-        vmovdqa  ymm1, YMMWORD [rsi+1*SIZEOF_YMMWORD]
+        vmovdqu  ymm0, YMMWORD [rsi+0*SIZEOF_YMMWORD]
+        vmovdqu  ymm1, YMMWORD [rsi+1*SIZEOF_YMMWORD]
 
 .downsample:
         vpsrlw   ymm2,ymm0,BYTE_BIT
@@ -155,7 +155,7 @@ EXTN(jsimd_h2v1_downsample_avx2):
         vpackuswb ymm0,ymm0,ymm1
         vpermq ymm0,ymm0,0xd8
 
-        vmovdqa  YMMWORD [rdi+0*SIZEOF_YMMWORD], ymm0
+        vmovdqu  YMMWORD [rdi+0*SIZEOF_YMMWORD], ymm0
 
         sub     rcx, byte SIZEOF_YMMWORD        ; outcol
         add     rsi, byte 2*SIZEOF_YMMWORD      ; inptr
@@ -274,37 +274,36 @@ EXTN(jsimd_h2v2_downsample_avx2):
         jae     short .columnloop
 
 .columnloop_r24:
-;rcx can possibly be 8,16,24
         cmp rcx,24
         jne   .columnloop_r16
-        vmovdqa  ymm0, YMMWORD [rdx+0*SIZEOF_YMMWORD]
-        vmovdqa  ymm1, YMMWORD [rsi+0*SIZEOF_YMMWORD]
-        vmovdqa xmm2,XMMWORD [rdx+1*SIZEOF_YMMWORD]
-        vmovdqa xmm3,XMMWORD [rsi+1*SIZEOF_YMMWORD]
+        vmovdqu  ymm0, YMMWORD [rdx+0*SIZEOF_YMMWORD]
+        vmovdqu  ymm1, YMMWORD [rsi+0*SIZEOF_YMMWORD]
+        vmovdqu xmm2,XMMWORD [rdx+1*SIZEOF_YMMWORD]
+        vmovdqu xmm3,XMMWORD [rsi+1*SIZEOF_YMMWORD]
         mov     rcx, SIZEOF_YMMWORD
         jmp     short .downsample
 .columnloop_r16:
         cmp rcx,16
         jne   .columnloop_r8
-        vmovdqa  ymm0, YMMWORD [rdx+0*SIZEOF_YMMWORD]
-        vmovdqa  ymm1, YMMWORD [rsi+0*SIZEOF_YMMWORD]
+        vmovdqu  ymm0, YMMWORD [rdx+0*SIZEOF_YMMWORD]
+        vmovdqu  ymm1, YMMWORD [rsi+0*SIZEOF_YMMWORD]
         vpxor    ymm2,ymm2,ymm2
         vpxor    ymm3,ymm3,ymm3
         mov     rcx, SIZEOF_YMMWORD
         jmp     short .downsample
 .columnloop_r8:
-        vmovdqa  xmm0, XMMWORD [rdx+0*SIZEOF_XMMWORD]
-        vmovdqa  xmm1, XMMWORD [rsi+0*SIZEOF_XMMWORD]
+        vmovdqu  xmm0, XMMWORD [rdx+0*SIZEOF_XMMWORD]
+        vmovdqu  xmm1, XMMWORD [rsi+0*SIZEOF_XMMWORD]
         vpxor    ymm2,ymm2,ymm2
         vpxor    ymm3,ymm3,ymm3
         mov     rcx, SIZEOF_YMMWORD
         jmp     short .downsample
 
 .columnloop:
-        vmovdqa  ymm0, YMMWORD [rdx+0*SIZEOF_YMMWORD]
-        vmovdqa  ymm1, YMMWORD [rsi+0*SIZEOF_YMMWORD]
-        vmovdqa  ymm2, YMMWORD [rdx+1*SIZEOF_YMMWORD]
-        vmovdqa  ymm3, YMMWORD [rsi+1*SIZEOF_YMMWORD]
+        vmovdqu  ymm0, YMMWORD [rdx+0*SIZEOF_YMMWORD]
+        vmovdqu  ymm1, YMMWORD [rsi+0*SIZEOF_YMMWORD]
+        vmovdqu  ymm2, YMMWORD [rdx+1*SIZEOF_YMMWORD]
+        vmovdqu  ymm3, YMMWORD [rsi+1*SIZEOF_YMMWORD]
 
 .downsample:
         vpand    ymm4,ymm0,ymm6
@@ -331,7 +330,7 @@ EXTN(jsimd_h2v2_downsample_avx2):
         vpackuswb ymm0,ymm0,ymm2
         vpermq ymm0,ymm0,0xd8
 
-        vmovdqa  YMMWORD [rdi+0*SIZEOF_YMMWORD], ymm0
+        vmovdqu  YMMWORD [rdi+0*SIZEOF_YMMWORD], ymm0
 
         sub     rcx, byte SIZEOF_YMMWORD        ; outcol
         add     rdx, byte 2*SIZEOF_YMMWORD      ; inptr0

@@ -382,7 +382,7 @@ EXTN(jsimd_rgb_ycc_convert_avx2):
 
         vpsllw     ymm7,ymm7,BYTE_BIT
         vpor       ymm5,ymm5,ymm7             ; ymm5=Cb
-        vmovdqa    YMMWORD [rbx], ymm5   ; Save Cb
+        vmovdqu    YMMWORD [rbx], ymm5   ; Save Cb
 
         vmovdqa    ymm0, YMMWORD [wk(3)] ; ymm0=BO
         vmovdqa    ymm6, YMMWORD [wk(2)] ; ymm6=BE
@@ -449,7 +449,7 @@ EXTN(jsimd_rgb_ycc_convert_avx2):
 
         vpsllw     ymm0,ymm0,BYTE_BIT
         vpor       ymm6,ymm6,ymm0             ; ymm6=Y
-        vmovdqa    YMMWORD [rdi], ymm6   ; Save Y
+        vmovdqu    YMMWORD [rdi], ymm6   ; Save Y
 
         vpxor      ymm2,ymm2,ymm2
         vpxor      ymm4,ymm4,ymm4
@@ -470,7 +470,7 @@ EXTN(jsimd_rgb_ycc_convert_avx2):
 
         vpsllw     ymm7,ymm7,BYTE_BIT
         vpor       ymm1,ymm1,ymm7             ; ymm1=Cr
-        vmovdqa    YMMWORD [rdx], ymm1   ; Save Cr
+        vmovdqu    YMMWORD [rdx], ymm1   ; Save Cr
 
 .done:
         sub     rcx, byte SIZEOF_YMMWORD

@@ -92,8 +92,8 @@ EXTN(jsimd_ycc_rgb_convert_avx2):
         mov     rdi, JSAMPROW [rdi]     
 .columnloop:
 
-        vmovdqa  ymm5, YMMWORD [rbx]     
-        vmovdqa  ymm1, YMMWORD [rdx]     
+        vmovdqu  ymm5, YMMWORD [rbx]     
+        vmovdqu  ymm1, YMMWORD [rdx]     
 
         vpcmpeqw ymm0,ymm0,ymm0
         vpcmpeqw ymm7,ymm7,ymm7
@@ -162,7 +162,7 @@ EXTN(jsimd_ycc_rgb_convert_avx2):
         vpsubw     ymm2,ymm2,ymm6     
         vpsubw     ymm3,ymm3,ymm7     
 
-        vmovdqa    ymm5, YMMWORD [rsi]   
+        vmovdqu    ymm5, YMMWORD [rsi]   
 
         vpcmpeqw   ymm4,ymm4,ymm4
         vpsrlw     ymm4,ymm4,BYTE_BIT         
