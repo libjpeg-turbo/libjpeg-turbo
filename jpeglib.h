@@ -6,7 +6,9 @@
  * Modified 2002-2009 by Guido Vollbeding.
  * libjpeg-turbo Modifications:
  * Copyright (C) 2009-2011, 2013-2014, D. R. Commander.
- * For conditions of distribution and use, see the accompanying README file.
+ * Copyright (C) 2015, Google, Inc.
+ * For conditions of distribution and use, see the accompanying README.ijg
+ * file.
  *
  * This file defines the application interface for the JPEG library.
  * Most applications using the library need only include this file,
@@ -918,7 +920,8 @@ EXTERN(void) jpeg_stdio_src (j_decompress_ptr cinfo, FILE * infile);
 /* Data source and destination managers: memory buffers. */
 EXTERN(void) jpeg_mem_dest (j_compress_ptr cinfo, unsigned char ** outbuffer,
                             unsigned long * outsize);
-EXTERN(void) jpeg_mem_src (j_decompress_ptr cinfo, unsigned char * inbuffer,
+EXTERN(void) jpeg_mem_src (j_decompress_ptr cinfo,
+                           const unsigned char * inbuffer,
                            unsigned long insize);
 #endif
 
@@ -990,6 +993,8 @@ EXTERN(boolean) jpeg_start_decompress (j_decompress_ptr cinfo);
 EXTERN(JDIMENSION) jpeg_read_scanlines (j_decompress_ptr cinfo,
                                         JSAMPARRAY scanlines,
                                         JDIMENSION max_lines);
+EXTERN(JDIMENSION) jpeg_skip_scanlines (j_decompress_ptr cinfo,
+                                        JDIMENSION num_lines);
 EXTERN(boolean) jpeg_finish_decompress (j_decompress_ptr cinfo);
 
 /* Replaces jpeg_read_scanlines when reading raw downsampled data. */

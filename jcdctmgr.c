@@ -6,8 +6,9 @@
  * libjpeg-turbo Modifications:
  * Copyright (C) 1999-2006, MIYASAKA Masaru.
  * Copyright 2009 Pierre Ossman <ossman@cendio.se> for Cendio AB
- * Copyright (C) 2011, 2014-2015 D. R. Commander
- * For conditions of distribution and use, see the accompanying README file.
+ * Copyright (C) 2011, 2014-2015, D. R. Commander.
+ * For conditions of distribution and use, see the accompanying README.ijg
+ * file.
  *
  * This file contains the forward-DCT management logic.
  * This code selects a particular DCT implementation to be used,
@@ -184,7 +185,7 @@ compute_reciprocal (UINT16 divisor, DCTELEM * dtbl)
     dtbl[DCTSIZE2 * 0] = (DCTELEM) 1;                       /* reciprocal */
     dtbl[DCTSIZE2 * 1] = (DCTELEM) 0;                       /* correction */
     dtbl[DCTSIZE2 * 2] = (DCTELEM) 1;                       /* scale */
-    dtbl[DCTSIZE2 * 3] = (DCTELEM) (-sizeof(DCTELEM) * 8);  /* shift */
+    dtbl[DCTSIZE2 * 3] = -(DCTELEM) (sizeof(DCTELEM) * 8);  /* shift */
     return 0;
   }
 
@@ -208,7 +209,11 @@ compute_reciprocal (UINT16 divisor, DCTELEM * dtbl)
 
   dtbl[DCTSIZE2 * 0] = (DCTELEM) fq;      /* reciprocal */
   dtbl[DCTSIZE2 * 1] = (DCTELEM) c;       /* correction + roundfactor */
+#ifdef WITH_SIMD
   dtbl[DCTSIZE2 * 2] = (DCTELEM) (1 << (sizeof(DCTELEM)*8*2 - r));  /* scale */
+#else
+  dtbl[DCTSIZE2 * 2] = 1;
+#endif
   dtbl[DCTSIZE2 * 3] = (DCTELEM) r - sizeof(DCTELEM)*8; /* shift */
 
   if(r <= 16) return 0;
@@ -301,15 +306,15 @@ start_pass_fdctmgr (j_compress_ptr cinfo)
         for (i = 0; i < DCTSIZE2; i++) {
 #if BITS_IN_JSAMPLE == 8
           if(!compute_reciprocal(
-            DESCALE(MULTIPLY16V16((INT32) qtbl->quantval[i],
-                                  (INT32) aanscales[i]),
+            DESCALE(MULTIPLY16V16((JLONG) qtbl->quantval[i],
+                                  (JLONG) aanscales[i]),
                     CONST_BITS-3), &dtbl[i])
             && fdct->quantize == jsimd_quantize)
             fdct->quantize = quantize;
 #else
            dtbl[i] = (DCTELEM)
-             DESCALE(MULTIPLY16V16((INT32) qtbl->quantval[i],
-                                   (INT32) aanscales[i]),
+             DESCALE(MULTIPLY16V16((JLONG) qtbl->quantval[i],
+                                   (JLONG) aanscales[i]),
                      CONST_BITS-3);
 #endif
         }
@@ -422,12 +427,12 @@ quantize (JCOEFPTR coef_block, DCTELEM * divisors, DCTELEM * workspace)
       temp = -temp;
       product = (UDCTELEM2)(temp + corr) * recip;
       product >>= shift + sizeof(DCTELEM)*8;
-      temp = product;
+      temp = (DCTELEM)product;
       temp = -temp;
     } else {
       product = (UDCTELEM2)(temp + corr) * recip;
       product >>= shift + sizeof(DCTELEM)*8;
-      temp = product;
+      temp = (DCTELEM)product;
     }
     output_ptr[i] = (JCOEF) temp;
   }
