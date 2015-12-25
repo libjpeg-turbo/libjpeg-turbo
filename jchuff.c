@@ -478,7 +478,252 @@ flush_bits (working_state * state)
 
 
 /* Encode a single block's worth of coefficients */
+#if defined(__SSE2__) || defined(__SSSE3__)
+#include <emmintrin.h>
+#if defined(__SSSE3__)
+#include <tmmintrin.h>
+#endif
+LOCAL(boolean)
+encode_one_block (working_state * state, JCOEFPTR block, int last_dc_val,
+                  c_derived_tbl *dctbl, c_derived_tbl *actbl)
+{
+  int temp, temp2, temp3;
+  int nbits;
+  int r, code, size;
+  JOCTET _buffer[BUFSIZE], *buffer;
+  size_t put_buffer;  int put_bits;
+  int code_0xf0 = actbl->ehufco[0xf0], size_0xf0 = actbl->ehufsi[0xf0];
+  size_t bytes, bytestocopy;  int localbuf = 0;
+  short t1[DCTSIZE2 + 16];
+ 	short t2[DCTSIZE2 + 16];
+ 	const __m128i zero = _mm_setzero_si128();
 
+  put_buffer = state->cur.put_buffer;
+  put_bits = state->cur.put_bits;
+  LOAD_BUFFER()
+
+  /* Encode the DC coefficient difference per section F.1.2.1 */
+
+  temp = temp2 = block[0] - last_dc_val;
+
+ /* This is a well-known technique for obtaining the absolute value without a
+  * branch.  It is derived from an assembly language technique presented in
+  * "How to Optimize for the Pentium Processors", Copyright (c) 1996, 1997 by
+  * Agner Fog.
+  */
+  temp3 = temp >> (CHAR_BIT * sizeof(int) - 1);
+  temp ^= temp3;
+  temp -= temp3;
+
+  /* For a negative input, want temp2 = bitwise complement of abs(input) */
+  /* This code assumes we are on a two's complement machine */
+  temp2 += temp3;
+
+  /* Find the number of bits needed for the magnitude of the coefficient */
+  nbits = JPEG_NBITS(temp);
+
+  /* Emit the Huffman-coded symbol for the number of bits */
+  code = dctbl->ehufco[nbits];
+  size = dctbl->ehufsi[nbits];
+  EMIT_BITS(code, size)
+
+  /* Mask off any extra bits in code */
+  temp2 &= (((JLONG) 1)<<nbits) - 1;
+
+  /* Emit that number of bits of the value, if positive, */
+  /* or the complement of its magnitude, if negative. */
+  EMIT_BITS(temp2, nbits)
+
+  /* Prepare data */
+#define kloop_prepare(ko, jno0, jno1, jno2, jno3, jno4, jno5, jno6, jno7) \
+  { \
+  	short xmm_shadow[8]; /* TODO this should be aligned */ \
+    __m128i x1; \
+    __m128i neg = _mm_setzero_si128(); \
+    xmm_shadow[0] = block[jno0]; \
+    xmm_shadow[1] = block[jno1]; \
+    xmm_shadow[2] = block[jno2]; \
+    xmm_shadow[3] = block[jno3]; \
+    xmm_shadow[4] = block[jno4]; \
+    xmm_shadow[5] = block[jno5]; \
+    xmm_shadow[6] = block[jno6]; \
+    xmm_shadow[7] = block[jno7]; \
+    x1 = _mm_loadu_si128((const __m128i*)xmm_shadow); \
+    neg = _mm_cmpgt_epi16(neg, x1); \
+    x1 = _mm_add_epi16(x1, neg); \
+    x1 = _mm_xor_si128(x1, neg); \
+    neg = _mm_xor_si128(neg, x1); \
+    _mm_storeu_si128((__m128i*)(t1+ko), x1); \
+    _mm_storeu_si128((__m128i*)(t2+ko), neg); \
+  }
+  
+  kloop_prepare( 0, 1, 8, 16, 9, 2, 3, 10, 17);
+  kloop_prepare( 8, 24, 32, 25, 18, 11, 4, 5, 12);
+  kloop_prepare(16, 19, 26, 33, 40, 48, 41, 34, 27);
+  kloop_prepare(24, 20, 13, 6, 7, 14, 21, 28, 35);
+  kloop_prepare(32, 42, 49, 56, 57, 50, 43, 36, 29);
+  kloop_prepare(40, 22, 15, 23, 30, 37, 44, 51, 58);
+  kloop_prepare(48, 59, 52, 45, 38, 31, 39, 46, 53);
+  kloop_prepare(56, 60, 61, 54, 47, 55, 62, 63, 63);
+  /* overwrite last coef */
+  t1[DCTSIZE2-1] = 0;
+  
+  /* Encode the AC coefficients per section F.1.2.2 */
+
+  r = 0;                        /* r = run length of zeros */
+#if 0
+#define kloop_inner(offset, k) \
+  if ((temp = t1[k+offset]) == 0) { \
+    r++; \
+  } else { \
+    temp2 = t2[k+offset]; \
+    nbits = 32 - __builtin_clz(temp); \
+    while (r > 15) { \
+      EMIT_BITS(code_0xf0, size_0xf0) \
+      r -= 16; \
+    } \
+    /* Emit Huffman symbol for run length / number of bits */ \
+    temp3 = (r << 4) + nbits; \
+    code = actbl->ehufco[temp3]; \
+    size = actbl->ehufsi[temp3]; \
+    EMIT_CODE(code, size) \
+    r = 0; \
+  }
+  
+#define kloop(offset, looplen) \
+	{ \
+	  int idx; \
+    __m128i tmp0 = _mm_loadu_si128((__m128i*)(t1+0+offset)); \
+    __m128i tmp1 = _mm_loadu_si128((__m128i*)(t1+8+offset)); \
+    tmp0 = _mm_cmpeq_epi16(tmp0, zero); \
+    tmp1 = _mm_cmpeq_epi16(tmp1, zero); \
+    tmp0 = _mm_packs_epi16(tmp0, tmp1); \
+    idx = _mm_movemask_epi8(tmp0); \
+    if (idx == 0xffff) { \
+      r += 16; \
+    } else { \
+      idx = __builtin_ctz(~idx); /* use bsf as ~idx can't be 0 */ \
+      r += idx; \
+      switch(idx) { \
+        case 0: kloop_inner(offset, 0); \
+        case 1: kloop_inner(offset, 1); \
+        case 2: kloop_inner(offset, 2); \
+        case 3: kloop_inner(offset, 3); \
+        case 4: kloop_inner(offset, 4); \
+        case 5: kloop_inner(offset, 5); \
+        case 6: kloop_inner(offset, 6); \
+        case 7: kloop_inner(offset, 7); \
+        case 8: kloop_inner(offset, 8); \
+        case 9: kloop_inner(offset, 9); \
+        case 10: kloop_inner(offset, 10); \
+        case 11: kloop_inner(offset, 11); \
+        case 12: kloop_inner(offset, 12); \
+        case 13: kloop_inner(offset, 13); \
+        case 14: kloop_inner(offset, 14); \
+        if (looplen == 16) { \
+          case 15: kloop_inner(offset, 15); \
+        } \
+        default: \
+      	  break; \
+      } \
+    } \
+  }
+  kloop(0, 16);
+  kloop(16, 16);
+  kloop(32, 16);
+  kloop(48, 15);
+#elif 1
+#define kloop(offset, looplen) \
+	{ \
+	  int idx; \
+    int k; \
+    __m128i tmp0 = _mm_loadu_si128((__m128i*)(t1+0+offset)); \
+    __m128i tmp1 = _mm_loadu_si128((__m128i*)(t1+8+offset)); \
+    tmp0 = _mm_cmpeq_epi16(tmp0, zero); \
+    tmp1 = _mm_cmpeq_epi16(tmp1, zero); \
+    tmp0 = _mm_packs_epi16(tmp0, tmp1); \
+    idx = _mm_movemask_epi8(tmp0); \
+    if (idx == 0xffff) { \
+      r += 16; \
+    } else { \
+      idx = __builtin_ctz(~idx); /* use bsf as ~idx can't be 0 */ \
+      r += idx; \
+      k  = idx; \
+      for (;k < looplen;++k) { \
+  	    if ((temp = t1[k+offset]) == 0) { \
+          r++; \
+        } else { \
+          temp2 = t2[k+offset]; \
+          nbits = 32 - __builtin_clz(temp); \
+          while (r > 15) { \
+            EMIT_BITS(code_0xf0, size_0xf0) \
+            r -= 16; \
+          } \
+          /* Emit Huffman symbol for run length / number of bits */ \
+          temp3 = (r << 4) + nbits; \
+          code = actbl->ehufco[temp3]; \
+          size = actbl->ehufsi[temp3]; \
+          EMIT_CODE(code, size) \
+          r = 0; \
+        } \
+      } \
+    } \
+  }
+  kloop(0, 16);
+  kloop(16, 16);
+  kloop(32, 16);
+  kloop(48, 15);
+#else
+  for (k = 0; k < DCTSIZE2-1;) {
+    int idx;
+    __m128i tmp0 = _mm_loadu_si128((__m128i*)(t1+k+0));
+    __m128i tmp1 = _mm_loadu_si128((__m128i*)(t1+k+8));
+    tmp0 = _mm_cmpeq_epi16(tmp0, zero);
+    tmp1 = _mm_cmpeq_epi16(tmp1, zero);
+    tmp0 = _mm_packs_epi16(tmp0, tmp1);
+    idx = _mm_movemask_epi8(tmp0);
+    if (idx == 0xffff) {
+      r += 16;
+      k += 16;
+      continue;
+    } else {
+      idx = __builtin_ctz(~idx); /* use bsf as ~idx can't be 0 */
+      r += idx;
+      k += idx;
+      if (k>=DCTSIZE2-1) break;
+    }
+    
+    temp = t1[k];
+    temp2 = t2[k];
+    
+    nbits = 32 - __builtin_clz(temp);
+    while (r > 15) {
+      EMIT_BITS(code_0xf0, size_0xf0)
+      r -= 16;
+    }
+    /* Emit Huffman symbol for run length / number of bits */
+    temp3 = (r << 4) + nbits;
+    code = actbl->ehufco[temp3];
+    size = actbl->ehufsi[temp3];
+    EMIT_CODE(code, size)
+    r = 0; 
+    k++;
+  }
+#endif
+  /* If the last coef(s) were zero, emit an end-of-block code */
+  if (r > 0) {
+    code = actbl->ehufco[0];
+    size = actbl->ehufsi[0];
+    EMIT_BITS(code, size)
+  }
+
+  state->cur.put_buffer = put_buffer;
+  state->cur.put_bits = put_bits;
+  STORE_BUFFER()
+
+  return TRUE;
+}
+#else
 LOCAL(boolean)
 encode_one_block (working_state * state, JCOEFPTR block, int last_dc_val,
                   c_derived_tbl *dctbl, c_derived_tbl *actbl)
@@ -586,6 +831,7 @@ encode_one_block (working_state * state, JCOEFPTR block, int last_dc_val,
 
   return TRUE;
 }
+#endif
 
 
 /*
