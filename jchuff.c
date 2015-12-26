@@ -483,27 +483,28 @@ flush_bits (working_state * state)
 #if defined(__SSSE3__)
 #include <tmmintrin.h>
 #endif
-LOCAL(boolean)
-encode_one_block (working_state * state, JCOEFPTR block, int last_dc_val,
+
+extern JOCTET* jsimd_encode_one_block_sse2(working_state * state, JOCTET *buffer, JCOEFPTR block, int last_dc_val,
+                  c_derived_tbl *dctbl, c_derived_tbl *actbl);
+
+
+LOCAL(JOCTET*)
+encode_one_block_sse2(working_state * state, JOCTET *buffer, JCOEFPTR block, int last_dc_val,
                   c_derived_tbl *dctbl, c_derived_tbl *actbl)
 {
+  size_t put_buffer;  int put_bits;
+  int code_0xf0 = actbl->ehufco[0xf0], size_0xf0 = actbl->ehufsi[0xf0];
   int temp, temp2, temp3;
   int nbits;
   int r, code, size;
-  JOCTET _buffer[BUFSIZE], *buffer;
-  size_t put_buffer;  int put_bits;
-  int code_0xf0 = actbl->ehufco[0xf0], size_0xf0 = actbl->ehufsi[0xf0];
-  size_t bytes, bytestocopy;  int localbuf = 0;
-  short t1[DCTSIZE2 + 16];
- 	short t2[DCTSIZE2 + 16];
- 	const __m128i zero = _mm_setzero_si128();
+  __attribute__((aligned(16))) short  t2[DCTSIZE2*2+4];
+  short* t1 = t2 + DCTSIZE2;
+  const __m128i zero = _mm_setzero_si128();
 
   put_buffer = state->cur.put_buffer;
   put_bits = state->cur.put_bits;
-  LOAD_BUFFER()
-
+ 	
   /* Encode the DC coefficient difference per section F.1.2.1 */
-
   temp = temp2 = block[0] - last_dc_val;
 
  /* This is a well-known technique for obtaining the absolute value without a
@@ -537,24 +538,23 @@ encode_one_block (working_state * state, JCOEFPTR block, int last_dc_val,
   /* Prepare data */
 #define kloop_prepare(ko, jno0, jno1, jno2, jno3, jno4, jno5, jno6, jno7) \
   { \
-  	short xmm_shadow[8]; /* TODO this should be aligned */ \
     __m128i x1; \
     __m128i neg = _mm_setzero_si128(); \
-    xmm_shadow[0] = block[jno0]; \
-    xmm_shadow[1] = block[jno1]; \
-    xmm_shadow[2] = block[jno2]; \
-    xmm_shadow[3] = block[jno3]; \
-    xmm_shadow[4] = block[jno4]; \
-    xmm_shadow[5] = block[jno5]; \
-    xmm_shadow[6] = block[jno6]; \
-    xmm_shadow[7] = block[jno7]; \
-    x1 = _mm_loadu_si128((const __m128i*)xmm_shadow); \
+    t1[ko+0] = block[jno0]; \
+    t1[ko+1] = block[jno1]; \
+    t1[ko+2] = block[jno2]; \
+    t1[ko+3] = block[jno3]; \
+    t1[ko+4] = block[jno4]; \
+    t1[ko+5] = block[jno5]; \
+    t1[ko+6] = block[jno6]; \
+    t1[ko+7] = block[jno7]; \
+    x1 = _mm_load_si128((const __m128i*)(t1+ko)); \
     neg = _mm_cmpgt_epi16(neg, x1); \
     x1 = _mm_add_epi16(x1, neg); \
     x1 = _mm_xor_si128(x1, neg); \
     neg = _mm_xor_si128(neg, x1); \
-    _mm_storeu_si128((__m128i*)(t1+ko), x1); \
-    _mm_storeu_si128((__m128i*)(t2+ko), neg); \
+    _mm_store_si128((__m128i*)(t1+ko), x1); \
+    _mm_store_si128((__m128i*)(t2+ko), neg); \
   }
   
   kloop_prepare( 0, 1, 8, 16, 9, 2, 3, 10, 17);
@@ -570,132 +570,43 @@ encode_one_block (working_state * state, JCOEFPTR block, int last_dc_val,
   
   /* Encode the AC coefficients per section F.1.2.2 */
 
-  r = 0;                        /* r = run length of zeros */
-#if 0
-#define kloop_inner(offset, k) \
-  if ((temp = t1[k+offset]) == 0) { \
-    r++; \
-  } else { \
-    temp2 = t2[k+offset]; \
-    nbits = 32 - __builtin_clz(temp); \
-    while (r > 15) { \
-      EMIT_BITS(code_0xf0, size_0xf0) \
-      r -= 16; \
-    } \
-    /* Emit Huffman symbol for run length / number of bits */ \
-    temp3 = (r << 4) + nbits; \
-    code = actbl->ehufco[temp3]; \
-    size = actbl->ehufsi[temp3]; \
-    EMIT_CODE(code, size) \
-    r = 0; \
-  }
+  r = 1;                        /* r = run length of zeros */
+  int k = 0;
+  uint64_t index = 0U;
   
-#define kloop(offset, looplen) \
-	{ \
-	  int idx; \
-    __m128i tmp0 = _mm_loadu_si128((__m128i*)(t1+0+offset)); \
-    __m128i tmp1 = _mm_loadu_si128((__m128i*)(t1+8+offset)); \
-    tmp0 = _mm_cmpeq_epi16(tmp0, zero); \
-    tmp1 = _mm_cmpeq_epi16(tmp1, zero); \
-    tmp0 = _mm_packs_epi16(tmp0, tmp1); \
-    idx = _mm_movemask_epi8(tmp0); \
-    if (idx == 0xffff) { \
-      r += 16; \
-    } else { \
-      idx = __builtin_ctz(~idx); /* use bsf as ~idx can't be 0 */ \
-      r += idx; \
-      switch(idx) { \
-        case 0: kloop_inner(offset, 0); \
-        case 1: kloop_inner(offset, 1); \
-        case 2: kloop_inner(offset, 2); \
-        case 3: kloop_inner(offset, 3); \
-        case 4: kloop_inner(offset, 4); \
-        case 5: kloop_inner(offset, 5); \
-        case 6: kloop_inner(offset, 6); \
-        case 7: kloop_inner(offset, 7); \
-        case 8: kloop_inner(offset, 8); \
-        case 9: kloop_inner(offset, 9); \
-        case 10: kloop_inner(offset, 10); \
-        case 11: kloop_inner(offset, 11); \
-        case 12: kloop_inner(offset, 12); \
-        case 13: kloop_inner(offset, 13); \
-        case 14: kloop_inner(offset, 14); \
-        if (looplen == 16) { \
-          case 15: kloop_inner(offset, 15); \
-        } \
-        default: \
-      	  break; \
-      } \
-    } \
-  }
-  kloop(0, 16);
-  kloop(16, 16);
-  kloop(32, 16);
-  kloop(48, 15);
-#elif 1
-#define kloop(offset, looplen) \
-	{ \
-	  int idx; \
-    int k; \
-    __m128i tmp0 = _mm_loadu_si128((__m128i*)(t1+0+offset)); \
-    __m128i tmp1 = _mm_loadu_si128((__m128i*)(t1+8+offset)); \
-    tmp0 = _mm_cmpeq_epi16(tmp0, zero); \
-    tmp1 = _mm_cmpeq_epi16(tmp1, zero); \
-    tmp0 = _mm_packs_epi16(tmp0, tmp1); \
-    idx = _mm_movemask_epi8(tmp0); \
-    if (idx == 0xffff) { \
-      r += 16; \
-    } else { \
-      idx = __builtin_ctz(~idx); /* use bsf as ~idx can't be 0 */ \
-      r += idx; \
-      k  = idx; \
-      for (;k < looplen;++k) { \
-  	    if ((temp = t1[k+offset]) == 0) { \
-          r++; \
-        } else { \
-          temp2 = t2[k+offset]; \
-          nbits = 32 - __builtin_clz(temp); \
-          while (r > 15) { \
-            EMIT_BITS(code_0xf0, size_0xf0) \
-            r -= 16; \
-          } \
-          /* Emit Huffman symbol for run length / number of bits */ \
-          temp3 = (r << 4) + nbits; \
-          code = actbl->ehufco[temp3]; \
-          size = actbl->ehufsi[temp3]; \
-          EMIT_CODE(code, size) \
-          r = 0; \
-        } \
-      } \
-    } \
-  }
-  kloop(0, 16);
-  kloop(16, 16);
-  kloop(32, 16);
-  kloop(48, 15);
-#else
-  for (k = 0; k < DCTSIZE2-1;) {
-    int idx;
-    __m128i tmp0 = _mm_loadu_si128((__m128i*)(t1+k+0));
-    __m128i tmp1 = _mm_loadu_si128((__m128i*)(t1+k+8));
-    tmp0 = _mm_cmpeq_epi16(tmp0, zero);
-    tmp1 = _mm_cmpeq_epi16(tmp1, zero);
-    tmp0 = _mm_packs_epi16(tmp0, tmp1);
-    idx = _mm_movemask_epi8(tmp0);
-    if (idx == 0xffff) {
-      r += 16;
-      k += 16;
-      continue;
-    } else {
-      idx = __builtin_ctz(~idx); /* use bsf as ~idx can't be 0 */
-      r += idx;
-      k += idx;
-      if (k>=DCTSIZE2-1) break;
-    }
-    
+  __m128i tmp0 = _mm_load_si128((__m128i*)(t1+0));
+  __m128i tmp1 = _mm_load_si128((__m128i*)(t1+8));
+  __m128i tmp2 = _mm_load_si128((__m128i*)(t1+16));
+  __m128i tmp3 = _mm_load_si128((__m128i*)(t1+24));
+  __m128i tmp4 = _mm_load_si128((__m128i*)(t1+32));
+  __m128i tmp5 = _mm_load_si128((__m128i*)(t1+40));
+  __m128i tmp6 = _mm_load_si128((__m128i*)(t1+48));
+  __m128i tmp7 = _mm_load_si128((__m128i*)(t1+56));
+  tmp0 = _mm_cmpeq_epi16(tmp0, zero);
+  tmp1 = _mm_cmpeq_epi16(tmp1, zero);
+  tmp2 = _mm_cmpeq_epi16(tmp2, zero);
+  tmp3 = _mm_cmpeq_epi16(tmp3, zero);
+  tmp4 = _mm_cmpeq_epi16(tmp4, zero);
+  tmp5 = _mm_cmpeq_epi16(tmp5, zero);
+  tmp6 = _mm_cmpeq_epi16(tmp6, zero);
+  tmp7 = _mm_cmpeq_epi16(tmp7, zero);
+  tmp0 = _mm_packs_epi16(tmp0, tmp1);
+  tmp2 = _mm_packs_epi16(tmp2, tmp3);
+  tmp4 = _mm_packs_epi16(tmp4, tmp5);
+  tmp6 = _mm_packs_epi16(tmp6, tmp7);
+  index  = ((uint64_t)_mm_movemask_epi8(tmp0)) << 0;
+  index |= ((uint64_t)_mm_movemask_epi8(tmp2)) << 16;
+  index |= ((uint64_t)_mm_movemask_epi8(tmp4)) << 32;
+  index |= ((uint64_t)_mm_movemask_epi8(tmp6)) << 48;
+  index = ~index;
+
+  while (index)
+  {
+    r = __builtin_ctzl(index);
+    k += r;
+    index >>= r;
     temp = t1[k];
     temp2 = t2[k];
-    
     nbits = 32 - __builtin_clz(temp);
     while (r > 15) {
       EMIT_BITS(code_0xf0, size_0xf0)
@@ -706,19 +617,32 @@ encode_one_block (working_state * state, JCOEFPTR block, int last_dc_val,
     code = actbl->ehufco[temp3];
     size = actbl->ehufsi[temp3];
     EMIT_CODE(code, size)
-    r = 0; 
-    k++;
+    index >>= 1;
+    ++k;
   }
-#endif
+  r = DCTSIZE2-1-k;
   /* If the last coef(s) were zero, emit an end-of-block code */
   if (r > 0) {
     code = actbl->ehufco[0];
     size = actbl->ehufsi[0];
     EMIT_BITS(code, size)
   }
-
   state->cur.put_buffer = put_buffer;
   state->cur.put_bits = put_bits;
+  return buffer;
+}
+
+LOCAL(boolean)
+encode_one_block (working_state * state, JCOEFPTR block, int last_dc_val,
+                  c_derived_tbl *dctbl, c_derived_tbl *actbl)
+{
+  JOCTET _buffer[BUFSIZE], *buffer;
+  size_t bytes, bytestocopy;  int localbuf = 0;
+
+  LOAD_BUFFER()
+
+  buffer = jsimd_encode_one_block_sse2(state, buffer, block, last_dc_val, dctbl, actbl);
+
   STORE_BUFFER()
 
   return TRUE;
