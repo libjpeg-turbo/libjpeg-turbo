@@ -1,5 +1,5 @@
 ;
-; jchuff-sse2-64.asm - Huffman entropy encoding routines.
+; jchuff-ssse3-64.asm - Huffman entropy encoding routines.
 ;
 ; Copyright 2009 Pierre Ossman <ossman@cendio.se> for Cendio AB
 ; Copyright 2009-2011, 2014-2015 D. R. Commander.
@@ -16,7 +16,7 @@
 ; NASM is available from http://nasm.sourceforge.net/ or
 ; http://sourceforge.net/project/showfiles.php?group_id=6208
 ;
-; This file contains an SSE2 implementation for huffman coding of one block.
+; This file contains an SSSE3 implementation for huffman coding of one block.
 ; The following code is based directly on jchuff.c; see the jchuff.c for more details.
 ;
 ; [TAB8]
@@ -127,14 +127,10 @@
     pcmpgtw xmm9, %35 ; neg = _mm_cmpgt_epi16(neg, x1);
     pcmpgtw xmm10, %36 ; neg = _mm_cmpgt_epi16(neg, x1);
     pcmpgtw xmm11, %37 ; neg = _mm_cmpgt_epi16(neg, x1);
-    paddw %34, xmm8   ; x1 = _mm_add_epi16(x1, neg);
-    paddw %35, xmm9   ; x1 = _mm_add_epi16(x1, neg);
-    paddw %36, xmm10  ; x1 = _mm_add_epi16(x1, neg);
-    paddw %37, xmm11  ; x1 = _mm_add_epi16(x1, neg);
-    pxor %34, xmm8    ; x1 = _mm_xor_si128(x1, neg);
-    pxor %35, xmm9    ; x1 = _mm_xor_si128(x1, neg);
-    pxor %36, xmm10   ; x1 = _mm_xor_si128(x1, neg);
-    pxor %37, xmm11   ; x1 = _mm_xor_si128(x1, neg);
+    pabsw %34, %34   ; x1 = _mm_abs_epi16(x1);
+    pabsw %35, %35   ; x1 = _mm_abs_epi16(x1);
+    pabsw %36, %36   ; x1 = _mm_abs_epi16(x1);
+    pabsw %37, %37   ; x1 = _mm_abs_epi16(x1);
     pxor xmm8, %34    ; neg = _mm_xor_si128(neg, x1);
     pxor xmm9, %35    ; neg = _mm_xor_si128(neg, x1);
     pxor xmm10, %36   ; neg = _mm_xor_si128(neg, x1);
@@ -153,7 +149,7 @@
 ; Encode a single block's worth of coefficients.
 ;
 ; GLOBAL(void)
-; jsimd_encode_one_block_sse2 (DCTELEM * data)
+; jsimd_encode_one_block_ssse3 (DCTELEM * data)
 ;
 
 ; r10 = working_state* state
@@ -170,9 +166,9 @@
 %define buffer          rax
 
         align   16
-        global  EXTN(jsimd_encode_one_block_sse2)
+        global  EXTN(jsimd_encode_one_block_ssse3)
 
-EXTN(jsimd_encode_one_block_sse2):
+EXTN(jsimd_encode_one_block_ssse3):
         push    rbp
         mov     rax,rsp                         ; rax = original rbp
         sub     rsp, byte 4

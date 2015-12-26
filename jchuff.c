@@ -486,6 +486,10 @@ flush_bits (working_state * state)
 
 extern JOCTET* jsimd_encode_one_block_sse2(working_state * state, JOCTET *buffer, JCOEFPTR block, int last_dc_val,
                   c_derived_tbl *dctbl, c_derived_tbl *actbl);
+extern JOCTET* jsimd_encode_one_block_ssse3(working_state * state, JOCTET *buffer, JCOEFPTR block, int last_dc_val,
+                  c_derived_tbl *dctbl, c_derived_tbl *actbl);
+extern JOCTET* jsimd_encode_one_block_avx2(working_state * state, JOCTET *buffer, JCOEFPTR block, int last_dc_val,
+                  c_derived_tbl *dctbl, c_derived_tbl *actbl);
 
 
 LOCAL(JOCTET*)
