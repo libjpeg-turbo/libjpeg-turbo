@@ -39,12 +39,12 @@
         mov edx, put_buffer
         mov ecx, put_bits
         shr edx, cl ; c = (JOCTET)GETJOCTET(put_buffer >> put_bits);
-        mov byte [esi], dl ; *buffer++ = c;
-        add esi, 1
+        mov byte [eax], dl ; *buffer++ = c;
+        add eax, 1
         cmp dl, 0xFF ; need to stuff a zero byte?
         jne %%.EMIT_BYTE_END
-        mov byte [esi], 0 ; *buffer++ = 0;
-        add esi, 1
+        mov byte [eax], 0 ; *buffer++ = 0;
+        add eax, 1
 %%.EMIT_BYTE_END:
 %endmacro
 
@@ -57,12 +57,10 @@
 %macro CHECKBUF15 0
         cmp put_bits, 16 ; if (put_bits > 31) {
         jl %%.CHECKBUF15_END
-        push esi
-        mov esi, POINTER [esp+buffer+4]
+        mov eax, POINTER [esp+buffer]
         EMIT_BYTE
         EMIT_BYTE
-        mov POINTER [esp+buffer+4], esi
-        pop esi
+        mov POINTER [esp+buffer], eax
 %%.CHECKBUF15_END:
 %endmacro
 
