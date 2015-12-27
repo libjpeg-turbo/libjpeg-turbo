@@ -178,15 +178,13 @@ EXTN(jsimd_chuff_encode_one_block_ssse3):
         mov     rbp,rsp                         ; rbp = aligned rbp
         lea     rsp, [t2]
         collect_args
-;%ifdef __x86_64__
-;%ifdef WIN64
+%ifdef WIN64
         sub     rsp, 4*SIZEOF_XMMWORD
         movaps  XMMWORD [rsp-3*SIZEOF_XMMWORD], xmm8 ; Shall only be necessary for windows x64
         movaps  XMMWORD [rsp-2*SIZEOF_XMMWORD], xmm9 ; Shall only be necessary for windows x64
         movaps  XMMWORD [rsp-1*SIZEOF_XMMWORD], xmm10 ; Shall only be necessary for windows x64
         movaps  XMMWORD [rsp-0*SIZEOF_XMMWORD], xmm11 ; Shall only be necessary for windows x64
-;%endif
-;%endif
+%endif
         push rbx
         
         mov buffer, r11 ; r11 is now sratch 
@@ -330,16 +328,13 @@ EXTN(jsimd_chuff_encode_one_block_ssse3):
         mov DWORD  [r10+24], put_bits ; state->cur.put_bits = put_bits;
 
         pop rbx
-;%ifdef __x86_64__
-;%ifdef WIN64
-        
+%ifdef WIN64
         movaps  xmm8, XMMWORD [rsp-3*SIZEOF_XMMWORD] ; Shall only be necessary for windows x64
         movaps  xmm9, XMMWORD [rsp-2*SIZEOF_XMMWORD] ; Shall only be necessary for windows x64
         movaps  xmm10, XMMWORD [rsp-1*SIZEOF_XMMWORD] ; Shall only be necessary for windows x64
         movaps  xmm11, XMMWORD [rsp-0*SIZEOF_XMMWORD] ; Shall only be necessary for windows x64
         add     rsp, 4*SIZEOF_XMMWORD
-;%endif
-;%endif
+%endif
         uncollect_args
         mov     rsp,rbp         ; rsp <- aligned rbp
         pop     rsp             ; rsp <- original rbp
