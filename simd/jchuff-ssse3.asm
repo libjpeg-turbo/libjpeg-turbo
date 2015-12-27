@@ -58,12 +58,10 @@
         cmp put_bits, 16 ; if (put_bits > 31) {
         jl %%.CHECKBUF15_END
         push esi
-        push edx
-        mov esi, POINTER [esp+buffer+8]
+        mov esi, POINTER [esp+buffer+4]
         EMIT_BYTE
         EMIT_BYTE
-        mov POINTER [esp+buffer+8], esi
-        pop edx
+        mov POINTER [esp+buffer+4], esi
         pop esi
 %%.CHECKBUF15_END:
 %endmacro
