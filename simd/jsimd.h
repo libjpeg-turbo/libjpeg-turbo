@@ -828,3 +828,8 @@ extern const int jconst_idct_float_sse2[];
 EXTERN(void) jsimd_idct_float_sse2
         (void * dct_table, JCOEFPTR coef_block, JSAMPARRAY output_buf,
          JDIMENSION output_col);
+
+/* Huffman coding */
+EXTERN(JOCTET*) jsimd_chuff_encode_one_block_sse2
+        (/*working_state*/void * state, JOCTET *buffer, JCOEFPTR block, int last_dc_val,
+         c_derived_tbl *dctbl, c_derived_tbl *actbl);

@@ -19,6 +19,8 @@
 #include "../jsimd.h"
 #include "../jdct.h"
 #include "../jsimddct.h"
+#include "../jchuff.h"
+#include "../jsimdchuff.h"
 #include "jsimd.h"
 
 /*
@@ -754,4 +756,25 @@ jsimd_idct_float (j_decompress_ptr cinfo, jpeg_component_info * compptr,
   jsimd_idct_float_sse2(compptr->dct_table, coef_block, output_buf,
                         output_col);
 }
+
+GLOBAL(int)
+jsimd_can_chuff_encode_one_block (void)
+{
+  if (DCTSIZE != 8)
+    return 0;
+  if (sizeof(JCOEF) != 2)
+    return 0;
+
+  return 1;
+}
+
+GLOBAL(JOCTET*)
+jsimd_chuff_encode_one_block (/*working_state*/void * state, JOCTET *buffer,
+                              JCOEFPTR block, int last_dc_val,
+                              c_derived_tbl *dctbl, c_derived_tbl *actbl)
+{
+  return jsimd_chuff_encode_one_block_sse2 (state, buffer, block,
+                                            last_dc_val, dctbl, actbl);
+}
+         
 
