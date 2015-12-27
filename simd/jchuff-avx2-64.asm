@@ -124,8 +124,9 @@
 ;
 ; Encode a single block's worth of coefficients.
 ;
-; GLOBAL(void)
-; jsimd_encode_one_block_ssse3 (DCTELEM * data)
+; GLOBAL(JOCTET*)
+; jsimd_chuff_encode_one_block_avx2 (Dworking_state * state, JOCTET *buffer, JCOEFPTR block, int last_dc_val,
+;         c_derived_tbl *dctbl, c_derived_tbl *actbl)
 ;
 
 ; r10 = working_state* state
@@ -142,9 +143,9 @@
 %define buffer          rax
 
         align   16
-        global  EXTN(jsimd_encode_one_block_avx2)
+        global  EXTN(jsimd_chuff_encode_one_block_avx2)
 
-EXTN(jsimd_encode_one_block_avx2):
+EXTN(jsimd_chuff_encode_one_block_avx2):
         push    rbp
         mov     rax,rsp                         ; rax = original rbp
         sub     rsp, byte 4

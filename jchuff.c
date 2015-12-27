@@ -5,6 +5,7 @@
  * Copyright (C) 1991-1997, Thomas G. Lane.
  * libjpeg-turbo Modifications:
  * Copyright (C) 2009-2011, 2014-2015 D. R. Commander.
+ * Copyright (C) 2015 Matthieu Darbois.
  * For conditions of distribution and use, see the accompanying README.ijg
  * file.
  *
@@ -21,6 +22,7 @@
 #include "jinclude.h"
 #include "jpeglib.h"
 #include "jchuff.h"             /* Declarations shared with jcphuff.c */
+#include "jsimdchuff.h"
 #include <limits.h>
 
 /*
@@ -478,166 +480,8 @@ flush_bits (working_state * state)
 
 
 /* Encode a single block's worth of coefficients */
-#if defined(__SSE2__) || defined(__SSSE3__)
-#include <emmintrin.h>
-#if defined(__SSSE3__)
-#include <tmmintrin.h>
-#endif
-
-extern JOCTET* jsimd_encode_one_block_sse2(working_state * state, JOCTET *buffer, JCOEFPTR block, int last_dc_val,
-                  c_derived_tbl *dctbl, c_derived_tbl *actbl);
-extern JOCTET* jsimd_encode_one_block_ssse3(working_state * state, JOCTET *buffer, JCOEFPTR block, int last_dc_val,
-                  c_derived_tbl *dctbl, c_derived_tbl *actbl);
-extern JOCTET* jsimd_encode_one_block_avx2(working_state * state, JOCTET *buffer, JCOEFPTR block, int last_dc_val,
-                  c_derived_tbl *dctbl, c_derived_tbl *actbl);
-
-
-LOCAL(JOCTET*)
-encode_one_block_sse2(working_state * state, JOCTET *buffer, JCOEFPTR block, int last_dc_val,
-                  c_derived_tbl *dctbl, c_derived_tbl *actbl)
-{
-  size_t put_buffer;  int put_bits;
-  int code_0xf0 = actbl->ehufco[0xf0], size_0xf0 = actbl->ehufsi[0xf0];
-  int temp, temp2, temp3;
-  int nbits;
-  int r, code, size;
-  __attribute__((aligned(16))) short  t2[DCTSIZE2*2+4];
-  short* t1 = t2 + DCTSIZE2;
-  const __m128i zero = _mm_setzero_si128();
-
-  put_buffer = state->cur.put_buffer;
-  put_bits = state->cur.put_bits;
- 	
-  /* Encode the DC coefficient difference per section F.1.2.1 */
-  temp = temp2 = block[0] - last_dc_val;
-
- /* This is a well-known technique for obtaining the absolute value without a
-  * branch.  It is derived from an assembly language technique presented in
-  * "How to Optimize for the Pentium Processors", Copyright (c) 1996, 1997 by
-  * Agner Fog.
-  */
-  temp3 = temp >> (CHAR_BIT * sizeof(int) - 1);
-  temp ^= temp3;
-  temp -= temp3;
-
-  /* For a negative input, want temp2 = bitwise complement of abs(input) */
-  /* This code assumes we are on a two's complement machine */
-  temp2 += temp3;
-
-  /* Find the number of bits needed for the magnitude of the coefficient */
-  nbits = JPEG_NBITS(temp);
-
-  /* Emit the Huffman-coded symbol for the number of bits */
-  code = dctbl->ehufco[nbits];
-  size = dctbl->ehufsi[nbits];
-  EMIT_BITS(code, size)
-
-  /* Mask off any extra bits in code */
-  temp2 &= (((JLONG) 1)<<nbits) - 1;
-
-  /* Emit that number of bits of the value, if positive, */
-  /* or the complement of its magnitude, if negative. */
-  EMIT_BITS(temp2, nbits)
-
-  /* Prepare data */
-#define kloop_prepare(ko, jno0, jno1, jno2, jno3, jno4, jno5, jno6, jno7) \
-  { \
-    __m128i x1; \
-    __m128i neg = _mm_setzero_si128(); \
-    t1[ko+0] = block[jno0]; \
-    t1[ko+1] = block[jno1]; \
-    t1[ko+2] = block[jno2]; \
-    t1[ko+3] = block[jno3]; \
-    t1[ko+4] = block[jno4]; \
-    t1[ko+5] = block[jno5]; \
-    t1[ko+6] = block[jno6]; \
-    t1[ko+7] = block[jno7]; \
-    x1 = _mm_load_si128((const __m128i*)(t1+ko)); \
-    neg = _mm_cmpgt_epi16(neg, x1); \
-    x1 = _mm_add_epi16(x1, neg); \
-    x1 = _mm_xor_si128(x1, neg); \
-    neg = _mm_xor_si128(neg, x1); \
-    _mm_store_si128((__m128i*)(t1+ko), x1); \
-    _mm_store_si128((__m128i*)(t2+ko), neg); \
-  }
-  
-  kloop_prepare( 0, 1, 8, 16, 9, 2, 3, 10, 17);
-  kloop_prepare( 8, 24, 32, 25, 18, 11, 4, 5, 12);
-  kloop_prepare(16, 19, 26, 33, 40, 48, 41, 34, 27);
-  kloop_prepare(24, 20, 13, 6, 7, 14, 21, 28, 35);
-  kloop_prepare(32, 42, 49, 56, 57, 50, 43, 36, 29);
-  kloop_prepare(40, 22, 15, 23, 30, 37, 44, 51, 58);
-  kloop_prepare(48, 59, 52, 45, 38, 31, 39, 46, 53);
-  kloop_prepare(56, 60, 61, 54, 47, 55, 62, 63, 63);
-  /* overwrite last coef */
-  t1[DCTSIZE2-1] = 0;
-  
-  /* Encode the AC coefficients per section F.1.2.2 */
-
-  r = 1;                        /* r = run length of zeros */
-  int k = 0;
-  uint64_t index = 0U;
-  
-  __m128i tmp0 = _mm_load_si128((__m128i*)(t1+0));
-  __m128i tmp1 = _mm_load_si128((__m128i*)(t1+8));
-  __m128i tmp2 = _mm_load_si128((__m128i*)(t1+16));
-  __m128i tmp3 = _mm_load_si128((__m128i*)(t1+24));
-  __m128i tmp4 = _mm_load_si128((__m128i*)(t1+32));
-  __m128i tmp5 = _mm_load_si128((__m128i*)(t1+40));
-  __m128i tmp6 = _mm_load_si128((__m128i*)(t1+48));
-  __m128i tmp7 = _mm_load_si128((__m128i*)(t1+56));
-  tmp0 = _mm_cmpeq_epi16(tmp0, zero);
-  tmp1 = _mm_cmpeq_epi16(tmp1, zero);
-  tmp2 = _mm_cmpeq_epi16(tmp2, zero);
-  tmp3 = _mm_cmpeq_epi16(tmp3, zero);
-  tmp4 = _mm_cmpeq_epi16(tmp4, zero);
-  tmp5 = _mm_cmpeq_epi16(tmp5, zero);
-  tmp6 = _mm_cmpeq_epi16(tmp6, zero);
-  tmp7 = _mm_cmpeq_epi16(tmp7, zero);
-  tmp0 = _mm_packs_epi16(tmp0, tmp1);
-  tmp2 = _mm_packs_epi16(tmp2, tmp3);
-  tmp4 = _mm_packs_epi16(tmp4, tmp5);
-  tmp6 = _mm_packs_epi16(tmp6, tmp7);
-  index  = ((uint64_t)_mm_movemask_epi8(tmp0)) << 0;
-  index |= ((uint64_t)_mm_movemask_epi8(tmp2)) << 16;
-  index |= ((uint64_t)_mm_movemask_epi8(tmp4)) << 32;
-  index |= ((uint64_t)_mm_movemask_epi8(tmp6)) << 48;
-  index = ~index;
-
-  while (index)
-  {
-    r = __builtin_ctzl(index);
-    k += r;
-    index >>= r;
-    temp = t1[k];
-    temp2 = t2[k];
-    nbits = 32 - __builtin_clz(temp);
-    while (r > 15) {
-      EMIT_BITS(code_0xf0, size_0xf0)
-      r -= 16;
-    }
-    /* Emit Huffman symbol for run length / number of bits */
-    temp3 = (r << 4) + nbits;
-    code = actbl->ehufco[temp3];
-    size = actbl->ehufsi[temp3];
-    EMIT_CODE(code, size)
-    index >>= 1;
-    ++k;
-  }
-  r = DCTSIZE2-1-k;
-  /* If the last coef(s) were zero, emit an end-of-block code */
-  if (r > 0) {
-    code = actbl->ehufco[0];
-    size = actbl->ehufsi[0];
-    EMIT_BITS(code, size)
-  }
-  state->cur.put_buffer = put_buffer;
-  state->cur.put_bits = put_bits;
-  return buffer;
-}
-
 LOCAL(boolean)
-encode_one_block (working_state * state, JCOEFPTR block, int last_dc_val,
+encode_one_block_simd (working_state * state, JCOEFPTR block, int last_dc_val,
                   c_derived_tbl *dctbl, c_derived_tbl *actbl)
 {
   JOCTET _buffer[BUFSIZE], *buffer;
@@ -645,13 +489,13 @@ encode_one_block (working_state * state, JCOEFPTR block, int last_dc_val,
 
   LOAD_BUFFER()
 
-  buffer = jsimd_encode_one_block_sse2(state, buffer, block, last_dc_val, dctbl, actbl);
+  buffer = jsimd_chuff_encode_one_block(state, buffer, block, last_dc_val, dctbl, actbl);
 
   STORE_BUFFER()
 
   return TRUE;
 }
-#else
+
 LOCAL(boolean)
 encode_one_block (working_state * state, JCOEFPTR block, int last_dc_val,
                   c_derived_tbl *dctbl, c_derived_tbl *actbl)
@@ -759,8 +603,6 @@ encode_one_block (working_state * state, JCOEFPTR block, int last_dc_val,
 
   return TRUE;
 }
-#endif
-
 
 /*
  * Emit a restart marker & resynchronize predictions.
@@ -798,6 +640,12 @@ encode_mcu_huff (j_compress_ptr cinfo, JBLOCKROW *MCU_data)
   working_state state;
   int blkn, ci;
   jpeg_component_info * compptr;
+  boolean (*encode_one_block_ptr) (working_state*, JCOEFPTR, int,
+                  c_derived_tbl *, c_derived_tbl *) = encode_one_block;
+
+  if (jsimd_can_chuff_encode_one_block()) {
+    encode_one_block_ptr = encode_one_block_simd;
+  }
 
   /* Load up working state */
   state.next_output_byte = cinfo->dest->next_output_byte;
@@ -816,10 +664,10 @@ encode_mcu_huff (j_compress_ptr cinfo, JBLOCKROW *MCU_data)
   for (blkn = 0; blkn < cinfo->blocks_in_MCU; blkn++) {
     ci = cinfo->MCU_membership[blkn];
     compptr = cinfo->cur_comp_info[ci];
-    if (! encode_one_block(&state,
-                           MCU_data[blkn][0], state.cur.last_dc_val[ci],
-                           entropy->dc_derived_tbls[compptr->dc_tbl_no],
-                           entropy->ac_derived_tbls[compptr->ac_tbl_no]))
+    if (! encode_one_block_ptr(&state,
+                               MCU_data[blkn][0], state.cur.last_dc_val[ci],
+                               entropy->dc_derived_tbls[compptr->dc_tbl_no],
+                               entropy->ac_derived_tbls[compptr->ac_tbl_no]))
       return FALSE;
     /* Update last_dc_val */
     state.cur.last_dc_val[ci] = MCU_data[blkn][0][0];

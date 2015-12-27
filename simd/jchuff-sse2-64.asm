@@ -152,8 +152,9 @@
 ;
 ; Encode a single block's worth of coefficients.
 ;
-; GLOBAL(void)
-; jsimd_encode_one_block_sse2 (DCTELEM * data)
+; GLOBAL(JOCTET*)
+; jsimd_chuff_encode_one_block_sse2 (Dworking_state * state, JOCTET *buffer, JCOEFPTR block, int last_dc_val,
+;         c_derived_tbl *dctbl, c_derived_tbl *actbl)
 ;
 
 ; r10 = working_state* state
@@ -170,9 +171,9 @@
 %define buffer          rax
 
         align   16
-        global  EXTN(jsimd_encode_one_block_sse2)
+        global  EXTN(jsimd_chuff_encode_one_block_sse2)
 
-EXTN(jsimd_encode_one_block_sse2):
+EXTN(jsimd_chuff_encode_one_block_sse2):
         push    rbp
         mov     rax,rsp                         ; rax = original rbp
         sub     rsp, byte 4
@@ -181,8 +182,15 @@ EXTN(jsimd_encode_one_block_sse2):
         mov     rbp,rsp                         ; rbp = aligned rbp
         lea     rsp, [t2]
         collect_args
-        sub     rsp, SIZEOF_XMMWORD
-        movaps  XMMWORD [rsp], xmm8 ; Shall only be necessary for windows x64
+;%ifdef __x86_64__
+;%ifdef WIN64
+        sub     rsp, 4*SIZEOF_XMMWORD
+        movaps  XMMWORD [rsp-3*SIZEOF_XMMWORD], xmm8 ; Shall only be necessary for windows x64
+        movaps  XMMWORD [rsp-2*SIZEOF_XMMWORD], xmm9 ; Shall only be necessary for windows x64
+        movaps  XMMWORD [rsp-1*SIZEOF_XMMWORD], xmm10 ; Shall only be necessary for windows x64
+        movaps  XMMWORD [rsp-0*SIZEOF_XMMWORD], xmm11 ; Shall only be necessary for windows x64
+;%endif
+;%endif
         push rbx
         
         mov buffer, r11 ; r11 is now sratch 
@@ -241,14 +249,6 @@ EXTN(jsimd_encode_one_block_sse2):
         kloop_prepare 32, 42, 49, 56, 57, 50, 43, 36, 29, 22, 15, 23, 30, 37, 44, 51, 58, 59, 52, 45, 38, 31, 39, 46, 53, 60, 61, 54, 47, 55, 62, 63, 63, xmm4, xmm5, xmm6, xmm7
         
         pxor xmm8, xmm8
-        ;movdqa xmm0, XMMWORD [t1+0*SIZEOF_WORD]  ; __m128i tmp0 = _mm_loadu_si128((__m128i*)(t1+0));
-        ;movdqa xmm1, XMMWORD [t1+8*SIZEOF_WORD]  ; __m128i tmp1 = _mm_loadu_si128((__m128i*)(t1+8));
-        ;movdqa xmm2, XMMWORD [t1+16*SIZEOF_WORD] ; __m128i tmp2 = _mm_loadu_si128((__m128i*)(t1+16));
-        ;movdqa xmm3, XMMWORD [t1+24*SIZEOF_WORD] ; __m128i tmp3 = _mm_loadu_si128((__m128i*)(t1+24));
-        ;movdqa xmm4, XMMWORD [t1+32*SIZEOF_WORD] ; __m128i tmp4 = _mm_loadu_si128((__m128i*)(t1+32));
-        ;movdqa xmm5, XMMWORD [t1+40*SIZEOF_WORD] ; __m128i tmp5 = _mm_loadu_si128((__m128i*)(t1+40));
-        ;movdqa xmm6, XMMWORD [t1+48*SIZEOF_WORD] ; __m128i tmp6 = _mm_loadu_si128((__m128i*)(t1+48));
-        ;movdqa xmm7, XMMWORD [t1+56*SIZEOF_WORD] ; __m128i tmp7 = _mm_loadu_si128((__m128i*)(t1+56));
         pcmpeqw xmm0, xmm8 ; tmp0 = _mm_cmpeq_epi16(tmp0, zero);
         pcmpeqw xmm1, xmm8 ; tmp1 = _mm_cmpeq_epi16(tmp1, zero);
         pcmpeqw xmm2, xmm8 ; tmp2 = _mm_cmpeq_epi16(tmp2, zero);
@@ -334,8 +334,16 @@ EXTN(jsimd_encode_one_block_sse2):
         mov DWORD  [r10+24], put_bits ; state->cur.put_bits = put_bits;
 
         pop rbx
-        movaps  xmm8, XMMWORD [rsp] ; Shall only be necessary for win x64
-        add     rsp, SIZEOF_XMMWORD
+;%ifdef __x86_64__
+;%ifdef WIN64
+        
+        movaps  xmm8, XMMWORD [rsp-3*SIZEOF_XMMWORD] ; Shall only be necessary for windows x64
+        movaps  xmm9, XMMWORD [rsp-2*SIZEOF_XMMWORD] ; Shall only be necessary for windows x64
+        movaps  xmm10, XMMWORD [rsp-1*SIZEOF_XMMWORD] ; Shall only be necessary for windows x64
+        movaps  xmm11, XMMWORD [rsp-0*SIZEOF_XMMWORD] ; Shall only be necessary for windows x64
+        add     rsp, 4*SIZEOF_XMMWORD
+;%endif
+;%endif
         uncollect_args
         mov     rsp,rbp         ; rsp <- aligned rbp
         pop     rsp             ; rsp <- original rbp

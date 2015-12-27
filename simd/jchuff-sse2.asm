@@ -139,8 +139,9 @@
 ;
 ; Encode a single block's worth of coefficients.
 ;
-; GLOBAL(void)
-; jsimd_encode_one_block_sse2 (DCTELEM * data)
+; GLOBAL(JOCTET*)
+; jsimd_chuff_encode_one_block_sse2 (Dworking_state * state, JOCTET *buffer, JCOEFPTR block, int last_dc_val,
+;         c_derived_tbl *dctbl, c_derived_tbl *actbl)
 ;
 
 ; eax + 8 = working_state* state
@@ -165,9 +166,9 @@
 %define put_bits        edi
 
         align   16
-        global  EXTN(jsimd_encode_one_block_sse2)
+        global  EXTN(jsimd_chuff_encode_one_block_sse2)
 
-EXTN(jsimd_encode_one_block_sse2):
+EXTN(jsimd_chuff_encode_one_block_sse2):
         push    ebp
         mov     eax,esp                         ; eax = original ebp
         sub     esp, byte 4
