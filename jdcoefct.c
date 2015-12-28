@@ -289,13 +289,22 @@ decompress_simd256_onepass (j_decompress_ptr cinfo, JSAMPIMAGE output_buf)
 					(size_t) ( 2* cinfo->blocks_in_MCU * sizeof(JBLOCK)));
 
 			ret = (*cinfo->entropy->decode_mcu) (cinfo, coef->SIMD256_buffer[0]);
-			if(b_dual_codec)
-				ret &= (*cinfo->entropy->decode_mcu) (cinfo, coef->SIMD256_buffer[1]);
-			if (! ret)
+			if(!ret)
 			{
-				/* Suspension forced; update state counters and exit */
 				coef->MCU_vert_offset = yoffset;
+				coef->MCU_ctr = MCU_col_num;
 				return JPEG_SUSPENDED;
+			}
+
+			if(b_dual_codec)
+			{
+				ret = (*cinfo->entropy->decode_mcu) (cinfo, coef->SIMD256_buffer[1]);
+				if(!ret)
+				{
+					coef->MCU_vert_offset = yoffset;
+					coef->MCU_ctr = MCU_col_num+1;
+					return JPEG_SUSPENDED;
+				}
 			}
 
 			for (ci = 0; ci < cinfo->comps_in_scan; ci++) {
