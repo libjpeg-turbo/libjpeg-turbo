@@ -5,6 +5,7 @@
  * Copyright (C) 1991-1997, Thomas G. Lane.
  * libjpeg-turbo Modifications:
  * Copyright (C) 2009-2011, 2014-2015 D. R. Commander.
+ * Copyright (C) 2015 Matthieu Darbois.
  * For conditions of distribution and use, see the accompanying README.ijg
  * file.
  *
@@ -21,6 +22,7 @@
 #include "jinclude.h"
 #include "jpeglib.h"
 #include "jchuff.h"             /* Declarations shared with jcphuff.c */
+#include "jsimdchuff.h"
 #include <limits.h>
 
 /*
@@ -478,6 +480,21 @@ flush_bits (working_state * state)
 
 
 /* Encode a single block's worth of coefficients */
+LOCAL(boolean)
+encode_one_block_simd (working_state * state, JCOEFPTR block, int last_dc_val,
+                  c_derived_tbl *dctbl, c_derived_tbl *actbl)
+{
+  JOCTET _buffer[BUFSIZE], *buffer;
+  size_t bytes, bytestocopy;  int localbuf = 0;
+
+  LOAD_BUFFER()
+
+  buffer = jsimd_chuff_encode_one_block(state, buffer, block, last_dc_val, dctbl, actbl);
+
+  STORE_BUFFER()
+
+  return TRUE;
+}
 
 LOCAL(boolean)
 encode_one_block (working_state * state, JCOEFPTR block, int last_dc_val,
@@ -587,7 +604,6 @@ encode_one_block (working_state * state, JCOEFPTR block, int last_dc_val,
   return TRUE;
 }
 
-
 /*
  * Emit a restart marker & resynchronize predictions.
  */
@@ -624,6 +640,12 @@ encode_mcu_huff (j_compress_ptr cinfo, JBLOCKROW *MCU_data)
   working_state state;
   int blkn, ci;
   jpeg_component_info * compptr;
+  boolean (*encode_one_block_ptr) (working_state*, JCOEFPTR, int,
+                  c_derived_tbl *, c_derived_tbl *) = encode_one_block;
+
+  if (jsimd_can_chuff_encode_one_block()) {
+    encode_one_block_ptr = encode_one_block_simd;
+  }
 
   /* Load up working state */
   state.next_output_byte = cinfo->dest->next_output_byte;
@@ -642,10 +664,10 @@ encode_mcu_huff (j_compress_ptr cinfo, JBLOCKROW *MCU_data)
   for (blkn = 0; blkn < cinfo->blocks_in_MCU; blkn++) {
     ci = cinfo->MCU_membership[blkn];
     compptr = cinfo->cur_comp_info[ci];
-    if (! encode_one_block(&state,
-                           MCU_data[blkn][0], state.cur.last_dc_val[ci],
-                           entropy->dc_derived_tbls[compptr->dc_tbl_no],
-                           entropy->ac_derived_tbls[compptr->ac_tbl_no]))
+    if (! encode_one_block_ptr(&state,
+                               MCU_data[blkn][0], state.cur.last_dc_val[ci],
+                               entropy->dc_derived_tbls[compptr->dc_tbl_no],
+                               entropy->ac_derived_tbls[compptr->ac_tbl_no]))
       return FALSE;
     /* Update last_dc_val */
     state.cur.last_dc_val[ci] = MCU_data[blkn][0][0];
