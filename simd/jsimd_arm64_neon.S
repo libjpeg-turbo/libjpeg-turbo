@@ -7,6 +7,7 @@
  * Copyright (C) 2013-2014, Linaro Limited
  * Author: Ragesh Radhakrishnan <ragesh.r@linaro.org>
  * Copyright (C) 2014-2015, D. R. Commander.  All Rights Reserved.
+ * Copyright (C) 2015, Matthieu Darbois.  All Rights Reserved.
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the authors be held liable for any damages
@@ -1859,3 +1860,399 @@ generate_jsimd_ycc_rgb_convert_neon extxrgb, 32, 1, .4h,   2, .4h,   3, .4h,   .
 generate_jsimd_ycc_rgb_convert_neon rgb565,  16, 0, .4h,   0, .4h,   0, .4h,   .8b
 .purgem do_load
 .purgem do_store
+
+/*****************************************************************************/
+
+/*
+ * GLOBAL(JOCTET*)
+ * jsimd_chuff_encode_one_block (working_state * state, JOCTET *buffer,
+ *                               JCOEFPTR block, int last_dc_val,
+ *                               c_derived_tbl *dctbl, c_derived_tbl *actbl)
+ *
+ */
+
+.macro emit_byte
+    sub x7, x7, #0x8 /* put_bits -= 8 */
+    lsr x19, x6, x7
+    uxtb w19, w19
+    strb w19, [x1, #1]!
+    cmp w19, #0xff
+    bne 14f
+    strb wzr, [x1, #1]!
+14:
+.endm
+.macro put_bits CODE, SIZE
+    lsl x6, x6, \SIZE
+    add x7, x7, \SIZE
+    orr x6, x6, \CODE
+.endm
+.macro checkbuf31
+  cmp x7, #0x20
+  blt 31f
+    emit_byte
+    emit_byte
+    emit_byte
+    emit_byte
+31:
+.endm
+.macro checkbuf47
+  cmp x7, #0x30
+  blt 47f
+    emit_byte
+    emit_byte
+    emit_byte
+    emit_byte
+    emit_byte
+    emit_byte
+47:
+.endm
+
+.balign 16
+jsimd_chuff_encode_one_block_neon_consts:
+    .byte 0x01
+    .byte 0x02
+    .byte 0x04
+    .byte 0x08
+    .byte 0x10
+    .byte 0x20
+    .byte 0x40
+    .byte 0x80
+
+asm_function jsimd_chuff_encode_one_block_neon
+    sub sp, sp, 432
+    /* Save NEON registers */
+    st1 {v0.8b, v1.8b, v2.8b, v3.8b}, [sp], 32
+    st1 {v4.8b, v5.8b, v6.8b, v7.8b}, [sp], 32
+    st1 {v8.8b, v9.8b, v10.8b, v11.8b}, [sp], 32
+    st1 {v12.8b, v13.8b, v14.8b, v15.8b}, [sp], 32
+    /* Save ARM registers */
+    stp x4, x5, [sp], 16
+    stp x6, x7, [sp], 16
+    stp x19, x20, [sp], 16
+    sub x1, x1, #0x1   /* r10=buffer-- */
+    ldr x6, [x0, #0x10]  /* x6 = put_buffer */
+    ldr w7, [x0, #0x18]  /* x7  = put_bits */
+    
+    ldrsh w12, [x2]
+    mov w13, #0x10
+    mov w14, #0x1
+    adr x15, jsimd_chuff_encode_one_block_neon_consts
+    /* prepare data */
+    ld1 {v13.8b}, [x15]
+    eor v8.16b, v8.16b, v8.16b
+    eor v9.16b, v9.16b, v9.16b
+    dup v14.8h, w13
+    dup v15.8h, w14
+    eor v10.16b, v10.16b, v10.16b
+    eor v11.16b, v11.16b, v11.16b
+    sub w12, w12, w3   /* last_dc_val, not used afterwards */
+    add x13, x2, #0x22
+    add x14, x2, #0x18
+    add x3, x2, #0x36
+    ins v0.h[0], w12
+    ld1 {v1.h}[0], [x13]
+    ld1 {v2.h}[0], [x14]
+    ld1 {v3.h}[0], [x3]
+    add x12, x2, #0x2
+    add x13, x2, #0x30
+    add x14, x2, #0x26
+    add x3, x2, #0x28
+    ld1 {v0.h}[1], [x12]
+    ld1 {v1.h}[1], [x13]
+    ld1 {v2.h}[1], [x14]
+    ld1 {v3.h}[1], [x3]
+    add x12, x2, #0x10
+    add x13, x2, #0x40
+    add x14, x2, #0x34
+    add x3, x2, #0x1a
+    ld1 {v0.h}[2], [x12]
+    ld1 {v1.h}[2], [x13]
+    ld1 {v2.h}[2], [x14]
+    ld1 {v3.h}[2], [x3]
+    add x12, x2, #0x20
+    add x13, x2, #0x32
+    add x14, x2, #0x42
+    add x3, x2, #0xc
+    ld1 {v0.h}[3], [x12]
+    ld1 {v1.h}[3], [x13]
+    ld1 {v2.h}[3], [x14]
+    ld1 {v3.h}[3], [x3]
+    add x12, x2, #0x12
+    add x13, x2, #0x24
+    add x14, x2, #0x50
+    add x3, x2, #0xe
+    ld1 {v0.h}[4], [x12]
+    ld1 {v1.h}[4], [x13]
+    ld1 {v2.h}[4], [x14]
+    ld1 {v3.h}[4], [x3]
+    add x12, x2, #0x4
+    add x13, x2, #0x16
+    add x14, x2, #0x60
+    add x3, x2, #0x1c
+    ld1 {v0.h}[5], [x12]
+    ld1 {v1.h}[5], [x13]
+    ld1 {v2.h}[5], [x14]
+    ld1 {v3.h}[5], [x3]
+    add x12, x2, #0x6
+    add x13, x2, #0x8
+    add x14, x2, #0x52
+    add x3, x2, #0x2a
+    ld1 {v0.h}[6], [x12]
+    ld1 {v1.h}[6], [x13]
+    ld1 {v2.h}[6], [x14]
+    ld1 {v3.h}[6], [x3]
+    add x12, x2, #0x14
+    add x13, x2, #0xa
+    add x14, x2, #0x44
+    add x3, x2, #0x38
+    ld1 {v0.h}[7], [x12]
+    ld1 {v1.h}[7], [x13]
+    ld1 {v2.h}[7], [x14]
+    ld1 {v3.h}[7], [x3]
+    cmgt v8.8h, v8.8h, v0.8h
+    cmgt v9.8h, v9.8h, v1.8h
+    cmgt v10.8h, v10.8h, v2.8h
+    cmgt v11.8h, v11.8h, v3.8h
+    abs v0.8h, v0.8h
+    abs v1.8h, v1.8h
+    abs v2.8h, v2.8h
+    abs v3.8h, v3.8h
+    eor v8.16b, v8.16b, v0.16b
+    eor v9.16b, v9.16b, v1.16b
+    eor v10.16b, v10.16b, v2.16b
+    eor v11.16b, v11.16b, v3.16b
+    add x13, sp, #0x20
+    add x14, sp, #0x80
+    add x3, sp, #0xa0
+    clz v0.8h, v0.8h
+    clz v1.8h, v1.8h
+    clz v2.8h, v2.8h
+    clz v3.8h, v3.8h
+    sub v0.8h, v14.8h, v0.8h
+    sub v1.8h, v14.8h, v1.8h
+    sub v2.8h, v14.8h, v2.8h
+    sub v3.8h, v14.8h, v3.8h
+    st1 {v0.8h, v1.8h}, [sp]
+    st1 {v2.8h, v3.8h}, [x13]
+    sshl v0.8h, v15.8h, v0.8h
+    sshl v1.8h, v15.8h, v1.8h
+    sshl v2.8h, v15.8h, v2.8h
+    sshl v3.8h, v15.8h, v3.8h
+    sub v0.8h, v0.8h, v15.8h
+    sub v1.8h, v1.8h, v15.8h
+    sub v2.8h, v2.8h, v15.8h
+    sub v3.8h, v3.8h, v15.8h
+    and v8.16b, v8.16b, v0.16b
+    and v9.16b, v9.16b, v1.16b
+    and v10.16b, v10.16b, v2.16b
+    and v11.16b, v11.16b, v3.16b
+    st1 {v8.8h, v9.8h}, [x14]
+    st1 {v10.8h, v11.8h}, [x3]
+    add x12, x2, #0x46
+    add x13, x2, #0x3a
+    add x14, x2, #0x74
+    add x3, x2, #0x6a
+    ld1 {v4.h}[0], [x12]
+    ld1 {v5.h}[0], [x13]
+    ld1 {v6.h}[0], [x14]
+    ld1 {v7.h}[0], [x3]
+    eor v8.16b, v8.16b, v8.16b
+    eor v9.16b, v9.16b, v9.16b
+    eor v10.16b, v10.16b, v10.16b
+    eor v11.16b, v11.16b, v11.16b
+    add x12, x2, #0x54
+    add x13, x2, #0x2c
+    add x14, x2, #0x76
+    add x3, x2, #0x78
+    ld1 {v4.h}[1], [x12]
+    ld1 {v5.h}[1], [x13]
+    ld1 {v6.h}[1], [x14]
+    ld1 {v7.h}[1], [x3]
+    add x12, x2, #0x62
+    add x13, x2, #0x1e
+    add x14, x2, #0x68
+    add x3, x2, #0x7a
+    ld1 {v4.h}[2], [x12]
+    ld1 {v5.h}[2], [x13]
+    ld1 {v6.h}[2], [x14]
+    ld1 {v7.h}[2], [x3]
+    add x12, x2, #0x70
+    add x13, x2, #0x2e
+    add x14, x2, #0x5a
+    add x3, x2, #0x6c
+    ld1 {v4.h}[3], [x12]
+    ld1 {v5.h}[3], [x13]
+    ld1 {v6.h}[3], [x14]
+    ld1 {v7.h}[3], [x3]
+    add x12, x2, #0x72
+    add x13, x2, #0x3c
+    add x14, x2, #0x4c
+    add x3, x2, #0x5e
+    ld1 {v4.h}[4], [x12]
+    ld1 {v5.h}[4], [x13]
+    ld1 {v6.h}[4], [x14]
+    ld1 {v7.h}[4], [x3]
+    add x12, x2, #0x64
+    add x13, x2, #0x4a
+    add x14, x2, #0x3e
+    add x3, x2, #0x6e
+    ld1 {v4.h}[5], [x12]
+    ld1 {v5.h}[5], [x13]
+    ld1 {v6.h}[5], [x14]
+    ld1 {v7.h}[5], [x3]
+    add x12, x2, #0x56
+    add x13, x2, #0x58
+    add x14, x2, #0x4e
+    add x3, x2, #0x7c
+    ld1 {v4.h}[6], [x12]
+    ld1 {v5.h}[6], [x13]
+    ld1 {v6.h}[6], [x14]
+    ld1 {v7.h}[6], [x3]
+    add x12, x2, #0x48
+    add x13, x2, #0x66
+    add x14, x2, #0x5c
+    add x3, x2, #0x7e
+    ld1 {v4.h}[7], [x12]
+    ld1 {v5.h}[7], [x13]
+    ld1 {v6.h}[7], [x14]
+    ld1 {v7.h}[7], [x3]
+    cmgt v8.8h, v8.8h, v4.8h
+    cmgt v9.8h, v9.8h, v5.8h
+    cmgt v10.8h, v10.8h, v6.8h
+    cmgt v11.8h, v11.8h, v7.8h
+    abs v4.8h, v4.8h
+    abs v5.8h, v5.8h
+    abs v6.8h, v6.8h
+    abs v7.8h, v7.8h
+    eor v8.16b, v8.16b, v4.16b
+    eor v9.16b, v9.16b, v5.16b
+    eor v10.16b, v10.16b, v6.16b
+    eor v11.16b, v11.16b, v7.16b
+    add x12, sp, #0x40
+    add x13, sp, #0x60
+    add x14, sp, #0xc0
+    add x3, sp, #0xe0
+    clz v4.8h, v4.8h
+    clz v5.8h, v5.8h
+    clz v6.8h, v6.8h
+    clz v7.8h, v7.8h
+    sub v4.8h, v14.8h, v4.8h
+    sub v5.8h, v14.8h, v5.8h
+    sub v6.8h, v14.8h, v6.8h
+    sub v7.8h, v14.8h, v7.8h
+    st1 {v4.8h, v5.8h}, [x12]
+    st1 {v6.8h, v7.8h}, [x13]
+    sshl v4.8h, v15.8h, v4.8h
+    sshl v5.8h, v15.8h, v5.8h
+    sshl v6.8h, v15.8h, v6.8h
+    sshl v7.8h, v15.8h, v7.8h
+    sub v4.8h, v4.8h, v15.8h
+    sub v5.8h, v5.8h, v15.8h
+    sub v6.8h, v6.8h, v15.8h
+    sub v7.8h, v7.8h, v15.8h
+    and v8.16b, v8.16b, v4.16b
+    and v9.16b, v9.16b, v5.16b
+    and v10.16b, v10.16b, v6.16b
+    and v11.16b, v11.16b, v7.16b
+    st1 {v8.8h, v9.8h}, [x14]
+    st1 {v10.8h, v11.8h}, [x3]
+    add  x3, x4, #0x400   /* r1 = dctbl->ehufsi */
+    add x15, sp, #0x80  /* x15 = t2 */
+    ldrh w12, [sp]
+    ldrh w13, [x15]
+    ldr  w10, [x4, x12, lsl #2]
+    ldrb w11, [x3, x12]
+    checkbuf47
+    put_bits x10, x11
+    checkbuf47
+    put_bits x13, x12
+    eor v8.16b, v8.16b, v8.16b
+    cmeq v0.8h, v0.8h, v8.8h
+    cmeq v1.8h, v1.8h, v8.8h
+    cmeq v2.8h, v2.8h, v8.8h
+    cmeq v3.8h, v3.8h, v8.8h
+    cmeq v4.8h, v4.8h, v8.8h
+    cmeq v5.8h, v5.8h, v8.8h
+    cmeq v6.8h, v6.8h, v8.8h
+    cmeq v7.8h, v7.8h, v8.8h
+    xtn v0.8b, v0.8h
+    xtn v1.8b, v1.8h
+    xtn v2.8b, v2.8h
+    xtn v3.8b, v3.8h
+    xtn v4.8b, v4.8h
+    xtn v5.8b, v5.8h
+    xtn v6.8b, v6.8h
+    xtn v7.8b, v7.8h
+    and v0.8b, v0.8b, v13.8b
+    and v1.8b, v1.8b, v13.8b
+    and v2.8b, v2.8b, v13.8b
+    and v3.8b, v3.8b, v13.8b
+    and v4.8b, v4.8b, v13.8b
+    and v5.8b, v5.8b, v13.8b
+    and v6.8b, v6.8b, v13.8b
+    and v7.8b, v7.8b, v13.8b
+    addp v0.8b, v0.8b, v1.8b
+    addp v2.8b, v2.8b, v3.8b
+    addp v4.8b, v4.8b, v5.8b
+    addp v6.8b, v6.8b, v7.8b
+    addp v0.8b, v0.8b, v2.8b
+    addp v4.8b, v4.8b, v6.8b
+    addp v0.8b, v0.8b, v4.8b
+    umov x9,v0.D[0]
+    mvn x9, x9
+    lsr x9, x9, #0x1 /* clear AC coeff */
+    rbit x9, x9 /* x9 = index0 */
+    add x4, x5, #0x400     /* x4 = actbl->ehufsi */
+    ldr  w13, [x5, #0x3c0] /* x13 = actbl->ehufco[0xf0] */
+    ldrb w14, [x4, #0xf0]  /* x14 = actbl->ehufsi[0xf0] */
+    cmp x9, #0x0
+    beq 6f
+1:
+    clz x2, x9
+    add x15, x15, x2, lsl #1
+    lsl x9, x9, x2
+    ldrh w11, [x15, #-126]
+2:
+    cmp x2, #0x10
+    blt 3f
+    sub x2, x2, #0x10
+    checkbuf47
+    put_bits x13, x14
+    b 2b
+3:
+    add x2, x11, x2, lsl #4
+    ldrh w3, [x15, #2]!
+    ldr w12, [x5, x2, lsl #2]
+    ldrb w10, [x4, x2]
+    checkbuf31
+    put_bits x12, x10
+    put_bits x3, x11
+    lsl x9, x9, #0x1
+    cbnz x9, 1b
+6:
+    add x13, sp, #0xfe
+    cmp x15, x13
+    bhs 1f
+    ldr w12, [x5]
+    ldrb w14, [x4]
+    checkbuf47
+    put_bits x12, x14
+1:
+    str x6, [x0, #0x10]
+    str w7, [x0, #0x18]
+    add x0, x1, #0x1
+    sub sp, sp, 176
+    ld1             {v0.8b, v1.8b, v2.8b, v3.8b}, [sp], 32
+    ld1             {v4.8b, v5.8b, v6.8b, v7.8b}, [sp], 32
+    ld1             {v8.8b, v9.8b, v10.8b, v11.8b}, [sp], 32
+    ld1             {v12.8b, v13.8b, v14.8b, v15.8b}, [sp], 32
+    ldp x4, x5, [sp], 16
+    ldp x6, x7, [sp], 16
+    ldp x19, x20, [sp], 16
+    add sp, sp, 256
+    br x30
+
+.purgem emit_byte
+.purgem put_bits
+.purgem checkbuf31
+.purgem checkbuf47
