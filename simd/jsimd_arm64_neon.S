@@ -91,6 +91,35 @@ _\fname:
     transpose_4x4_32 \x0,.2s, \x1,.2s, \x2,.2s,\x3,.2s,\x5,.16b
 .endm
 
+.macro transpose_8x8 l0, l1, l2, l3, l4, l5, l6, l7, t0, t1, t2, t3 
+    trn1 \t0\().8h, \l0\().8h, \l1\().8h
+    trn1 \t1\().8h, \l2\().8h, \l3\().8h
+    trn1 \t2\().8h, \l4\().8h, \l5\().8h
+    trn1 \t3\().8h, \l6\().8h, \l7\().8h
+    trn2 \l1\().8h, \l0\().8h, \l1\().8h
+    trn2 \l3\().8h, \l2\().8h, \l3\().8h
+    trn2 \l5\().8h, \l4\().8h, \l5\().8h
+    trn2 \l7\().8h, \l6\().8h, \l7\().8h
+    
+    trn1 \l4\().4s, \t2\().4s, \t3\().4s
+    trn2 \t3\().4s, \t2\().4s, \t3\().4s
+    trn1 \t2\().4s, \t0\().4s, \t1\().4s
+    trn2 \l2\().4s, \t0\().4s, \t1\().4s
+    trn1 \t0\().4s, \l1\().4s, \l3\().4s
+    trn2 \l3\().4s, \l1\().4s, \l3\().4s
+    trn2 \t1\().4s, \l5\().4s, \l7\().4s
+    trn1 \l5\().4s, \l5\().4s, \l7\().4s
+    
+    trn2 \l6\().2d, \l2\().2d, \t3\().2d
+    trn1 \l0\().2d, \t2\().2d, \l4\().2d
+    trn1 \l1\().2d, \t0\().2d, \l5\().2d
+    trn2 \l7\().2d, \l3\().2d, \t1\().2d
+    trn1 \l2\().2d, \l2\().2d, \t3\().2d
+    trn2 \l4\().2d, \t2\().2d, \l4\().2d
+    trn1 \l3\().2d, \l3\().2d, \t1\().2d
+    trn2 \l5\().2d, \t0\().2d, \l5\().2d
+.endm
+
 
 #define CENTERJSAMPLE 128
 
@@ -1859,3 +1888,114 @@ generate_jsimd_ycc_rgb_convert_neon extxrgb, 32, 1, .4h,   2, .4h,   3, .4h,   .
 generate_jsimd_ycc_rgb_convert_neon rgb565,  16, 0, .4h,   0, .4h,   0, .4h,   .8b
 .purgem do_load
 .purgem do_store
+
+/*****************************************************************************/
+
+/*
+ * jsimd_fdct_ifast_neon
+ *
+ * This function contains a fast, not so accurate integer implementation of
+ * the forward DCT (Discrete Cosine Transform). It uses the same calculations
+ * and produces exactly the same output as IJG''s original 'jpeg_fdct_ifast'
+ * function from jfdctfst.c
+ *
+ * TODO: can be combined with 'jsimd_convsamp_neon' to get
+ *       rid of a bunch of VLD1.16 instructions
+ */
+
+#undef XFIX_0_541196100
+#define XFIX_0_382683433 v0.h[0]
+#define XFIX_0_541196100 v0.h[1]
+#define XFIX_0_707106781 v0.h[2]
+#define XFIX_1_306562965 v0.h[3]
+
+.balign 16
+jsimd_fdct_ifast_neon_consts:
+    .short (98 * 128)              /* XFIX_0_382683433 */
+    .short (139 * 128)             /* XFIX_0_541196100 */
+    .short (181 * 128)             /* XFIX_0_707106781 */
+    .short (334 * 128 - 256 * 128) /* XFIX_1_306562965 */
+
+asm_function jsimd_fdct_ifast_neon
+
+    DATA    .req x0
+    TMP     .req x9
+
+    /* Load constants */
+    adr     TMP, jsimd_fdct_ifast_neon_consts
+    ld1     {v0.4h}, [TMP]
+
+    /* Load all DATA into NEON registers with the following allocation:
+     *       0 1 2 3 | 4 5 6 7
+     *      ---------+--------
+     *   0 | d16     | d17    | v0.8h
+     *   1 | d18     | d19    | q9 
+     *   2 | d20     | d21    | q10
+     *   3 | d22     | d23    | q11
+     *   4 | d24     | d25    | q12
+     *   5 | d26     | d27    | q13
+     *   6 | d28     | d29    | q14
+     *   7 | d30     | d31    | q15
+     */
+
+    ld1     {v16.8h, v17.8h, v18.8h, v19.8h}, [DATA], 64
+    ld1     {v20.8h, v21.8h, v22.8h, v23.8h}, [DATA]
+    mov     TMP, #2
+    sub     DATA, DATA, #64
+1:
+    /* Transpose */
+    transpose_8x8 v16, v17, v18, v19, v20, v21, v22, v23, v1, v2, v3, v4
+    subs    TMP, TMP, #1
+    /* 1-D FDCT */
+    add      v4.8h, v19.8h, v20.8h
+    sub     v20.8h, v19.8h, v20.8h
+    sub     v28.8h, v18.8h, v21.8h
+    add     v18.8h, v18.8h, v21.8h
+    sub     v29.8h, v17.8h, v22.8h
+    add     v17.8h, v17.8h, v22.8h
+    sub     v21.8h, v16.8h, v23.8h
+    add     v16.8h, v16.8h, v23.8h
+    sub      v6.8h, v17.8h, v18.8h
+    sub      v7.8h, v16.8h, v4.8h
+    add      v5.8h, v17.8h, v18.8h
+    add      v6.8h,  v6.8h, v7.8h
+    add      v4.8h, v16.8h, v4.8h
+    sqdmulh  v6.8h,  v6.8h, XFIX_0_707106781
+    add     v19.8h, v20.8h, v28.8h
+    add     v16.8h,  v4.8h, v5.8h
+    sub     v20.8h,  v4.8h, v5.8h
+    add      v5.8h, v28.8h, v29.8h
+    add     v29.8h, v29.8h, v21.8h
+    sqdmulh  v5.8h,  v5.8h, XFIX_0_707106781
+    sub     v28.8h, v19.8h, v29.8h
+    add     v18.8h,  v7.8h, v6.8h
+    sqdmulh v28.8h, v28.8h, XFIX_0_382683433
+    sub     v22.8h,  v7.8h, v6.8h
+    sqdmulh v19.8h, v19.8h, XFIX_0_541196100
+    sqdmulh  v7.8h, v29.8h, XFIX_1_306562965
+    add      v6.8h, v21.8h, v5.8h
+    sub      v5.8h, v21.8h, v5.8h
+    add     v29.8h, v29.8h, v28.8h
+    add     v19.8h, v19.8h, v28.8h
+    add     v29.8h, v29.8h, v7.8h
+    add     v21.8h,  v5.8h, v19.8h
+    sub     v19.8h,  v5.8h, v19.8h
+    add     v17.8h,  v6.8h, v29.8h
+    sub     v23.8h,  v6.8h, v29.8h
+    
+    bne     1b
+
+    /* store results */
+    st1     {v16.8h, v17.8h, v18.8h, v19.8h}, [DATA], 64
+    st1     {v20.8h, v21.8h, v22.8h, v23.8h}, [DATA]
+
+    br              x30
+
+    .unreq          DATA
+    .unreq          TMP
+#undef XFIX_0_382683433
+#undef XFIX_0_541196100
+#undef XFIX_0_707106781
+#undef XFIX_1_306562965
+
+
