@@ -1998,4 +1998,110 @@ asm_function jsimd_fdct_ifast_neon
 #undef XFIX_0_707106781
 #undef XFIX_1_306562965
 
+/*****************************************************************************/
+
+/*
+ * GLOBAL(void)
+ * jsimd_quantize_neon (JCOEFPTR coef_block, DCTELEM * divisors,
+ *                      DCTELEM * workspace);
+ *
+ * Note: the code uses 2 stage pipelining in order to improve instructions
+ *       scheduling and eliminate stalls (this provides ~15% better
+ *       performance for this function on both ARM Cortex-A8 and
+ *       ARM Cortex-A9 when compared to the non-pipelined variant).
+ *       The instructions which belong to the second stage use different
+ *       indentation for better readiability.
+ */
+asm_function jsimd_quantize_neon
+
+    COEF_BLOCK      .req x0
+    DIVISORS        .req x1
+    WORKSPACE       .req x2
+
+    RECIPROCAL      .req DIVISORS
+    CORRECTION      .req x9
+    SHIFT           .req x10
+    LOOP_COUNT      .req x11
+
+    ld1             {v0.8h, v1.8h}, [WORKSPACE], 32
+    abs             v20.8h, v0.8h
+    add             CORRECTION, DIVISORS, #(64 * 2)
+    add             SHIFT, DIVISORS, #(64 * 6)
+    ld1             {v18.8h, v19.8h}, [CORRECTION], 32
+    abs             v21.8h, v1.8h
+    ld1             {v26.4h, v27.4h, v28.4h, v29.4h}, [RECIPROCAL], 32
+    add             v20.8h, v20.8h, v18.8h /* add correction */
+    add             v21.8h, v21.8h, v19.8h
+    ins             v24.d[0], v20.d[1]
+    ins             v25.d[0], v21.d[1]
+    umull           v18.4s, v20.4h, v26.4h /* multiply by reciprocal */
+    umull           v16.4s, v24.4h, v27.4h
+    umull           v19.4s, v21.4h, v28.4h
+    umull           v17.4s, v25.4h, v29.4h
+    ld1             {v20.8h, v21.8h}, [SHIFT], 32
+    shrn            v18.4h, v18.4s, #16
+    shrn            v16.4h, v16.4s, #16
+    shrn            v19.4h, v19.4s, #16
+    shrn            v17.4h, v17.4s, #16
+    ins             v18.d[1], v16.d[0]
+    ins             v19.d[1], v17.d[0]
+    neg             v20.8h, v20.8h
+    neg             v21.8h, v21.8h
+    sshr            v2.8h,  v0.8h,  #15 /* extract sign */
+    sshr            v3.8h,  v1.8h,  #15
+    ushl            v22.8h, v18.8h, v20.8h /* shift */
+    ushl            v23.8h, v19.8h, v21.8h
+
+    mov             LOOP_COUNT, #3
+1:
+    ld1             {v0.8h, v1.8h}, [WORKSPACE], 32
+      eor             v22.16b, v22.16b, v2.16b  /* restore sign */
+    abs             v20.8h, v0.8h
+    ld1             {v18.8h, v19.8h}, [CORRECTION], 32
+    abs             v21.8h, v1.8h
+      eor             v23.16b, v23.16b, v3.16b
+    ld1             {v26.4h, v27.4h, v28.4h, v29.4h}, [RECIPROCAL], 32
+    add             v20.8h, v20.8h, v18.8h /* add correction */
+    add             v21.8h, v21.8h, v19.8h
+    ins             v24.d[0], v20.d[1]
+    ins             v25.d[0], v21.d[1]
+    umull           v18.4s, v20.4h, v26.4h /* multiply by reciprocal */
+    umull           v16.4s, v24.4h, v27.4h
+    umull           v19.4s, v21.4h, v28.4h
+    umull           v17.4s, v25.4h, v29.4h
+      sub             v22.8h, v22.8h, v2.8h
+    ld1             {v20.8h, v21.8h}, [SHIFT], 32
+      sub             v23.8h, v23.8h, v3.8h
+    shrn            v18.4h, v18.4s, #16
+    shrn            v16.4h, v16.4s, #16
+    shrn            v19.4h, v19.4s, #16
+    shrn            v17.4h, v17.4s, #16
+      st1             {v22.8h, v23.8h}, [COEF_BLOCK], 32
+    ins             v18.d[1], v16.d[0]
+    ins             v19.d[1], v17.d[0]
+    neg             v20.8h, v20.8h
+    neg             v21.8h, v21.8h
+    sshr            v2.8h,  v0.8h,  #15 /* extract sign */
+    sshr            v3.8h,  v1.8h,  #15
+    ushl            v22.8h, v18.8h, v20.8h /* shift */
+    ushl            v23.8h, v19.8h, v21.8h
+    subs            LOOP_COUNT, LOOP_COUNT, #1
+    bne             1b
+
+
+      eor             v22.16b, v22.16b, v2.16b  /* restore sign */
+      eor             v23.16b, v23.16b, v3.16b
+      sub             v22.8h, v22.8h, v2.8h
+      sub             v23.8h, v23.8h, v3.8h
+      st1             {v22.8h, v23.8h}, [COEF_BLOCK], 32
+
+    br              x30 /* return */
+
+    .unreq          COEF_BLOCK
+    .unreq          DIVISORS
+    .unreq          WORKSPACE
+    .unreq          RECIPROCAL
+    .unreq          CORRECTION
+    .unreq          SHIFT
+    .unreq          LOOP_COUNT
 
