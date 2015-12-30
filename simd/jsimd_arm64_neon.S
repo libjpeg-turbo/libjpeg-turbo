@@ -1084,6 +1084,7 @@ asm_function jsimd_idct_ifast_neon
     .unreq          TMP2
     .unreq          TMP3
     .unreq          TMP4
+    .unreq          TMP5
 
 
 /*****************************************************************************/
@@ -1892,6 +1893,79 @@ generate_jsimd_ycc_rgb_convert_neon rgb565,  16, 0, .4h,   0, .4h,   0, .4h,   .
 /*****************************************************************************/
 
 /*
+ * Load data into workspace, applying unsigned->signed conversion
+ *
+ * TODO: can be combined with 'jsimd_fdct_ifast_neon' to get
+ *       rid of VST1.16 instructions
+ */
+
+asm_function jsimd_convsamp_neon
+    SAMPLE_DATA     .req x0
+    START_COL       .req x1
+    WORKSPACE       .req x2
+    TMP1            .req x9
+    TMP2            .req x10
+    TMP3            .req x11
+    TMP4            .req x12
+    TMP5            .req x13
+    TMP6            .req x14
+    TMP7            .req x15
+    TMP8            .req x4
+    TMPDUP          .req w3
+
+    
+    mov             TMPDUP, #128
+    ldp             TMP1, TMP2, [SAMPLE_DATA], 16
+    ldp             TMP3, TMP4, [SAMPLE_DATA], 16
+    dup             v0.8b, TMPDUP
+    add             TMP1, TMP1, START_COL
+    add             TMP2, TMP2, START_COL
+    ldp             TMP5, TMP6, [SAMPLE_DATA], 16
+    add             TMP3, TMP3, START_COL
+    add             TMP4, TMP4, START_COL
+    ldp             TMP7, TMP8, [SAMPLE_DATA], 16
+    add             TMP5, TMP5, START_COL
+    add             TMP6, TMP6, START_COL
+    ld1             {v16.8b}, [TMP1]
+    add             TMP7, TMP7, START_COL
+    add             TMP8, TMP8, START_COL
+    ld1             {v17.8b}, [TMP2]
+    usubl           v16.8h, v16.8b, v0.8b
+    ld1             {v18.8b}, [TMP3]
+    usubl           v17.8h, v17.8b, v0.8b
+    ld1             {v19.8b}, [TMP4]
+    usubl           v18.8h, v18.8b, v0.8b
+    ld1             {v20.8b}, [TMP5]
+    usubl           v19.8h, v19.8b, v0.8b
+    ld1             {v21.8b}, [TMP6]
+    st1             {v16.8h, v17.8h, v18.8h, v19.8h}, [WORKSPACE], 64
+    usubl           v20.8h, v20.8b, v0.8b
+    ld1             {v22.8b}, [TMP7]
+    usubl           v21.8h, v21.8b, v0.8b
+    ld1             {v23.8b}, [TMP8]
+    usubl           v22.8h, v22.8b, v0.8b
+    usubl           v23.8h, v23.8b, v0.8b
+    st1             {v20.8h, v21.8h, v22.8h, v23.8h}, [WORKSPACE], 64
+
+    br              x30
+
+    .unreq          SAMPLE_DATA
+    .unreq          START_COL
+    .unreq          WORKSPACE
+    .unreq          TMP1
+    .unreq          TMP2
+    .unreq          TMP3
+    .unreq          TMP4
+    .unreq          TMP5
+    .unreq          TMP6
+    .unreq          TMP7
+    .unreq          TMP8
+    .unreq          TMPDUP
+
+
+/*****************************************************************************/
+
+/*
  * jsimd_fdct_ifast_neon
  *
  * This function contains a fast, not so accurate integer implementation of
@@ -2005,12 +2079,6 @@ asm_function jsimd_fdct_ifast_neon
  * jsimd_quantize_neon (JCOEFPTR coef_block, DCTELEM * divisors,
  *                      DCTELEM * workspace);
  *
- * Note: the code uses 2 stage pipelining in order to improve instructions
- *       scheduling and eliminate stalls (this provides ~15% better
- *       performance for this function on both ARM Cortex-A8 and
- *       ARM Cortex-A9 when compared to the non-pipelined variant).
- *       The instructions which belong to the second stage use different
- *       indentation for better readiability.
  */
 asm_function jsimd_quantize_neon
 
