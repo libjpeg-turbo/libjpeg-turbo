@@ -679,6 +679,8 @@ EXTERN(void) jsimd_fdct_islow_mmx (DCTELEM * data);
 extern const int jconst_fdct_islow_sse2[];
 EXTERN(void) jsimd_fdct_islow_sse2 (DCTELEM * data);
 
+EXTERN(void) jsimd_fdct_islow_neon (DCTELEM * data);
+
 EXTERN(void) jsimd_fdct_islow_mips_dspr2 (DCTELEM * data);
 
 EXTERN(void) jsimd_fdct_islow_altivec (DCTELEM * data);

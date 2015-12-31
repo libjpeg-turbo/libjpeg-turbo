@@ -7,6 +7,7 @@
  * Copyright (C) 2013-2014, Linaro Limited
  * Author: Ragesh Radhakrishnan <ragesh.r@linaro.org>
  * Copyright (C) 2014-2015, D. R. Commander.  All Rights Reserved.
+ * Copyright (C) 2015, Matthieu Darbois.  All Rights Reserved.
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the authors be held liable for any damages
@@ -2284,6 +2285,463 @@ asm_function jsimd_convsamp_neon
     .unreq          TMP8
     .unreq          TMPDUP
 
+/*****************************************************************************/
+
+/*
+ * jsimd_fdct_islow_neon
+ *
+ * This file contains a slow-but-accurate integer implementation of the
+ * forward DCT (Discrete Cosine Transform). The following code is based
+ * directly on the IJG''s original jfdctint.c; see the jfdctint.c for
+ * more details.
+ *
+ * TODO: can be combined with 'jsimd_convsamp_neon' to get
+ *       rid of a bunch of VLD1.16 instructions
+ */
+
+#define CONST_BITS      13
+#define PASS1_BITS      2
+
+#define DESCALE_P1      (CONST_BITS-PASS1_BITS)
+#define DESCALE_P2      (CONST_BITS+PASS1_BITS)
+
+#if CONST_BITS == 13
+#define F_0_298      2446           /* FIX(0.298631336) */
+#define F_0_390      3196           /* FIX(0.390180644) */
+#define F_0_541      4433           /* FIX(0.541196100) */
+#define F_0_765      6270           /* FIX(0.765366865) */
+#define F_0_899      7373           /* FIX(0.899976223) */
+#define F_1_175      9633           /* FIX(1.175875602) */
+#define F_1_501     12299           /* FIX(1.501321110) */
+#define F_1_847     15137           /* FIX(1.847759065) */
+#define F_1_961     16069           /* FIX(1.961570560) */
+#define F_2_053     16819           /* FIX(2.053119869) */
+#define F_2_562     20995           /* FIX(2.562915447) */
+#define F_3_072     25172           /* FIX(3.072711026) */
+#else
+#define DESCALE(x,n)  (((x)+(1<<((n)-1)))>>(n))
+#define F_0_298     DESCALE( 320652955,30-CONST_BITS)       /* FIX(0.298631336) */
+#define F_0_390     DESCALE( 418953276,30-CONST_BITS)       /* FIX(0.390180644) */
+#define F_0_541     DESCALE( 581104887,30-CONST_BITS)       /* FIX(0.541196100) */
+#define F_0_765     DESCALE( 821806413,30-CONST_BITS)       /* FIX(0.765366865) */
+#define F_0_899     DESCALE( 966342111,30-CONST_BITS)       /* FIX(0.899976223) */
+#define F_1_175     DESCALE(1262586813,30-CONST_BITS)       /* FIX(1.175875602) */
+#define F_1_501     DESCALE(1612031267,30-CONST_BITS)       /* FIX(1.501321110) */
+#define F_1_847     DESCALE(1984016188,30-CONST_BITS)       /* FIX(1.847759065) */
+#define F_1_961     DESCALE(2106220350,30-CONST_BITS)       /* FIX(1.961570560) */
+#define F_2_053     DESCALE(2204520673,30-CONST_BITS)       /* FIX(2.053119869) */
+#define F_2_562     DESCALE(2751909506,30-CONST_BITS)       /* FIX(2.562915447) */
+#define F_3_072     DESCALE(3299298341,30-CONST_BITS)       /* FIX(3.072711026) */
+#endif
+
+.balign 16
+jsimd_fdct_islow_neon_consts:
+    .short F_0_298
+    .short -F_0_390
+    .short F_0_541
+    .short F_0_765
+    .short - F_0_899
+    .short F_1_175
+    .short F_1_501
+    .short - F_1_847
+    .short - F_1_961
+    .short F_2_053
+    .short - F_2_562
+    .short F_3_072
+    .short 0 /* padding */
+    .short 0
+    .short 0
+    .short 0
+    
+#undef F_0_298
+#undef F_0_390
+#undef F_0_541
+#undef F_0_765
+#undef F_0_899
+#undef F_1_175
+#undef F_1_501
+#undef F_1_847
+#undef F_1_961
+#undef F_2_053
+#undef F_2_562
+#undef F_3_072
+#define XFIX_P_0_298 v0.h[0]
+#define XFIX_N_0_390 v0.h[1]
+#define XFIX_P_0_541 v0.h[2]
+#define XFIX_P_0_765 v0.h[3]
+#define XFIX_N_0_899 v0.h[4]
+#define XFIX_P_1_175 v0.h[5]
+#define XFIX_P_1_501 v0.h[6]
+#define XFIX_N_1_847 v0.h[7]
+#define XFIX_N_1_961 v1.h[0]
+#define XFIX_P_2_053 v1.h[1]
+#define XFIX_N_2_562 v1.h[2]
+#define XFIX_P_3_072 v1.h[3]
+#define PD_DESCALE_P1 v2.4s
+#define PD_DESCALE_P2 v2.4s
+#define PW_DESCALE_P2 v3.8h
+
+asm_function jsimd_fdct_islow_neon
+
+    DATA    .req x0
+    TMP     .req x9
+    DSP1    .req w10
+    DSP2    .req w11
+    DSP2H   .req w12
+
+    /* Load constants */
+    adr     TMP, jsimd_fdct_islow_neon_consts
+    mov     DSP1, #(1 << (DESCALE_P1-1))
+    ld1     {v0.8h, v1.8h}, [TMP]
+    
+    /* Save NEON registers */
+    sub             sp, sp, #64
+    mov     DSP2, #(1 << (DESCALE_P2-1))
+    st1             {v8.8b, v9.8b, v10.8b, v11.8b}, [sp], 32
+    st1             {v12.8b, v13.8b, v14.8b, v15.8b}, [sp], 32
+
+    /* Load all DATA into NEON registers with the following allocation:
+     *       0 1 2 3 | 4 5 6 7
+     *      ---------+--------
+     *   0 | d16     | d17    | v16.8h
+     *   1 | d18     | d19    | v17.8h 
+     *   2 | d20     | d21    | v18.8h
+     *   3 | d22     | d23    | v19.8h
+     *   4 | d24     | d25    | v20.8h
+     *   5 | d26     | d27    | v21.8h
+     *   6 | d28     | d29    | v22.8h
+     *   7 | d30     | d31    | v23.8h
+     */
+
+    ld1     {v16.8h, v17.8h, v18.8h, v19.8h}, [DATA], 64
+    ld1     {v20.8h, v21.8h, v22.8h, v23.8h}, [DATA]
+    mov     DSP2H, #(1 << (PASS1_BITS-1))
+    sub     DATA, DATA, #64
+
+    /* Transpose */
+    transpose_8x8 v16, v17, v18, v19, v20, v21, v22, v23, v31, v2, v3, v4
+    /* 1-D FDCT */
+    dup PD_DESCALE_P1, DSP1
+    add v24.8h, v16.8h, v23.8h /* tmp0 = dataptr[0] + dataptr[7]; */
+    sub v31.8h, v16.8h, v23.8h /* tmp7 = dataptr[0] - dataptr[7]; */
+    add v25.8h, v17.8h, v22.8h /* tmp1 = dataptr[1] + dataptr[6]; */
+    sub v30.8h, v17.8h, v22.8h /* tmp6 = dataptr[1] - dataptr[6]; */
+    add v26.8h, v18.8h, v21.8h /* tmp2 = dataptr[2] + dataptr[5]; */
+    sub v29.8h, v18.8h, v21.8h /* tmp5 = dataptr[2] - dataptr[5]; */
+    add v27.8h, v19.8h, v20.8h /* tmp3 = dataptr[3] + dataptr[4]; */
+    sub v28.8h, v19.8h, v20.8h /* tmp4 = dataptr[3] - dataptr[4]; */
+    
+    /* even part */
+    
+    add v8.8h, v24.8h, v27.8h /* tmp10 = tmp0 + tmp3; */
+    sub v9.8h, v24.8h, v27.8h /* tmp13 = tmp0 - tmp3; */
+    add v10.8h, v25.8h, v26.8h /* tmp11 = tmp1 + tmp2; */
+    sub v11.8h, v25.8h, v26.8h /* tmp12 = tmp1 - tmp2; */
+    
+    add v16.8h, v8.8h, v10.8h /* tmp10 + tmp11 */
+    sub v20.8h, v8.8h, v10.8h /* tmp10 - tmp11 */
+    
+    ins  v12.d[0], v9.d[1] /* tmp13hi */
+    ins  v13.d[0], v11.d[1] /* tmp12hi */
+    
+    shl  v16.8h, v16.8h, #PASS1_BITS /* dataptr[0] = (DCTELEM) LEFT_SHIFT(tmp10 + tmp11, PASS1_BITS); */
+    shl  v20.8h, v20.8h, #PASS1_BITS /* dataptr[4] = (DCTELEM) LEFT_SHIFT(tmp10 - tmp11, PASS1_BITS); */
+  
+    add  v18.4h, v11.4h,  v9.4h /* tmp12 + tmp13 lo */
+    add  v24.4h, v13.4h, v12.4h /* tmp12 + tmp13 hi */
+    
+    smull v18.4s, v18.4h, XFIX_P_0_541 /* z1 lo = MULTIPLY(tmp12 + tmp13, XFIX_P_0_541); */
+    smull v24.4s, v24.4h, XFIX_P_0_541 /* z1 hi = MULTIPLY(tmp12 + tmp13, XFIX_P_0_541); */
+    mov   v22.4s, v18.4s
+    mov   v25.4s, v24.4s
+    
+    smlal v18.4s,  v9.4h, XFIX_P_0_765 /* lo z1 + MULTIPLY(tmp13, XFIX_P_0_765) */
+    smlal v24.4s, v12.4h, XFIX_P_0_765 /* hi z1 + MULTIPLY(tmp13, XFIX_P_0_765) */
+    smlal v22.4s, v11.4h, XFIX_N_1_847 /* lo z1 + MULTIPLY(tmp12, XFIX_N_1_847) */
+    smlal v25.4s, v13.4h, XFIX_N_1_847 /* hi z1 + MULTIPLY(tmp12, XFIX_N_1_847) */
+    
+    add v18.4s, v18.4s, PD_DESCALE_P1
+    add v24.4s, v24.4s, PD_DESCALE_P1
+    add v22.4s, v22.4s, PD_DESCALE_P1
+    add v25.4s, v25.4s, PD_DESCALE_P1
+    
+    shrn v18.4h, v18.4s, #DESCALE_P1
+    shrn v24.4h, v24.4s, #DESCALE_P1
+    shrn v22.4h, v22.4s, #DESCALE_P1
+    shrn v25.4h, v25.4s, #DESCALE_P1
+    
+    ins  v18.d[1], v24.d[0] /* dataptr[2] = (DCTELEM) DESCALE(z1 + MULTIPLY(tmp13, XFIX_P_0_765),
+                                   CONST_BITS-PASS1_BITS); */
+    ins  v22.d[1], v25.d[0] /* dataptr[6] = (DCTELEM) DESCALE(z1 + MULTIPLY(tmp12, XFIX_N_1_847),
+                                   CONST_BITS-PASS1_BITS); */
+                              
+    /* Odd part */
+
+    add  v8.8h, v28.8h, v31.8h /* z1 = tmp4 + tmp7; */
+    add  v9.8h, v29.8h, v30.8h /* z2 = tmp5 + tmp6; */
+    add v10.8h, v28.8h, v30.8h /* z3 = tmp4 + tmp6; */
+    add v11.8h, v29.8h, v31.8h /* z4 = tmp5 + tmp7; */
+    ins v12.d[0], v8.d[1]  /* z1 hi */
+    ins v13.d[0], v9.d[1]  /* z2 hi */
+    ins v14.d[0], v10.d[1] /* z3 hi */
+    ins v15.d[0], v11.d[1] /* z4 hi */
+    
+    ins v24.d[0], v28.d[1] /* tmp4 hi */
+    ins v25.d[0], v29.d[1] /* tmp5 hi */
+    ins v26.d[0], v30.d[1] /* tmp6 hi */
+    ins v27.d[0], v31.d[1] /* tmp7 hi */
+     
+    smull v4.4s, v10.4h, XFIX_P_1_175 /* z5 lo = z3 lo * XFIX_P_1_175 */
+    smull v5.4s, v14.4h, XFIX_P_1_175
+    smlal v4.4s, v11.4h, XFIX_P_1_175
+    smlal v5.4s, v15.4h, XFIX_P_1_175 /* z5 = MULTIPLY(z3 + z4, FIX_1_175875602); */
+
+    smull v28.4s, v28.4h, XFIX_P_0_298 /* tmp4 = MULTIPLY(tmp4, FIX_0_298631336); */
+    smull v24.4s, v24.4h, XFIX_P_0_298
+    smull v29.4s, v29.4h, XFIX_P_2_053 /* tmp5 = MULTIPLY(tmp5, FIX_2_053119869); */
+    smull v25.4s, v25.4h, XFIX_P_2_053
+    smull v30.4s, v30.4h, XFIX_P_3_072 /* tmp6 = MULTIPLY(tmp6, FIX_3_072711026); */
+    smull v26.4s, v26.4h, XFIX_P_3_072
+    smull v31.4s, v31.4h, XFIX_P_1_501 /* tmp7 = MULTIPLY(tmp7, FIX_1_501321110); */
+    smull v27.4s, v27.4h, XFIX_P_1_501
+
+    smull  v8.4s,  v8.4h, XFIX_N_0_899 /* z1 = MULTIPLY(z1, - FIX_0_899976223); */
+    smull v12.4s, v12.4h, XFIX_N_0_899
+    smull  v9.4s,  v9.4h, XFIX_N_2_562 /* z2 = MULTIPLY(z2, - FIX_2_562915447); */
+    smull v13.4s, v13.4h, XFIX_N_2_562
+    smull v10.4s, v10.4h, XFIX_N_1_961 /* z3 = MULTIPLY(z3, - FIX_1_961570560); */
+    smull v14.4s, v14.4h, XFIX_N_1_961
+    smull v11.4s, v11.4h, XFIX_N_0_390 /* z4 = MULTIPLY(z4, - FIX_0_390180644); */
+    smull v15.4s, v15.4h, XFIX_N_0_390
+
+    add v10.4s, v10.4s, v4.4s /* z3 += z5 */
+    add v14.4s, v14.4s, v5.4s
+    add v11.4s, v11.4s, v4.4s /* z4 += z5 */
+    add v15.4s, v15.4s, v5.4s
+
+    add v28.4s, v28.4s,  v8.4s /* tmp4 += z1 */
+    add v24.4s, v24.4s, v12.4s
+    add v29.4s, v29.4s,  v9.4s /* tmp5 += z2 */
+    add v25.4s, v25.4s, v13.4s
+    add v30.4s, v30.4s, v10.4s /* tmp6 += z3 */
+    add v26.4s, v26.4s, v14.4s
+    add v31.4s, v31.4s, v11.4s /* tmp7 += z4 */
+    add v27.4s, v27.4s, v15.4s
+    
+    add v28.4s, v28.4s, v10.4s /* tmp4 += z3 */
+    add v24.4s, v24.4s, v14.4s
+    add v29.4s, v29.4s, v11.4s /* tmp5 += z4 */
+    add v25.4s, v25.4s, v15.4s
+    add v30.4s, v30.4s,  v9.4s /* tmp6 += z2 */
+    add v26.4s, v26.4s, v13.4s
+    add v31.4s, v31.4s,  v8.4s /* tmp7 += z1 */
+    add v27.4s, v27.4s, v12.4s
+    
+    add v28.4s, v28.4s, PD_DESCALE_P1 /* tmp4 += PD_DESCALE_P1 */
+    add v24.4s, v24.4s, PD_DESCALE_P1
+    add v29.4s, v29.4s, PD_DESCALE_P1 /* tmp5 += PD_DESCALE_P1 */
+    add v25.4s, v25.4s, PD_DESCALE_P1
+    add v30.4s, v30.4s, PD_DESCALE_P1 /* tmp6 += PD_DESCALE_P1 */
+    add v26.4s, v26.4s, PD_DESCALE_P1
+    add v31.4s, v31.4s, PD_DESCALE_P1 /* tmp7 += PD_DESCALE_P1 */
+    add v27.4s, v27.4s, PD_DESCALE_P1
+    
+    
+    shrn v23.4h, v28.4s, #DESCALE_P1
+    shrn v24.4h, v24.4s, #DESCALE_P1
+    shrn v21.4h, v29.4s, #DESCALE_P1
+    shrn v25.4h, v25.4s, #DESCALE_P1
+    shrn v19.4h, v30.4s, #DESCALE_P1
+    shrn v26.4h, v26.4s, #DESCALE_P1
+    shrn v17.4h, v31.4s, #DESCALE_P1
+    shrn v27.4h, v27.4s, #DESCALE_P1
+    
+    ins  v23.d[1], v24.d[0] /* dataptr[7] = (DCTELEM) DESCALE(tmp4 + z1 + z3, CONST_BITS-PASS1_BITS); */
+    ins  v21.d[1], v25.d[0] /* dataptr[5] = (DCTELEM) DESCALE(tmp5 + z2 + z4, CONST_BITS-PASS1_BITS); */
+    ins  v19.d[1], v26.d[0] /* dataptr[3] = (DCTELEM) DESCALE(tmp6 + z2 + z3, CONST_BITS-PASS1_BITS); */
+    ins  v17.d[1], v27.d[0] /* dataptr[1] = (DCTELEM) DESCALE(tmp7 + z1 + z4, CONST_BITS-PASS1_BITS); */    
+    
+    /* Transpose */
+    transpose_8x8 v16, v17, v18, v19, v20, v21, v22, v23, v31, v2, v3, v4
+    
+    /* 1-D FDCT */
+    dup PD_DESCALE_P2, DSP2
+    dup PW_DESCALE_P2, DSP2H
+    
+    add v24.8h, v16.8h, v23.8h /* tmp0 = dataptr[0] + dataptr[7]; */
+    sub v31.8h, v16.8h, v23.8h /* tmp7 = dataptr[0] - dataptr[7]; */
+    add v25.8h, v17.8h, v22.8h /* tmp1 = dataptr[1] + dataptr[6]; */
+    sub v30.8h, v17.8h, v22.8h /* tmp6 = dataptr[1] - dataptr[6]; */
+    add v26.8h, v18.8h, v21.8h /* tmp2 = dataptr[2] + dataptr[5]; */
+    sub v29.8h, v18.8h, v21.8h /* tmp5 = dataptr[2] - dataptr[5]; */
+    add v27.8h, v19.8h, v20.8h /* tmp3 = dataptr[3] + dataptr[4]; */
+    sub v28.8h, v19.8h, v20.8h /* tmp4 = dataptr[3] - dataptr[4]; */
+    
+    /* even part */
+    
+    add v8.8h, v24.8h, v27.8h /* tmp10 = tmp0 + tmp3; */
+    sub v9.8h, v24.8h, v27.8h /* tmp13 = tmp0 - tmp3; */
+    add v10.8h, v25.8h, v26.8h /* tmp11 = tmp1 + tmp2; */
+    sub v11.8h, v25.8h, v26.8h /* tmp12 = tmp1 - tmp2; */
+    
+    add v16.8h, v8.8h, v10.8h /* tmp10 + tmp11 */
+    sub v20.8h, v8.8h, v10.8h /* tmp10 - tmp11 */
+    
+    ins  v12.d[0], v9.d[1] /* tmp13hi */
+    ins  v13.d[0], v11.d[1] /* tmp12hi */
+    
+    add v16.8h, v16.8h, PW_DESCALE_P2
+    add v20.8h, v20.8h, PW_DESCALE_P2
+    
+    sshr  v16.8h, v16.8h, #PASS1_BITS /* dataptr[0] = (DCTELEM) DESCALE(tmp10 + tmp11, PASS1_BITS); */
+    sshr  v20.8h, v20.8h, #PASS1_BITS /* dataptr[4] = (DCTELEM) DESCALE(tmp10 - tmp11, PASS1_BITS); */
+  
+    add  v18.4h, v11.4h,  v9.4h /* tmp12 + tmp13 lo */
+    add  v24.4h, v13.4h, v12.4h /* tmp12 + tmp13 hi */
+    
+    smull v18.4s, v18.4h, XFIX_P_0_541 /* z1 lo = MULTIPLY(tmp12 + tmp13, XFIX_P_0_541); */
+    smull v24.4s, v24.4h, XFIX_P_0_541 /* z1 hi = MULTIPLY(tmp12 + tmp13, XFIX_P_0_541); */
+    mov   v22.4s, v18.4s
+    mov   v25.4s, v24.4s
+    
+    smlal v18.4s,  v9.4h, XFIX_P_0_765 /* lo z1 + MULTIPLY(tmp13, XFIX_P_0_765) */
+    smlal v24.4s, v12.4h, XFIX_P_0_765 /* hi z1 + MULTIPLY(tmp13, XFIX_P_0_765) */
+    smlal v22.4s, v11.4h, XFIX_N_1_847 /* lo z1 + MULTIPLY(tmp12, XFIX_N_1_847) */
+    smlal v25.4s, v13.4h, XFIX_N_1_847 /* hi z1 + MULTIPLY(tmp12, XFIX_N_1_847) */
+    
+    add v18.4s, v18.4s, PD_DESCALE_P2
+    add v24.4s, v24.4s, PD_DESCALE_P2
+    add v22.4s, v22.4s, PD_DESCALE_P2
+    add v25.4s, v25.4s, PD_DESCALE_P2
+    
+    shrn v18.4h, v18.4s, #DESCALE_P2
+    shrn v24.4h, v24.4s, #DESCALE_P2
+    shrn v22.4h, v22.4s, #DESCALE_P2
+    shrn v25.4h, v25.4s, #DESCALE_P2
+    
+    ins  v18.d[1], v24.d[0] /* dataptr[2] = (DCTELEM) DESCALE(z1 + MULTIPLY(tmp13, XFIX_P_0_765),
+                                   CONST_BITS-PASS1_BITS); */
+    ins  v22.d[1], v25.d[0] /* dataptr[6] = (DCTELEM) DESCALE(z1 + MULTIPLY(tmp12, XFIX_N_1_847),
+                                   CONST_BITS-PASS1_BITS); */
+                              
+    /* Odd part */
+
+    add  v8.8h, v28.8h, v31.8h /* z1 = tmp4 + tmp7; */
+    add  v9.8h, v29.8h, v30.8h /* z2 = tmp5 + tmp6; */
+    add v10.8h, v28.8h, v30.8h /* z3 = tmp4 + tmp6; */
+    add v11.8h, v29.8h, v31.8h /* z4 = tmp5 + tmp7; */
+    ins v12.d[0], v8.d[1]  /* z1 hi */
+    ins v13.d[0], v9.d[1]  /* z2 hi */
+    ins v14.d[0], v10.d[1] /* z3 hi */
+    ins v15.d[0], v11.d[1] /* z4 hi */
+    
+    ins v24.d[0], v28.d[1] /* tmp4 hi */
+    ins v25.d[0], v29.d[1] /* tmp5 hi */
+    ins v26.d[0], v30.d[1] /* tmp6 hi */
+    ins v27.d[0], v31.d[1] /* tmp7 hi */
+     
+    smull v4.4s, v10.4h, XFIX_P_1_175 /* z5 lo = z3 lo * XFIX_P_1_175 */
+    smull v5.4s, v14.4h, XFIX_P_1_175
+    smlal v4.4s, v11.4h, XFIX_P_1_175
+    smlal v5.4s, v15.4h, XFIX_P_1_175 /* z5 = MULTIPLY(z3 + z4, FIX_1_175875602); */
+
+    smull v28.4s, v28.4h, XFIX_P_0_298 /* tmp4 = MULTIPLY(tmp4, FIX_0_298631336); */
+    smull v24.4s, v24.4h, XFIX_P_0_298
+    smull v29.4s, v29.4h, XFIX_P_2_053 /* tmp5 = MULTIPLY(tmp5, FIX_2_053119869); */
+    smull v25.4s, v25.4h, XFIX_P_2_053
+    smull v30.4s, v30.4h, XFIX_P_3_072 /* tmp6 = MULTIPLY(tmp6, FIX_3_072711026); */
+    smull v26.4s, v26.4h, XFIX_P_3_072
+    smull v31.4s, v31.4h, XFIX_P_1_501 /* tmp7 = MULTIPLY(tmp7, FIX_1_501321110); */
+    smull v27.4s, v27.4h, XFIX_P_1_501
+
+    smull  v8.4s,  v8.4h, XFIX_N_0_899 /* z1 = MULTIPLY(z1, - FIX_0_899976223); */
+    smull v12.4s, v12.4h, XFIX_N_0_899
+    smull  v9.4s,  v9.4h, XFIX_N_2_562 /* z2 = MULTIPLY(z2, - FIX_2_562915447); */
+    smull v13.4s, v13.4h, XFIX_N_2_562
+    smull v10.4s, v10.4h, XFIX_N_1_961 /* z3 = MULTIPLY(z3, - FIX_1_961570560); */
+    smull v14.4s, v14.4h, XFIX_N_1_961
+    smull v11.4s, v11.4h, XFIX_N_0_390 /* z4 = MULTIPLY(z4, - FIX_0_390180644); */
+    smull v15.4s, v15.4h, XFIX_N_0_390
+
+    add v10.4s, v10.4s, v4.4s
+    add v14.4s, v14.4s, v5.4s
+    add v11.4s, v11.4s, v4.4s
+    add v15.4s, v15.4s, v5.4s
+
+    add v28.4s, v28.4s,  v8.4s /* tmp4 += z1 */
+    add v24.4s, v24.4s, v12.4s
+    add v29.4s, v29.4s,  v9.4s /* tmp5 += z2 */
+    add v25.4s, v25.4s, v13.4s
+    add v30.4s, v30.4s, v10.4s /* tmp6 += z3 */
+    add v26.4s, v26.4s, v14.4s
+    add v31.4s, v31.4s, v11.4s /* tmp7 += z4 */
+    add v27.4s, v27.4s, v15.4s
+    
+    add v28.4s, v28.4s, v10.4s /* tmp4 += z3 */
+    add v24.4s, v24.4s, v14.4s
+    add v29.4s, v29.4s, v11.4s /* tmp5 += z4 */
+    add v25.4s, v25.4s, v15.4s
+    add v30.4s, v30.4s,  v9.4s /* tmp6 += z2 */
+    add v26.4s, v26.4s, v13.4s
+    add v31.4s, v31.4s,  v8.4s /* tmp7 += z1 */
+    add v27.4s, v27.4s, v12.4s
+    
+    add v28.4s, v28.4s, PD_DESCALE_P2 /* tmp4 += PD_DESCALE_P2 */
+    add v24.4s, v24.4s, PD_DESCALE_P2
+    add v29.4s, v29.4s, PD_DESCALE_P2 /* tmp5 += PD_DESCALE_P2 */
+    add v25.4s, v25.4s, PD_DESCALE_P2
+    add v30.4s, v30.4s, PD_DESCALE_P2 /* tmp6 += PD_DESCALE_P2 */
+    add v26.4s, v26.4s, PD_DESCALE_P2
+    add v31.4s, v31.4s, PD_DESCALE_P2 /* tmp7 += PD_DESCALE_P2 */
+    add v27.4s, v27.4s, PD_DESCALE_P2
+    
+    
+    shrn v23.4h, v28.4s, #DESCALE_P2
+    shrn v24.4h, v24.4s, #DESCALE_P2
+    shrn v21.4h, v29.4s, #DESCALE_P2
+    shrn v25.4h, v25.4s, #DESCALE_P2
+    shrn v19.4h, v30.4s, #DESCALE_P2
+    shrn v26.4h, v26.4s, #DESCALE_P2
+    shrn v17.4h, v31.4s, #DESCALE_P2
+    shrn v27.4h, v27.4s, #DESCALE_P2
+    
+    ins  v23.d[1], v24.d[0] /* dataptr[7] = (DCTELEM) DESCALE(tmp4 + z1 + z3, CONST_BITS-PASS1_BITS); */
+    ins  v21.d[1], v25.d[0] /* dataptr[5] = (DCTELEM) DESCALE(tmp5 + z2 + z4, CONST_BITS-PASS1_BITS); */
+    ins  v19.d[1], v26.d[0] /* dataptr[3] = (DCTELEM) DESCALE(tmp6 + z2 + z3, CONST_BITS-PASS1_BITS); */
+    ins  v17.d[1], v27.d[0] /* dataptr[1] = (DCTELEM) DESCALE(tmp7 + z1 + z4, CONST_BITS-PASS1_BITS); */
+
+    /* store results */
+    st1     {v16.8h, v17.8h, v18.8h, v19.8h}, [DATA], 64
+    st1     {v20.8h, v21.8h, v22.8h, v23.8h}, [DATA]
+
+    /* Restore NEON registers */
+    sub             sp, sp, #64
+    ld1             {v8.8b, v9.8b, v10.8b, v11.8b}, [sp], 32
+    ld1             {v12.8b, v13.8b, v14.8b, v15.8b}, [sp], 32
+    
+    br              x30
+
+    .unreq          DATA
+    .unreq          TMP
+    .unreq          DSP1
+    .unreq          DSP2
+    .unreq          DSP2H
+
+#undef XFIX_P_0_298
+#undef XFIX_N_0_390
+#undef XFIX_P_0_541
+#undef XFIX_P_0_765
+#undef XFIX_N_0_899
+#undef XFIX_P_1_175
+#undef XFIX_P_1_501
+#undef XFIX_N_1_847
+#undef XFIX_N_1_961
+#undef XFIX_P_2_053
+#undef XFIX_N_2_562
+#undef XFIX_P_3_072
+#undef PD_DESCALE_P1
+#undef PD_DESCALE_P2
+#undef PW_DESCALE_P2
 
 /*****************************************************************************/
 
