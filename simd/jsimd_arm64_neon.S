@@ -3067,3 +3067,127 @@ asm_function jsimd_h2v1_downsample_neon
     .unreq          TMP2
     .unreq          TMP3
     .unreq          TMPDUP
+
+/*****************************************************************************/
+
+/*
+ * Downsample pixel values of a single component.
+ * This version handles the common case of 2:1 horizontal and 2:1 vertical,
+ * without smoothing.
+ *
+ * GLOBAL(void)
+ * jsimd_h2v2_downsample_neon (JDIMENSION image_width, int max_v_samp_factor,
+ *                             JDIMENSION v_samp_factor, JDIMENSION width_blocks,
+ *                             JSAMPARRAY input_data, JSAMPARRAY output_data);
+ */
+ 
+ .balign 16
+ jsimd_h2v2_downsample_neon_consts:
+    .byte 0x00, 0x02, 0x04, 0x06, 0x08, 0x0A, 0x0C, 0x0E /* diff 0, even */
+    .byte 0x01, 0x03, 0x05, 0x07, 0x09, 0x0B, 0x0D, 0x0F /* diff 0,  odd */
+    .byte 0x00, 0x02, 0x04, 0x06, 0x08, 0x0A, 0x0C, 0x0E /* diff 1, even */
+    .byte 0x01, 0x03, 0x05, 0x07, 0x09, 0x0B, 0x0D, 0x0E /* diff 1,  odd */
+    .byte 0x00, 0x02, 0x04, 0x06, 0x08, 0x0A, 0x0C, 0x0D /* diff 2, even */
+    .byte 0x01, 0x03, 0x05, 0x07, 0x09, 0x0B, 0x0D, 0x0D /* diff 2,  odd */
+    .byte 0x00, 0x02, 0x04, 0x06, 0x08, 0x0A, 0x0C, 0x0C /* diff 3, even */
+    .byte 0x01, 0x03, 0x05, 0x07, 0x09, 0x0B, 0x0C, 0x0C /* diff 3,  odd */
+    .byte 0x00, 0x02, 0x04, 0x06, 0x08, 0x0A, 0x0B, 0x0B /* diff 4, even */
+    .byte 0x01, 0x03, 0x05, 0x07, 0x09, 0x0B, 0x0B, 0x0B /* diff 4,  odd */
+    .byte 0x00, 0x02, 0x04, 0x06, 0x08, 0x0A, 0x0A, 0x0A /* diff 5, even */
+    .byte 0x01, 0x03, 0x05, 0x07, 0x09, 0x0A, 0x0A, 0x0A /* diff 5,  odd */
+    .byte 0x00, 0x02, 0x04, 0x06, 0x08, 0x09, 0x09, 0x09 /* diff 6, even */
+    .byte 0x01, 0x03, 0x05, 0x07, 0x09, 0x09, 0x09, 0x09 /* diff 6,  odd */
+    .byte 0x00, 0x02, 0x04, 0x06, 0x08, 0x08, 0x08, 0x08 /* diff 7, even */
+    .byte 0x01, 0x03, 0x05, 0x07, 0x08, 0x08, 0x08, 0x08 /* diff 7,  odd */
+    .byte 0x00, 0x02, 0x04, 0x06, 0x07, 0x07, 0x07, 0x07 /* diff 8, even */
+    .byte 0x01, 0x03, 0x05, 0x07, 0x07, 0x07, 0x07, 0x07 /* diff 8,  odd */
+    .byte 0x00, 0x02, 0x04, 0x06, 0x06, 0x06, 0x06, 0x06 /* diff 9, even */
+    .byte 0x01, 0x03, 0x05, 0x06, 0x06, 0x06, 0x06, 0x06 /* diff 9,  odd */
+    .byte 0x00, 0x02, 0x04, 0x05, 0x05, 0x05, 0x05, 0x05 /* diff 10, even */
+    .byte 0x01, 0x03, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05 /* diff 10,  odd */
+    .byte 0x00, 0x02, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04 /* diff 11, even */
+    .byte 0x01, 0x03, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04 /* diff 11,  odd */
+    .byte 0x00, 0x02, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03 /* diff 12, even */
+    .byte 0x01, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03 /* diff 12,  odd */
+    .byte 0x00, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02 /* diff 13, even */
+    .byte 0x01, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02 /* diff 13,  odd */
+    .byte 0x00, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01 /* diff 14, even */
+    .byte 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01 /* diff 14,  odd */
+    .byte 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 /* diff 15, even */
+    .byte 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 /* diff 15,  odd */
+
+asm_function jsimd_h2v2_downsample_neon
+    IMAGE_WIDTH     .req x0
+    MAX_V_SAMP      .req x1
+    V_SAMP          .req x2
+    BLOCK_WIDTH     .req x3
+    INPUT_DATA      .req x4
+    OUTPUT_DATA     .req x5
+    OUTPTR          .req x9
+    INPTR0          .req x10
+    INPTR1          .req x14
+    TMP1            .req x11
+    TMP2            .req x12
+    TMP3            .req x13
+    TMPDUP          .req w15
+
+    mov   TMPDUP, #1
+    lsl   TMP2, BLOCK_WIDTH, #4
+    lsl   TMPDUP, TMPDUP, #17
+    sub   TMP2, TMP2, IMAGE_WIDTH
+    adr   TMP3, jsimd_h2v2_downsample_neon_consts
+    orr   TMPDUP, TMPDUP, #1
+    add   TMP3, TMP3, TMP2, lsl #4
+    dup   v16.4s, TMPDUP
+    ld1   {v18.8b, v19.8b}, [TMP3]
+
+1:  /* row loop */
+    ldr   INPTR0, [INPUT_DATA], #8
+    ldr   OUTPTR, [OUTPUT_DATA], #8
+    ldr   INPTR1, [INPUT_DATA], #8
+    subs  TMP1, BLOCK_WIDTH, #1
+    beq 3f
+2: /* columns */
+    ld2   {v0.8b, v1.8b}, [INPTR0], #16
+    ld2   {v2.8b, v3.8b}, [INPTR1], #16
+    subs  TMP1, TMP1, #1
+    uaddl v4.8h, v0.8b, v1.8b
+    uaddl v6.8h, v2.8b, v3.8b
+    add   v4.8h, v4.8h, v6.8h
+    add   v4.8h, v4.8h, v16.8h
+    shrn  v4.8b, v4.8h, #2
+    st1   {v4.8b}, [OUTPTR], #8
+    bne 2b
+3: /* last columns */
+    ld1   {v0.16b}, [INPTR0]
+    ld1   {v1.16b}, [INPTR1]
+    subs  V_SAMP, V_SAMP, #1
+   /* expand right */
+    tbl   v4.8b, {v0.16b}, v18.8b
+    tbl   v5.8b, {v0.16b}, v19.8b
+    tbl   v6.8b, {v1.16b}, v18.8b
+    tbl   v7.8b, {v1.16b}, v19.8b
+    uaddl v4.8h, v4.8b, v5.8b
+    uaddl v6.8h, v6.8b, v7.8b
+    add   v4.8h, v4.8h, v6.8h
+    add   v4.8h, v4.8h, v16.8h
+    shrn  v4.8b, v4.8h, #2
+    st1   {v4.8b}, [OUTPTR], #8
+    bne 1b
+    
+    br              x30
+
+    .unreq          IMAGE_WIDTH
+    .unreq          MAX_V_SAMP
+    .unreq          V_SAMP
+    .unreq          BLOCK_WIDTH
+    .unreq          INPUT_DATA
+    .unreq          OUTPUT_DATA
+    .unreq          OUTPTR
+    .unreq          INPTR0
+    .unreq          INPTR1
+    .unreq          TMP1
+    .unreq          TMP2
+    .unreq          TMP3
+    .unreq          TMPDUP
+    

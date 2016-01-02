@@ -223,6 +223,17 @@ jsimd_can_h2v2_downsample (void)
 {
   init_simd();
 
+  /* The code is optimised for these values only */
+  if (BITS_IN_JSAMPLE != 8)
+    return 0;
+  if (DCTSIZE != 8)
+    return 0;
+  if (sizeof(JDIMENSION) != 4)
+    return 0;
+
+  if (simd_support & JSIMD_ARM_NEON)
+    return 1;
+
   return 0;
 }
 
@@ -249,6 +260,11 @@ GLOBAL(void)
 jsimd_h2v2_downsample (j_compress_ptr cinfo, jpeg_component_info * compptr,
                        JSAMPARRAY input_data, JSAMPARRAY output_data)
 {
+  if (simd_support & JSIMD_ARM_NEON)
+    jsimd_h2v2_downsample_neon(cinfo->image_width, cinfo->max_v_samp_factor,
+                               compptr->v_samp_factor,
+                               compptr->width_in_blocks, input_data,
+                               output_data);
 }
 
 GLOBAL(void)
