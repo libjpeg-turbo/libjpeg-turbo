@@ -2377,9 +2377,6 @@ jsimd_fdct_islow_neon_consts:
 #define XFIX_P_2_053 v1.h[1]
 #define XFIX_N_2_562 v1.h[2]
 #define XFIX_P_3_072 v1.h[3]
-#define PD_DESCALE_P1 v2.4s
-#define PD_DESCALE_P2 v2.4s
-#define PW_DESCALE_P2 v3.8h
 
 asm_function jsimd_fdct_islow_neon
 
@@ -2653,9 +2650,6 @@ asm_function jsimd_fdct_islow_neon
 #undef XFIX_P_2_053
 #undef XFIX_N_2_562
 #undef XFIX_P_3_072
-#undef PD_DESCALE_P1
-#undef PD_DESCALE_P2
-#undef PW_DESCALE_P2
 
 /*****************************************************************************/
 
