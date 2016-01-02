@@ -17,6 +17,8 @@
 #include "jsimd.h"
 #include "jdct.h"
 #include "jsimddct.h"
+#include "jchuff.h"
+#include "jsimdchuff.h"
 
 GLOBAL(int)
 jsimd_can_rgb_ycc (void)
@@ -387,3 +389,16 @@ jsimd_idct_float (j_decompress_ptr cinfo, jpeg_component_info * compptr,
 {
 }
 
+GLOBAL(int)
+jsimd_can_chuff_encode_one_block (void)
+{
+  return 0;
+}
+
+GLOBAL(JOCTET*)
+jsimd_chuff_encode_one_block (/*working_state*/void * state, JOCTET *buffer,
+                              JCOEFPTR block, int last_dc_val,
+                              c_derived_tbl *dctbl, c_derived_tbl *actbl)
+{
+  return NULL;
+}

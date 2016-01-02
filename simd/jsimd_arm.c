@@ -3,6 +3,7 @@
  *
  * Copyright 2009 Pierre Ossman <ossman@cendio.se> for Cendio AB
  * Copyright 2009-2011, 2013-2014 D. R. Commander
+ * Copyright 2015, Matthieu Darbois
  *
  * Based on the x86 SIMD extension for IJG JPEG library,
  * Copyright (C) 1999-2006, MIYASAKA Masaru.
@@ -19,6 +20,8 @@
 #include "../jsimd.h"
 #include "../jdct.h"
 #include "../jsimddct.h"
+#include "../jchuff.h"
+#include "../jsimdchuff.h"
 #include "jsimd.h"
 
 #include <stdio.h>
@@ -705,4 +708,28 @@ jsimd_idct_float (j_decompress_ptr cinfo, jpeg_component_info * compptr,
                   JCOEFPTR coef_block, JSAMPARRAY output_buf,
                   JDIMENSION output_col)
 {
+}
+
+GLOBAL(int)
+jsimd_can_chuff_encode_one_block (void)
+{
+  init_simd();
+  
+  if (DCTSIZE != 8)
+    return 0;
+  if (sizeof(JCOEF) != 2)
+    return 0;
+  if (simd_support & JSIMD_ARM_NEON)
+    return 1;
+  return 0;
+}
+
+GLOBAL(JOCTET*)
+jsimd_chuff_encode_one_block (/*working_state*/void * state, JOCTET *buffer,
+                              JCOEFPTR block, int last_dc_val,
+                              c_derived_tbl *dctbl, c_derived_tbl *actbl)
+{
+  if (simd_support & JSIMD_ARM_NEON)
+  	return jsimd_chuff_encode_one_block_neon(state, buffer, block, last_dc_val, dctbl, actbl);
+  return NULL;
 }
