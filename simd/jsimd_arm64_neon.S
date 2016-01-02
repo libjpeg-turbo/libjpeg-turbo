@@ -2778,9 +2778,6 @@ asm_function jsimd_quantize_neon
     CORRECTION      .req x9
     SHIFT           .req x10
     LOOP_COUNT      .req x11
-    
-    sub             sp, sp, #32
-    st1             {v8.8b, v9.8b, v10.8b, v11.8b}, [sp], 32
 
     mov             LOOP_COUNT, #2
     add             CORRECTION, DIVISORS, #(64 * 2)
@@ -2788,73 +2785,57 @@ asm_function jsimd_quantize_neon
 1:
     subs            LOOP_COUNT, LOOP_COUNT, #1
     ld1             {v0.8h, v1.8h, v2.8h, v3.8h}, [WORKSPACE], 64
-    ld1             {v18.8h, v19.8h}, [CORRECTION], 32
+    ld1             {v4.8h, v5.8h, v6.8h, v7.8h}, [CORRECTION], 64
     abs             v20.8h, v0.8h
     abs             v21.8h, v1.8h
-    ld1             {v8.8h, v9.8h}, [CORRECTION], 32
-    abs             v10.8h, v2.8h
-    abs             v11.8h, v3.8h
-    ld1             {v26.4h, v27.4h, v28.4h, v29.4h}, [RECIPROCAL], 32
-    add             v20.8h, v20.8h, v18.8h /* add correction */
-    add             v21.8h, v21.8h, v19.8h
-    ld1             {v4.4h, v5.4h, v6.4h, v7.4h}, [RECIPROCAL], 32
-    add             v10.8h, v10.8h, v8.8h
-    add             v11.8h, v11.8h, v9.8h
-    ins             v24.d[0], v20.d[1]
-    ins             v25.d[0], v21.d[1]
-    ins             v22.d[0], v10.d[1]
-    ins             v23.d[0], v11.d[1]
-    umull           v18.4s, v20.4h, v26.4h /* multiply by reciprocal */
-    umull           v16.4s, v24.4h, v27.4h
-    umull           v19.4s, v21.4h, v28.4h
-    umull           v17.4s, v25.4h, v29.4h
-    umull           v8.4s, v10.4h, v4.4h /* multiply by reciprocal */
-    umull           v30.4s, v22.4h, v5.4h
-    umull           v9.4s, v11.4h, v6.4h
-    umull           v31.4s, v23.4h, v7.4h
-    ld1             {v20.8h, v21.8h}, [SHIFT], 32
-    shrn            v18.4h, v18.4s, #16
-    shrn            v16.4h, v16.4s, #16
-    shrn            v19.4h, v19.4s, #16
-    shrn            v17.4h, v17.4s, #16
-    ld1             {v10.8h, v11.8h}, [SHIFT], 32
-    shrn            v8.4h, v8.4s, #16
-    shrn            v30.4h, v30.4s, #16
-    shrn            v9.4h, v9.4s, #16
-    shrn            v31.4h, v31.4s, #16
-    ins             v18.d[1], v16.d[0]
-    ins             v19.d[1], v17.d[0]
-    neg             v20.8h, v20.8h
-    neg             v21.8h, v21.8h
-    ins             v8.d[1], v30.d[0]
-    ins             v9.d[1], v31.d[0]
-    neg             v10.8h, v10.8h
-    neg             v11.8h, v11.8h
+    abs             v22.8h, v2.8h
+    abs             v23.8h, v3.8h
+    ld1             {v28.8h, v29.8h, v30.8h, v31.8h}, [RECIPROCAL], 64
+    add             v20.8h, v20.8h, v4.8h /* add correction */
+    add             v21.8h, v21.8h, v5.8h
+    add             v22.8h, v22.8h, v6.8h
+    add             v23.8h, v23.8h, v7.8h
+    umull           v4.4s, v20.4h, v28.4h /* multiply by reciprocal */
+    umull2          v16.4s, v20.8h, v28.8h
+    umull           v5.4s, v21.4h, v29.4h
+    umull2          v17.4s, v21.8h, v29.8h
+    umull           v6.4s, v22.4h, v30.4h /* multiply by reciprocal */
+    umull2          v18.4s, v22.8h, v30.8h
+    umull           v7.4s, v23.4h, v31.4h
+    umull2          v19.4s, v23.8h, v31.8h
+    ld1             {v24.8h, v25.8h, v26.8h, v27.8h}, [SHIFT], 64
+    shrn            v4.4h, v4.4s, #16
+    shrn            v5.4h, v5.4s, #16
+    shrn            v6.4h, v6.4s, #16
+    shrn            v7.4h, v7.4s, #16
+    shrn2           v4.8h, v16.4s, #16
+    shrn2           v5.8h, v17.4s, #16
+    shrn2           v6.8h, v18.4s, #16
+    shrn2           v7.8h, v19.4s, #16
+    neg             v24.8h, v24.8h
+    neg             v25.8h, v25.8h
+    neg             v26.8h, v26.8h
+    neg             v27.8h, v27.8h
     sshr            v0.8h,  v0.8h,  #15 /* extract sign */
     sshr            v1.8h,  v1.8h,  #15
     sshr            v2.8h,  v2.8h,  #15
     sshr            v3.8h,  v3.8h,  #15
-    ushl            v18.8h, v18.8h, v20.8h /* shift */
-    ushl            v19.8h, v19.8h, v21.8h
-    ushl            v22.8h, v8.8h, v10.8h
-    ushl            v23.8h, v9.8h, v11.8h
+    ushl            v4.8h, v4.8h, v24.8h /* shift */
+    ushl            v5.8h, v5.8h, v25.8h
+    ushl            v6.8h, v6.8h, v26.8h
+    ushl            v7.8h, v7.8h, v27.8h
     
-    eor             v18.16b, v18.16b, v0.16b  /* restore sign */
-    eor             v19.16b, v19.16b, v1.16b
-    eor             v22.16b, v22.16b, v2.16b
-    eor             v23.16b, v23.16b, v3.16b
-    sub             v18.8h, v18.8h, v0.8h
-    sub             v19.8h, v19.8h, v1.8h
-    sub             v22.8h, v22.8h, v2.8h
-    sub             v23.8h, v23.8h, v3.8h
-    st1             {v18.8h, v19.8h}, [COEF_BLOCK], 32
-    st1             {v22.8h, v23.8h}, [COEF_BLOCK], 32
+    eor             v4.16b, v4.16b, v0.16b  /* restore sign */
+    eor             v5.16b, v5.16b, v1.16b
+    eor             v6.16b, v6.16b, v2.16b
+    eor             v7.16b, v7.16b, v3.16b
+    sub             v4.8h, v4.8h, v0.8h
+    sub             v5.8h, v5.8h, v1.8h
+    sub             v6.8h, v6.8h, v2.8h
+    sub             v7.8h, v7.8h, v3.8h
+    st1             {v4.8h, v5.8h, v6.8h, v7.8h}, [COEF_BLOCK], 64
     
     bne             1b
-
-
-    sub             sp, sp, #32
-    ld1             {v8.8b, v9.8b, v10.8b, v11.8b}, [sp], 32
 
     br              x30 /* return */
 
