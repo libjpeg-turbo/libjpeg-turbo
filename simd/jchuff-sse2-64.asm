@@ -284,9 +284,6 @@ EXTN(jsimd_chuff_encode_one_block_sse2):
         mov rcx, r12
         lea rsi, [rsi+r12*2] ; k += r;
         shr r11, cl  ; index >>= r;
-        movsx edi, word [rsi] ; temp = t1[k];
-        bsr edi, edi ; nbits = 32 - __builtin_clz(temp);
-        inc edi
 .BRLOOP:
         cmp r12, 16 ; while (r > 15) {
         jl .ERLOOP
@@ -296,6 +293,10 @@ EXTN(jsimd_chuff_encode_one_block_sse2):
 .ERLOOP:
         ; Emit Huffman symbol for run length / number of bits
         CHECKBUF31 ; uses rcx, rdx
+        
+        movzx rdi, word [rsi] ; temp = t1[k];
+        bsr rdi, rdi ; nbits = 32 - __builtin_clz(temp);
+        inc rdi
         
         shl r12, 4 ;temp3 = (r << 4) + nbits;
         add r12, rdi
@@ -308,10 +309,10 @@ EXTN(jsimd_chuff_encode_one_block_sse2):
         movsx ebx, word [rsi-DCTSIZE2*2] ; temp2 = t2[k];
         ; Mask off any extra bits in code
         mov rcx, rdi
-        mov edx, 1
-        shl edx, cl
-        dec edx
-        and ebx, edx ; temp2 &= (((JLONG) 1)<<nbits) - 1;
+        mov rdx, 1
+        shl rdx, cl
+        dec rdx
+        and rbx, rdx ; temp2 &= (((JLONG) 1)<<nbits) - 1;
         PUT_BITS rbx ; PUT_BITS(temp2, nbits)
         
         shr r11, 1 ;index >>= 1;
