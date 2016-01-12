@@ -7,6 +7,7 @@
  * Copyright (C) 2013-2014, Linaro Limited
  * Author: Ragesh Radhakrishnan <ragesh.r@linaro.org>
  * Copyright (C) 2014-2015, D. R. Commander.  All Rights Reserved.
+ * Copyright (C) 2015-2016, Matthieu Darbois.  All Rights Reserved.
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the authors be held liable for any damages
@@ -1055,6 +1056,7 @@ asm_function jsimd_idct_ifast_neon
     .unreq          TMP2
     .unreq          TMP3
     .unreq          TMP4
+    .unreq          TMP5
 
 
 /*****************************************************************************/
@@ -1859,3 +1861,266 @@ generate_jsimd_ycc_rgb_convert_neon extxrgb, 32, 1, .4h,   2, .4h,   3, .4h,   .
 generate_jsimd_ycc_rgb_convert_neon rgb565,  16, 0, .4h,   0, .4h,   0, .4h,   .8b
 .purgem do_load
 .purgem do_store
+
+/*****************************************************************************/
+
+/*
+ * GLOBAL(JOCTET*)
+ * jsimd_chuff_encode_one_block (working_state * state, JOCTET *buffer,
+ *                               JCOEFPTR block, int last_dc_val,
+ *                               c_derived_tbl *dctbl, c_derived_tbl *actbl)
+ *
+ */
+
+.macro emit_byte
+    sub x7, x7, #0x8 /* put_bits -= 8 */
+    lsr x19, x6, x7
+    uxtb w19, w19
+    strb w19, [x1, #1]!
+    cmp w19, #0xff
+    bne 14f
+    strb wzr, [x1, #1]!
+14:
+.endm
+.macro put_bits CODE, SIZE
+    lsl x6, x6, \SIZE
+    add x7, x7, \SIZE
+    orr x6, x6, \CODE
+.endm
+.macro checkbuf31
+  cmp x7, #0x20
+  blt 31f
+    emit_byte
+    emit_byte
+    emit_byte
+    emit_byte
+31:
+.endm
+.macro checkbuf47
+  cmp x7, #0x30
+  blt 47f
+    emit_byte
+    emit_byte
+    emit_byte
+    emit_byte
+    emit_byte
+    emit_byte
+47:
+.endm
+
+.balign 16
+jsimd_huff_encode_one_block_neon_consts:
+    .byte 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80
+    .byte    0,   1,   2,   3,  16,  17,  32,  33,  18,  19,   4,   5,   6,   7,  20,  21 /* L0 => L3 : 4 lines OK */
+    .byte   34,  35,  48,  49, 255, 255,  50,  51,  36,  37,  22,  23,   8,   9,  10,  11 /* L0 => L3 : 4 lines OK */
+    .byte    8,   9,  22,  23,  36,  37,  50,  51, 255, 255, 255, 255, 255, 255,  52,  53 /* L1 => L4 : 4 lines OK */
+    .byte   54,  55,  40,  41,  26,  27,  12,  13,  14,  15,  28,  29,  42,  43,  56,  57 /* L0 => L3 : 4 lines OK */
+    .byte    6,   7,  20,  21,  34,  35,  48,  49,  50,  51,  36,  37,  22,  23,   8,   9 /* L4 => L7 : 4 lines OK */
+    .byte   42,  43,  28,  29,  14,  15,  30,  31,  44,  45,  58,  59, 255, 255, 255, 255 /* L1 => L4 : 4 lines OK */
+    .byte  255, 255, 255, 255,  56,  57,  42,  43,  28,  29,  14,  15,  30,  31,  44,  45 /* L3 => L6 : 4 lines OK */
+    .byte   26,  27,  40,  41,  42,  43,  28,  29,  14,  15,  30,  31,  44,  45,  46,  47 /* L5 => L7 : 3 lines OK */
+ 
+    .byte  255, 255, 255, 255,   0,   1, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255 /* L4 : 1 lines OK */
+    .byte  255, 255, 255, 255, 255, 255, 255, 255,   0,   1,  16,  17,   2,   3, 255, 255 /* L5 => L6 : 2 lines OK */
+    .byte  255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,   8,   9,  22,  23 /* L5 => L6 : 2 lines OK */
+    .byte    4,   5,   6,   7, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255 /* L7 : 1 line OK */
+
+asm_function jsimd_huff_encode_one_block_neon
+    sub sp, sp, 272
+    /* Save ARM registers */
+    sub x1, x1, #0x1   /* r10=buffer-- */
+    stp x19, x20, [sp], 16
+    adr x15, jsimd_huff_encode_one_block_neon_consts
+    ldr x6, [x0, #0x10]  /* x6 = put_buffer */
+    mov w13, #0x10
+    ldr w7, [x0, #0x18]  /* x7  = put_bits */
+    mov w14, #0x1
+    ldrsh w12, [x2]
+    mov x11, sp
+    /* prepare data */
+    ld1 {v20.8b}, [x15], #8
+    ld1 {v0.16b, v1.16b, v2.16b, v3.16b}, [x15], #64
+    ld1 {v4.16b, v5.16b, v6.16b, v7.16b}, [x15], #64
+    ld1 {v16.16b, v17.16b, v18.16b, v19.16b}, [x15], #64
+    ld1 {v24.16b, v25.16b, v26.16b, v27.16b}, [x2], #64
+    ld1 {v28.16b, v29.16b, v30.16b, v31.16b}, [x2], #64
+    sub x2, x2, #128
+    dup v21.8h, w13
+    dup v22.8h, w14
+    eor v23.16b, v23.16b, v23.16b
+    sub w12, w12, w3   /* last_dc_val, not used afterwards */
+    tbl v0.16b, {v24.16b, v25.16b, v26.16b, v27.16b}, v0.16b
+    tbl v1.16b, {v24.16b, v25.16b, v26.16b, v27.16b}, v1.16b
+    tbl v2.16b, {v25.16b, v26.16b, v27.16b, v28.16b}, v2.16b
+    tbl v3.16b, {v24.16b, v25.16b, v26.16b, v27.16b}, v3.16b
+    tbl v4.16b, {v28.16b, v29.16b, v30.16b, v31.16b}, v4.16b
+    tbl v5.16b, {v25.16b, v26.16b, v27.16b, v28.16b}, v5.16b
+    tbl v6.16b, {v27.16b, v28.16b, v29.16b, v30.16b}, v6.16b
+    tbl v7.16b, {v29.16b, v30.16b, v31.16b}, v7.16b
+    ins v0.h[0], w12
+    tbx v1.16b, {v28.16b}, v16.16b
+    tbx v2.16b, {v29.16b, v30.16b}, v17.16b
+    tbx v5.16b, {v29.16b, v30.16b}, v18.16b
+    tbx v6.16b, {v31.16b}, v19.16b
+    eor  v16.16b, v16.16b, v16.16b
+    cmgt v24.8h, v23.8h, v0.8h
+    cmgt v25.8h, v16.8h, v1.8h
+    cmgt v26.8h, v23.8h, v2.8h
+    cmgt v27.8h, v16.8h, v3.8h
+    cmgt v28.8h, v23.8h, v4.8h
+    cmgt v29.8h, v16.8h, v5.8h
+    cmgt v30.8h, v23.8h, v6.8h
+    cmgt v31.8h, v16.8h, v7.8h
+    abs v0.8h, v0.8h
+    abs v1.8h, v1.8h
+    abs v2.8h, v2.8h
+    abs v3.8h, v3.8h
+    abs v4.8h, v4.8h
+    abs v5.8h, v5.8h
+    abs v6.8h, v6.8h
+    abs v7.8h, v7.8h
+    eor v24.16b, v24.16b, v0.16b
+    eor v25.16b, v25.16b, v1.16b
+    eor v26.16b, v26.16b, v2.16b
+    eor v27.16b, v27.16b, v3.16b
+    eor v28.16b, v28.16b, v4.16b
+    eor v29.16b, v29.16b, v5.16b
+    eor v30.16b, v30.16b, v6.16b
+    eor v31.16b, v31.16b, v7.16b
+    clz v0.8h, v0.8h
+    clz v1.8h, v1.8h
+    clz v2.8h, v2.8h
+    clz v3.8h, v3.8h
+    clz v4.8h, v4.8h
+    clz v5.8h, v5.8h
+    clz v6.8h, v6.8h
+    clz v7.8h, v7.8h
+    sub v0.8h, v21.8h, v0.8h
+    sub v1.8h, v21.8h, v1.8h
+    sub v2.8h, v21.8h, v2.8h
+    sub v3.8h, v21.8h, v3.8h
+    sub v4.8h, v21.8h, v4.8h
+    sub v5.8h, v21.8h, v5.8h
+    sub v6.8h, v21.8h, v6.8h
+    sub v7.8h, v21.8h, v7.8h
+    st1 {v0.8h, v1.8h, v2.8h, v3.8h}, [x11], #64
+    st1 {v4.8h, v5.8h, v6.8h, v7.8h}, [x11], #64
+    sshl v0.8h, v22.8h, v0.8h
+    sshl v1.8h, v22.8h, v1.8h
+    sshl v2.8h, v22.8h, v2.8h
+    sshl v3.8h, v22.8h, v3.8h
+    sshl v4.8h, v22.8h, v4.8h
+    sshl v5.8h, v22.8h, v5.8h
+    sshl v6.8h, v22.8h, v6.8h
+    sshl v7.8h, v22.8h, v7.8h
+    sub v0.8h, v0.8h, v22.8h
+    sub v1.8h, v1.8h, v22.8h
+    sub v2.8h, v2.8h, v22.8h
+    sub v3.8h, v3.8h, v22.8h
+    sub v4.8h, v4.8h, v22.8h
+    sub v5.8h, v5.8h, v22.8h
+    sub v6.8h, v6.8h, v22.8h
+    sub v7.8h, v7.8h, v22.8h
+    and v24.16b, v24.16b, v0.16b
+    and v25.16b, v25.16b, v1.16b
+    and v26.16b, v26.16b, v2.16b
+    and v27.16b, v27.16b, v3.16b
+    and v28.16b, v28.16b, v4.16b
+    and v29.16b, v29.16b, v5.16b
+    and v30.16b, v30.16b, v6.16b
+    and v31.16b, v31.16b, v7.16b
+    st1 {v24.8h, v25.8h, v26.8h, v27.8h}, [x11], #64
+    st1 {v28.8h, v29.8h, v30.8h, v31.8h}, [x11], #64
+    add  x3, x4, #0x400   /* r1 = dctbl->ehufsi */
+    add x15, sp, #0x80  /* x15 = t2 */
+    ldrh w12, [sp]
+    ldrh w13, [x15]
+    ldr  w10, [x4, x12, lsl #2]
+    ldrb w11, [x3, x12]
+    checkbuf47
+    put_bits x10, x11
+    checkbuf47
+    put_bits x13, x12
+    cmeq v0.8h, v0.8h, v23.8h
+    cmeq v1.8h, v1.8h, v23.8h
+    cmeq v2.8h, v2.8h, v23.8h
+    cmeq v3.8h, v3.8h, v23.8h
+    cmeq v4.8h, v4.8h, v23.8h
+    cmeq v5.8h, v5.8h, v23.8h
+    cmeq v6.8h, v6.8h, v23.8h
+    cmeq v7.8h, v7.8h, v23.8h
+    xtn v0.8b, v0.8h
+    xtn v1.8b, v1.8h
+    xtn v2.8b, v2.8h
+    xtn v3.8b, v3.8h
+    xtn v4.8b, v4.8h
+    xtn v5.8b, v5.8h
+    xtn v6.8b, v6.8h
+    xtn v7.8b, v7.8h
+    and v0.8b, v0.8b, v20.8b
+    and v1.8b, v1.8b, v20.8b
+    and v2.8b, v2.8b, v20.8b
+    and v3.8b, v3.8b, v20.8b
+    and v4.8b, v4.8b, v20.8b
+    and v5.8b, v5.8b, v20.8b
+    and v6.8b, v6.8b, v20.8b
+    and v7.8b, v7.8b, v20.8b
+    addp v0.8b, v0.8b, v1.8b
+    addp v2.8b, v2.8b, v3.8b
+    addp v4.8b, v4.8b, v5.8b
+    addp v6.8b, v6.8b, v7.8b
+    addp v0.8b, v0.8b, v2.8b
+    addp v4.8b, v4.8b, v6.8b
+    addp v0.8b, v0.8b, v4.8b
+    umov x9,v0.D[0]
+    mvn x9, x9
+    add x4, x5, #0x400     /* x4 = actbl->ehufsi */
+    lsr x9, x9, #0x1 /* clear AC coeff */
+    ldr  w13, [x5, #0x3c0] /* x13 = actbl->ehufco[0xf0] */
+    rbit x9, x9 /* x9 = index0 */
+    ldrb w14, [x4, #0xf0]  /* x14 = actbl->ehufsi[0xf0] */
+    cmp x9, #0x0
+    beq 6f
+1:
+    clz x2, x9
+    add x15, x15, x2, lsl #1
+    lsl x9, x9, x2
+    ldrh w11, [x15, #-126]
+2:
+    cmp x2, #0x10
+    blt 3f
+    sub x2, x2, #0x10
+    checkbuf47
+    put_bits x13, x14
+    b 2b
+3:
+    add x2, x11, x2, lsl #4
+    ldrh w3, [x15, #2]!
+    lsl x9, x9, #0x1
+    ldr w12, [x5, x2, lsl #2]
+    ldrb w10, [x4, x2]
+    checkbuf31
+    put_bits x12, x10
+    put_bits x3, x11
+    cbnz x9, 1b
+6:
+    add x13, sp, #0xfe
+    cmp x15, x13
+    bhs 1f
+    ldr w12, [x5]
+    ldrb w14, [x4]
+    checkbuf47
+    put_bits x12, x14
+1:
+    sub sp, sp, 16
+    str x6, [x0, #0x10]
+    str w7, [x0, #0x18]
+    ldp x19, x20, [sp], 16
+    add x0, x1, #0x1
+    add sp, sp, 256
+    br x30
+
+.purgem emit_byte
+.purgem put_bits
+.purgem checkbuf31
+.purgem checkbuf47
