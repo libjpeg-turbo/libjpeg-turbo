@@ -71,6 +71,11 @@ Solaris/x86 systems (on Solaris, this generates a 32-bit library.  See below
 for 64-bit build instructions.)
 
     cd {source_directory}
+    aclocal
+    autoconf
+    libtoolize
+    autoheader
+    automake --add-missing
     cd {build_directory}
     sh {source_directory}/configure [additional configure flags]
     make
