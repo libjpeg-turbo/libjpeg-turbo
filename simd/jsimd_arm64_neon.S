@@ -92,7 +92,7 @@ _\fname:
     transpose_4x4_32 \x0,.2s, \x1,.2s, \x2,.2s,\x3,.2s,\x5,.16b
 .endm
 
-.macro transpose_8x8 l0, l1, l2, l3, l4, l5, l6, l7, t0, t1, t2, t3 
+.macro transpose_8x8 l0, l1, l2, l3, l4, l5, l6, l7, t0, t1, t2, t3
     trn1 \t0\().8h, \l0\().8h, \l1\().8h
     trn1 \t1\().8h, \l2\().8h, \l3\().8h
     trn1 \t2\().8h, \l4\().8h, \l5\().8h
@@ -101,7 +101,7 @@ _\fname:
     trn2 \l3\().8h, \l2\().8h, \l3\().8h
     trn2 \l5\().8h, \l4\().8h, \l5\().8h
     trn2 \l7\().8h, \l6\().8h, \l7\().8h
-    
+
     trn1 \l4\().4s, \t2\().4s, \t3\().4s
     trn2 \t3\().4s, \t2\().4s, \t3\().4s
     trn1 \t2\().4s, \t0\().4s, \t1\().4s
@@ -110,7 +110,7 @@ _\fname:
     trn2 \l3\().4s, \l1\().4s, \l3\().4s
     trn2 \t1\().4s, \l5\().4s, \l7\().4s
     trn1 \l5\().4s, \l5\().4s, \l7\().4s
-    
+
     trn2 \l6\().2d, \l2\().2d, \t3\().2d
     trn1 \l0\().2d, \t2\().2d, \l4\().2d
     trn1 \l1\().2d, \t0\().2d, \l5\().2d
@@ -2236,7 +2236,7 @@ asm_function jsimd_convsamp_neon
     TMP8            .req x4
     TMPDUP          .req w3
 
-    
+
     mov             TMPDUP, #128
     ldp             TMP1, TMP2, [SAMPLE_DATA], 16
     ldp             TMP3, TMP4, [SAMPLE_DATA], 16
@@ -2352,7 +2352,7 @@ jsimd_fdct_islow_neon_consts:
     .short 0
     .short 0
     .short 0
-    
+
 #undef F_0_298
 #undef F_0_390
 #undef F_0_541
@@ -2386,7 +2386,7 @@ asm_function jsimd_fdct_islow_neon
     /* Load constants */
     adr     TMP, jsimd_fdct_islow_neon_consts
     ld1     {v0.8h, v1.8h}, [TMP]
-    
+
     /* Save NEON registers */
     sub             sp, sp, #64
     st1             {v8.8b, v9.8b, v10.8b, v11.8b}, [sp], 32
@@ -2396,7 +2396,7 @@ asm_function jsimd_fdct_islow_neon
      *       0 1 2 3 | 4 5 6 7
      *      ---------+--------
      *   0 | d16     | d17    | v16.8h
-     *   1 | d18     | d19    | v17.8h 
+     *   1 | d18     | d19    | v17.8h
      *   2 | d20     | d21    | v18.8h
      *   3 | d22     | d23    | v19.8h
      *   4 | d24     | d25    | v20.8h
@@ -2420,39 +2420,39 @@ asm_function jsimd_fdct_islow_neon
     sub v29.8h, v18.8h, v21.8h /* tmp5 = dataptr[2] - dataptr[5]; */
     add v27.8h, v19.8h, v20.8h /* tmp3 = dataptr[3] + dataptr[4]; */
     sub v28.8h, v19.8h, v20.8h /* tmp4 = dataptr[3] - dataptr[4]; */
-    
+
     /* even part */
-    
+
     add v8.8h, v24.8h, v27.8h /* tmp10 = tmp0 + tmp3; */
     sub v9.8h, v24.8h, v27.8h /* tmp13 = tmp0 - tmp3; */
     add v10.8h, v25.8h, v26.8h /* tmp11 = tmp1 + tmp2; */
     sub v11.8h, v25.8h, v26.8h /* tmp12 = tmp1 - tmp2; */
-    
+
     add v16.8h, v8.8h, v10.8h /* tmp10 + tmp11 */
     sub v20.8h, v8.8h, v10.8h /* tmp10 - tmp11 */
-    
+
     add  v18.8h, v11.8h, v9.8h /* tmp12 + tmp13 */
-    
+
     shl  v16.8h, v16.8h, #PASS1_BITS /* dataptr[0] = (DCTELEM) LEFT_SHIFT(tmp10 + tmp11, PASS1_BITS); */
     shl  v20.8h, v20.8h, #PASS1_BITS /* dataptr[4] = (DCTELEM) LEFT_SHIFT(tmp10 - tmp11, PASS1_BITS); */
-    
+
     smull2 v24.4s, v18.8h, XFIX_P_0_541 /* z1 hi = MULTIPLY(tmp12 + tmp13, XFIX_P_0_541); */
     smull  v18.4s, v18.4h, XFIX_P_0_541 /* z1 lo = MULTIPLY(tmp12 + tmp13, XFIX_P_0_541); */
     mov   v22.4s, v18.4s
     mov   v25.4s, v24.4s
-    
+
     smlal  v18.4s,  v9.4h, XFIX_P_0_765 /* lo z1 + MULTIPLY(tmp13, XFIX_P_0_765) */
     smlal2 v24.4s,  v9.8h, XFIX_P_0_765 /* hi z1 + MULTIPLY(tmp13, XFIX_P_0_765) */
     smlal  v22.4s, v11.4h, XFIX_N_1_847 /* lo z1 + MULTIPLY(tmp12, XFIX_N_1_847) */
     smlal2 v25.4s, v11.8h, XFIX_N_1_847 /* hi z1 + MULTIPLY(tmp12, XFIX_N_1_847) */
-    
+
     rshrn  v18.4h, v18.4s, #DESCALE_P1
     rshrn  v22.4h, v22.4s, #DESCALE_P1
     rshrn2 v18.8h, v24.4s, #DESCALE_P1 /* dataptr[2] = (DCTELEM) DESCALE(z1 + MULTIPLY(tmp13, XFIX_P_0_765),
                                    CONST_BITS-PASS1_BITS); */
     rshrn2 v22.8h, v25.4s, #DESCALE_P1 /* dataptr[6] = (DCTELEM) DESCALE(z1 + MULTIPLY(tmp12, XFIX_N_1_847),
                                    CONST_BITS-PASS1_BITS); */
-                              
+
     /* Odd part */
 
     add  v8.8h, v28.8h, v31.8h /* z1 = tmp4 + tmp7; */
@@ -2460,14 +2460,14 @@ asm_function jsimd_fdct_islow_neon
     add v10.8h, v28.8h, v30.8h /* z3 = tmp4 + tmp6; */
     add v11.8h, v29.8h, v31.8h /* z4 = tmp5 + tmp7; */
     smull  v4.4s, v10.4h, XFIX_P_1_175 /* z5 lo = z3 lo * XFIX_P_1_175 */
-    smull2 v5.4s, v10.8h, XFIX_P_1_175 
+    smull2 v5.4s, v10.8h, XFIX_P_1_175
     smlal  v4.4s, v11.4h, XFIX_P_1_175 /* z5 = MULTIPLY(z3 + z4, FIX_1_175875602); */
-    smlal2 v5.4s, v11.8h, XFIX_P_1_175 
+    smlal2 v5.4s, v11.8h, XFIX_P_1_175
 
     smull2 v24.4s, v28.8h, XFIX_P_0_298
-    smull2 v25.4s, v29.8h, XFIX_P_2_053 
-    smull2 v26.4s, v30.8h, XFIX_P_3_072 
-    smull2 v27.4s, v31.8h, XFIX_P_1_501 
+    smull2 v25.4s, v29.8h, XFIX_P_2_053
+    smull2 v26.4s, v30.8h, XFIX_P_3_072
+    smull2 v27.4s, v31.8h, XFIX_P_1_501
     smull  v28.4s, v28.4h, XFIX_P_0_298 /* tmp4 = MULTIPLY(tmp4, FIX_0_298631336); */
     smull  v29.4s, v29.4h, XFIX_P_2_053 /* tmp5 = MULTIPLY(tmp5, FIX_2_053119869); */
     smull  v30.4s, v30.4h, XFIX_P_3_072 /* tmp6 = MULTIPLY(tmp6, FIX_3_072711026); */
@@ -2495,7 +2495,7 @@ asm_function jsimd_fdct_islow_neon
     add v26.4s, v26.4s, v14.4s
     add v31.4s, v31.4s, v11.4s /* tmp7 += z4 */
     add v27.4s, v27.4s, v15.4s
-    
+
     add v28.4s, v28.4s, v10.4s /* tmp4 += z3 */
     add v24.4s, v24.4s, v14.4s
     add v29.4s, v29.4s, v11.4s /* tmp5 += z4 */
@@ -2504,7 +2504,7 @@ asm_function jsimd_fdct_islow_neon
     add v26.4s, v26.4s, v13.4s
     add v31.4s, v31.4s,  v8.4s /* tmp7 += z1 */
     add v27.4s, v27.4s, v12.4s
-    
+
     rshrn  v23.4h, v28.4s, #DESCALE_P1
     rshrn  v21.4h, v29.4s, #DESCALE_P1
     rshrn  v19.4h, v30.4s, #DESCALE_P1
@@ -2513,10 +2513,10 @@ asm_function jsimd_fdct_islow_neon
     rshrn2 v21.8h, v25.4s, #DESCALE_P1 /* dataptr[5] = (DCTELEM) DESCALE(tmp5 + z2 + z4, CONST_BITS-PASS1_BITS); */
     rshrn2 v19.8h, v26.4s, #DESCALE_P1 /* dataptr[3] = (DCTELEM) DESCALE(tmp6 + z2 + z3, CONST_BITS-PASS1_BITS); */
     rshrn2 v17.8h, v27.4s, #DESCALE_P1 /* dataptr[1] = (DCTELEM) DESCALE(tmp7 + z1 + z4, CONST_BITS-PASS1_BITS); */
-    
+
     /* Transpose */
     transpose_8x8 v16, v17, v18, v19, v20, v21, v22, v23, v31, v2, v3, v4
-    
+
     /* 1-D FDCT */
     add v24.8h, v16.8h, v23.8h /* tmp0 = dataptr[0] + dataptr[7]; */
     sub v31.8h, v16.8h, v23.8h /* tmp7 = dataptr[0] - dataptr[7]; */
@@ -2526,39 +2526,39 @@ asm_function jsimd_fdct_islow_neon
     sub v29.8h, v18.8h, v21.8h /* tmp5 = dataptr[2] - dataptr[5]; */
     add v27.8h, v19.8h, v20.8h /* tmp3 = dataptr[3] + dataptr[4]; */
     sub v28.8h, v19.8h, v20.8h /* tmp4 = dataptr[3] - dataptr[4]; */
-    
+
     /* even part */
-    
+
     add v8.8h, v24.8h, v27.8h /* tmp10 = tmp0 + tmp3; */
     sub v9.8h, v24.8h, v27.8h /* tmp13 = tmp0 - tmp3; */
     add v10.8h, v25.8h, v26.8h /* tmp11 = tmp1 + tmp2; */
     sub v11.8h, v25.8h, v26.8h /* tmp12 = tmp1 - tmp2; */
-    
+
     add v16.8h, v8.8h, v10.8h /* tmp10 + tmp11 */
     sub v20.8h, v8.8h, v10.8h /* tmp10 - tmp11 */
-    
+
     add  v18.8h, v11.8h, v9.8h /* tmp12 + tmp13 */
-    
+
     srshr  v16.8h, v16.8h, #PASS1_BITS /* dataptr[0] = (DCTELEM) DESCALE(tmp10 + tmp11, PASS1_BITS); */
     srshr  v20.8h, v20.8h, #PASS1_BITS /* dataptr[4] = (DCTELEM) DESCALE(tmp10 - tmp11, PASS1_BITS); */
-  
+
     smull2 v24.4s, v18.8h, XFIX_P_0_541 /* z1 hi = MULTIPLY(tmp12 + tmp13, XFIX_P_0_541); */
     smull  v18.4s, v18.4h, XFIX_P_0_541 /* z1 lo = MULTIPLY(tmp12 + tmp13, XFIX_P_0_541); */
     mov    v22.4s, v18.4s
     mov    v25.4s, v24.4s
-    
+
     smlal  v18.4s,  v9.4h, XFIX_P_0_765 /* lo z1 + MULTIPLY(tmp13, XFIX_P_0_765) */
     smlal2 v24.4s,  v9.8h, XFIX_P_0_765 /* hi z1 + MULTIPLY(tmp13, XFIX_P_0_765) */
     smlal  v22.4s, v11.4h, XFIX_N_1_847 /* lo z1 + MULTIPLY(tmp12, XFIX_N_1_847) */
     smlal2 v25.4s, v11.8h, XFIX_N_1_847 /* hi z1 + MULTIPLY(tmp12, XFIX_N_1_847) */
-    
+
     rshrn  v18.4h, v18.4s, #DESCALE_P2
     rshrn  v22.4h, v22.4s, #DESCALE_P2
     rshrn2 v18.8h, v24.4s, #DESCALE_P2 /* dataptr[2] = (DCTELEM) DESCALE(z1 + MULTIPLY(tmp13, XFIX_P_0_765),
                                    CONST_BITS-PASS1_BITS); */
     rshrn2 v22.8h, v25.4s, #DESCALE_P2 /* dataptr[6] = (DCTELEM) DESCALE(z1 + MULTIPLY(tmp12, XFIX_N_1_847),
                                    CONST_BITS-PASS1_BITS); */
-                              
+
     /* Odd part */
 
     add  v8.8h, v28.8h, v31.8h /* z1 = tmp4 + tmp7; */
@@ -2567,14 +2567,14 @@ asm_function jsimd_fdct_islow_neon
     add v11.8h, v29.8h, v31.8h /* z4 = tmp5 + tmp7; */
 
     smull  v4.4s, v10.4h, XFIX_P_1_175 /* z5 lo = z3 lo * XFIX_P_1_175 */
-    smull2 v5.4s, v10.8h, XFIX_P_1_175 
+    smull2 v5.4s, v10.8h, XFIX_P_1_175
     smlal  v4.4s, v11.4h, XFIX_P_1_175 /* z5 = MULTIPLY(z3 + z4, FIX_1_175875602); */
-    smlal2 v5.4s, v11.8h, XFIX_P_1_175 
+    smlal2 v5.4s, v11.8h, XFIX_P_1_175
 
     smull2 v24.4s, v28.8h, XFIX_P_0_298
-    smull2 v25.4s, v29.8h, XFIX_P_2_053 
-    smull2 v26.4s, v30.8h, XFIX_P_3_072 
-    smull2 v27.4s, v31.8h, XFIX_P_1_501 
+    smull2 v25.4s, v29.8h, XFIX_P_2_053
+    smull2 v26.4s, v30.8h, XFIX_P_3_072
+    smull2 v27.4s, v31.8h, XFIX_P_1_501
     smull  v28.4s, v28.4h, XFIX_P_0_298 /* tmp4 = MULTIPLY(tmp4, FIX_0_298631336); */
     smull  v29.4s, v29.4h, XFIX_P_2_053 /* tmp5 = MULTIPLY(tmp5, FIX_2_053119869); */
     smull  v30.4s, v30.4h, XFIX_P_3_072 /* tmp6 = MULTIPLY(tmp6, FIX_3_072711026); */
@@ -2602,7 +2602,7 @@ asm_function jsimd_fdct_islow_neon
     add v26.4s, v26.4s, v14.4s
     add v31.4s, v31.4s, v11.4s /* tmp7 += z4 */
     add v27.4s, v27.4s, v15.4s
-    
+
     add v28.4s, v28.4s, v10.4s /* tmp4 += z3 */
     add v24.4s, v24.4s, v14.4s
     add v29.4s, v29.4s, v11.4s /* tmp5 += z4 */
@@ -2611,7 +2611,7 @@ asm_function jsimd_fdct_islow_neon
     add v26.4s, v26.4s, v13.4s
     add v31.4s, v31.4s,  v8.4s /* tmp7 += z1 */
     add v27.4s, v27.4s, v12.4s
-    
+
     rshrn  v23.4h, v28.4s, #DESCALE_P2
     rshrn  v21.4h, v29.4s, #DESCALE_P2
     rshrn  v19.4h, v30.4s, #DESCALE_P2
@@ -2620,7 +2620,7 @@ asm_function jsimd_fdct_islow_neon
     rshrn2 v21.8h, v25.4s, #DESCALE_P2 /* dataptr[5] = (DCTELEM) DESCALE(tmp5 + z2 + z4, CONST_BITS-PASS1_BITS); */
     rshrn2 v19.8h, v26.4s, #DESCALE_P2 /* dataptr[3] = (DCTELEM) DESCALE(tmp6 + z2 + z3, CONST_BITS-PASS1_BITS); */
     rshrn2 v17.8h, v27.4s, #DESCALE_P2 /* dataptr[1] = (DCTELEM) DESCALE(tmp7 + z1 + z4, CONST_BITS-PASS1_BITS); */
-    
+
     /* store results */
     st1     {v16.8h, v17.8h, v18.8h, v19.8h}, [DATA], 64
     st1     {v20.8h, v21.8h, v22.8h, v23.8h}, [DATA]
@@ -2629,7 +2629,7 @@ asm_function jsimd_fdct_islow_neon
     sub             sp, sp, #64
     ld1             {v8.8b, v9.8b, v10.8b, v11.8b}, [sp], 32
     ld1             {v12.8b, v13.8b, v14.8b, v15.8b}, [sp], 32
-    
+
     br              x30
 
     .unreq          DATA
@@ -2691,7 +2691,7 @@ asm_function jsimd_fdct_ifast_neon
      *       0 1 2 3 | 4 5 6 7
      *      ---------+--------
      *   0 | d16     | d17    | v0.8h
-     *   1 | d18     | d19    | q9 
+     *   1 | d18     | d19    | q9
      *   2 | d20     | d21    | q10
      *   3 | d22     | d23    | q11
      *   4 | d24     | d25    | q12
@@ -2744,7 +2744,7 @@ asm_function jsimd_fdct_ifast_neon
     sub     v19.8h,  v5.8h, v19.8h
     add     v17.8h,  v6.8h, v29.8h
     sub     v23.8h,  v6.8h, v29.8h
-    
+
     bne     1b
 
     /* store results */
@@ -2824,7 +2824,7 @@ asm_function jsimd_quantize_neon
     ushl            v5.8h, v5.8h, v25.8h
     ushl            v6.8h, v6.8h, v26.8h
     ushl            v7.8h, v7.8h, v27.8h
-    
+
     eor             v4.16b, v4.16b, v0.16b  /* restore sign */
     eor             v5.16b, v5.16b, v1.16b
     eor             v6.16b, v6.16b, v2.16b
@@ -2834,7 +2834,7 @@ asm_function jsimd_quantize_neon
     sub             v6.8h, v6.8h, v2.8h
     sub             v7.8h, v7.8h, v3.8h
     st1             {v4.8h, v5.8h, v6.8h, v7.8h}, [COEF_BLOCK], 64
-    
+
     bne             1b
 
     br              x30 /* return */
@@ -2859,7 +2859,7 @@ asm_function jsimd_quantize_neon
  *                             JDIMENSION v_samp_factor, JDIMENSION width_blocks,
  *                             JSAMPARRAY input_data, JSAMPARRAY output_data);
  */
- 
+
  .balign 16
  jsimd_h2v1_downsample_neon_consts:
     .byte 0x00, 0x02, 0x04, 0x06, 0x08, 0x0A, 0x0C, 0x0E /* diff 0, even */
@@ -2941,7 +2941,7 @@ asm_function jsimd_h2v1_downsample_neon
     shrn  v2.8b, v2.8h, #1
     st1   {v2.8b}, [OUTPTR], #8
     bne 1b
-    
+
     br              x30
 
     .unreq          IMAGE_WIDTH
@@ -2969,7 +2969,7 @@ asm_function jsimd_h2v1_downsample_neon
  *                             JDIMENSION v_samp_factor, JDIMENSION width_blocks,
  *                             JSAMPARRAY input_data, JSAMPARRAY output_data);
  */
- 
+
  .balign 16
  jsimd_h2v2_downsample_neon_consts:
     .byte 0x00, 0x02, 0x04, 0x06, 0x08, 0x0A, 0x0C, 0x0E /* diff 0, even */
@@ -3063,7 +3063,7 @@ asm_function jsimd_h2v2_downsample_neon
     shrn  v4.8b, v4.8h, #2
     st1   {v4.8b}, [OUTPTR], #8
     bne 1b
-    
+
     br              x30
 
     .unreq          IMAGE_WIDTH
@@ -3079,4 +3079,4 @@ asm_function jsimd_h2v2_downsample_neon
     .unreq          TMP2
     .unreq          TMP3
     .unreq          TMPDUP
-    
+
