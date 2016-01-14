@@ -7,7 +7,7 @@
  * Copyright (C) 2013-2014, Linaro Limited
  * Author: Ragesh Radhakrishnan <ragesh.r@linaro.org>
  * Copyright (C) 2014-2015, D. R. Commander.  All Rights Reserved.
- * Copyright (C) 2015, Matthieu Darbois.  All Rights Reserved.
+ * Copyright (C) 2015-2016, Matthieu Darbois.  All Rights Reserved.
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the authors be held liable for any damages
