@@ -385,7 +385,7 @@ EXTERN(void) jsimd_h2v2_downsample_sse2
         (JDIMENSION image_width, int max_v_samp_factor,
          JDIMENSION v_samp_factor, JDIMENSION width_blocks,
          JSAMPARRAY input_data, JSAMPARRAY output_data);
-         
+
 EXTERN(void) jsimd_h2v2_downsample_neon
         (JDIMENSION image_width, int max_v_samp_factor,
          JDIMENSION v_samp_factor, JDIMENSION width_blocks,

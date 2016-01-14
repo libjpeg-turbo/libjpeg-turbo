@@ -2083,7 +2083,7 @@ generate_jsimd_ycc_rgb_convert_neon rgb565,  16, 0, .4h,   0, .4h,   0, .4h,   .
 .endm
 
 .balign 16
-jsimd_\colorid\()_ycc_neon_consts:
+Ljsimd_\colorid\()_ycc_neon_consts:
     .short          19595, 38470, 7471,  11059
     .short          21709, 32768, 27439, 5329
     .short          32767, 128,   32767, 128
@@ -2098,7 +2098,7 @@ asm_function jsimd_\colorid\()_ycc_convert_neon
 
     OUTPUT_BUF0     .req x5
     OUTPUT_BUF1     .req x6
-    OUTPUT_BUF2     .req OUTPUT_BUF
+    OUTPUT_BUF2     .req x2 /* OUTPUT_BUF */
 
     RGB             .req x7
     Y               .req x9
@@ -2107,7 +2107,7 @@ asm_function jsimd_\colorid\()_ycc_convert_neon
     N               .req w12
 
     /* Load constants to d0, d1, d2, d3 */
-    adr             x13, jsimd_\colorid\()_ycc_neon_consts
+    adr             x13, Ljsimd_\colorid\()_ycc_neon_consts
     ld1             {v0.8h, v1.8h}, [x13]
 
     ldr             OUTPUT_BUF0, [OUTPUT_BUF]
@@ -2122,7 +2122,7 @@ asm_function jsimd_\colorid\()_ycc_convert_neon
 
     /* Outer loop over scanlines */
     cmp             NUM_ROWS, #1
-    blt             9f
+    b.lt            9f
 0:
     ldr             Y, [OUTPUT_BUF0, OUTPUT_ROW, lsl #3]
     ldr             U, [OUTPUT_BUF1, OUTPUT_ROW, lsl #3]
@@ -2133,48 +2133,42 @@ asm_function jsimd_\colorid\()_ycc_convert_neon
 
     /* Inner loop over pixels */
     subs            N, N, #8
-    blt             3f
+    b.lt            3f
     do_load         \bpp, 8
     do_rgb_to_yuv_stage1
     subs            N, N, #8
-    blt             2f
+    b.lt            2f
 1:
     do_rgb_to_yuv_stage2_store_load_stage1
     subs            N, N, #8
-    bge             1b
+    b.ge            1b
 2:
     do_rgb_to_yuv_stage2
     do_store        8
     tst             N, #7
-    beq             8f
+    b.eq            8f
 3:
-    tst             N, #4
-    beq             3f
+    tbz             N, #2, 3f
     do_load         \bpp, 4
 3:
-    tst             N, #2
-    beq             4f
+    tbz             N, #1, 4f
     do_load         \bpp, 2
 4:
-    tst             N, #1
-    beq             5f
+    tbz             N, #0, 5f
     do_load         \bpp, 1
 5:
     do_rgb_to_yuv
-    tst             N, #4
-    beq             6f
+    tbz             N, #2, 6f
     do_store        4
 6:
-    tst             N, #2
-    beq             7f
+    tbz             N, #1, 7f
     do_store        2
 7:
-    tst             N, #1
-    beq             8f
+    tbz             N, #1, 8f
     do_store        1
 8:
     subs            NUM_ROWS, NUM_ROWS, #1
-    bgt             0b
+    b.gt            0b
 9:
     /* Restore all registers and return */
     sub             sp, sp, #64
@@ -2335,7 +2329,7 @@ asm_function jsimd_convsamp_neon
 #endif
 
 .balign 16
-jsimd_fdct_islow_neon_consts:
+Ljsimd_fdct_islow_neon_consts:
     .short F_0_298
     .short -F_0_390
     .short F_0_541
@@ -2384,7 +2378,7 @@ asm_function jsimd_fdct_islow_neon
     TMP     .req x9
 
     /* Load constants */
-    adr     TMP, jsimd_fdct_islow_neon_consts
+    adr     TMP, Ljsimd_fdct_islow_neon_consts
     ld1     {v0.8h, v1.8h}, [TMP]
 
     /* Save NEON registers */
@@ -2669,7 +2663,7 @@ asm_function jsimd_fdct_islow_neon
 #define XFIX_1_306562965 v0.h[3]
 
 .balign 16
-jsimd_fdct_ifast_neon_consts:
+Ljsimd_fdct_ifast_neon_consts:
     .short (98 * 128)              /* XFIX_0_382683433 */
     .short (139 * 128)             /* XFIX_0_541196100 */
     .short (181 * 128)             /* XFIX_0_707106781 */
@@ -2681,7 +2675,7 @@ asm_function jsimd_fdct_ifast_neon
     TMP     .req x9
 
     /* Load constants */
-    adr     TMP, jsimd_fdct_ifast_neon_consts
+    adr     TMP, Ljsimd_fdct_ifast_neon_consts
     ld1     {v0.4h}, [TMP]
 
     /* Load all DATA into NEON registers with the following allocation:
@@ -2742,7 +2736,7 @@ asm_function jsimd_fdct_ifast_neon
     add     v17.8h,  v6.8h, v29.8h
     sub     v23.8h,  v6.8h, v29.8h
 
-    bne     1b
+    b.ne    1b
 
     /* store results */
     st1     {v16.8h, v17.8h, v18.8h, v19.8h}, [DATA], 64
@@ -2832,7 +2826,7 @@ asm_function jsimd_quantize_neon
     sub             v7.8h, v7.8h, v3.8h
     st1             {v4.8h, v5.8h, v6.8h, v7.8h}, [COEF_BLOCK], 64
 
-    bne             1b
+    b.ne            1b
 
     br              x30 /* return */
 
@@ -2857,8 +2851,8 @@ asm_function jsimd_quantize_neon
  *                             JSAMPARRAY input_data, JSAMPARRAY output_data);
  */
 
- .balign 16
- jsimd_h2v1_downsample_neon_consts:
+.balign 16
+Ljsimd_h2v1_downsample_neon_consts:
     .byte 0x00, 0x02, 0x04, 0x06, 0x08, 0x0A, 0x0C, 0x0E /* diff 0, even */
     .byte 0x01, 0x03, 0x05, 0x07, 0x09, 0x0B, 0x0D, 0x0F /* diff 0,  odd */
     .byte 0x00, 0x02, 0x04, 0x06, 0x08, 0x0A, 0x0C, 0x0E /* diff 1, even */
@@ -2909,7 +2903,7 @@ asm_function jsimd_h2v1_downsample_neon
     mov   TMPDUP, #0x10000
     lsl   TMP2, BLOCK_WIDTH, #4
     sub   TMP2, TMP2, IMAGE_WIDTH
-    adr   TMP3, jsimd_h2v1_downsample_neon_consts
+    adr   TMP3, Ljsimd_h2v1_downsample_neon_consts
     add   TMP3, TMP3, TMP2, lsl #4
     dup   v16.4s, TMPDUP
     ld1   {v18.8b, v19.8b}, [TMP3]
@@ -2918,7 +2912,7 @@ asm_function jsimd_h2v1_downsample_neon
     ldr   INPTR, [INPUT_DATA], #8
     ldr   OUTPTR, [OUTPUT_DATA], #8
     subs  TMP1, BLOCK_WIDTH, #1
-    beq 3f
+    b.eq  3f
 2: /* columns */
     ld2   {v0.8b, v1.8b}, [INPTR], #16
     subs  TMP1, TMP1, #1
@@ -2926,7 +2920,7 @@ asm_function jsimd_h2v1_downsample_neon
     add   v2.8h, v2.8h, v16.8h
     shrn  v2.8b, v2.8h, #1
     st1   {v2.8b}, [OUTPTR], #8
-    bne 2b
+    b.ne  2b
 3: /* last columns */
     ld1   {v0.16b}, [INPTR]
     subs  V_SAMP, V_SAMP, #1
@@ -2937,7 +2931,7 @@ asm_function jsimd_h2v1_downsample_neon
     add   v2.8h, v2.8h, v16.8h
     shrn  v2.8b, v2.8h, #1
     st1   {v2.8b}, [OUTPTR], #8
-    bne 1b
+    b.ne  1b
 
     br              x30
 
@@ -2967,8 +2961,8 @@ asm_function jsimd_h2v1_downsample_neon
  *                             JSAMPARRAY input_data, JSAMPARRAY output_data);
  */
 
- .balign 16
- jsimd_h2v2_downsample_neon_consts:
+.balign 16
+Ljsimd_h2v2_downsample_neon_consts:
     .byte 0x00, 0x02, 0x04, 0x06, 0x08, 0x0A, 0x0C, 0x0E /* diff 0, even */
     .byte 0x01, 0x03, 0x05, 0x07, 0x09, 0x0B, 0x0D, 0x0F /* diff 0,  odd */
     .byte 0x00, 0x02, 0x04, 0x06, 0x08, 0x0A, 0x0C, 0x0E /* diff 1, even */
@@ -3021,7 +3015,7 @@ asm_function jsimd_h2v2_downsample_neon
     lsl   TMP2, BLOCK_WIDTH, #4
     lsl   TMPDUP, TMPDUP, #17
     sub   TMP2, TMP2, IMAGE_WIDTH
-    adr   TMP3, jsimd_h2v2_downsample_neon_consts
+    adr   TMP3, Ljsimd_h2v2_downsample_neon_consts
     orr   TMPDUP, TMPDUP, #1
     add   TMP3, TMP3, TMP2, lsl #4
     dup   v16.4s, TMPDUP
@@ -3032,7 +3026,7 @@ asm_function jsimd_h2v2_downsample_neon
     ldr   OUTPTR, [OUTPUT_DATA], #8
     ldr   INPTR1, [INPUT_DATA], #8
     subs  TMP1, BLOCK_WIDTH, #1
-    beq 3f
+    b.eq  3f
 2: /* columns */
     ld2   {v0.8b, v1.8b}, [INPTR0], #16
     ld2   {v2.8b, v3.8b}, [INPTR1], #16
@@ -3043,7 +3037,7 @@ asm_function jsimd_h2v2_downsample_neon
     add   v4.8h, v4.8h, v16.8h
     shrn  v4.8b, v4.8h, #2
     st1   {v4.8b}, [OUTPTR], #8
-    bne 2b
+    b.ne  2b
 3: /* last columns */
     ld1   {v0.16b}, [INPTR0]
     ld1   {v1.16b}, [INPTR1]
@@ -3059,7 +3053,7 @@ asm_function jsimd_h2v2_downsample_neon
     add   v4.8h, v4.8h, v16.8h
     shrn  v4.8b, v4.8h, #2
     st1   {v4.8b}, [OUTPTR], #8
-    bne 1b
+    b.ne  1b
 
     br              x30
 
