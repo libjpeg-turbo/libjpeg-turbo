@@ -2164,7 +2164,7 @@ asm_function jsimd_\colorid\()_ycc_convert_neon
     tbz             N, #1, 7f
     do_store        2
 7:
-    tbz             N, #1, 8f
+    tbz             N, #0, 8f
     do_store        1
 8:
     subs            NUM_ROWS, NUM_ROWS, #1
