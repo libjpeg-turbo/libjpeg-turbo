@@ -2438,8 +2438,8 @@ asm_function jsimd_fdct_islow_neon
 
     smull2 v24.4s, v18.8h, XFIX_P_0_541 /* z1 hi = MULTIPLY(tmp12 + tmp13, XFIX_P_0_541); */
     smull  v18.4s, v18.4h, XFIX_P_0_541 /* z1 lo = MULTIPLY(tmp12 + tmp13, XFIX_P_0_541); */
-    mov   v22.4s, v18.4s
-    mov   v25.4s, v24.4s
+    mov    v22.16b, v18.16b
+    mov    v25.16b, v24.16b
 
     smlal  v18.4s,  v9.4h, XFIX_P_0_765 /* lo z1 + MULTIPLY(tmp13, XFIX_P_0_765) */
     smlal2 v24.4s,  v9.8h, XFIX_P_0_765 /* hi z1 + MULTIPLY(tmp13, XFIX_P_0_765) */
@@ -2544,8 +2544,8 @@ asm_function jsimd_fdct_islow_neon
 
     smull2 v24.4s, v18.8h, XFIX_P_0_541 /* z1 hi = MULTIPLY(tmp12 + tmp13, XFIX_P_0_541); */
     smull  v18.4s, v18.4h, XFIX_P_0_541 /* z1 lo = MULTIPLY(tmp12 + tmp13, XFIX_P_0_541); */
-    mov    v22.4s, v18.4s
-    mov    v25.4s, v24.4s
+    mov    v22.16b, v18.16b
+    mov    v25.16b, v24.16b
 
     smlal  v18.4s,  v9.4h, XFIX_P_0_765 /* lo z1 + MULTIPLY(tmp13, XFIX_P_0_765) */
     smlal2 v24.4s,  v9.8h, XFIX_P_0_765 /* hi z1 + MULTIPLY(tmp13, XFIX_P_0_765) */
@@ -2634,9 +2634,6 @@ asm_function jsimd_fdct_islow_neon
 
     .unreq          DATA
     .unreq          TMP
-    .unreq          DSP1
-    .unreq          DSP2
-    .unreq          DSP2H
 
 #undef XFIX_P_0_298
 #undef XFIX_N_0_390
