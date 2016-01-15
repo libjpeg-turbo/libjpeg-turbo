@@ -2,7 +2,7 @@
  * jsimd_arm64.c
  *
  * Copyright 2009 Pierre Ossman <ossman@cendio.se> for Cendio AB
- * Copyright 2009-2011, 2013-2014 D. R. Commander
+ * Copyright 2009-2011, 2013-2014, 2016 D. R. Commander
  * Copyright 2015-2016 Matthieu Darbois
  *
  * Based on the x86 SIMD extension for IJG JPEG library,
@@ -158,6 +158,7 @@ jsimd_rgb_ycc_convert (j_compress_ptr cinfo,
       neonfct=jsimd_extrgb_ycc_convert_neon;
       break;
   }
+
   neonfct(cinfo->image_width, input_buf, output_buf, output_row, num_rows);
 }
 
@@ -258,9 +259,8 @@ jsimd_h2v2_downsample (j_compress_ptr cinfo, jpeg_component_info * compptr,
                        JSAMPARRAY input_data, JSAMPARRAY output_data)
 {
   jsimd_h2v2_downsample_neon(cinfo->image_width, cinfo->max_v_samp_factor,
-                             compptr->v_samp_factor,
-                             compptr->width_in_blocks, input_data,
-                             output_data);
+                             compptr->v_samp_factor, compptr->width_in_blocks,
+                             input_data, output_data);
 }
 
 GLOBAL(void)
@@ -268,9 +268,8 @@ jsimd_h2v1_downsample (j_compress_ptr cinfo, jpeg_component_info * compptr,
                        JSAMPARRAY input_data, JSAMPARRAY output_data)
 {
   jsimd_h2v1_downsample_neon(cinfo->image_width, cinfo->max_v_samp_factor,
-                             compptr->v_samp_factor,
-                             compptr->width_in_blocks, input_data,
-                             output_data);
+                             compptr->v_samp_factor, compptr->width_in_blocks,
+                             input_data, output_data);
 }
 
 GLOBAL(int)
