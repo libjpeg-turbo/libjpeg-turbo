@@ -122,6 +122,35 @@ _\fname:
     trn2 \l5\().2d, \t0\().2d, \l5\().2d
 .endm
 
+.macro transpose8x8.8b l0, l1, l2, l3, l4, l5, l6, l7, t0, t1, t2, t3
+    trn1 \t0\().8b, \l0\().8b, \l1\().8b
+    trn1 \t1\().8b, \l2\().8b, \l3\().8b
+    trn1 \t2\().8b, \l4\().8b, \l5\().8b
+    trn1 \t3\().8b, \l6\().8b, \l7\().8b
+    trn2 \l1\().8b, \l0\().8b, \l1\().8b
+    trn2 \l3\().8b, \l2\().8b, \l3\().8b
+    trn2 \l5\().8b, \l4\().8b, \l5\().8b
+    trn2 \l7\().8b, \l6\().8b, \l7\().8b
+
+    trn1 \l4\().4h, \t2\().4h, \t3\().4h
+    trn2 \t3\().4h, \t2\().4h, \t3\().4h
+    trn1 \t2\().4h, \t0\().4h, \t1\().4h
+    trn2 \l2\().4h, \t0\().4h, \t1\().4h
+    trn1 \t0\().4h, \l1\().4h, \l3\().4h
+    trn2 \l3\().4h, \l1\().4h, \l3\().4h
+    trn2 \t1\().4h, \l5\().4h, \l7\().4h
+    trn1 \l5\().4h, \l5\().4h, \l7\().4h
+
+    trn2 \l6\().2s, \l2\().2s, \t3\().2s
+    trn1 \l0\().2s, \t2\().2s, \l4\().2s
+    trn1 \l1\().2s, \t0\().2s, \l5\().2s
+    trn2 \l7\().2s, \l3\().2s, \t1\().2s
+    trn1 \l2\().2s, \l2\().2s, \t3\().2s
+    trn2 \l4\().2s, \t2\().2s, \l4\().2s
+    trn1 \l3\().2s, \l3\().2s, \t1\().2s
+    trn2 \l5\().2s, \t0\().2s, \l5\().2s
+.endm
+
 
 #define CENTERJSAMPLE 128
 
@@ -822,260 +851,166 @@ asm_function jsimd_idct_ifast_neon
     TMP1            .req x0
     TMP2            .req x1
     TMP3            .req x2
-    TMP4            .req x22
-    TMP5            .req x23
+    TMP4            .req x9
+    TMP5            .req x10
 
     /* Load and dequantize coefficients into NEON registers
      * with the following allocation:
      *       0 1 2 3 | 4 5 6 7
      *      ---------+--------
-     *   0 | d16     | d17     ( v8.8h  )
-     *   1 | d18     | d19     ( v9.8h  )
-     *   2 | d20     | d21     ( v10.8h )
-     *   3 | d22     | d23     ( v11.8h )
-     *   4 | d24     | d25     ( v12.8h )
-     *   5 | d26     | d27     ( v13.8h )
-     *   6 | d28     | d29     ( v14.8h )
-     *   7 | d30     | d31     ( v15.8h )
+     *   0 | d16     | d17     ( v16.8h  )
+     *   1 | d18     | d19     ( v17.8h  )
+     *   2 | d20     | d21     ( v18.8h )
+     *   3 | d22     | d23     ( v19.8h )
+     *   4 | d24     | d25     ( v20.8h )
+     *   5 | d26     | d27     ( v21.8h )
+     *   6 | d28     | d29     ( v22.8h )
+     *   7 | d30     | d31     ( v23.8h )
      */
     /* Save NEON registers used in fast IDCT */
-    sub             sp, sp, #176
-    stp             x22, x23, [sp], 16
-    adr             x23, Ljsimd_idct_ifast_neon_consts
-    st1             {v0.8b, v1.8b, v2.8b, v3.8b}, [sp], 32
-    st1             {v4.8b, v5.8b, v6.8b, v7.8b}, [sp], 32
-    st1             {v8.8b, v9.8b, v10.8b, v11.8b}, [sp], 32
-    st1             {v12.8b, v13.8b, v14.8b, v15.8b}, [sp], 32
-    st1             {v16.8b, v17.8b, v18.8b, v19.8b}, [sp], 32
-    ld1             {v8.8h, v9.8h}, [COEF_BLOCK], 32
+    adr             TMP5, Ljsimd_idct_ifast_neon_consts
+    ld1             {v16.8h, v17.8h}, [COEF_BLOCK], 32
     ld1             {v0.8h, v1.8h}, [DCT_TABLE], 32
-    ld1             {v10.8h, v11.8h}, [COEF_BLOCK], 32
-    mul             v8.8h,  v8.8h,  v0.8h
+    ld1             {v18.8h, v19.8h}, [COEF_BLOCK], 32
+    mul             v16.8h,  v16.8h,  v0.8h
     ld1             {v2.8h, v3.8h}, [DCT_TABLE], 32
-    mul             v9.8h,  v9.8h,  v1.8h
-    ld1             {v12.8h, v13.8h}, [COEF_BLOCK], 32
-    mul             v10.8h, v10.8h, v2.8h
+    mul             v17.8h,  v17.8h,  v1.8h
+    ld1             {v20.8h, v21.8h}, [COEF_BLOCK], 32
+    mul             v18.8h, v18.8h, v2.8h
     ld1             {v0.8h, v1.8h}, [DCT_TABLE], 32
-    mul             v11.8h, v11.8h, v3.8h
-    ld1             {v14.8h, v15.8h}, [COEF_BLOCK], 32
-    mul             v12.8h, v12.8h, v0.8h
+    mul             v19.8h, v19.8h, v3.8h
+    ld1             {v22.8h, v23.8h}, [COEF_BLOCK], 32
+    mul             v20.8h, v20.8h, v0.8h
     ld1             {v2.8h, v3.8h}, [DCT_TABLE], 32
-    mul             v14.8h, v14.8h, v2.8h
-    mul             v13.8h, v13.8h, v1.8h
-    ld1             {v0.4h}, [x23]      /* load constants */
-    mul             v15.8h, v15.8h, v3.8h
+    mul             v22.8h, v22.8h, v2.8h
+    mul             v21.8h, v21.8h, v1.8h
+    ld1             {v0.4h}, [TMP5]      /* load constants */
+    mul             v23.8h, v23.8h, v3.8h
 
     /* 1-D IDCT, pass 1 */
-    sub             v2.8h,    v10.8h,   v14.8h
-    add             v14.8h,   v10.8h,   v14.8h
-    sub             v1.8h,    v11.8h,   v13.8h
-    add             v13.8h,   v11.8h,   v13.8h
-    sub             v5.8h,    v9.8h,    v15.8h
-    add             v15.8h,   v9.8h,    v15.8h
+    sub             v2.8h,    v18.8h,   v22.8h
+    add             v22.8h,   v18.8h,   v22.8h
+    sub             v1.8h,    v19.8h,   v21.8h
+    add             v21.8h,   v19.8h,   v21.8h
+    sub             v5.8h,    v17.8h,   v23.8h
+    add             v23.8h,   v17.8h,   v23.8h
     sqdmulh         v4.8h,    v2.8h,    XFIX_1_414213562
     sqdmulh         v6.8h,    v1.8h,    XFIX_2_613125930
     add             v3.8h,    v1.8h,    v1.8h
     sub             v1.8h,    v5.8h,    v1.8h
-    add             v10.8h,   v2.8h,    v4.8h
+    add             v18.8h,   v2.8h,    v4.8h
     sqdmulh         v4.8h,    v1.8h,    XFIX_1_847759065
-    sub             v2.8h,    v15.8h,   v13.8h
+    sub             v2.8h,    v23.8h,   v21.8h
     add             v3.8h,    v3.8h,    v6.8h
     sqdmulh         v6.8h,    v2.8h,    XFIX_1_414213562
     add             v1.8h,    v1.8h,    v4.8h
     sqdmulh         v4.8h,    v5.8h,    XFIX_1_082392200
-    sub             v10.8h,   v10.8h,   v14.8h
+    sub             v18.8h,   v18.8h,   v22.8h
     add             v2.8h,    v2.8h,    v6.8h
-    sub             v6.8h,    v8.8h,    v12.8h
-    add             v12.8h,   v8.8h,    v12.8h
-    add             v9.8h,    v5.8h,    v4.8h
-    add             v5.8h,    v6.8h,    v10.8h
-    sub             v10.8h,   v6.8h,    v10.8h
-    add             v6.8h,    v15.8h,   v13.8h
-    add             v8.8h,    v12.8h,   v14.8h
+    sub             v6.8h,    v16.8h,   v20.8h
+    add             v20.8h,   v16.8h,   v20.8h
+    add             v17.8h,   v5.8h,    v4.8h
+    add             v5.8h,    v6.8h,    v18.8h
+    sub             v18.8h,   v6.8h,    v18.8h
+    add             v6.8h,    v23.8h,   v21.8h
+    add             v16.8h,   v20.8h,   v22.8h
     sub             v3.8h,    v6.8h,    v3.8h
-    sub             v12.8h,   v12.8h,   v14.8h
+    sub             v20.8h,   v20.8h,   v22.8h
     sub             v3.8h,    v3.8h,    v1.8h
-    sub             v1.8h,    v9.8h,    v1.8h
+    sub             v1.8h,    v17.8h,   v1.8h
     add             v2.8h,    v3.8h,    v2.8h
-    sub             v15.8h,   v8.8h,    v6.8h
+    sub             v23.8h,   v16.8h,   v6.8h
     add             v1.8h,    v1.8h,    v2.8h
-    add             v8.8h,    v8.8h,    v6.8h
-    add             v14.8h,   v5.8h,    v3.8h
-    sub             v9.8h,    v5.8h,    v3.8h
-    sub             v13.8h,   v10.8h,   v2.8h
-    add             v10.8h,   v10.8h,   v2.8h
-    /* Transpose  q8-q9 */
-    mov             v18.16b,  v8.16b
-    trn1            v8.8h,    v8.8h,    v9.8h
-    trn2            v9.8h,    v18.8h,   v9.8h
-    sub             v11.8h,   v12.8h,   v1.8h
-    /* Transpose  q14-q15 */
-    mov             v18.16b,  v14.16b
-    trn1            v14.8h,   v14.8h,   v15.8h
-    trn2            v15.8h,   v18.8h,   v15.8h
-    add             v12.8h,   v12.8h,   v1.8h
-    /* Transpose  q10-q11 */
-    mov             v18.16b,  v10.16b
-    trn1            v10.8h,   v10.8h,   v11.8h
-    trn2            v11.8h,   v18.8h,   v11.8h
-    /* Transpose  q12-q13 */
-    mov             v18.16b,  v12.16b
-    trn1            v12.8h,   v12.8h,   v13.8h
-    trn2            v13.8h,   v18.8h,   v13.8h
-    /* Transpose  q9-q11 */
-    mov             v18.16b,  v9.16b
-    trn1            v9.4s,    v9.4s,    v11.4s
-    trn2            v11.4s,   v18.4s,   v11.4s
-    /* Transpose  q12-q14 */
-    mov             v18.16b,  v12.16b
-    trn1            v12.4s,   v12.4s,   v14.4s
-    trn2            v14.4s,   v18.4s,   v14.4s
-    /* Transpose  q8-q10 */
-    mov             v18.16b,  v8.16b
-    trn1            v8.4s,    v8.4s,    v10.4s
-    trn2            v10.4s,   v18.4s,   v10.4s
-    /* Transpose  q13-q15 */
-    mov             v18.16b,  v13.16b
-    trn1            v13.4s,   v13.4s,   v15.4s
-    trn2            v15.4s,   v18.4s,   v15.4s
-    /* vswp            v14.4h,   v10-MSB.4h */
-    umov            x22, v14.d[0]
-    ins             v14.d[0], v10.d[1]
-    ins             v10.d[1], x22
-    /* vswp            v13.4h,   v9MSB.4h */
-
-    umov            x22, v13.d[0]
-    ins             v13.d[0], v9.d[1]
-    ins             v9.d[1], x22
+    add             v16.8h,   v16.8h,   v6.8h
+    add             v22.8h,   v5.8h,    v3.8h
+    sub             v17.8h,   v5.8h,    v3.8h
+    sub             v21.8h,   v18.8h,   v2.8h
+    add             v18.8h,   v18.8h,   v2.8h
+    sub             v19.8h,   v20.8h,   v1.8h
+    add             v20.8h,   v20.8h,   v1.8h
+    transpose_8x8   v16, v17, v18, v19, v20, v21, v22, v23, v28, v29, v30, v31
     /* 1-D IDCT, pass 2 */
-    sub             v2.8h,    v10.8h,   v14.8h
-    /* vswp            v15.4h,   v11MSB.4h */
-    umov            x22, v15.d[0]
-    ins             v15.d[0], v11.d[1]
-    ins             v11.d[1], x22
-    add             v14.8h,   v10.8h,   v14.8h
-    /* vswp            v12.4h,   v8-MSB.4h */
-    umov            x22, v12.d[0]
-    ins             v12.d[0], v8.d[1]
-    ins             v8.d[1],  x22
-    sub             v1.8h,    v11.8h,   v13.8h
-    add             v13.8h,   v11.8h,   v13.8h
-    sub             v5.8h,    v9.8h,    v15.8h
-    add             v15.8h,   v9.8h,    v15.8h
+    sub             v2.8h,    v18.8h,   v22.8h
+    add             v22.8h,   v18.8h,   v22.8h
+    sub             v1.8h,    v19.8h,   v21.8h
+    add             v21.8h,   v19.8h,   v21.8h
+    sub             v5.8h,    v17.8h,   v23.8h
+    add             v23.8h,   v17.8h,   v23.8h
     sqdmulh         v4.8h,    v2.8h,    XFIX_1_414213562
     sqdmulh         v6.8h,    v1.8h,    XFIX_2_613125930
     add             v3.8h,    v1.8h,    v1.8h
     sub             v1.8h,    v5.8h,    v1.8h
-    add             v10.8h,   v2.8h,    v4.8h
+    add             v18.8h,   v2.8h,    v4.8h
     sqdmulh         v4.8h,    v1.8h,    XFIX_1_847759065
-    sub             v2.8h,    v15.8h,   v13.8h
+    sub             v2.8h,    v23.8h,   v21.8h
     add             v3.8h,    v3.8h,    v6.8h
     sqdmulh         v6.8h,    v2.8h,    XFIX_1_414213562
     add             v1.8h,    v1.8h,    v4.8h
     sqdmulh         v4.8h,    v5.8h,    XFIX_1_082392200
-    sub             v10.8h,   v10.8h,   v14.8h
+    sub             v18.8h,   v18.8h,   v22.8h
     add             v2.8h,    v2.8h,    v6.8h
-    sub             v6.8h,    v8.8h,    v12.8h
-    add             v12.8h,   v8.8h,    v12.8h
-    add             v9.8h,    v5.8h,    v4.8h
-    add             v5.8h,    v6.8h,    v10.8h
-    sub             v10.8h,   v6.8h,    v10.8h
-    add             v6.8h,    v15.8h,   v13.8h
-    add             v8.8h,    v12.8h,   v14.8h
+    sub             v6.8h,    v16.8h,   v20.8h
+    add             v20.8h,   v16.8h,   v20.8h
+    add             v17.8h,   v5.8h,    v4.8h
+    add             v5.8h,    v6.8h,    v18.8h
+    sub             v18.8h,   v6.8h,    v18.8h
+    add             v6.8h,    v23.8h,   v21.8h
+    add             v16.8h,   v20.8h,   v22.8h
     sub             v3.8h,    v6.8h,    v3.8h
-    sub             v12.8h,   v12.8h,   v14.8h
+    sub             v20.8h,   v20.8h,   v22.8h
     sub             v3.8h,    v3.8h,    v1.8h
-    sub             v1.8h,    v9.8h,    v1.8h
+    sub             v1.8h,    v17.8h,   v1.8h
     add             v2.8h,    v3.8h,    v2.8h
-    sub             v15.8h,   v8.8h,    v6.8h
+    sub             v23.8h,   v16.8h,   v6.8h
     add             v1.8h,    v1.8h,    v2.8h
-    add             v8.8h,    v8.8h,    v6.8h
-    add             v14.8h,   v5.8h,    v3.8h
-    sub             v9.8h,    v5.8h,    v3.8h
-    sub             v13.8h,   v10.8h,   v2.8h
-    add             v10.8h,   v10.8h,   v2.8h
-    sub             v11.8h,   v12.8h,   v1.8h
-    add             v12.8h,   v12.8h,   v1.8h
+    add             v16.8h,   v16.8h,   v6.8h
+    add             v22.8h,   v5.8h,    v3.8h
+    sub             v17.8h,   v5.8h,    v3.8h
+    sub             v21.8h,   v18.8h,   v2.8h
+    add             v18.8h,   v18.8h,   v2.8h
+    sub             v19.8h,   v20.8h,   v1.8h
+    add             v20.8h,   v20.8h,   v1.8h
     /* Descale to 8-bit and range limit */
     movi            v0.16b,   #0x80
-    sqshrn          v8.8b,    v8.8h,    #5
-    sqshrn2         v8.16b,   v9.8h,    #5
-    sqshrn          v9.8b,    v10.8h,   #5
-    sqshrn2         v9.16b,   v11.8h,   #5
-    sqshrn          v10.8b,   v12.8h,   #5
-    sqshrn2         v10.16b,  v13.8h,   #5
-    sqshrn          v11.8b,   v14.8h,   #5
-    sqshrn2         v11.16b,  v15.8h,   #5
-    add             v8.16b,   v8.16b,   v0.16b
-    add             v9.16b,   v9.16b,   v0.16b
-    add             v10.16b,  v10.16b,  v0.16b
-    add             v11.16b,  v11.16b,  v0.16b
-    /* Transpose the final 8-bit samples */
-    /* Transpose  q8-q9 */
-    mov             v18.16b,  v8.16b
-    trn1            v8.8h,    v8.8h,    v9.8h
-    trn2            v9.8h,    v18.8h,   v9.8h
-    /* Transpose  q10-q11 */
-    mov             v18.16b,  v10.16b
-    trn1            v10.8h,   v10.8h,   v11.8h
-    trn2            v11.8h,   v18.8h,   v11.8h
-    /* Transpose  q8-q10 */
-    mov             v18.16b,  v8.16b
-    trn1            v8.4s,    v8.4s,    v10.4s
-    trn2            v10.4s,   v18.4s,   v10.4s
-    /* Transpose  q9-q11 */
-    mov             v18.16b,  v9.16b
-    trn1            v9.4s,    v9.4s,    v11.4s
-    trn2            v11.4s,   v18.4s,   v11.4s
-    /* make copy */
-    ins             v17.d[0], v8.d[1]
-    /* Transpose  d16-d17-msb */
-    mov             v18.16b,  v8.16b
-    trn1            v8.8b,    v8.8b,    v17.8b
-    trn2            v17.8b,   v18.8b,   v17.8b
-    /* make copy */
-    ins             v19.d[0], v9.d[1]
-    mov             v18.16b,  v9.16b
-    trn1            v9.8b,    v9.8b,    v19.8b
-    trn2            v19.8b,   v18.8b,   v19.8b
+    sqshrn          v16.8b,   v16.8h,   #5
+    sqshrn2         v16.16b,  v17.8h,   #5
+    sqshrn          v18.8b,   v18.8h,   #5
+    sqshrn2         v18.16b,  v19.8h,   #5
+    sqshrn          v20.8b,   v20.8h,   #5
+    sqshrn2         v20.16b,  v21.8h,   #5
+    sqshrn          v22.8b,   v22.8h,   #5
+    sqshrn2         v22.16b,  v23.8h,   #5
+    add             v16.16b,  v16.16b,  v0.16b
+    add             v18.16b,  v18.16b,  v0.16b
+    add             v20.16b,  v20.16b,  v0.16b
+    add             v22.16b,  v22.16b,  v0.16b
+    mov             v17.d[0], v16.d[1]
+    mov             v19.d[0], v18.d[1]
+    mov             v21.d[0], v20.d[1]
+    mov             v23.d[0], v22.d[1]
+    
+    transpose8x8.8b v16, v17, v18, v19, v20, v21, v22, v23, v28, v29, v30, v31
     /* Store results to the output buffer */
-    ldp             TMP1,     TMP2,     [OUTPUT_BUF], 16
-    add             TMP1,     TMP1,     OUTPUT_COL
-    add             TMP2,     TMP2,     OUTPUT_COL
-    st1             {v8.8b},  [TMP1]
-    st1             {v17.8b}, [TMP2]
-    ldp             TMP1,     TMP2,     [OUTPUT_BUF], 16
-    add             TMP1,     TMP1,     OUTPUT_COL
-    add             TMP2,     TMP2,     OUTPUT_COL
-    st1             {v9.8b},  [TMP1]
-    /* make copy */
-    ins             v7.d[0],  v10.d[1]
-    mov             v18.16b,  v10.16b
-    trn1            v10.8b,   v10.8b,   v7.8b
-    trn2            v7.8b,    v18.8b,   v7.8b
-    st1             {v19.8b}, [TMP2]
     ldp             TMP1,     TMP2,     [OUTPUT_BUF], 16
     ldp             TMP4,     TMP5,     [OUTPUT_BUF], 16
     add             TMP1,     TMP1,     OUTPUT_COL
     add             TMP2,     TMP2,     OUTPUT_COL
     add             TMP4,     TMP4,     OUTPUT_COL
     add             TMP5,     TMP5,     OUTPUT_COL
-    st1             {v10.8b}, [TMP1]
-    /* make copy */
-    ins             v16.d[0], v11.d[1]
-    mov             v18.16b,  v11.16b
-    trn1            v11.8b,   v11.8b,   v16.8b
-    trn2            v16.8b,   v18.8b,   v16.8b
-    st1             {v7.8b},  [TMP2]
-    st1             {v11.8b}, [TMP4]
-    st1             {v16.8b}, [TMP5]
-    sub             sp, sp, #176
-    ldp             x22, x23, [sp], 16
-    ld1             {v0.8b, v1.8b, v2.8b, v3.8b}, [sp], 32
-    ld1             {v4.8b, v5.8b, v6.8b, v7.8b}, [sp], 32
-    ld1             {v8.8b, v9.8b, v10.8b, v11.8b}, [sp], 32
-    ld1             {v12.8b, v13.8b, v14.8b, v15.8b}, [sp], 32
-    ld1             {v16.8b, v17.8b, v18.8b, v19.8b}, [sp], 32
+    st1             {v16.8b}, [TMP1]
+    st1             {v17.8b}, [TMP2]
+    st1             {v18.8b}, [TMP4]
+    st1             {v19.8b}, [TMP5]
+    ldp             TMP1,     TMP2,     [OUTPUT_BUF], 16
+    ldp             TMP4,     TMP5,     [OUTPUT_BUF], 16
+    add             TMP1,     TMP1,     OUTPUT_COL
+    add             TMP2,     TMP2,     OUTPUT_COL
+    add             TMP4,     TMP4,     OUTPUT_COL
+    add             TMP5,     TMP5,     OUTPUT_COL
+    st1             {v20.8b}, [TMP1]
+    st1             {v21.8b},  [TMP2]
+    st1             {v22.8b}, [TMP4]
+    st1             {v23.8b}, [TMP5]
     blr             x30
 
     .unreq          DCT_TABLE
@@ -1540,6 +1475,11 @@ asm_function jsimd_idct_2x2_neon
  * Colorspace conversion YCbCr -> RGB
  */
 
+#if __APPLE__
+/* TODO: expand this to include other devices that are known not to have a slow
+ *       ld3 implementation. */
+#define ST3_IS_FAST
+#endif
 
 .macro do_load size
     .if \size == 8
@@ -1581,7 +1521,41 @@ asm_function jsimd_idct_2x2_neon
 .macro do_store bpp, size
     .if \bpp == 24
         .if \size == 8
+#ifdef ST3_IS_FAST
             st3  {v10.8b, v11.8b, v12.8b}, [RGB], 24
+#else
+            st1  {v10.b}[0], [RGB], #1
+            st1  {v11.b}[0], [RGB], #1
+            st1  {v12.b}[0], [RGB], #1
+
+            st1  {v10.b}[1], [RGB], #1
+            st1  {v11.b}[1], [RGB], #1
+            st1  {v12.b}[1], [RGB], #1
+
+            st1  {v10.b}[2], [RGB], #1
+            st1  {v11.b}[2], [RGB], #1
+            st1  {v12.b}[2], [RGB], #1
+
+            st1  {v10.b}[3], [RGB], #1
+            st1  {v11.b}[3], [RGB], #1
+            st1  {v12.b}[3], [RGB], #1
+
+            st1  {v10.b}[4], [RGB], #1
+            st1  {v11.b}[4], [RGB], #1
+            st1  {v12.b}[4], [RGB], #1
+
+            st1  {v10.b}[5], [RGB], #1
+            st1  {v11.b}[5], [RGB], #1
+            st1  {v12.b}[5], [RGB], #1
+
+            st1  {v10.b}[6], [RGB], #1
+            st1  {v11.b}[6], [RGB], #1
+            st1  {v12.b}[6], [RGB], #1
+
+            st1  {v10.b}[7], [RGB], #1
+            st1  {v11.b}[7], [RGB], #1
+            st1  {v12.b}[7], [RGB], #1
+#endif
         .elseif \size == 4
             st3  {v10.b, v11.b, v12.b}[0], [RGB], 3
             st3  {v10.b, v11.b, v12.b}[1], [RGB], 3
