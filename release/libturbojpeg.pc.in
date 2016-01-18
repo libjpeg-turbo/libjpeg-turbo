@@ -1,0 +1,10 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+ 
+Name: @PACKAGE_NAME@
+Description: A SIMD-accelerated JPEG codec
+Version: @PACKAGE_VERSION@
+Libs: -L${libdir} -lturbojpeg
+Cflags: -I${includedir}
