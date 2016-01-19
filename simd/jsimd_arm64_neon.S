@@ -122,36 +122,6 @@ _\fname:
     trn2 \l5\().2d, \t0\().2d, \l5\().2d
 .endm
 
-.macro transpose8x8.8b l0, l1, l2, l3, l4, l5, l6, l7, t0, t1, t2, t3
-    trn1 \t0\().8b, \l0\().8b, \l1\().8b
-    trn1 \t1\().8b, \l2\().8b, \l3\().8b
-    trn1 \t2\().8b, \l4\().8b, \l5\().8b
-    trn1 \t3\().8b, \l6\().8b, \l7\().8b
-    trn2 \l1\().8b, \l0\().8b, \l1\().8b
-    trn2 \l3\().8b, \l2\().8b, \l3\().8b
-    trn2 \l5\().8b, \l4\().8b, \l5\().8b
-    trn2 \l7\().8b, \l6\().8b, \l7\().8b
-
-    trn1 \l4\().4h, \t2\().4h, \t3\().4h
-    trn2 \t3\().4h, \t2\().4h, \t3\().4h
-    trn1 \t2\().4h, \t0\().4h, \t1\().4h
-    trn2 \l2\().4h, \t0\().4h, \t1\().4h
-    trn1 \t0\().4h, \l1\().4h, \l3\().4h
-    trn2 \l3\().4h, \l1\().4h, \l3\().4h
-    trn2 \t1\().4h, \l5\().4h, \l7\().4h
-    trn1 \l5\().4h, \l5\().4h, \l7\().4h
-
-    trn2 \l6\().2s, \l2\().2s, \t3\().2s
-    trn1 \l0\().2s, \t2\().2s, \l4\().2s
-    trn1 \l1\().2s, \t0\().2s, \l5\().2s
-    trn2 \l7\().2s, \l3\().2s, \t1\().2s
-    trn1 \l2\().2s, \l2\().2s, \t3\().2s
-    trn2 \l4\().2s, \t2\().2s, \l4\().2s
-    trn1 \l3\().2s, \l3\().2s, \t1\().2s
-    trn2 \l5\().2s, \t0\().2s, \l5\().2s
-.endm
-
-
 #define CENTERJSAMPLE 128
 
 /*****************************************************************************/
@@ -850,9 +820,12 @@ asm_function jsimd_idct_ifast_neon
     OUTPUT_COL      .req x3
     TMP1            .req x0
     TMP2            .req x1
-    TMP3            .req x2
-    TMP4            .req x9
-    TMP5            .req x10
+    TMP3            .req x9
+    TMP4            .req x10
+    TMP5            .req x11
+    TMP6            .req x12
+    TMP7            .req x13
+    TMP8            .req x14
 
     /* Load and dequantize coefficients into NEON registers
      * with the following allocation:
@@ -972,45 +945,57 @@ asm_function jsimd_idct_ifast_neon
     add             v20.8h,   v20.8h,   v1.8h
     /* Descale to 8-bit and range limit */
     movi            v0.16b,   #0x80
-    sqshrn          v16.8b,   v16.8h,   #5
-    sqshrn2         v16.16b,  v17.8h,   #5
-    sqshrn          v18.8b,   v18.8h,   #5
-    sqshrn2         v18.16b,  v19.8h,   #5
-    sqshrn          v20.8b,   v20.8h,   #5
-    sqshrn2         v20.16b,  v21.8h,   #5
-    sqshrn          v22.8b,   v22.8h,   #5
-    sqshrn2         v22.16b,  v23.8h,   #5
-    add             v16.16b,  v16.16b,  v0.16b
-    add             v18.16b,  v18.16b,  v0.16b
-    add             v20.16b,  v20.16b,  v0.16b
-    add             v22.16b,  v22.16b,  v0.16b
-    mov             v17.d[0], v16.d[1]
-    mov             v19.d[0], v18.d[1]
-    mov             v21.d[0], v20.d[1]
-    mov             v23.d[0], v22.d[1]
-    
-    transpose8x8.8b v16, v17, v18, v19, v20, v21, v22, v23, v28, v29, v30, v31
+      /* Prepare pointers (dual-issue with NEON instructions) */
+      ldp             TMP1,     TMP2,     [OUTPUT_BUF], 16
+    sqshrn          v28.8b,   v16.8h,   #5
+      ldp             TMP3,     TMP4,     [OUTPUT_BUF], 16
+    sqshrn          v29.8b,   v17.8h,   #5
+      add             TMP1,     TMP1,     OUTPUT_COL
+    sqshrn          v30.8b,   v18.8h,   #5
+      add             TMP2,     TMP2,     OUTPUT_COL
+    sqshrn          v31.8b,   v19.8h,   #5
+      add             TMP3,     TMP3,     OUTPUT_COL
+    sqshrn2         v28.16b,  v20.8h,   #5
+      add             TMP4,     TMP4,     OUTPUT_COL
+    sqshrn2         v29.16b,  v21.8h,   #5
+      ldp             TMP5,     TMP6,     [OUTPUT_BUF], 16
+    sqshrn2         v30.16b,  v22.8h,   #5
+      ldp             TMP7,     TMP8,     [OUTPUT_BUF], 16
+    sqshrn2         v31.16b,  v23.8h,   #5
+      add             TMP5,     TMP5,     OUTPUT_COL
+    add             v16.16b,  v28.16b,  v0.16b
+      add             TMP6,     TMP6,     OUTPUT_COL
+    add             v18.16b,  v29.16b,  v0.16b
+      add             TMP7,     TMP7,     OUTPUT_COL
+    add             v20.16b,  v30.16b,  v0.16b
+      add             TMP8,     TMP8,     OUTPUT_COL
+    add             v22.16b,  v31.16b,  v0.16b
+
+    /* Transpose the final 8-bit samples */
+    trn1            v28.16b,  v16.16b,  v18.16b
+    trn1            v30.16b,  v20.16b,  v22.16b
+    trn2            v29.16b,  v16.16b,  v18.16b
+    trn2            v31.16b,  v20.16b,  v22.16b
+
+    trn1            v16.8h,   v28.8h,   v30.8h
+    trn2            v18.8h,   v28.8h,   v30.8h
+    trn1            v20.8h,   v29.8h,   v31.8h
+    trn2            v22.8h,   v29.8h,   v31.8h
+
+    uzp1            v28.4s,   v16.4s,   v18.4s
+    uzp2            v30.4s,   v16.4s,   v18.4s
+    uzp1            v29.4s,   v20.4s,   v22.4s
+    uzp2            v31.4s,   v20.4s,   v22.4s
+
     /* Store results to the output buffer */
-    ldp             TMP1,     TMP2,     [OUTPUT_BUF], 16
-    ldp             TMP4,     TMP5,     [OUTPUT_BUF], 16
-    add             TMP1,     TMP1,     OUTPUT_COL
-    add             TMP2,     TMP2,     OUTPUT_COL
-    add             TMP4,     TMP4,     OUTPUT_COL
-    add             TMP5,     TMP5,     OUTPUT_COL
-    st1             {v16.8b}, [TMP1]
-    st1             {v17.8b}, [TMP2]
-    st1             {v18.8b}, [TMP4]
-    st1             {v19.8b}, [TMP5]
-    ldp             TMP1,     TMP2,     [OUTPUT_BUF], 16
-    ldp             TMP4,     TMP5,     [OUTPUT_BUF], 16
-    add             TMP1,     TMP1,     OUTPUT_COL
-    add             TMP2,     TMP2,     OUTPUT_COL
-    add             TMP4,     TMP4,     OUTPUT_COL
-    add             TMP5,     TMP5,     OUTPUT_COL
-    st1             {v20.8b}, [TMP1]
-    st1             {v21.8b},  [TMP2]
-    st1             {v22.8b}, [TMP4]
-    st1             {v23.8b}, [TMP5]
+    st1             {v28.d}[0], [TMP1]
+    st1             {v29.d}[0], [TMP2]
+    st1             {v28.d}[1], [TMP3]
+    st1             {v29.d}[1], [TMP4]
+    st1             {v30.d}[0], [TMP5]
+    st1             {v31.d}[0], [TMP6]
+    st1             {v30.d}[1], [TMP7]
+    st1             {v31.d}[1], [TMP8]
     blr             x30
 
     .unreq          DCT_TABLE
@@ -1022,6 +1007,9 @@ asm_function jsimd_idct_ifast_neon
     .unreq          TMP3
     .unreq          TMP4
     .unreq          TMP5
+    .unreq          TMP6
+    .unreq          TMP7
+    .unreq          TMP8
 
 
 /*****************************************************************************/
