@@ -138,7 +138,6 @@ _\fname:
 #define CONST_BITS    13
 #define PASS1_BITS    2
 
-#if CONST_BITS == 13
 #define F_0_298      2446           /* FIX(0.298631336) */
 #define F_0_390      3196           /* FIX(0.390180644) */
 #define F_0_541      4433           /* FIX(0.541196100) */
@@ -151,21 +150,6 @@ _\fname:
 #define F_2_053     16819           /* FIX(2.053119869) */
 #define F_2_562     20995           /* FIX(2.562915447) */
 #define F_3_072     25172           /* FIX(3.072711026) */
-#else
-#define DESCALE(x,n)  (((x)+(1<<((n)-1)))>>(n))
-#define F_0_298     DESCALE( 320652955, 30-CONST_BITS)  /* FIX(0.298631336) */
-#define F_0_390     DESCALE( 418953276, 30-CONST_BITS)  /* FIX(0.390180644) */
-#define F_0_541     DESCALE( 581104887, 30-CONST_BITS)  /* FIX(0.541196100) */
-#define F_0_765     DESCALE( 821806413, 30-CONST_BITS)  /* FIX(0.765366865) */
-#define F_0_899     DESCALE( 966342111, 30-CONST_BITS)  /* FIX(0.899976223) */
-#define F_1_175     DESCALE(1262586813, 30-CONST_BITS)  /* FIX(1.175875602) */
-#define F_1_501     DESCALE(1612031267, 30-CONST_BITS)  /* FIX(1.501321110) */
-#define F_1_847     DESCALE(1984016188, 30-CONST_BITS)  /* FIX(1.847759065) */
-#define F_1_961     DESCALE(2106220350, 30-CONST_BITS)  /* FIX(1.961570560) */
-#define F_2_053     DESCALE(2204520673, 30-CONST_BITS)  /* FIX(2.053119869) */
-#define F_2_562     DESCALE(2751909506, 30-CONST_BITS)  /* FIX(2.562915447) */
-#define F_3_072     DESCALE(3299298341, 30-CONST_BITS)  /* FIX(3.072711026) */
-#endif
 
 .balign 16
 Ljsimd_idct_islow_neon_consts:
@@ -251,24 +235,49 @@ asm_function jsimd_idct_islow_neon
     and            v14.16b,  v11.16b,   v12.16b
     mul              v2.8h,    v2.8h,   v18.8h
     and            v15.16b,  v13.16b,   v14.16b
-    sqxtn           v16.8b,  v15.8h
+    shl             v10.8h,    v2.8h,   #(PASS1_BITS)
+    sqxtn           v16.8b,   v15.8h
     mov               TMP1,  v16.d[0]
     sub                 sp,       sp,   #64
     mvn               TMP2,  TMP1
 
     cbnz              TMP2,  2f
     /* case all AC coeffs are zeros */
-    shl              v2.8h,    v2.8h,   #(PASS1_BITS)
+    dup              v2.2d, v10.d[0]
+    dup              v6.2d, v10.d[1]
     mov             v3.16b,   v2.16b
+    mov             v7.16b,   v6.16b
     mov             v4.16b,   v2.16b
+    mov             v8.16b,   v6.16b
     mov             v5.16b,   v2.16b
-    mov             v6.16b,   v2.16b
-    mov             v7.16b,   v2.16b
-    mov             v8.16b,   v2.16b
-    mov             v9.16b,   v2.16b
+    mov             v9.16b,   v6.16b
 1:
-    transpose_8x8   v2, v3, v4, v5, v6, v7, v8, v9, v28, v29, v30, v31
-
+    /* for this transpose, we should organise data like this:
+     * 00, 01, 02, 03, 40, 41, 42, 43
+     * 10, 11, 12, 13, 50, 51, 52, 53
+     * 20, 21, 22, 23, 60, 61, 62, 63
+     * 30, 31, 32, 33, 70, 71, 72, 73
+     * 04, 05, 06, 07, 44, 45, 46, 47
+     * 14, 15, 16, 17, 54, 55, 56, 57
+     * 24, 25, 26, 27, 64, 65, 66, 67
+     * 34, 35, 36, 37, 74, 75, 76, 77
+     */
+    trn1            v28.8h,    v2.8h,   v3.8h
+    trn1            v29.8h,    v4.8h,   v5.8h
+    trn1            v30.8h,    v6.8h,   v7.8h
+    trn1            v31.8h,    v8.8h,   v9.8h
+    trn2            v16.8h,    v2.8h,   v3.8h
+    trn2            v17.8h,    v4.8h,   v5.8h
+    trn2            v18.8h,    v6.8h,   v7.8h
+    trn2            v19.8h,    v8.8h,   v9.8h
+    trn1             v2.4s,   v28.4s,  v29.4s
+    trn1             v6.4s,   v30.4s,  v31.4s
+    trn1             v3.4s,   v16.4s,  v17.4s
+    trn1             v7.4s,   v18.4s,  v19.4s
+    trn2             v4.4s,   v28.4s,  v29.4s
+    trn2             v8.4s,   v30.4s,  v31.4s
+    trn2             v5.4s,   v16.4s,  v17.4s
+    trn2             v9.4s,   v18.4s,  v19.4s
     /* Even part: reverse the even part of the forward DCT. */
     add             v18.8h,    v4.8h,   v8.8h /* z2 + z3 = DEQUANTIZE(inptr[DCTSIZE*2], quantptr[DCTSIZE*2]) + DEQUANTIZE(inptr[DCTSIZE*6], quantptr[DCTSIZE*6]) */
     add             v22.8h,    v2.8h,   v6.8h /* z2 + z3 = DEQUANTIZE(inptr[DCTSIZE*0], quantptr[DCTSIZE*0]) + DEQUANTIZE(inptr[DCTSIZE*4], quantptr[DCTSIZE*4]) */
@@ -451,7 +460,7 @@ asm_function jsimd_idct_islow_neon
     mul              v9.8h,    v9.8h,   v25.8h
     b.ne             3f
     /* Right AC coef is zero */
-    shl             v15.8h,    v2.8h,   #(PASS1_BITS)
+    dup             v15.2d, v10.d[1]
     /* Even part: reverse the even part of the forward DCT. */
     add             v18.4h,    v4.4h,   v8.4h /* z2 + z3 = DEQUANTIZE(inptr[DCTSIZE*2], quantptr[DCTSIZE*2]) + DEQUANTIZE(inptr[DCTSIZE*6], quantptr[DCTSIZE*6]) */
     add             v22.4h,    v2.4h,   v6.4h /* z2 + z3 = DEQUANTIZE(inptr[DCTSIZE*0], quantptr[DCTSIZE*0]) + DEQUANTIZE(inptr[DCTSIZE*4], quantptr[DCTSIZE*4]) */
@@ -512,28 +521,24 @@ asm_function jsimd_idct_islow_neon
     sub             v16.4s,    v6.4s,   v10.4s /* tmp13 - tmp0 */
 
     rshrn            v2.4h,   v18.4s,   #(CONST_BITS-PASS1_BITS) /* wsptr[DCTSIZE*0] = (int) DESCALE(tmp10 + tmp3, CONST_BITS-PASS1_BITS) */
-    rshrn            v9.4h,   v20.4s,   #(CONST_BITS-PASS1_BITS) /* wsptr[DCTSIZE*7] = (int) DESCALE(tmp10 - tmp3, CONST_BITS-PASS1_BITS) */
     rshrn            v3.4h,   v22.4s,   #(CONST_BITS-PASS1_BITS) /* wsptr[DCTSIZE*1] = (int) DESCALE(tmp11 + tmp2, CONST_BITS-PASS1_BITS) */
-    rshrn            v8.4h,   v24.4s,   #(CONST_BITS-PASS1_BITS) /* wsptr[DCTSIZE*6] = (int) DESCALE(tmp11 - tmp2, CONST_BITS-PASS1_BITS) */
     rshrn            v4.4h,   v26.4s,   #(CONST_BITS-PASS1_BITS) /* wsptr[DCTSIZE*2] = (int) DESCALE(tmp12 + tmp1, CONST_BITS-PASS1_BITS) */
-    rshrn            v7.4h,   v28.4s,   #(CONST_BITS-PASS1_BITS) /* wsptr[DCTSIZE*5] = (int) DESCALE(tmp12 - tmp1, CONST_BITS-PASS1_BITS) */
     rshrn            v5.4h,   v14.4s,   #(CONST_BITS-PASS1_BITS) /* wsptr[DCTSIZE*3] = (int) DESCALE(tmp13 + tmp0, CONST_BITS-PASS1_BITS) */
-    rshrn            v6.4h,   v16.4s,   #(CONST_BITS-PASS1_BITS) /* wsptr[DCTSIZE*4] = (int) DESCALE(tmp13 - tmp0, CONST_BITS-PASS1_BITS) */
-    ins            v2.d[1], v15.d[1]
-    ins            v9.d[1], v15.d[1]
-    ins            v3.d[1], v15.d[1]
-    ins            v8.d[1], v15.d[1]
-    ins            v4.d[1], v15.d[1]
-    ins            v7.d[1], v15.d[1]
-    ins            v5.d[1], v15.d[1]
-    ins            v6.d[1], v15.d[1]
+    rshrn2           v2.8h,   v16.4s,   #(CONST_BITS-PASS1_BITS) /* wsptr[DCTSIZE*4] = (int) DESCALE(tmp13 - tmp0, CONST_BITS-PASS1_BITS) */
+    rshrn2           v3.8h,   v28.4s,   #(CONST_BITS-PASS1_BITS) /* wsptr[DCTSIZE*5] = (int) DESCALE(tmp12 - tmp1, CONST_BITS-PASS1_BITS) */
+    rshrn2           v4.8h,   v24.4s,   #(CONST_BITS-PASS1_BITS) /* wsptr[DCTSIZE*6] = (int) DESCALE(tmp11 - tmp2, CONST_BITS-PASS1_BITS) */
+    rshrn2           v5.8h,   v20.4s,   #(CONST_BITS-PASS1_BITS) /* wsptr[DCTSIZE*7] = (int) DESCALE(tmp10 - tmp3, CONST_BITS-PASS1_BITS) */
+    mov             v6.16b,  v15.16b
+    mov             v7.16b,  v15.16b
+    mov             v8.16b,  v15.16b
+    mov             v9.16b,  v15.16b
     b                1b
 
 .balign 16
 3:
     cbnz              TMP4,    4f
     /* Left AC coef is zero */
-    shl             v14.4h,    v2.4h,   #(PASS1_BITS)
+    dup             v14.2d, v10.d[0]
     /* Even part: reverse the even part of the forward DCT. */
     add             v18.8h,    v4.8h,   v8.8h /* z2 + z3 = DEQUANTIZE(inptr[DCTSIZE*2], quantptr[DCTSIZE*2]) + DEQUANTIZE(inptr[DCTSIZE*6], quantptr[DCTSIZE*6]) */
     add             v22.8h,    v2.8h,   v6.8h /* z2 + z3 = DEQUANTIZE(inptr[DCTSIZE*0], quantptr[DCTSIZE*0]) + DEQUANTIZE(inptr[DCTSIZE*4], quantptr[DCTSIZE*4]) */
@@ -578,7 +583,7 @@ asm_function jsimd_idct_islow_neon
     add             v13.4s,   v13.4s,   v21.4s /* tmp1 += z2 */
     add             v15.4s,   v15.4s,   v21.4s /* tmp2 += z2 */
     add             v17.4s,   v17.4s,   v19.4s /* tmp3 += z1 */
-    
+
     add             v11.4s,   v11.4s,   v23.4s /* tmp0 += z3 */
     add             v13.4s,   v13.4s,   v25.4s /* tmp1 += z4 */
     add             v17.4s,   v17.4s,   v25.4s /* tmp3 += z4 */
@@ -595,23 +600,19 @@ asm_function jsimd_idct_islow_neon
     add             v15.4s,   v31.4s,   v11.4s /* tmp13 + tmp0 */
     sub             v17.4s,   v31.4s,   v11.4s /* tmp13 - tmp0 */
 
-    rshrn2           v2.8h,   v19.4s,   #(CONST_BITS-PASS1_BITS) /* wsptr[DCTSIZE*0] = (int) DESCALE(tmp10 + tmp3, CONST_BITS-PASS1_BITS) */
-    rshrn2           v9.8h,   v21.4s,   #(CONST_BITS-PASS1_BITS) /* wsptr[DCTSIZE*7] = (int) DESCALE(tmp10 - tmp3, CONST_BITS-PASS1_BITS) */
-    rshrn2           v3.8h,   v23.4s,   #(CONST_BITS-PASS1_BITS) /* wsptr[DCTSIZE*1] = (int) DESCALE(tmp11 + tmp2, CONST_BITS-PASS1_BITS) */
-    rshrn2           v8.8h,   v25.4s,   #(CONST_BITS-PASS1_BITS) /* wsptr[DCTSIZE*6] = (int) DESCALE(tmp11 - tmp2, CONST_BITS-PASS1_BITS) */
-    rshrn2           v4.8h,   v27.4s,   #(CONST_BITS-PASS1_BITS) /* wsptr[DCTSIZE*2] = (int) DESCALE(tmp12 + tmp1, CONST_BITS-PASS1_BITS) */
-    rshrn2           v7.8h,   v29.4s,   #(CONST_BITS-PASS1_BITS) /* wsptr[DCTSIZE*5] = (int) DESCALE(tmp12 - tmp1, CONST_BITS-PASS1_BITS) */
-    rshrn2           v5.8h,   v15.4s,   #(CONST_BITS-PASS1_BITS) /* wsptr[DCTSIZE*3] = (int) DESCALE(tmp13 + tmp0, CONST_BITS-PASS1_BITS) */
+    mov             v2.16b,  v14.16b
+    mov             v3.16b,  v14.16b
+    mov             v4.16b,  v14.16b
+    mov             v5.16b,  v14.16b
+    rshrn            v6.4h,   v19.4s,   #(CONST_BITS-PASS1_BITS) /* wsptr[DCTSIZE*0] = (int) DESCALE(tmp10 + tmp3, CONST_BITS-PASS1_BITS) */
+    rshrn            v7.4h,   v23.4s,   #(CONST_BITS-PASS1_BITS) /* wsptr[DCTSIZE*1] = (int) DESCALE(tmp11 + tmp2, CONST_BITS-PASS1_BITS) */
+    rshrn            v8.4h,   v27.4s,   #(CONST_BITS-PASS1_BITS) /* wsptr[DCTSIZE*2] = (int) DESCALE(tmp12 + tmp1, CONST_BITS-PASS1_BITS) */
+    rshrn            v9.4h,   v15.4s,   #(CONST_BITS-PASS1_BITS) /* wsptr[DCTSIZE*3] = (int) DESCALE(tmp13 + tmp0, CONST_BITS-PASS1_BITS) */
     rshrn2           v6.8h,   v17.4s,   #(CONST_BITS-PASS1_BITS) /* wsptr[DCTSIZE*4] = (int) DESCALE(tmp13 - tmp0, CONST_BITS-PASS1_BITS) */
-    ins            v2.d[0], v14.d[0]
-    ins            v9.d[0], v14.d[0]
-    ins            v3.d[0], v14.d[0]
-    ins            v8.d[0], v14.d[0]
-    ins            v4.d[0], v14.d[0]
-    ins            v7.d[0], v14.d[0]
-    ins            v5.d[0], v14.d[0]
-    ins            v6.d[0], v14.d[0]
-    b              1b
+    rshrn2           v7.8h,   v29.4s,   #(CONST_BITS-PASS1_BITS) /* wsptr[DCTSIZE*5] = (int) DESCALE(tmp12 - tmp1, CONST_BITS-PASS1_BITS) */
+    rshrn2           v8.8h,   v25.4s,   #(CONST_BITS-PASS1_BITS) /* wsptr[DCTSIZE*6] = (int) DESCALE(tmp11 - tmp2, CONST_BITS-PASS1_BITS) */
+    rshrn2           v9.8h,   v21.4s,   #(CONST_BITS-PASS1_BITS) /* wsptr[DCTSIZE*7] = (int) DESCALE(tmp10 - tmp3, CONST_BITS-PASS1_BITS) */
+    b                1b
 
 .balign 16
 4:
@@ -714,24 +715,22 @@ asm_function jsimd_idct_islow_neon
     sub             v17.4s,   v31.4s,   v11.4s /* tmp13 - tmp0 */
 
     rshrn            v2.4h,   v18.4s,   #(CONST_BITS-PASS1_BITS) /* wsptr[DCTSIZE*0] = (int) DESCALE(tmp10 + tmp3, CONST_BITS-PASS1_BITS) */
-    rshrn            v9.4h,   v20.4s,   #(CONST_BITS-PASS1_BITS) /* wsptr[DCTSIZE*7] = (int) DESCALE(tmp10 - tmp3, CONST_BITS-PASS1_BITS) */
     rshrn            v3.4h,   v22.4s,   #(CONST_BITS-PASS1_BITS) /* wsptr[DCTSIZE*1] = (int) DESCALE(tmp11 + tmp2, CONST_BITS-PASS1_BITS) */
-    rshrn            v8.4h,   v24.4s,   #(CONST_BITS-PASS1_BITS) /* wsptr[DCTSIZE*6] = (int) DESCALE(tmp11 - tmp2, CONST_BITS-PASS1_BITS) */
     rshrn            v4.4h,   v26.4s,   #(CONST_BITS-PASS1_BITS) /* wsptr[DCTSIZE*2] = (int) DESCALE(tmp12 + tmp1, CONST_BITS-PASS1_BITS) */
-    rshrn            v7.4h,   v28.4s,   #(CONST_BITS-PASS1_BITS) /* wsptr[DCTSIZE*5] = (int) DESCALE(tmp12 - tmp1, CONST_BITS-PASS1_BITS) */
     rshrn            v5.4h,   v14.4s,   #(CONST_BITS-PASS1_BITS) /* wsptr[DCTSIZE*3] = (int) DESCALE(tmp13 + tmp0, CONST_BITS-PASS1_BITS) */
-    rshrn            v6.4h,   v16.4s,   #(CONST_BITS-PASS1_BITS) /* wsptr[DCTSIZE*4] = (int) DESCALE(tmp13 - tmp0, CONST_BITS-PASS1_BITS) */
-    rshrn2           v2.8h,   v19.4s,   #(CONST_BITS-PASS1_BITS) /* wsptr[DCTSIZE*0] = (int) DESCALE(tmp10 + tmp3, CONST_BITS-PASS1_BITS) */
-    rshrn2           v9.8h,   v21.4s,   #(CONST_BITS-PASS1_BITS) /* wsptr[DCTSIZE*7] = (int) DESCALE(tmp10 - tmp3, CONST_BITS-PASS1_BITS) */
-    rshrn2           v3.8h,   v23.4s,   #(CONST_BITS-PASS1_BITS) /* wsptr[DCTSIZE*1] = (int) DESCALE(tmp11 + tmp2, CONST_BITS-PASS1_BITS) */
-    rshrn2           v8.8h,   v25.4s,   #(CONST_BITS-PASS1_BITS) /* wsptr[DCTSIZE*6] = (int) DESCALE(tmp11 - tmp2, CONST_BITS-PASS1_BITS) */
-    rshrn2           v4.8h,   v27.4s,   #(CONST_BITS-PASS1_BITS) /* wsptr[DCTSIZE*2] = (int) DESCALE(tmp12 + tmp1, CONST_BITS-PASS1_BITS) */
-    rshrn2           v7.8h,   v29.4s,   #(CONST_BITS-PASS1_BITS) /* wsptr[DCTSIZE*5] = (int) DESCALE(tmp12 - tmp1, CONST_BITS-PASS1_BITS) */
-    rshrn2           v5.8h,   v15.4s,   #(CONST_BITS-PASS1_BITS) /* wsptr[DCTSIZE*3] = (int) DESCALE(tmp13 + tmp0, CONST_BITS-PASS1_BITS) */
+    rshrn            v6.4h,   v19.4s,   #(CONST_BITS-PASS1_BITS) /* wsptr[DCTSIZE*0] = (int) DESCALE(tmp10 + tmp3, CONST_BITS-PASS1_BITS) */
+    rshrn            v7.4h,   v23.4s,   #(CONST_BITS-PASS1_BITS) /* wsptr[DCTSIZE*1] = (int) DESCALE(tmp11 + tmp2, CONST_BITS-PASS1_BITS) */
+    rshrn            v8.4h,   v27.4s,   #(CONST_BITS-PASS1_BITS) /* wsptr[DCTSIZE*2] = (int) DESCALE(tmp12 + tmp1, CONST_BITS-PASS1_BITS) */
+    rshrn            v9.4h,   v15.4s,   #(CONST_BITS-PASS1_BITS) /* wsptr[DCTSIZE*3] = (int) DESCALE(tmp13 + tmp0, CONST_BITS-PASS1_BITS) */
+    rshrn2           v2.8h,   v16.4s,   #(CONST_BITS-PASS1_BITS) /* wsptr[DCTSIZE*4] = (int) DESCALE(tmp13 - tmp0, CONST_BITS-PASS1_BITS) */
+    rshrn2           v3.8h,   v28.4s,   #(CONST_BITS-PASS1_BITS) /* wsptr[DCTSIZE*5] = (int) DESCALE(tmp12 - tmp1, CONST_BITS-PASS1_BITS) */
+    rshrn2           v4.8h,   v24.4s,   #(CONST_BITS-PASS1_BITS) /* wsptr[DCTSIZE*6] = (int) DESCALE(tmp11 - tmp2, CONST_BITS-PASS1_BITS) */
+    rshrn2           v5.8h,   v20.4s,   #(CONST_BITS-PASS1_BITS) /* wsptr[DCTSIZE*7] = (int) DESCALE(tmp10 - tmp3, CONST_BITS-PASS1_BITS) */
     rshrn2           v6.8h,   v17.4s,   #(CONST_BITS-PASS1_BITS) /* wsptr[DCTSIZE*4] = (int) DESCALE(tmp13 - tmp0, CONST_BITS-PASS1_BITS) */
+    rshrn2           v7.8h,   v29.4s,   #(CONST_BITS-PASS1_BITS) /* wsptr[DCTSIZE*5] = (int) DESCALE(tmp12 - tmp1, CONST_BITS-PASS1_BITS) */
+    rshrn2           v8.8h,   v25.4s,   #(CONST_BITS-PASS1_BITS) /* wsptr[DCTSIZE*6] = (int) DESCALE(tmp11 - tmp2, CONST_BITS-PASS1_BITS) */
+    rshrn2           v9.8h,   v21.4s,   #(CONST_BITS-PASS1_BITS) /* wsptr[DCTSIZE*7] = (int) DESCALE(tmp10 - tmp3, CONST_BITS-PASS1_BITS) */
     b                1b
-
-
 
     .unreq          DCT_TABLE
     .unreq          COEF_BLOCK
@@ -2241,7 +2240,6 @@ asm_function jsimd_convsamp_neon
 #define DESCALE_P1      (CONST_BITS-PASS1_BITS)
 #define DESCALE_P2      (CONST_BITS+PASS1_BITS)
 
-#if CONST_BITS == 13
 #define F_0_298      2446           /* FIX(0.298631336) */
 #define F_0_390      3196           /* FIX(0.390180644) */
 #define F_0_541      4433           /* FIX(0.541196100) */
@@ -2254,21 +2252,6 @@ asm_function jsimd_convsamp_neon
 #define F_2_053     16819           /* FIX(2.053119869) */
 #define F_2_562     20995           /* FIX(2.562915447) */
 #define F_3_072     25172           /* FIX(3.072711026) */
-#else
-#define DESCALE(x,n)  (((x)+(1<<((n)-1)))>>(n))
-#define F_0_298     DESCALE( 320652955, 30-CONST_BITS)  /* FIX(0.298631336) */
-#define F_0_390     DESCALE( 418953276, 30-CONST_BITS)  /* FIX(0.390180644) */
-#define F_0_541     DESCALE( 581104887, 30-CONST_BITS)  /* FIX(0.541196100) */
-#define F_0_765     DESCALE( 821806413, 30-CONST_BITS)  /* FIX(0.765366865) */
-#define F_0_899     DESCALE( 966342111, 30-CONST_BITS)  /* FIX(0.899976223) */
-#define F_1_175     DESCALE(1262586813, 30-CONST_BITS)  /* FIX(1.175875602) */
-#define F_1_501     DESCALE(1612031267, 30-CONST_BITS)  /* FIX(1.501321110) */
-#define F_1_847     DESCALE(1984016188, 30-CONST_BITS)  /* FIX(1.847759065) */
-#define F_1_961     DESCALE(2106220350, 30-CONST_BITS)  /* FIX(1.961570560) */
-#define F_2_053     DESCALE(2204520673, 30-CONST_BITS)  /* FIX(2.053119869) */
-#define F_2_562     DESCALE(2751909506, 30-CONST_BITS)  /* FIX(2.562915447) */
-#define F_3_072     DESCALE(3299298341, 30-CONST_BITS)  /* FIX(3.072711026) */
-#endif
 
 .balign 16
 Ljsimd_fdct_islow_neon_consts:
