@@ -657,6 +657,16 @@ jsimd_idct_float (j_decompress_ptr cinfo, jpeg_component_info * compptr,
 GLOBAL(int)
 jsimd_can_huff_encode_one_block (void)
 {
+  init_simd();
+
+  if (DCTSIZE != 8)
+    return 0;
+  if (sizeof(JCOEF) != 2)
+    return 0;
+
+  if (simd_support & JSIMD_ARM_NEON)
+    return 1;
+
   return 0;
 }
 
@@ -665,5 +675,6 @@ jsimd_huff_encode_one_block (void * state, JOCTET *buffer, JCOEFPTR block,
                              int last_dc_val, c_derived_tbl *dctbl,
                              c_derived_tbl *actbl)
 {
-  return NULL;
+  return jsimd_huff_encode_one_block_neon(state, buffer, block, last_dc_val,
+                                          dctbl, actbl);
 }
