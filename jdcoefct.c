@@ -263,8 +263,6 @@ decompress_simd256_onepass (j_decompress_ptr cinfo, JSAMPIMAGE output_buf)
 {
 	my_coef_ptr coef = (my_coef_ptr) cinfo->coef;
 	JDIMENSION MCU_col_num;       /* index of current MCU within row */
-	JDIMENSION last_MCU_col = cinfo->MCUs_per_row - 1;
-	JDIMENSION last_proc_col = last_MCU_col&(JDIMENSION)(-2);
 	JDIMENSION last_iMCU_row = cinfo->total_iMCU_rows - 1;
 	int ci, xindex, yindex, yoffset, useful_width;
 	JSAMPARRAY output_ptr;
@@ -272,17 +270,18 @@ decompress_simd256_onepass (j_decompress_ptr cinfo, JSAMPIMAGE output_buf)
 	jpeg_component_info *compptr;
 	inverse_DCT_method_ptr inverse_DCT;
 	int b_dual_codec ;
-	boolean ret;
+    int error_partial_decode=0;
+  boolean ret;
 
 	/* Loop to process as much as one whole iMCU row */
 	for (yoffset = coef->MCU_vert_offset; yoffset < coef->MCU_rows_per_iMCU_row;
 			yoffset++) {
-		for (MCU_col_num = coef->MCU_ctr; MCU_col_num <= last_MCU_col;
+		for (MCU_col_num = coef->MCU_ctr; MCU_col_num < cinfo->MCUs_per_row ;
 				MCU_col_num+=2) {
-			if( last_proc_col == last_MCU_col && MCU_col_num == last_proc_col)
-				b_dual_codec = 0;
-			else
+			if( cinfo->MCUs_per_row - MCU_col_num > 1)
 				b_dual_codec = 1;
+			else
+				b_dual_codec = 0;
 
 			/* Try to fetch an MCU.  Entropy decoder expects buffer to be zeroed. */
 			jzero_far((void *) coef->MCU_buffer[0],
@@ -292,18 +291,19 @@ decompress_simd256_onepass (j_decompress_ptr cinfo, JSAMPIMAGE output_buf)
 			if(!ret)
 			{
 				coef->MCU_vert_offset = yoffset;
-				coef->MCU_ctr = MCU_col_num;
-				return JPEG_SUSPENDED;
-			}
-
+        coef->MCU_ctr = MCU_col_num;
+        return JPEG_SUSPENDED;
+      }
+      error_partial_decode = 0;
 			if(b_dual_codec)
 			{
 				ret = (*cinfo->entropy->decode_mcu) (cinfo, coef->SIMD256_buffer[1]);
 				if(!ret)
 				{
-					coef->MCU_vert_offset = yoffset;
-					coef->MCU_ctr = MCU_col_num+1;
-					return JPEG_SUSPENDED;
+          b_dual_codec = 0;
+          coef->MCU_vert_offset = yoffset;
+          coef->MCU_ctr = MCU_col_num+1;
+          error_partial_decode = 1;
 				}
 			}
 
@@ -313,8 +313,9 @@ decompress_simd256_onepass (j_decompress_ptr cinfo, JSAMPIMAGE output_buf)
 				if (! compptr->component_needed) {
 					continue;
 				}
-				useful_width  = (MCU_col_num==last_proc_col)
-					?compptr->last_col_width:compptr->MCU_width;
+
+        useful_width  = (MCU_col_num + 1 < cinfo->MCUs_per_row)
+					? compptr->MCU_width : compptr->last_col_width;
 
 				inverse_DCT = cinfo->idct->inverse_DCT[compptr->component_index];
 				output_ptr = output_buf[compptr->component_index] +
@@ -366,7 +367,11 @@ decompress_simd256_onepass (j_decompress_ptr cinfo, JSAMPIMAGE output_buf)
 					output_ptr += compptr->_DCT_scaled_size;
 				}
 			}
-		}
+      if(error_partial_decode)
+      {
+          return JPEG_SUSPENDED;
+      }
+    }
 		/* Completed an MCU row, but perhaps not an iMCU row */
 		coef->MCU_ctr = 0;
 	}
