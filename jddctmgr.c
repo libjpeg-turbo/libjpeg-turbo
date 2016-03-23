@@ -86,6 +86,10 @@ typedef union {
 #endif
 #endif
 
+EXTERN(void) jpeg_set_idct_method_selector (j_decompress_ptr cinfo, jpeg_idct_method_selector selector){
+  cinfo->custom_idct_selector = selector;
+}
+
 
 /*
  * Prepare for an output pass.
@@ -225,6 +229,11 @@ start_pass (j_decompress_ptr cinfo)
       ERREXIT1(cinfo, JERR_BAD_DCTSIZE, compptr->_DCT_scaled_size);
       break;
     }
+    //Let selector override
+    if (cinfo->custom_idct_selector != NULL){
+      cinfo->custom_idct_selector(cinfo, compptr, &method_ptr, &method);
+    }
+
     idct->pub.inverse_DCT[ci] = method_ptr;
     /* Create multiplier table from quant table.
      * However, we can skip this if the component is uninteresting
