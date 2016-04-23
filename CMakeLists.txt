@@ -168,6 +168,9 @@ endif()
 
 message(STATUS "Install directory = ${CMAKE_INSTALL_PREFIX}")
 
+include(CheckTypeSize)
+check_type_size(size_t SIZEOF_SIZE_T)
+
 configure_file(win/jconfig.h.in jconfig.h)
 configure_file(win/jconfigint.h.in jconfigint.h)
 
@@ -296,11 +299,15 @@ if(WITH_TURBOJPEG)
 endif()
 
 if(WITH_12BIT)
-  set(COMPILE_FLAGS "-DGIF_SUPPORTED -DPPM_SUPPORTED -DUSE_SETMODE")
+  set(COMPILE_FLAGS "-DGIF_SUPPORTED -DPPM_SUPPORTED")
 else()
-  set(COMPILE_FLAGS "-DBMP_SUPPORTED -DGIF_SUPPORTED -DPPM_SUPPORTED -DTARGA_SUPPORTED -DUSE_SETMODE")
+  set(COMPILE_FLAGS "-DBMP_SUPPORTED -DGIF_SUPPORTED -DPPM_SUPPORTED -DTARGA_SUPPORTED")
   set(CJPEG_BMP_SOURCES rdbmp.c rdtarga.c)
   set(DJPEG_BMP_SOURCES wrbmp.c wrtarga.c)
+endif()
+
+if(WIN32)
+  add_definitions(-DUSE_SETMODE)
 endif()
 
 if(ENABLE_STATIC)
@@ -316,7 +323,7 @@ if(ENABLE_STATIC)
 
   add_executable(jpegtran-static jpegtran.c cdjpeg.c rdswitch.c transupp.c)
   target_link_libraries(jpegtran-static jpeg-static)
-  set_property(TARGET jpegtran-static PROPERTY COMPILE_FLAGS "-DUSE_SETMODE")
+  set_property(TARGET jpegtran-static PROPERTY COMPILE_FLAGS "")
 endif()
 
 add_executable(rdjpgcom rdjpgcom.c)
