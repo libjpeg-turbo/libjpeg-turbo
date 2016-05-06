@@ -208,13 +208,12 @@ jpeg_stdio_dest (j_compress_ptr cinfo, FILE *outfile)
 {
   my_dest_ptr dest;
 
-  /* The destination object is made permanent so that multiple JPEG images
-   * can be written to the same file without re-executing jpeg_stdio_dest.
-   * This makes it dangerous to use this manager and a different destination
-   * manager serially with the same JPEG object, because their private object
-   * sizes may be different.  Caveat programmer.
-   */
-  if (cinfo->dest == NULL) {    /* first time for this JPEG object? */
+  /* It's only safe to reuse existing dest if it has the same type */
+  if (cinfo->dest == NULL ||
+      cinfo->dest->init_destination != init_destination) {
+    /* The destination object is made permanent so that multiple JPEG images
+     * can be written to the same file without re-executing jpeg_stdio_dest.
+     */
     cinfo->dest = (struct jpeg_destination_mgr *)
       (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT,
                                   sizeof(my_destination_mgr));
@@ -252,10 +251,12 @@ jpeg_mem_dest (j_compress_ptr cinfo,
   if (outbuffer == NULL || outsize == NULL)     /* sanity check */
     ERREXIT(cinfo, JERR_BUFFER_SIZE);
 
-  /* The destination object is made permanent so that multiple JPEG images
-   * can be written to the same buffer without re-executing jpeg_mem_dest.
-   */
-  if (cinfo->dest == NULL) {    /* first time for this JPEG object? */
+  /* It's only safe to reuse existing dest if it has the same type */
+  if (cinfo->dest == NULL ||
+      cinfo->dest->init_destination != init_mem_destination) {
+    /* The destination object is made permanent so that multiple JPEG images
+     * can be written to the same file without re-executing jpeg_stdio_dest.
+     */
     cinfo->dest = (struct jpeg_destination_mgr *)
       (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT,
                                   sizeof(my_mem_destination_mgr));
