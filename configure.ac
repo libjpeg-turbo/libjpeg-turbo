@@ -1,8 +1,13 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
+m4_define(_LJT_VERSION_MAJOR,          1)       dnl version (major)
+m4_define(_LJT_VERSION_MINOR,          4)       dnl version (minor)
+m4_define(_LJT_VERSION_MICRO,         90)       dnl version (micro)
+m4_define(_LJT_VERSION_VERSION_STRING, _LJT_VERSION_MAJOR[.]_LJT_VERSION_MINOR[.]_LJT_VERSION_MICRO) dnl version string
+
 AC_PREREQ([2.56])
-AC_INIT([libjpeg-turbo], [1.4.90])
+AC_INIT([libjpeg-turbo], _LJT_VERSION_VERSION_STRING)
 
 AM_INIT_AUTOMAKE([-Wall foreign dist-bzip2])
 AC_PREFIX_DEFAULT(/opt/libjpeg-turbo)
@@ -223,6 +228,12 @@ AC_SUBST(SO_AGE)
 AC_SUBST(MEM_SRCDST_FUNCTIONS)
 
 AC_DEFINE_UNQUOTED(LIBJPEG_TURBO_VERSION, [$VERSION], [libjpeg-turbo version])
+
+LJT_VERSION_MAJOR=_LJT_VERSION_MAJOR
+LJT_VERSION_MINOR=_LJT_VERSION_MINOR
+LJT_VERSION_MICRO=_LJT_VERSION_MICRO
+LIBJPEG_TURBO_VERSION_NUMBER=`printf "%d%03d%03d" $LJT_VERSION_MAJOR $LJT_VERSION_MINOR $LJT_VERSION_MICRO`
+AC_DEFINE_UNQUOTED(LIBJPEG_TURBO_VERSION_NUMBER, [$LIBJPEG_TURBO_VERSION_NUMBER], [libjpeg-turbo version as integer number])
 
 VERSION_SCRIPT=yes
 AC_ARG_ENABLE([ld-version-script],
