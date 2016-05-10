@@ -32,6 +32,15 @@
 LOCAL(boolean)
 use_merged_upsample (j_decompress_ptr cinfo)
 {
+#if defined(__ARM_NEON__) || defined(__aarch64__)
+  /* On arm32 with NEON or arm64, merged upsampling is significantly slower than
+   * the alternative of doing pixel format conversion and "fast" upsampling
+   * sequentially. That's because only pixel format conversion has a SIMD
+   * implementation for these platforms; neither "fast" upsampling nor merged
+   * upsampling are SIMD on ARM.
+   */
+  return FALSE;
+#endif
 #ifdef UPSAMPLE_MERGING_SUPPORTED
   /* Merging is the equivalent of plain box-filter upsampling */
   if (cinfo->do_fancy_upsampling || cinfo->CCIR601_sampling)
