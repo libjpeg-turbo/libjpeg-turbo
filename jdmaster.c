@@ -22,6 +22,7 @@
 #include "jpeglib.h"
 #include "jpegcomp.h"
 #include "jdmaster.h"
+#include "jsimd.h"
 
 
 /*
@@ -32,14 +33,17 @@
 LOCAL(boolean)
 use_merged_upsample (j_decompress_ptr cinfo)
 {
-#if defined(__ARM_NEON__) || defined(__aarch64__)
+#if defined(__arm__) || defined(__aarch64__)
   /* On arm32 with NEON or arm64, merged upsampling is significantly slower than
    * the alternative of doing pixel format conversion and "fast" upsampling
    * sequentially. That's because only pixel format conversion has a SIMD
    * implementation for these platforms; neither "fast" upsampling nor merged
    * upsampling are SIMD on ARM.
    */
-  return FALSE;
+  if (!jsimd_can_h2v1_merged_upsample() &&
+      !jsimd_can_h2v2_merged_upsample()) {
+    return FALSE;
+  }
 #endif
 #ifdef UPSAMPLE_MERGING_SUPPORTED
   /* Merging is the equivalent of plain box-filter upsampling */
