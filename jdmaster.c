@@ -34,14 +34,14 @@ LOCAL(boolean)
 use_merged_upsample (j_decompress_ptr cinfo)
 {
 #if defined(__arm__) || defined(__aarch64__)
-  /* On arm32 with NEON or arm64, merged upsampling is significantly slower than
-   * the alternative of doing pixel format conversion and "fast" upsampling
-   * sequentially. That's because only pixel format conversion has a SIMD
-   * implementation for these platforms; neither "fast" upsampling nor merged
-   * upsampling are SIMD on ARM.
+  /* On arm32 with NEON or arm64, skipping merged upsampling, and instead
+   * applying YCC=>RGB color conversion and fast upsampling sequentially, is an
+   * optimization. To be conservative, limit this behavior to devices with a
+   * SIMD implementation for YCC=>RGB but not for merged upsampling.
    */
   if (!jsimd_can_h2v1_merged_upsample() &&
-      !jsimd_can_h2v2_merged_upsample()) {
+      !jsimd_can_h2v2_merged_upsample() &&
+      jsimd_can_ycc_rgb()) {
     return FALSE;
   }
 #endif
