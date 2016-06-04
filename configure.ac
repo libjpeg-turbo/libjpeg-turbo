@@ -6,6 +6,7 @@ AC_INIT([libjpeg-turbo], [1.5.0])
 
 AM_INIT_AUTOMAKE([-Wall foreign dist-bzip2])
 AC_PREFIX_DEFAULT(/opt/libjpeg-turbo)
+AC_CONFIG_MACRO_DIRS([m4])
 
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
