@@ -129,9 +129,10 @@ else()
     i386/jdsample-sse2.asm i386/jfdctfst-sse2.asm i386/jfdctint-sse2.asm
     i386/jidctflt-sse2.asm i386/jidctfst-sse2.asm i386/jidctint-sse2.asm
     i386/jidctred-sse2.asm i386/jquantf-sse2.asm i386/jquanti-sse2.asm
-    i386/jccolor-avx2.asm i386/jcgray-avx2.asm i386/jcsample-avx2.asm
-    i386/jdcolor-avx2.asm i386/jdmerge-avx2.asm i386/jdsample-avx2.asm
-    i386/jfdctint-avx2.asm i386/jidctint-avx2.asm i386/jquanti-avx2.asm)
+    i386/jccolor-avx2.asm i386/jcgray-avx2.asm i386/jchuff-avx2.asm
+    i386/jcsample-avx2.asm i386/jdcolor-avx2.asm i386/jdmerge-avx2.asm
+    i386/jdsample-avx2.asm i386/jfdctint-avx2.asm i386/jidctint-avx2.asm
+    i386/jquanti-avx2.asm)
 endif()
 
 if(MSVC_IDE)

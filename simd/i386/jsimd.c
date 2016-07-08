@@ -1191,6 +1191,9 @@ jsimd_can_huff_encode_one_block (void)
   if (sizeof(JCOEF) != 2)
     return 0;
 
+  if ((simd_support & JSIMD_AVX2) && simd_huffman &&
+      IS_ALIGNED_AVX(jconst_huff_encode_one_block_avx2))
+    return 1;
   if ((simd_support & JSIMD_SSE2) && simd_huffman &&
       IS_ALIGNED_SSE(jconst_huff_encode_one_block))
     return 1;
@@ -1203,6 +1206,10 @@ jsimd_huff_encode_one_block (void *state, JOCTET *buffer, JCOEFPTR block,
                              int last_dc_val, c_derived_tbl *dctbl,
                              c_derived_tbl *actbl)
 {
-  return jsimd_huff_encode_one_block_sse2(state, buffer, block, last_dc_val,
-                                          dctbl, actbl);
+  if (simd_support & JSIMD_AVX2)
+    return jsimd_huff_encode_one_block_avx2(state, buffer, block, last_dc_val,
+                                            dctbl, actbl);
+  else
+    return jsimd_huff_encode_one_block_sse2(state, buffer, block, last_dc_val,
+                                            dctbl, actbl);
 }

@@ -12,10 +12,10 @@ Build Requirements
 
 - [NASM](http://www.nasm.us) or [YASM](http://yasm.tortall.net)
   (if building x86 or x86-64 SIMD extensions)
-  * If using NASM, 2.10 or later is required.
-  * If using NASM, 2.10 or later (except 2.11.08) is required for an x86-64 Mac
-    build (2.11.08 does not work properly with libjpeg-turbo's x86-64 SIMD code
-    when building macho64 objects.)  NASM or YASM can be obtained from
+  * If using NASM, 2.10.01 or later is required.
+  * If using NASM, 2.10.01 or later (except 2.11.08) is required for an x86-64
+    Mac build (2.11.08 does not work properly with libjpeg-turbo's x86-64 SIMD
+    code when building macho64 objects.)  NASM or YASM can be obtained from
     [MacPorts](http://www.macports.org/) or [Homebrew](http://brew.sh/).
   * If using YASM, 1.2.0 or later is required.
      - NOTE: Currently, if it is desirable to hide the SIMD function symbols in
