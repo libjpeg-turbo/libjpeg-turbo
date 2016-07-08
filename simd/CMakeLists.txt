@@ -112,10 +112,10 @@ if(CPU_TYPE STREQUAL "x86_64")
     x86_64/jdsample-sse2.asm x86_64/jfdctfst-sse2.asm x86_64/jfdctint-sse2.asm
     x86_64/jidctflt-sse2.asm x86_64/jidctfst-sse2.asm x86_64/jidctint-sse2.asm
     x86_64/jidctred-sse2.asm x86_64/jquantf-sse2.asm x86_64/jquanti-sse2.asm
-    x86_64/jccolor-avx2.asm x86_64/jcgray-avx2.asm x86_64/jcsample-avx2.asm
-    x86_64/jdcolor-avx2.asm x86_64/jdmerge-avx2.asm x86_64/jdsample-avx2.asm
-    x86_64/jfdctfst-avx2.asm x86_64/jfdctint-avx2.asm x86_64/jidctint-avx2.asm
-    x86_64/jquanti-avx2.asm)
+    x86_64/jccolor-avx2.asm x86_64/jcgray-avx2.asm x86_64/jchuff-avx2.asm
+    x86_64/jcsample-avx2.asm x86_64/jdcolor-avx2.asm x86_64/jdmerge-avx2.asm
+    x86_64/jdsample-avx2.asm x86_64/jfdctfst-avx2.asm x86_64/jfdctint-avx2.asm
+    x86_64/jidctint-avx2.asm x86_64/jquanti-avx2.asm)
 else()
   set(SIMD_SOURCES i386/jsimdcpu.asm i386/jfdctflt-3dn.asm
     i386/jidctflt-3dn.asm i386/jquant-3dn.asm
