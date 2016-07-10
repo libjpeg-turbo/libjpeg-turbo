@@ -302,6 +302,40 @@ h2v1_fancy_upsample (j_decompress_ptr cinfo, jpeg_component_info *compptr,
   }
 }
 
+METHODDEF(void)
+h1v2_fancy_upsample (j_decompress_ptr cinfo, jpeg_component_info *compptr,
+                     JSAMPARRAY input_data, JSAMPARRAY *output_data_ptr)
+{
+  JSAMPARRAY output_data = *output_data_ptr;
+  JSAMPROW inptr0, inptr1, outptr;
+#if BITS_IN_JSAMPLE == 8
+  int thiscolsum;
+#else
+  JLONG thiscolsum;
+#endif
+  JDIMENSION colctr;
+  int inrow, outrow, v;
+
+  inrow = outrow = 0;
+  while (outrow < cinfo->max_v_samp_factor) {
+    for (v = 0; v < 2; v++) {
+      /* inptr0 points to nearest input row, inptr1 points to next nearest */
+      inptr0 = input_data[inrow];
+      if (v == 0)               /* next nearest is row above */
+        inptr1 = input_data[inrow-1];
+      else                      /* next nearest is row below */
+        inptr1 = input_data[inrow+1];
+      outptr = output_data[outrow++];
+
+      for(colctr = 0; colctr < compptr->downsampled_width; colctr++) {
+        thiscolsum = GETJSAMPLE(*inptr0++) * 3 + GETJSAMPLE(*inptr1++);
+        *outptr++ = (JSAMPLE) ((thiscolsum + 1) >> 2);
+      }
+    }
+    inrow++;
+  }
+}
+
 
 /*
  * Fancy processing for the common case of 2:1 horizontal and 2:1 vertical.
@@ -431,6 +465,11 @@ jinit_upsampler (j_decompress_ptr cinfo)
         else
           upsample->methods[ci] = h2v1_upsample;
       }
+    } else if (h_in_group == h_out_group &&
+               v_in_group * 2 == v_out_group && do_fancy) {
+      /* Non-fancy upsampling is handled by the generic method */
+      upsample->methods[ci] = h1v2_fancy_upsample;
+      upsample->pub.need_context_rows = TRUE;
     } else if (h_in_group * 2 == h_out_group &&
                v_in_group * 2 == v_out_group) {
       /* Special cases for 2h2v upsampling */
