@@ -11,6 +11,9 @@
  *
  */
 
+#ifndef jsimd_h
+#define jsimd_h
+
 #include "jchuff.h"             /* Declarations shared with jcphuff.c */
 
 EXTERN(int) jsimd_can_rgb_ycc (void);
@@ -91,3 +94,5 @@ EXTERN(int) jsimd_can_huff_encode_one_block (void);
 EXTERN(JOCTET*) jsimd_huff_encode_one_block
         (void *state, JOCTET *buffer, JCOEFPTR block, int last_dc_val,
          c_derived_tbl *dctbl, c_derived_tbl *actbl);
+
+#endif

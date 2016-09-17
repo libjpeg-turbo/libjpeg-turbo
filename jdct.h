@@ -15,6 +15,8 @@
  * machine-dependent tuning (e.g., assembly coding).
  */
 
+#ifndef jdct_h
+#define jdct_h
 
 /*
  * A forward DCT routine is given a pointer to a work area of type DCTELEM[];
@@ -205,4 +207,6 @@ EXTERN(void) jpeg_idct_16x16
 
 #ifndef MULTIPLY16V16           /* default definition */
 #define MULTIPLY16V16(var1,var2)  ((var1) * (var2))
+#endif
+
 #endif

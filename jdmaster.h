@@ -9,6 +9,9 @@
  * This file contains the master control structure for the JPEG decompressor.
  */
 
+#ifndef jdmaster_h
+#define jdmaster_h
+
 /* Private state */
 
 typedef struct {
@@ -26,3 +29,5 @@ typedef struct {
 } my_decomp_master;
 
 typedef my_decomp_master *my_master_ptr;
+
+#endif

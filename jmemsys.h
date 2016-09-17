@@ -20,6 +20,8 @@
  * symbol supplied in jconfig.h.
  */
 
+#ifndef jmemsys_h
+#define jmemsys_h
 
 /*
  * These two functions are used to allocate and release small chunks of
@@ -176,3 +178,5 @@ EXTERN(void) jpeg_open_backing_store (j_common_ptr cinfo,
 
 EXTERN(long) jpeg_mem_init (j_common_ptr cinfo);
 EXTERN(void) jpeg_mem_term (j_common_ptr cinfo);
+
+#endif
