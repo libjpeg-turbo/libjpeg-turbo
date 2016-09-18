@@ -162,7 +162,10 @@ jpeg_crop_scanline (j_decompress_ptr cinfo, JDIMENSION *xoffset,
     ERREXIT1(cinfo, JERR_BAD_STATE, cinfo->global_state);
 
   if (!xoffset || !width)
+  {
     ERREXIT(cinfo, JERR_BAD_CROP_SPEC);
+    return;
+  }
 
   /* xoffset and width must fall within the output image dimensions. */
   if (*width == 0 || *xoffset + *width > cinfo->output_width)
