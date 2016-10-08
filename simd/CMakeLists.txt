@@ -1,5 +1,5 @@
 if(NOT DEFINED NASM)
-  set(NASM nasm CACHE FILEPATH "Path to NASM/YASM executable")
+  find_program(NASM NAMES nasm yasm DOC "Path to NASM/YASM executable")
 endif()
 
 if(SIMD_X86_64)
