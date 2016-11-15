@@ -30,6 +30,8 @@
 #endif
 #include "jmorecfg.h"           /* seldom changed options */
 
+#include <stdio.h>
+#include <stddef.h>
 
 #ifdef __cplusplus
 #ifndef DONT_USE_EXTERN_C
