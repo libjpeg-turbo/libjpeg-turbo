@@ -15,6 +15,7 @@
  */
 
 #ifdef __amigaos4__
+/* This must be defined first as it re-defines GLOBAL otherwise */
 #include <proto/exec.h>
 #endif
 
