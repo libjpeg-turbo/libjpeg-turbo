@@ -14,6 +14,10 @@
  * PowerPC architecture.
  */
 
+#ifdef __amigaos4__
+#include <proto/exec.h>
+#endif
+
 #define JPEG_INTERNALS
 #include "../jinclude.h"
 #include "../jpeglib.h"
@@ -25,10 +29,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
-
-#ifdef __amigaos4__
-#include <proto/exec.h>
-#endif
 
 static unsigned int simd_support = ~0;
 
@@ -122,7 +122,7 @@ init_simd (void)
   }
 #elif defined(__amigaos4__)
   uint32 altivec = 0;
-  GetCPUInfoTags(GCIT_VectorUnit, &altivec, TAG_DONE);
+  IExec->GetCPUInfoTags(GCIT_VectorUnit, &altivec, TAG_DONE);
   if(altivec == VECTORTYPE_ALTIVEC)
     simd_support |= JSIMD_ALTIVEC;
 #endif
