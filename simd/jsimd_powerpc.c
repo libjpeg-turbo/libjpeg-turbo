@@ -26,6 +26,10 @@
 #include <string.h>
 #include <ctype.h>
 
+#ifdef __amigaos4__
+#include <proto/exec.h>
+#endif
+
 static unsigned int simd_support = ~0;
 
 #if defined(__linux__) || defined(ANDROID) || defined(__ANDROID__)
@@ -116,6 +120,11 @@ init_simd (void)
     if (bufsize > SOMEWHAT_SANE_PROC_CPUINFO_SIZE_LIMIT)
       break;
   }
+#elif defined(__amigaos4__)
+  uint32 altivec = 0;
+  GetCPUInfoTags(GCIT_VectorUnit, &altivec, TAG_DONE);
+  if(altivec == VECTORTYPE_ALTIVEC)
+    simd_support |= JSIMD_ALTIVEC;
 #endif
 
   /* Force different settings through environment variables */
