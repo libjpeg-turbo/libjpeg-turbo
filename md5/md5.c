@@ -34,8 +34,11 @@
 #ifdef __amigaos4__
 #include <stdint.h>
 #include <machine/endian.h>
-#include "endian.h"
-#define le32toh(x) letoh32(x)
+#define le32toh(x) (((x & 0xff) << 24) | \
+					((x & 0xff00) << 8) | \
+					((x & 0xff0000) >> 8) | \
+					((x & 0xff000000) >> 24))
+#define htole32(x) le32toh(x) 
 #endif
 
 static void MD5Transform(unsigned int [4], const unsigned char [64]);
