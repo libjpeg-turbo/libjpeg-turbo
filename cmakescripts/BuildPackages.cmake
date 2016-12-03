@@ -38,8 +38,8 @@ message(STATUS "RPM architecture = ${RPMARCH}, DEB architecture = ${DEBARCH}")
 boolean_number(CMAKE_POSITION_INDEPENDENT_CODE)
 
 configure_file(release/makerpm.in pkgscripts/makerpm)
-configure_file(release/${CMAKE_PROJECT_NAME}.spec.in
-  pkgscripts/${CMAKE_PROJECT_NAME}.spec @ONLY)
+configure_file(release/libjpeg-turbo.spec.in
+  pkgscripts/libjpeg-turbo.spec @ONLY)
 
 add_custom_target(rpm sh pkgscripts/makerpm
   SOURCES pkgscripts/makerpm)
