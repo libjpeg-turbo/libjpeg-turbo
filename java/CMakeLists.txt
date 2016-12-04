@@ -54,4 +54,4 @@ add_jar(turbojpeg-java ${JAVA_SOURCES} OUTPUT_NAME turbojpeg
 if(MSYS)
   set(CMAKE_HOST_SYSTEM_NAME ${CMAKE_HOST_SYSTEM_NAME})
 endif()
-install_jar(turbojpeg-java ${DATADIR}/classes)
+install_jar(turbojpeg-java "${CMAKE_INSTALL_DATADIR}/classes")

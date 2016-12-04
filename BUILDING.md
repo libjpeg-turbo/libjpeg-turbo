@@ -619,29 +619,19 @@ an installer package.)  To do this, run `make install` or `nmake install`
 `make uninstall` or `nmake uninstall` (or building the "uninstall" target in
 the Visual Studio IDE) will uninstall libjpeg-turbo.
 
-The `CMAKE_INSTALL_PREFIX` CMake variable can be modified in order to install
-libjpeg-turbo into a directory of your choosing.  If you don't specify
-`CMAKE_INSTALL_PREFIX`, then the default is:
+The
+[`CMAKE_INSTALL_PREFIX`](https://cmake.org/cmake/help/latest/variable/CMAKE_INSTALL_PREFIX.html)
+CMake variable can be modified in order to install libjpeg-turbo into
+a directory of your choosing.
 
-**c:\libjpeg-turbo**<br>
-Visual Studio 32-bit build
-
-**c:\libjpeg-turbo64**<br>
-Visual Studio 64-bit build
-
-**c:\libjpeg-turbo-gcc**<br>
-MinGW 32-bit build
-
-**c:\libjpeg-turbo-gcc64**<br>
-MinGW 64-bit build
-
-**/opt/libjpeg-turbo**<br>
-Un*x
-
-The `BINDIR`, `DATADIR`, `DOCDIR`, `INCLUDEDIR`, `LIBDIR`, and `MANDIR`
-CMake variables allow a finer degree of control over where specific files in
-the libjpeg-turbo distribution should be installed.
-
+The `CMAKE_INSTALL_BINDIR`, `CMAKE_INSTALL_DATADIR`,
+`CMAKE_INSTALL_DOCDIR`, `CMAKE_INSTALL_INCLUDEDIR`,
+`CMAKE_INSTALL_LIBDIR`, and `CMAKE_INSTALL_MANDIR` CMake variables
+allow a finer degree of control over where specific files in the
+libjpeg-turbo distribution should be installed.  See the
+[`GNUInstallDirs`
+documentation](<https://cmake.org/cmake/help/latest/module/GNUInstallDirs.html>)
+for further details.
 
 
 Creating Distribution Packages
