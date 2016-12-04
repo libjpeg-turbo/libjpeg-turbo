@@ -71,6 +71,25 @@ message(STATUS "${BITS}-bit build (${CPU_TYPE})")
 # Use the standard GNU installation directories and defaults
 include(GNUInstallDirs)
 
+# Set default installation prefix
+if(WIN32)
+  if(MSVC)
+    set(DEFAULT_CMAKE_INSTALL_PREFIX "c:/${CMAKE_PROJECT_NAME}")
+  else()
+    set(DEFAULT_CMAKE_INSTALL_PREFIX "c:/${CMAKE_PROJECT_NAME}-gcc")
+  endif()
+  if(BITS EQUAL 64)
+    set(DEFAULT_CMAKE_INSTALL_PREFIX "${DEFAULT_CMAKE_INSTALL_PREFIX}64")
+  endif()
+else()
+  set(DEFAULT_CMAKE_INSTALL_PREFIX /opt/${CMAKE_PROJECT_NAME})
+endif()
+if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+  set(CMAKE_INSTALL_PREFIX "${DEFAULT_CMAKE_INSTALL_PREFIX}" CACHE PATH
+    "Directory into which to install ${CMAKE_PROJECT_NAME} (default: ${DEFAULT_CMAKE_INSTALL_PREFIX})"
+    FORCE)
+endif()
+
 message(STATUS "CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}")
 foreach(var BINDIR DATADIR DOCDIR INCLUDEDIR LIBDIR MANDIR)
   # Backward compatibility for earlier libjpeg-turbo settings:
