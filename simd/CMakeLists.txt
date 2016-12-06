@@ -14,9 +14,6 @@ endmacro()
 
 if(CPU_TYPE STREQUAL "x86_64" OR CPU_TYPE STREQUAL "i386")
 
-set(CMAKE_ASM_NASM_FLAGS_DEBUG_INIT "-g")
-set(CMAKE_ASM_NASM_FLAGS_RELWITHDEBINFO_INIT "-g")
-
 # Allow the location of the NASM executable to be specified using the ASM_NASM
 # environment variable.  This should happen automatically, but unfortunately
 # enable_language(ASM_NASM) doesn't parse the ASM_NASM environment variable
@@ -40,6 +37,21 @@ endif()
 
 enable_language(ASM_NASM)
 message(STATUS "CMAKE_ASM_NASM_COMPILER = ${CMAKE_ASM_NASM_COMPILER}")
+
+get_filename_component(asm_name "${CMAKE_ASM_NASM_COMPILER}" NAME_WE)
+if(asm_name STREQUAL "nasm")
+  set(asm_debug "-g")
+elseif(asm_name STREQUAL "yasm")
+  if(UNIX)
+    set(asm_debug "-g dwarf2")
+  endif()
+  if(MSVC)
+    set(asm_debug "-g cv8")
+  endif()
+endif()
+
+set(CMAKE_ASM_NASM_FLAGS_DEBUG_INIT "${asm_debug}" CACHE INTERNAL "")
+set(CMAKE_ASM_NASM_FLAGS_RELWITHDEBINFO_INIT "${asm_debug}" CACHE INTERNAL "")
 
 if(CMAKE_ASM_NASM_OBJECT_FORMAT MATCHES "macho*")
   set(CMAKE_ASM_NASM_FLAGS "${CMAKE_ASM_NASM_FLAGS} -DMACHO")
