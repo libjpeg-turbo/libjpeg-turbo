@@ -502,12 +502,27 @@ if test "x${with_simd}" != "xno"; then
       ;;
     mips*)
       AC_MSG_RESULT([yes (mips)])
-      AC_MSG_CHECKING([if the assembler is GNU-compatible and can be used])
+      AC_MSG_CHECKING([if the mips dspr2 assembler is GNU-compatible and can be used])
       AC_CHECK_COMPATIBLE_MIPS_ASSEMBLER_IFELSE(
         [AC_MSG_RESULT([yes])
          simd_arch=mips],
         [AC_MSG_RESULT([no])
          with_simd=no])
+      AC_MSG_CHECKING([if the loongson mmi assembler is GNU-compatible and can be used])
+      AC_CHECK_COMPATIBLE_LOONGSON_ASSEMBLER_IFELSE(
+        [AC_MSG_RESULT([yes])
+         simd_arch=loongson],
+        [AC_MSG_RESULT([no])])
+
+      if test "x${with_simd}" != "xno"; then
+      AC_MSG_CHECKING([which kind of mips SIMD be used])
+        if test "x${simd_arch}" = "xloongson"; then
+          AC_MSG_RESULT([loongson mmi])
+        else
+          AC_MSG_RESULT([mips dspr2])
+        fi
+      fi
+
       if test "x${with_simd}" = "xno"; then
         if test "x${require_simd}" = "xyes"; then
           AC_MSG_ERROR([SIMD support can't be enabled.])
@@ -545,10 +560,16 @@ AM_CONDITIONAL([SIMD_X86_64], [test "x$simd_arch" = "xx86_64"])
 AM_CONDITIONAL([SIMD_ARM], [test "x$simd_arch" = "xarm"])
 AM_CONDITIONAL([SIMD_ARM_64], [test "x$simd_arch" = "xaarch64"])
 AM_CONDITIONAL([SIMD_MIPS], [test "x$simd_arch" = "xmips"])
+AM_CONDITIONAL([SIMD_LOONGSON], [test "x$simd_arch" = "xloongson"])
 AM_CONDITIONAL([SIMD_POWERPC], [test "x$simd_arch" = "xpowerpc"])
 AM_CONDITIONAL([X86_64], [test "x$host_cpu" = "xx86_64" -o "x$host_cpu" = "xamd64"])
 AM_CONDITIONAL([WITH_TURBOJPEG], [test "x$with_turbojpeg" != "xno"])
 AM_CONDITIONAL([CROSS_COMPILING], [test "x$cross_compiling" = "xyes"])
+
+if test "x$simd_arch" = "xloongson" ; then
+	CFLAGS="-march=loongson3a ${CFLAGS}"
+	echo "Loongson SIMD debug: CFLAGS=${CFLAGS}"	
+fi
 
 AC_ARG_VAR(PKGNAME, [distribution package name (default: libjpeg-turbo)])
 if test "x$PKGNAME" = "x"; then
