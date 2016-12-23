@@ -71,6 +71,12 @@ libsimd_la_SOURCES = jsimd_mips.c jsimd_mips_dspr2_asm.h jsimd_mips_dspr2.S
 
 endif
 
+if SIMD_LOONGSON
+
+libsimd_la_SOURCES = jsimd_loongson.c jsimd_loongson_mmi.c
+
+endif
+
 if SIMD_POWERPC
 
 noinst_LTLIBRARIES += libsimd_altivec.la

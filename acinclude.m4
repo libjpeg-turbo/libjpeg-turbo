@@ -184,6 +184,44 @@ AC_DEFUN([AC_CHECK_COMPATIBLE_ARM_ASSEMBLER_IFELSE],[
   fi
 ])
 
+# AC_CHECK_COMPATIBLE_LOONGSON_ASSEMBLER_IFELSE
+# --------------------------
+# Test whether the assembler is suitable and supports LOONGSON MMI instructions
+AC_DEFUN([AC_CHECK_COMPATIBLE_LOONGSON_ASSEMBLER_IFELSE],[
+  have_loongson_mmi=no
+  ac_save_CFLAGS="$CFLAGS"
+  CFLAGS="-march=loongson3a $CCASFLAGS"
+
+  AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
+
+typedef double __m64;
+
+int main () {
+    union {
+        __m64 v;
+        char c[8];
+    } a = { .c = {1, 2, 3, 4, 5, 6, 7, 8} };
+    int b = 4;
+    __m64 c;
+	asm("psrlh %0, %1, %2\n\t"
+	   : "=f" (c)
+	   : "f" (a.v), "f" (*(__m64 *)&(b))
+	);
+
+    return 0;
+}
+  ]])], have_loongson_mmi=yes)
+  CFLAGS=$ac_save_CFLAGS
+
+  if test "x$have_loongson_mmi" = "xyes" ; then
+    $1
+  else
+    $2
+  fi
+])
+
+
+
 # AC_CHECK_COMPATIBLE_MIPSEL_ASSEMBLER_IFELSE
 # --------------------------
 # Test whether the assembler is suitable and supports MIPS instructions
