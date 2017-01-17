@@ -23,7 +23,7 @@ AC_PROG_LN_S
 
 AC_ARG_WITH([build-date], [Use custom build string to enable reproducible builds (default: YYMMDD)],
   [BUILD="$with_build_date"],
-  [BUILD=`date +%Y%m%d`])
+  [BUILD=`date --utc --date="@${SOURCE_DATE_EPOCH:-$(date +%s)}" +%Y%m%d`])
 
 PKG_PROG_PKG_CONFIG
 
