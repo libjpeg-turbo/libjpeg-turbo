@@ -238,7 +238,7 @@ parse_switches (j_compress_ptr cinfo, int argc, char **argv,
 
   /* Set up default JPEG parameters. */
 
-  force_baseline = FALSE;       /* by default, allow 16-bit quantizers */
+  force_baseline = (BITS_IN_JSAMPLE == 8); /* 8-bit JPEG is supposed to only have 8-bit qtables (B.2.4.1) */
   simple_progressive = FALSE;
   is_targa = FALSE;
   icc_filename = NULL;
