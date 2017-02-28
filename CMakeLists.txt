@@ -47,6 +47,12 @@ message(STATUS "CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}")
 # to set a variable's value based on the build type when using Visual Studio.
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   set(BUILD "${BUILD}d")
+  
+  # Add more debug information with gdb
+  if(MINGW)
+	  set (CMAKE_C_FLAGS "-ggdb" )
+	  set (CMAKE_CXX_FLAGS "-ggdb" )
+  endif()
 endif()
 
 message(STATUS "VERSION = ${VERSION}, BUILD = ${BUILD}")
