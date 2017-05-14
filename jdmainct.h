@@ -7,6 +7,9 @@
  * file.
  */
 
+#ifndef jdmainct_h
+#define jdmainct_h
+
 #define JPEG_INTERNALS
 #include "jpeglib.h"
 #include "jpegcomp.h"
@@ -69,3 +72,5 @@ set_wraparound_pointers (j_decompress_ptr cinfo)
     }
   }
 }
+
+#endif

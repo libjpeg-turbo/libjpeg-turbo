@@ -7,6 +7,9 @@
  * file.
  */
 
+#ifndef jdsample_h
+#define jdsample_h
+
 #define JPEG_INTERNALS
 #include "jpeglib.h"
 
@@ -48,3 +51,5 @@ typedef struct {
 } my_upsampler;
 
 typedef my_upsampler *my_upsample_ptr;
+
+#endif

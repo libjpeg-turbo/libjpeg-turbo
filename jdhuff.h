@@ -13,6 +13,9 @@
  * progressive decoder (jdphuff.c).  No other modules need to see these.
  */
 
+#ifndef jdhuff_h
+#define jdhuff_h
+
 #include "jconfigint.h"
 
 
@@ -232,3 +235,5 @@ slowlabel: \
 EXTERN(int) jpeg_huff_decode
         (bitread_working_state *state, register bit_buf_type get_buffer,
          register int bits_left, d_derived_tbl *htbl, int min_bits);
+
+#endif

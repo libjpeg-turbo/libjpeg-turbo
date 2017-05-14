@@ -9,6 +9,9 @@
  *
  */
 
+#ifndef jsimddct_h
+#define jsimddct_h
+
 EXTERN(int) jsimd_can_convsamp (void);
 EXTERN(int) jsimd_can_convsamp_float (void);
 
@@ -72,3 +75,5 @@ EXTERN(void) jsimd_idct_float (j_decompress_ptr cinfo,
                                jpeg_component_info *compptr,
                                JCOEFPTR coef_block, JSAMPARRAY output_buf,
                                JDIMENSION output_col);
+
+#endif

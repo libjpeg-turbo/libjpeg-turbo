@@ -9,6 +9,10 @@
  * file.
  */
 
+
+#ifndef jdcoefct_h
+#define jdcoefct_h
+
 #define JPEG_INTERNALS
 #include "jpeglib.h"
 
@@ -80,3 +84,5 @@ start_iMCU_row (j_decompress_ptr cinfo)
   coef->MCU_ctr = 0;
   coef->MCU_vert_offset = 0;
 }
+
+#endif
