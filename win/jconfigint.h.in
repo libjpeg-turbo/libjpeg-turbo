@@ -11,3 +11,6 @@
 #define INLINE
 #endif
 #endif
+
+/* The size of `size_t', as computed by sizeof. */
+#define SIZEOF_SIZE_T @SIZEOF_SIZE_T@

@@ -183,6 +183,9 @@ endif()
 
 message(STATUS "Install directory = ${CMAKE_INSTALL_PREFIX}")
 
+include(CheckTypeSize)
+check_type_size(size_t SIZEOF_SIZE_T)
+
 configure_file(win/jconfig.h.in jconfig.h)
 configure_file(win/jconfigint.h.in jconfigint.h)
 
@@ -311,11 +314,15 @@ if(WITH_TURBOJPEG)
 endif()
 
 if(WITH_12BIT)
-  set(COMPILE_FLAGS "-DGIF_SUPPORTED -DPPM_SUPPORTED -DUSE_SETMODE")
+  set(COMPILE_FLAGS "-DGIF_SUPPORTED -DPPM_SUPPORTED")
 else()
-  set(COMPILE_FLAGS "-DBMP_SUPPORTED -DGIF_SUPPORTED -DPPM_SUPPORTED -DTARGA_SUPPORTED -DUSE_SETMODE")
+  set(COMPILE_FLAGS "-DBMP_SUPPORTED -DGIF_SUPPORTED -DPPM_SUPPORTED -DTARGA_SUPPORTED")
   set(CJPEG_BMP_SOURCES rdbmp.c rdtarga.c)
   set(DJPEG_BMP_SOURCES wrbmp.c wrtarga.c)
+endif()
+
+if(WIN32)
+  add_definitions(-DUSE_SETMODE)
 endif()
 
 if(ENABLE_STATIC)
@@ -331,7 +338,7 @@ if(ENABLE_STATIC)
 
   add_executable(jpegtran-static jpegtran.c cdjpeg.c rdswitch.c transupp.c)
   target_link_libraries(jpegtran-static jpeg-static)
-  set_property(TARGET jpegtran-static PROPERTY COMPILE_FLAGS "-DUSE_SETMODE")
+  set_property(TARGET jpegtran-static PROPERTY COMPILE_FLAGS "")
 endif()
 
 add_executable(rdjpgcom rdjpgcom.c)
@@ -925,8 +932,8 @@ if(WITH_TURBOJPEG)
   if(ENABLE_STATIC)
     install(TARGETS turbojpeg-static ARCHIVE DESTINATION lib)
     if(NOT ENABLE_SHARED)
-      install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/tjbench-static.exe
-        DESTINATION bin RENAME tjbench.exe)
+      install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/tjbench-static${CMAKE_EXECUTABLE_SUFFIX}
+        DESTINATION bin RENAME tjbench${CMAKE_EXECUTABLE_SUFFIX})
     endif()
   endif()
   install(FILES ${CMAKE_SOURCE_DIR}/turbojpeg.h DESTINATION include)
@@ -935,12 +942,12 @@ endif()
 if(ENABLE_STATIC)
   install(TARGETS jpeg-static ARCHIVE DESTINATION lib)
   if(NOT ENABLE_SHARED)
-    install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/cjpeg-static.exe
-      DESTINATION bin RENAME cjpeg.exe)
-    install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/djpeg-static.exe
-      DESTINATION bin RENAME djpeg.exe)
-    install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/jpegtran-static.exe
-      DESTINATION bin RENAME jpegtran.exe)
+    install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/cjpeg-static${CMAKE_EXECUTABLE_SUFFIX}
+      DESTINATION bin RENAME cjpeg${CMAKE_EXECUTABLE_SUFFIX})
+    install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/djpeg-static${CMAKE_EXECUTABLE_SUFFIX}
+      DESTINATION bin RENAME djpeg${CMAKE_EXECUTABLE_SUFFIX})
+    install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/jpegtran-static${CMAKE_EXECUTABLE_SUFFIX}
+      DESTINATION bin RENAME jpegtran${CMAKE_EXECUTABLE_SUFFIX})
   endif()
 endif()
 
