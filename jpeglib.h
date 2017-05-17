@@ -466,6 +466,8 @@ struct jpeg_compress_struct {
   int script_space_size;
 };
 
+typedef void (*jpeg_idct_method) (j_decompress_ptr cinfo, jpeg_component_info *compptr, JCOEFPTR coef_block, JSAMPARRAY output_buf, JDIMENSION output_col);
+typedef void (*jpeg_idct_method_selector) (j_decompress_ptr cinfo, jpeg_component_info *compptr, jpeg_idct_method * set_idct_method, int * set_idct_category);
 
 /* Master record for a decompression instance */
 
@@ -704,6 +706,11 @@ struct jpeg_decompress_struct {
   struct jpeg_upsampler *upsample;
   struct jpeg_color_deconverter *cconvert;
   struct jpeg_color_quantizer *cquantize;
+
+  /*
+   * Permit users to replace the IDCT method
+  */
+  jpeg_idct_method_selector custom_idct_selector;
 };
 
 
@@ -1056,6 +1063,10 @@ EXTERN(void) jpeg_destroy (j_common_ptr cinfo);
 
 /* Default restart-marker-resync procedure for use by data source modules */
 EXTERN(boolean) jpeg_resync_to_restart (j_decompress_ptr cinfo, int desired);
+
+
+
+EXTERN(void) jpeg_set_idct_method_selector (j_decompress_ptr cinfo, jpeg_idct_method_selector selector);
 
 
 /* These marker codes are exported since applications and data source modules

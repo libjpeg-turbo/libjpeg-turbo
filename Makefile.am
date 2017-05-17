@@ -27,7 +27,7 @@ libjpeg_la_SOURCES = $(HDRS) jcapimin.c jcapistd.c jccoefct.c jccolor.c \
 	jddctmgr.c jdhuff.c jdinput.c jdmainct.c jdmarker.c jdmaster.c \
 	jdmerge.c jdphuff.c jdpostct.c jdsample.c jdtrans.c jerror.c \
 	jfdctflt.c jfdctfst.c jfdctint.c jidctflt.c jidctfst.c jidctint.c \
-	jidctred.c jquant1.c jquant2.c jutils.c jmemmgr.c jmemnobs.c
+	jidctred.c jquant1.c jquant2.c jutils.c jmemmgr.c jmemnobs.c 
 
 if WITH_ARITH
 libjpeg_la_SOURCES += jaricom.c
