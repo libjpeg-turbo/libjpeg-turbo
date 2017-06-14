@@ -43,7 +43,7 @@ typedef enum {
 JMESSAGE(JMSG_NOMESSAGE, "Bogus message code %d") /* Must be first entry! */
 
 /* For maintenance convenience, list is alphabetical by message code name */
-#if JPEG_LIB_VERSION < 70
+#if !defined(C_ARITH_CODING_SUPPORTED) || !defined(D_ARITH_CODING_SUPPORTED)
 JMESSAGE(JERR_ARITH_NOTIMPL,
          "Sorry, arithmetic coding is not implemented")
 #endif
