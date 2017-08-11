@@ -7,6 +7,34 @@
 #cmakedefine C_ARITH_CODING_SUPPORTED
 #cmakedefine D_ARITH_CODING_SUPPORTED
 #cmakedefine MEM_SRCDST_SUPPORTED
+#cmakedefine HAVE_LOCALE_H
+#cmakedefine HAVE_STDDEF_H
+#cmakedefine HAVE_STDLIB_H
+#cmakedefine NEED_BSD_STRINGS
+#cmakedefine NEED_SYS_TYPES_H
+
+#cmakedefine NEED_FAR_POINTERS    /* we presume a 32-bit flat memory model */
+
+#ifdef WIN32
+ /* Define "boolean" as unsigned char, not int, per Windows custom */
+ /* don't conflict if rpcndr.h already read */
+ #ifndef __RPCNDR_H__
+  typedef unsigned char boolean;
+ #endif
+ /* prevent jmorecfg.h from redefining it */
+ #define HAVE_BOOLEAN
+
+ /* Define "INT32" as int, not long, per Windows custom */
+ /* don't conflict if basetsd.h already read */
+ #if !(defined(_BASETSD_H_) || defined(_BASETSD_H))
+  typedef short INT16;
+  typedef signed int INT32;
+ #endif
+ /* prevent jmorecfg.h from redefining it */
+ #define XMD_H
+#else
+ #cmakedefine HAVE_BOOLEAN
+#endif
 
 /*
  * Define BITS_IN_JSAMPLE as either
@@ -24,28 +52,8 @@
 /* #define void char */
 /* #define const */
 #undef __CHAR_UNSIGNED__
-#define HAVE_STDDEF_H
-#define HAVE_STDLIB_H
-#undef NEED_BSD_STRINGS
-#undef NEED_SYS_TYPES_H
-#undef NEED_FAR_POINTERS	/* we presume a 32-bit flat memory model */
 #undef INCOMPLETE_TYPES_BROKEN
 
-/* Define "boolean" as unsigned char, not int, per Windows custom */
-#ifndef __RPCNDR_H__		/* don't conflict if rpcndr.h already read */
-typedef unsigned char boolean;
-#endif
-#define HAVE_BOOLEAN		/* prevent jmorecfg.h from redefining it */
-
-/* Define "INT32" as int, not long, per Windows custom */
-#if !(defined(_BASETSD_H_) || defined(_BASETSD_H))   /* don't conflict if basetsd.h already read */
-typedef short INT16;
-typedef signed int INT32;
-#endif
-#define XMD_H                   /* prevent jmorecfg.h from redefining it */
-
 #ifdef JPEG_INTERNALS
-
-#undef RIGHT_SHIFT_IS_UNSIGNED
-
+ #undef RIGHT_SHIFT_IS_UNSIGNED
 #endif /* JPEG_INTERNALS */
