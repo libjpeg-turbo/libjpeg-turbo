@@ -30,9 +30,9 @@
    capabilities of libjpeg-turbo at both compile time and run time. */
 
 #include <stdio.h>
-#include <jpeglib.h>
-#include <jerror.h>
 #include <setjmp.h>
+#include "jpeglib.h"
+#include "jerror.h"
 
 #ifndef JCS_EXTENSIONS
 #define JCS_EXT_RGB 6

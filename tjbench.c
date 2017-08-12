@@ -32,7 +32,7 @@
 #include <ctype.h>
 #include <math.h>
 #include <errno.h>
-#include <cdjpeg.h>
+#include "cdjpeg.h"
 #include "./bmp.h"
 #include "./tjutil.h"
 #include "./turbojpeg.h"
