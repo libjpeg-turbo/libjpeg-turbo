@@ -29,10 +29,6 @@ pad_number(VERSION_MINOR 3)
 pad_number(VERSION_REVISION 3)
 set(LIBJPEG_TURBO_VERSION_NUMBER ${VERSION_MAJOR}${VERSION_MINOR}${VERSION_REVISION})
 
-if(NOT WIN32)
-  message(FATAL_ERROR "Platform not supported by this build system.  Use autotools instead.")
-endif()
-
 string(TIMESTAMP BUILD "%Y%m%d")
 
 # This does nothing except when using MinGW.  CMAKE_BUILD_TYPE has no meaning
@@ -183,8 +179,40 @@ endif()
 
 message(STATUS "Install directory = ${CMAKE_INSTALL_PREFIX}")
 
-configure_file(win/jconfig.h.in jconfig.h)
-configure_file(win/jconfigint.h.in jconfigint.h)
+include(CheckIncludeFiles)
+include(CheckTypeSize)
+include(CheckSymbolExists)
+
+if(WIN32)
+  set(USE_SETMODE "-DUSE_SETMODE")
+  set(NEED_FAR_POINTERS ON)
+else()
+  set(USE_SETMODE "")
+  check_type_size(boolean HAVE_BOOLEAN)
+endif()
+
+check_type_size(size_t SIZEOF_SIZE_T)
+check_include_files(locale.h HAVE_LOCALE_H)
+check_include_files(stddef.h HAVE_STDDEF_H)
+check_include_files(stdlib.h HAVE_STDLIB_H)
+if(NOT HAVE_STDDEF_H)
+  set(NEED_SYS_TYPES_H 1)
+endif()
+check_symbol_exists(bzero strings.h NEED_BSD_STRINGS)
+if (NEED_BSD_STRINGS)
+  check_symbol_exists(memset string.h string_memset)
+  check_symbol_exists(memcpy string.h string_memcpy)
+  if (string_memset AND string_memcpy)
+    set(NEED_BSD_STRINGS 0)
+  endif()
+endif()
+
+# set(HAVE_UNSIGNED_CHAR 1)
+# set(HAVE_UNSIGNED_SHORT 1)
+add_definitions(-DSIZEOF_SIZE_T=SIZEOF_SIZE_T)
+
+configure_file(cmake/jconfig.h.in jconfig.h)
+configure_file(cmake/jconfigint.h.in jconfigint.h)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_SOURCE_DIR})
 
@@ -250,6 +278,9 @@ if(WITH_JAVA)
 endif()
 
 if(ENABLE_SHARED)
+  if (UNIX)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
+  endif()
   add_subdirectory(sharedlib)
 endif()
 
@@ -285,6 +316,9 @@ if(WITH_TURBOJPEG)
     add_executable(tjbench tjbench.c bmp.c tjutil.c rdbmp.c rdppm.c wrbmp.c
       wrppm.c)
     target_link_libraries(tjbench turbojpeg jpeg-static)
+    if("${CMAKE_SYSTEM}" MATCHES "Linux")
+      target_link_libraries(tjbench m)
+    endif()
     set_property(TARGET tjbench PROPERTY COMPILE_FLAGS
       "-DBMP_SUPPORTED -DPPM_SUPPORTED")
   endif()
@@ -311,9 +345,9 @@ if(WITH_TURBOJPEG)
 endif()
 
 if(WITH_12BIT)
-  set(COMPILE_FLAGS "-DGIF_SUPPORTED -DPPM_SUPPORTED -DUSE_SETMODE")
+  set(COMPILE_FLAGS "-DGIF_SUPPORTED -DPPM_SUPPORTED ${USE_SETMODE}")
 else()
-  set(COMPILE_FLAGS "-DBMP_SUPPORTED -DGIF_SUPPORTED -DPPM_SUPPORTED -DTARGA_SUPPORTED -DUSE_SETMODE")
+  set(COMPILE_FLAGS "-DBMP_SUPPORTED -DGIF_SUPPORTED -DPPM_SUPPORTED -DTARGA_SUPPORTED ${USE_SETMODE}")
   set(CJPEG_BMP_SOURCES rdbmp.c rdtarga.c)
   set(DJPEG_BMP_SOURCES wrbmp.c wrtarga.c)
 endif()
@@ -331,7 +365,7 @@ if(ENABLE_STATIC)
 
   add_executable(jpegtran-static jpegtran.c cdjpeg.c rdswitch.c transupp.c)
   target_link_libraries(jpegtran-static jpeg-static)
-  set_property(TARGET jpegtran-static PROPERTY COMPILE_FLAGS "-DUSE_SETMODE")
+  set_property(TARGET jpegtran-static PROPERTY COMPILE_FLAGS ${USE_SETMODE})
 endif()
 
 add_executable(rdjpgcom rdjpgcom.c)
@@ -867,7 +901,7 @@ foreach(libtype ${TEST_LIBTYPES})
 endforeach()
 
 add_custom_target(testclean COMMAND ${CMAKE_COMMAND} -P
-  ${CMAKE_SOURCE_DIR}/cmakescripts/testclean.cmake)
+  ${CMAKE_SOURCE_DIR}/cmake/testclean.cmake)
 
 
 #
@@ -956,7 +990,9 @@ install(FILES ${CMAKE_BINARY_DIR}/jconfig.h ${CMAKE_SOURCE_DIR}/jerror.h
   ${CMAKE_SOURCE_DIR}/jmorecfg.h ${CMAKE_SOURCE_DIR}/jpeglib.h
   DESTINATION include)
 
-configure_file("${CMAKE_SOURCE_DIR}/cmakescripts/cmake_uninstall.cmake.in"
-  "cmake_uninstall.cmake" IMMEDIATE @ONLY)
+if (WIN32)
+  configure_file("${CMAKE_SOURCE_DIR}/cmake/cmake_uninstall.cmake.in"
+    "cmake_uninstall.cmake" IMMEDIATE @ONLY)
+endif()
 
 add_custom_target(uninstall COMMAND ${CMAKE_COMMAND} -P cmake_uninstall.cmake)

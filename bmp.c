@@ -31,8 +31,8 @@
 #include <setjmp.h>
 #include <errno.h>
 #include "cdjpeg.h"
-#include <jpeglib.h>
-#include <jpegint.h>
+#include "jpeglib.h"
+#include "jpegint.h"
 #include "tjutil.h"
 #include "bmp.h"
 

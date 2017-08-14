@@ -4,15 +4,33 @@ endif()
 message(STATUS "NASM = ${NASM}")
 
 if(SIMD_X86_64)
-  set(NAFLAGS -fwin64 -DWIN64 -D__x86_64__)
+  set(NAFLAGS -D__x86_64__)
+  if(WIN32)
+    set(NAFLAGS -fwin64 -DWIN64 ${NAFLAGS} -I${CMAKE_SOURCE_DIR}/win)
+  elseif(APPLE)
+    set(NAFLAGS -fmacho64 -D__MACHO__ ${NAFLAGS})
+  elseif("${CMAKE_SYSTEM}" MATCHES "Linux")
+    set(NAFLAGS -felf64 -DELF ${NAFLAGS})
+  else()
+    message(FATAL_ERROR "Unkown object 64 format")
+  endif()
 else()
   if(BORLAND)
     set(NAFLAGS -fobj -DOBJ32)
+  elseif(WIN32)
+    set(NAFLAGS -fwin32 -DWIN32 -I${CMAKE_SOURCE_DIR}/win)
+  elseif(APPLE)
+    set(NAFLAGS -fmacho32 -D__MACHO__)
+  elseif("${CMAKE_SYSTEM}" MATCHES "Linux")
+    set(NAFLAGS -felf32 -DELF)
   else()
-    set(NAFLAGS -fwin32 -DWIN32)
+    message(FATAL_ERROR "Unkown object 32 format")
   endif()
 endif()
-set(NAFLAGS ${NAFLAGS} -I${CMAKE_SOURCE_DIR}/win/ -I${CMAKE_CURRENT_SOURCE_DIR}/)
+set(NAFLAGS ${NAFLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}/)
+if(NOT WIN32)
+  set(NAFLAGS ${NAFLAGS} -I${CMAKE_CURRENT_BINARY_DIR}/)
+endif()
 
 # This only works if building from the command line.  There is currently no way
 # to set a variable's value based on the build type when using the MSVC IDE.
@@ -79,3 +97,20 @@ endforeach()
 
 set(SIMD_OBJS ${SIMD_OBJS} PARENT_SCOPE)
 add_custom_target(simd DEPENDS ${SIMD_OBJS})
+
+if (NOT WIN32)
+  get_filename_component(ppcompiler ${CMAKE_C_COMPILER} NAME)
+  if(ppcompiler STREQUAL "ccache" OR ppcompiler STREQUAL "distcc")
+    separate_arguments(pp_arglist UNIX_COMMAND "${CMAKE_C_COMPILER_ARG1}")
+    list(GET pp_arglist 0 ppcompiler)
+  endif()
+  add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/jsimdcfg.inc
+    COMMAND "${ppcompiler}" -E -I../ -I. "${CMAKE_CURRENT_SOURCE_DIR}/jsimdcfg.inc.h" | grep \"^[;%]\" | sed 's/_cpp_protection_//' | sed 's/% define/%define/g' > ${CMAKE_CURRENT_BINARY_DIR}/jsimdcfg.inc
+    MAIN_DEPENDENCY ${CMAKE_CURRENT_SOURCE_DIR}/jsimdcfg.inc.h
+    COMMENT "Preprocessing jsimdcfg.inc.h")
+  add_custom_target(jsimdcfg.inc DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/jsimdcfg.inc
+                                         ${CMAKE_BINARY_DIR}/jconfig.h
+                                         ${CMAKE_BINARY_DIR}/jconfigint.h)
+  add_dependencies(simd jsimdcfg.inc)
+endif()
+
