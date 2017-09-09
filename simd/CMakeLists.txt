@@ -12,7 +12,7 @@ else()
     set(NAFLAGS -fwin32 -DWIN32)
   endif()
 endif()
-set(NAFLAGS ${NAFLAGS} -I${CMAKE_SOURCE_DIR}/win/ -I${CMAKE_CURRENT_SOURCE_DIR}/)
+set(NAFLAGS ${NAFLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}/../win/ -I${CMAKE_CURRENT_SOURCE_DIR}/)
 
 # This only works if building from the command line.  There is currently no way
 # to set a variable's value based on the build type when using the MSVC IDE.
@@ -45,7 +45,7 @@ else()
   set(OBJDIR ${CMAKE_CURRENT_BINARY_DIR})
 endif()
 
-file(GLOB INC_FILES *.inc)
+file(GLOB INC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/*.inc)
 
 foreach(file ${SIMD_BASENAMES})
   set(DEPFILE "")

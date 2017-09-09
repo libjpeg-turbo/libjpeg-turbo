@@ -16,7 +16,7 @@ if(MSVC)
 endif()
 
 foreach(src ${JPEG_SOURCES})
-  set(JPEG_SRCS ${JPEG_SRCS} ${CMAKE_SOURCE_DIR}/${src})
+  set(JPEG_SRCS ${JPEG_SRCS} ${CMAKE_CURRENT_SOURCE_DIR}/../${src})
 endforeach()
 
 if(WITH_SIMD)
@@ -26,10 +26,10 @@ endif()
 
 if(WITH_MEM_SRCDST AND NOT WITH_JPEG8)
   add_library(jpeg SHARED ${JPEG_SRCS} ${SIMD_OBJS}
-    ${CMAKE_SOURCE_DIR}/win/jpeg${DLL_VERSION}-memsrcdst.def)
+    ${CMAKE_CURRENT_SOURCE_DIR}/../win/jpeg${DLL_VERSION}-memsrcdst.def)
 else()
   add_library(jpeg SHARED ${JPEG_SRCS} ${SIMD_OBJS}
-    ${CMAKE_SOURCE_DIR}/win/jpeg${DLL_VERSION}.def)
+    ${CMAKE_CURRENT_SOURCE_DIR}/../win/jpeg${DLL_VERSION}.def)
 endif()
 set_target_properties(jpeg PROPERTIES SOVERSION ${DLL_VERSION}
   VERSION ${FULLVERSION})
@@ -66,6 +66,7 @@ set_property(TARGET jpegtran PROPERTY COMPILE_FLAGS "-DUSE_SETMODE")
 
 add_executable(jcstest ../jcstest.c)
 target_link_libraries(jcstest jpeg)
+target_include_directories(jcstest PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../)
 
 install(TARGETS jpeg cjpeg djpeg jpegtran
   ARCHIVE DESTINATION lib

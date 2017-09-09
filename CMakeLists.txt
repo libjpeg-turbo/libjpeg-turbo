@@ -257,6 +257,7 @@ if(ENABLE_STATIC OR WITH_TURBOJPEG)
   add_library(jpeg-static STATIC ${JPEG_SOURCES} ${SIMD_OBJS})
   if(NOT MSVC)
     set_target_properties(jpeg-static PROPERTIES OUTPUT_NAME jpeg)
+    target_include_directories(jpeg-staic PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
   endif()
   if(WITH_SIMD)
     add_dependencies(jpeg-static simd)
@@ -278,6 +279,7 @@ if(WITH_TURBOJPEG)
     endif()
     target_link_libraries(turbojpeg jpeg-static)
     set_target_properties(turbojpeg PROPERTIES LINK_INTERFACE_LIBRARIES "")
+    target_include_directories(turbojpeg PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
     add_executable(tjunittest tjunittest.c tjutil.c)
     target_link_libraries(tjunittest turbojpeg)
@@ -287,6 +289,7 @@ if(WITH_TURBOJPEG)
     target_link_libraries(tjbench turbojpeg jpeg-static)
     set_property(TARGET tjbench PROPERTY COMPILE_FLAGS
       "-DBMP_SUPPORTED -DPPM_SUPPORTED")
+    target_include_directories(tjbench PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
   endif()
 
   if(ENABLE_STATIC)
@@ -298,6 +301,7 @@ if(WITH_TURBOJPEG)
     if(WITH_SIMD)
       add_dependencies(turbojpeg-static simd)
     endif()
+    target_include_directories(turbojpeg-static PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
     add_executable(tjunittest-static tjunittest.c tjutil.c)
     target_link_libraries(tjunittest-static turbojpeg-static)
@@ -307,6 +311,7 @@ if(WITH_TURBOJPEG)
     target_link_libraries(tjbench-static turbojpeg-static jpeg-static)
     set_property(TARGET tjbench-static PROPERTY COMPILE_FLAGS
       "-DBMP_SUPPORTED -DPPM_SUPPORTED")
+    target_include_directories(tjbench-static PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
   endif()
 endif()
 
@@ -929,7 +934,7 @@ if(WITH_TURBOJPEG)
         DESTINATION bin RENAME tjbench.exe)
     endif()
   endif()
-  install(FILES ${CMAKE_SOURCE_DIR}/turbojpeg.h DESTINATION include)
+  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/turbojpeg.h DESTINATION include)
 endif()
 
 if(ENABLE_STATIC)
@@ -946,17 +951,17 @@ endif()
 
 install(TARGETS rdjpgcom wrjpgcom RUNTIME DESTINATION bin)
 
-install(FILES ${CMAKE_SOURCE_DIR}/README.ijg ${CMAKE_SOURCE_DIR}/README.md
-  ${CMAKE_SOURCE_DIR}/example.c ${CMAKE_SOURCE_DIR}/libjpeg.txt
-  ${CMAKE_SOURCE_DIR}/structure.txt ${CMAKE_SOURCE_DIR}/usage.txt
-  ${CMAKE_SOURCE_DIR}/wizard.txt
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/README.ijg ${CMAKE_CURRENT_SOURCE_DIR}/README.md
+  ${CMAKE_CURRENT_SOURCE_DIR}/example.c ${CMAKE_CURRENT_SOURCE_DIR}/libjpeg.txt
+  ${CMAKE_CURRENT_SOURCE_DIR}/structure.txt ${CMAKE_CURRENT_SOURCE_DIR}/usage.txt
+  ${CMAKE_CURRENT_SOURCE_DIR}/wizard.txt
   DESTINATION doc)
 
-install(FILES ${CMAKE_BINARY_DIR}/jconfig.h ${CMAKE_SOURCE_DIR}/jerror.h
-  ${CMAKE_SOURCE_DIR}/jmorecfg.h ${CMAKE_SOURCE_DIR}/jpeglib.h
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/jconfig.h ${CMAKE_CURRENT_SOURCE_DIR}/jerror.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/jmorecfg.h ${CMAKE_CURRENT_SOURCE_DIR}/jpeglib.h
   DESTINATION include)
 
-configure_file("${CMAKE_SOURCE_DIR}/cmakescripts/cmake_uninstall.cmake.in"
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmakescripts/cmake_uninstall.cmake.in"
   "cmake_uninstall.cmake" IMMEDIATE @ONLY)
 
 add_custom_target(uninstall COMMAND ${CMAKE_COMMAND} -P cmake_uninstall.cmake)
