@@ -531,6 +531,10 @@ quantize_ord_dither (j_decompress_ptr cinfo, JSAMPARRAY input_buf,
   JDIMENSION col;
   JDIMENSION width = cinfo->output_width;
 
+  if (output_buf == NULL && num_rows) {
+    ERREXIT(cinfo, JERR_BAD_PARAM);
+  }
+
   for (row = 0; row < num_rows; row++) {
     /* Initialize output values to 0 so can process components separately */
     jzero_far((void *) output_buf[row], (size_t) (width * sizeof(JSAMPLE)));

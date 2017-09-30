@@ -132,6 +132,11 @@ post_process_1pass (j_decompress_ptr cinfo,
   my_post_ptr post = (my_post_ptr) cinfo->post;
   JDIMENSION num_rows, max_rows;
 
+  /* read_and_discard_scanlines may call it with rows "available", but no buffer */
+  if (output_buf == NULL) {
+    return;
+  }
+
   /* Fill the buffer, but not more than what we can dump out in one go. */
   /* Note we rely on the upsampler to detect bottom of image. */
   max_rows = out_rows_avail - *out_row_ctr;
