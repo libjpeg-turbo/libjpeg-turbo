@@ -368,12 +368,91 @@ Building libjpeg-turbo for Android
 
 Building libjpeg-turbo for Android platforms requires the
 [Android NDK](https://developer.android.com/tools/sdk/ndk) and autotools.
+It would be better to generate the toolchains by make_standalone_toolchain.sh or make_standalone_toolchain.py.
 
+The script shall be copied under the libjpeg-turbo source code top directory
+NDK must be the android ndk installed folder in your computer, set up it in your environment path
+If you want to compile x86 or arm64-v8a shared libraries, you must modify options
+--arch, --toolchain, --platform, besides modify ANDROID_CFLAGS based on your target.
+### ARMv7 create by make_standalone_toolchain.sh
+```shell
+#!/bin/sh
+
+
+TOOLCHAIN_DIR=arm-toolchain
+make distclean
+rm -rf $TOOLCHAIN_DIR
+
+$NDK/build/tools/make-standalone-toolchain.sh \
+	--platform=android-16 \
+	--arch=arm \
+	--stl=libc++ \
+	--toolchain=arm-linux-androideabi \
+	--install-dir=$TOOLCHAIN_DIR \
+	--force
+
+
+
+HOST=arm-linux-androideabi
+ANDROID_CFLAGS="-march=armv7-a -mfloat-abi=softfp -fprefetch-loop-arrays -D__ANDROID_API__=16"
+TOOLCHAIN=$PWD/$TOOLCHAIN_DIR
+export CPP=${TOOLCHAIN}/bin/${HOST}-cpp
+export AR=${TOOLCHAIN}/bin/${HOST}-ar
+export NM=${TOOLCHAIN}/bin/${HOST}-nm
+export CC=${TOOLCHAIN}/bin/${HOST}-gcc
+export LD=${TOOLCHAIN}/bin/${HOST}-ld
+export RANLIB=${TOOLCHAIN}/bin/${HOST}-ranlib
+export OBJDUMP=${TOOLCHAIN}/bin/${HOST}-objdump
+export STRIP=${TOOLCHAIN}/bin/${HOST}-strip
+sh ./configure --host=${HOST} \
+	CFLAGS="${ANDROID_CFLAGS} -O3 -fPIE" \
+	CPPFLAGS="${ANDROID_CFLAGS}" \
+	LDFLAGS="${ANDROID_CFLAGS} -pie" --with-simd ${1+"$@"}
+make
+```
+
+### ARMv8 create by make_standalone_toolchain.sh
+```shell
+#!/bin/sh
+TOOLCHAIN_DIR=aarch64_toolchain
+
+make distclean
+
+$NDK/build/tools/make-standalone-toolchain.sh \
+	--install-dir=$TOOLCHAIN_DIR \
+	--stl=libc++ \
+	--platform=android-21 \
+	--toolchain=aarch64-linux-android-4.9 \
+	--arch=arm64 \
+	--force
+
+
+HOST=aarch64-linux-android
+
+ANDROID_CFLAGS="-D__ANDROID_API__=21"
+TOOLCHAIN=$PWD/$TOOLCHAIN_DIR
+
+export CPP=${TOOLCHAIN}/bin/${HOST}-cpp
+export AR=${TOOLCHAIN}/bin/${HOST}-ar
+export NM=${TOOLCHAIN}/bin/${HOST}-nm
+export CC=${TOOLCHAIN}/bin/${HOST}-gcc
+export LD=${TOOLCHAIN}/bin/${HOST}-ld
+export RANLIB=${TOOLCHAIN}/bin/${HOST}-ranlib
+export OBJDUMP=${TOOLCHAIN}/bin/${HOST}-objdump
+export STRIP=${TOOLCHAIN}/bin/${HOST}-strip
+
+sh ./configure --host=${HOST} \
+	CFLAGS="${ANDROID_CFLAGS} -O3 -fPIE" \
+	CPPFLAGS="${ANDROID_CFLAGS}" \
+	LDFLAGS="${ANDROID_CFLAGS} -pie" --with-simd ${1+"$@"}
+
+make
+```
 
 ### ARMv7 (32-bit)
 
 The following is a general recipe script that can be modified for your specific
-needs.
+needs. 
 
     # Set these variables to suit your needs
     NDK_PATH={full path to the "ndk" directory-- for example, /opt/android/sdk/ndk-bundle}
