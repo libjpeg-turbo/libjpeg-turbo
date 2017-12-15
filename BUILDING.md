@@ -374,7 +374,7 @@ It would be better to generate the toolchains by make_standalone_toolchain.sh or
 The script shall be copied under the libjpeg-turbo source code top directory
 NDK must be the android ndk installed folder in your computer, set up it in your environment path
 If you want to compile x86 or arm64-v8a shared libraries, you must modify options
---arch, --toolchain, --platform, besides modify ANDROID_CFLAGS based on your target.
+--arch, --toolchain, --platform, besides, modify ANDROID_CFLAGS based on your target system.
 ### ARMv7 create by make_standalone_toolchain.sh
 ```shell
 #!/bin/sh
