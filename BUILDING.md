@@ -367,7 +367,7 @@ Building libjpeg-turbo for Android
 ----------------------------------
 
 Building libjpeg-turbo for Android platforms requires the specific needs.
-[Android NDK](https://developer.android.com/tools/sdk/ndk) and autotools.
+
 
 It would be better to generate the toolchains by make_standalone_toolchain.sh or make_standalone_toolchain.py.
 

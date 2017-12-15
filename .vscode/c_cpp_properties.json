@@ -1,0 +1,14 @@
+{
+    "configurations": [
+        {
+            "name": "null",
+            "includePath": [],
+            "defines": [],
+            "browse": {
+                "path": [],
+                "limitSymbolsToIncludedHeaders": true,
+                "databaseFilename": ""
+            }
+        }
+    ]
+}
