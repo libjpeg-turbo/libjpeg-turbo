@@ -736,6 +736,8 @@ jsimd_can_fdct_ifast (void)
   if (sizeof(DCTELEM) != 2)
     return 0;
 
+  if ((simd_support & JSIMD_AVX2) && IS_ALIGNED_AVX(jconst_fdct_ifast_avx2))
+    return 1;
   if ((simd_support & JSIMD_SSE2) && IS_ALIGNED_SSE(jconst_fdct_ifast_sse2))
     return 1;
 
@@ -771,7 +773,10 @@ jsimd_fdct_islow (DCTELEM *data)
 GLOBAL(void)
 jsimd_fdct_ifast (DCTELEM *data)
 {
-  jsimd_fdct_ifast_sse2(data);
+  if (simd_support & JSIMD_AVX2)
+    jsimd_fdct_ifast_avx2(data);
+  else
+    jsimd_fdct_ifast_sse2(data);
 }
 
 GLOBAL(void)

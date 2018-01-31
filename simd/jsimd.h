@@ -862,6 +862,9 @@ EXTERN(void) jsimd_fdct_ifast_mmx (DCTELEM *data);
 extern const int jconst_fdct_ifast_sse2[];
 EXTERN(void) jsimd_fdct_ifast_sse2 (DCTELEM *data);
 
+extern const int jconst_fdct_ifast_avx2[];
+EXTERN(void) jsimd_fdct_ifast_avx2 (DCTELEM *data);
+
 EXTERN(void) jsimd_fdct_ifast_neon (DCTELEM *data);
 
 EXTERN(void) jsimd_fdct_ifast_mips_dspr2 (DCTELEM *data);
