@@ -43,6 +43,107 @@ F_1_306 equ DESCALE(1402911301, 30-CONST_BITS)  ; FIX(1.306562965)
 %endif
 
 ; --------------------------------------------------------------------------
+; In-place 8x8x16-bit matrix transpose using AVX2 instructions
+; %1-%4: Input/output registers
+; %5-%8: Temp registers
+
+%macro ymmtranspose 8
+    ; %1=(00 01 02 03 04 05 06 07  40 41 42 43 44 45 46 47)
+    ; %2=(10 11 12 13 14 15 16 17  50 51 52 53 54 55 56 57)
+    ; %3=(20 21 22 23 24 25 26 27  60 61 62 63 64 65 66 67)
+    ; %4=(30 31 32 33 34 35 36 37  70 71 72 73 74 75 76 77)
+
+    vpunpcklwd  %5, %1, %2
+    vpunpckhwd  %6, %1, %2
+    vpunpcklwd  %7, %3, %4
+    vpunpckhwd  %8, %3, %4
+    ; transpose coefficients(phase 1)
+    ; %5=(00 10 01 11 02 12 03 13  40 50 41 51 42 52 43 53)
+    ; %6=(04 14 05 15 06 16 07 17  44 54 45 55 46 56 47 57)
+    ; %7=(20 30 21 31 22 32 23 33  60 70 61 71 62 72 63 73)
+    ; %8=(24 34 25 35 26 36 27 37  64 74 65 75 66 76 67 77)
+
+    vpunpckldq  %1, %5, %7
+    vpunpckhdq  %2, %5, %7
+    vpunpckldq  %3, %6, %8
+    vpunpckhdq  %4, %6, %8
+    ; transpose coefficients(phase 2)
+    ; %1=(00 10 20 30 01 11 21 31  40 50 60 70 41 51 61 71)
+    ; %2=(02 12 22 32 03 13 23 33  42 52 62 72 43 53 63 73)
+    ; %3=(04 14 24 34 05 15 25 35  44 54 64 74 45 55 65 75)
+    ; %4=(06 16 26 36 07 17 27 37  46 56 66 76 47 57 67 77)
+
+    vpermq      %1, %1, 0xD8
+    vpermq      %2, %2, 0x8D
+    vpermq      %3, %3, 0xD8
+    vpermq      %4, %4, 0x8D
+    ; transpose coefficients(phase 3)
+    ; %1=(00 10 20 30 40 50 60 70  01 11 21 31 41 51 61 71)
+    ; %2=(03 13 23 33 43 53 63 73  02 12 22 32 42 52 62 72)
+    ; %3=(04 14 24 34 44 54 64 74  05 15 25 35 45 55 65 75)
+    ; %4=(07 17 27 37 47 57 67 77  06 16 26 36 46 56 66 76)
+%endmacro
+
+; --------------------------------------------------------------------------
+; In-place 8x8x16-bit fast integer forward DCT using AVX2 instructions
+; %1-%4: Input/output registers
+; %5-%8: Temp registers
+
+%macro dodct 8
+    vpsubw      %5, %1, %4              ; %5=data0_1-data7_6=tmp7_6
+    vpaddw      %6, %1, %4              ; %6=data0_1+data7_6=tmp0_1
+    vpaddw      %7, %2, %3              ; %7=data3_2+data4_5=tmp3_2
+    vpsubw      %8, %2, %3              ; %8=data3_2-data4_5=tmp4_5
+
+    ; -- Even part
+
+    vpaddw      %1, %6, %7              ; %1=tmp0_1+tmp3_2=tmp10_11
+    vpsubw      %6, %6, %7              ; %6=tmp0_1-tmp3_2=tmp13_12
+
+    vperm2i128  %7, %1, %1, 0x01        ; %7=tmp11_10
+    vpsignw     %1, %1, [rel PW_1_NEG1]  ; %1=tmp10_neg11
+    vpaddw      %1, %7, %1              ; %1=data0_4
+
+    vperm2i128  %7, %6, %6, 0x01        ; %7=tmp12_13
+    vpaddw      %7, %7, %6              ; %7=(tmp12+13)_(tmp12+13)
+    vpsllw      %7, %7, PRE_MULTIPLY_SCALE_BITS
+    vpmulhw     %7, %7, [rel PW_F0707]  ; %7=z1_z1
+    vpsignw     %7, %7, [rel PW_1_NEG1]  ; %7=z1_negz1
+
+    vperm2i128  %6, %6, %6, 0x00        ; %6=tmp13_13
+    vpaddw      %3, %6, %7              ; %3=data2_6
+
+    ; -- Odd part
+
+    vperm2i128  %6, %8, %5, 0x30        ; %6=tmp4_6
+    vperm2i128  %7, %8, %5, 0x21        ; %7=tmp5_7
+    vpaddw      %6, %6, %7              ; %6=tmp10_12
+
+    vpsllw      %6, %6, PRE_MULTIPLY_SCALE_BITS
+
+    vperm2i128  %7, %6, %6, 0x00        ; %7=tmp10_10
+    vperm2i128  %2, %6, %6, 0x11        ; %2=tmp12_12
+    vpsubw      %7, %7, %2
+    vpmulhw     %7, %7, [rel PW_F0382]  ; %7=z5_z5
+
+    vpmulhw     %6, %6, [rel PW_F0541_F1306]  ; %6=MULTIPLY(tmp10,FIX_0_541196)_MULTIPLY(tmp12,FIX_1_306562)
+    vpaddw      %6, %6, %7              ; %6=z2_z4
+
+    vperm2i128  %7, %8, %5, 0x31        ; %7=tmp5_6
+    vperm2i128  %2, %5, %8, 0x31        ; %2=tmp6_5
+    vpaddw      %7, %7, %2              ; %7=(tmp5+6)_(tmp5+6)
+    vpsllw      %7, %7, PRE_MULTIPLY_SCALE_BITS
+    vpmulhw     %7, %7, [rel PW_F0707]  ; %7=z3_z3
+    vpsignw     %7, %7, [rel PW_NEG1_1]  ; %7=negz3_z3
+
+    vperm2i128  %2, %5, %5, 0x00        ; %2=tmp7_7
+    vpaddw      %2, %2, %7              ; %2=z13_11
+
+    vpsubw      %4, %2, %6              ; %4=z13_11-z2_4=data3_7
+    vpaddw      %2, %2, %6              ; %2=z13_11+z2_4=data5_1
+%endmacro
+
+; --------------------------------------------------------------------------
     SECTION     SEG_CONST
 
 ; PRE_MULTIPLY_SCALE_BITS <= 2 (to avoid overflow)
@@ -56,10 +157,14 @@ F_1_306 equ DESCALE(1402911301, 30-CONST_BITS)  ; FIX(1.306562965)
 
 EXTN(jconst_fdct_ifast_avx2):
 
-PW_F0707 times 8 dw F_0_707 << CONST_SHIFT
-PW_F0382 times 8 dw F_0_382 << CONST_SHIFT
-PW_F0541 times 8 dw F_0_541 << CONST_SHIFT
-PW_F1306 times 8 dw F_1_306 << CONST_SHIFT
+PW_F0707       times 16 dw  F_0_707 << CONST_SHIFT
+PW_F0382       times 16 dw  F_0_382 << CONST_SHIFT
+PW_F0541_F1306 times 8  dw  F_0_541 << CONST_SHIFT
+               times 8  dw  F_1_306 << CONST_SHIFT
+PW_1_NEG1      times 8  dw  1
+               times 8  dw -1
+PW_NEG1_1      times 8  dw -1
+               times 8  dw  1
 
     alignz      32
 
@@ -86,208 +191,49 @@ EXTN(jsimd_fdct_ifast_avx2):
 
     ; ---- Pass 1: process rows.
 
-    mov         rdx, r10                ; (DCTELEM *)
+    vmovdqu     ymm4, YMMWORD [YMMBLOCK(0,0,r10,SIZEOF_DCTELEM)]
+    vmovdqu     ymm5, YMMWORD [YMMBLOCK(2,0,r10,SIZEOF_DCTELEM)]
+    vmovdqu     ymm6, YMMWORD [YMMBLOCK(4,0,r10,SIZEOF_DCTELEM)]
+    vmovdqu     ymm7, YMMWORD [YMMBLOCK(6,0,r10,SIZEOF_DCTELEM)]
+    ; ymm4=(00 01 02 03 04 05 06 07  10 11 12 13 14 15 16 17)
+    ; ymm5=(20 21 22 23 24 25 26 27  30 31 32 33 34 35 36 37)
+    ; ymm6=(40 41 42 43 44 45 46 47  50 51 52 53 54 55 56 57)
+    ; ymm7=(60 61 62 63 64 65 66 67  70 71 72 73 74 75 76 77)
 
-    movdqa      xmm0, XMMWORD [XMMBLOCK(0,0,rdx,SIZEOF_DCTELEM)]
-    movdqa      xmm1, XMMWORD [XMMBLOCK(1,0,rdx,SIZEOF_DCTELEM)]
-    movdqa      xmm2, XMMWORD [XMMBLOCK(2,0,rdx,SIZEOF_DCTELEM)]
-    movdqa      xmm3, XMMWORD [XMMBLOCK(3,0,rdx,SIZEOF_DCTELEM)]
+    vperm2i128  ymm0, ymm4, ymm6, 0x20
+    vperm2i128  ymm1, ymm4, ymm6, 0x31
+    vperm2i128  ymm2, ymm5, ymm7, 0x20
+    vperm2i128  ymm3, ymm5, ymm7, 0x31
+    ; ymm0=(00 01 02 03 04 05 06 07  40 41 42 43 44 45 46 47)
+    ; ymm1=(10 11 12 13 14 15 16 17  50 51 52 53 54 55 56 57)
+    ; ymm2=(20 21 22 23 24 25 26 27  60 61 62 63 64 65 66 67)
+    ; ymm3=(30 31 32 33 34 35 36 37  70 71 72 73 74 75 76 77)
 
-    ; xmm0=(00 01 02 03 04 05 06 07), xmm2=(20 21 22 23 24 25 26 27)
-    ; xmm1=(10 11 12 13 14 15 16 17), xmm3=(30 31 32 33 34 35 36 37)
+    ymmtranspose ymm0, ymm1, ymm2, ymm3, ymm4, ymm5, ymm6, ymm7
 
-    vpunpckhwd  xmm4, xmm0, xmm1        ; xmm4=(04 14 05 15 06 16 07 17)
-    vpunpcklwd  xmm0, xmm0, xmm1        ; xmm0=(00 10 01 11 02 12 03 13)
-    vpunpckhwd  xmm8, xmm2, xmm3        ; xmm8=(24 34 25 35 26 36 27 37)
-    vpunpcklwd  xmm9, xmm2, xmm3        ; xmm9=(20 30 21 31 22 32 23 33)
-
-    movdqa      xmm6, XMMWORD [XMMBLOCK(4,0,rdx,SIZEOF_DCTELEM)]
-    movdqa      xmm7, XMMWORD [XMMBLOCK(5,0,rdx,SIZEOF_DCTELEM)]
-    movdqa      xmm1, XMMWORD [XMMBLOCK(6,0,rdx,SIZEOF_DCTELEM)]
-    movdqa      xmm3, XMMWORD [XMMBLOCK(7,0,rdx,SIZEOF_DCTELEM)]
-
-    ; xmm6=(40 41 42 43 44 45 46 47), xmm1=(60 61 62 63 64 65 66 67)
-    ; xmm7=(50 51 52 53 54 55 56 57), xmm3=(70 71 72 73 74 75 76 77)
-
-    vpunpckhwd  xmm2, xmm6, xmm7        ; xmm2=(44 54 45 55 46 56 47 57)
-    vpunpcklwd  xmm6, xmm6, xmm7        ; xmm6=(40 50 41 51 42 52 43 53)
-    vpunpckhwd  xmm5, xmm1, xmm3        ; xmm5=(64 74 65 75 66 76 67 77)
-    vpunpcklwd  xmm1, xmm1, xmm3        ; xmm1=(60 70 61 71 62 72 63 73)
-
-    vpunpckhdq  xmm10, xmm6, xmm1       ; xmm10=(42 52 62 72 43 53 63 73)
-    vpunpckldq  xmm6, xmm6, xmm1        ; xmm6=(40 50 60 70 41 51 61 71)
-    vpunpckhdq  xmm3, xmm2, xmm5        ; xmm3=(46 56 66 76 47 57 67 77)
-    vpunpckldq  xmm11, xmm2, xmm5       ; xmm11=(44 54 64 74 45 55 65 75)
-
-    vpunpckhdq  xmm7, xmm0, xmm9        ; xmm7=(02 12 22 32 03 13 23 33)
-    vpunpckldq  xmm0, xmm0, xmm9        ; xmm0=(00 10 20 30 01 11 21 31)
-    vpunpckhdq  xmm2, xmm4, xmm8        ; xmm2=(06 16 26 36 07 17 27 37)
-    vpunpckldq  xmm4, xmm4, xmm8        ; xmm4=(04 14 24 34 05 15 25 35)
-
-    vpunpckhqdq xmm1, xmm0, xmm6        ; xmm1=(01 11 21 31 41 51 61 71)=data1
-    vpunpcklqdq xmm0, xmm0, xmm6        ; xmm0=(00 10 20 30 40 50 60 70)=data0
-    vpunpckhqdq xmm5, xmm2, xmm3        ; xmm5=(07 17 27 37 47 57 67 77)=data7
-    vpunpcklqdq xmm2, xmm2, xmm3        ; xmm2=(06 16 26 36 46 56 66 76)=data6
-
-    vpaddw      xmm6, xmm1, xmm2        ; xmm6=data1+data6=tmp1
-    vpaddw      xmm3, xmm0, xmm5        ; xmm3=data0+data7=tmp0
-    vpsubw      xmm8, xmm1, xmm2        ; xmm8=data1-data6=tmp6
-    vpsubw      xmm9, xmm0, xmm5        ; xmm9=data0-data7=tmp7
-
-    vpunpckhqdq xmm1, xmm7, xmm10       ; xmm1=(03 13 23 33 43 53 63 73)=data3
-    vpunpcklqdq xmm7, xmm7, xmm10       ; xmm7=(02 12 22 32 42 52 62 72)=data2
-    vpunpckhqdq xmm0, xmm4, xmm11       ; xmm0=(05 15 25 35 45 55 65 75)=data5
-    vpunpcklqdq xmm4, xmm4, xmm11       ; xmm4=(04 14 24 34 44 54 64 74)=data4
-
-    vpsubw      xmm2, xmm1, xmm4        ; xmm2=data3-data4=tmp4
-    vpsubw      xmm5, xmm7, xmm0        ; xmm5=data2-data5=tmp5
-    vpaddw      xmm1, xmm1, xmm4        ; xmm1=data3+data4=tmp3
-    vpaddw      xmm7, xmm7, xmm0        ; xmm7=data2+data5=tmp2
-
-    ; -- Even part
-
-    vpaddw      xmm4, xmm3, xmm1        ; xmm4=tmp10
-    vpaddw      xmm0, xmm6, xmm7        ; xmm0=tmp11
-    vpsubw      xmm3, xmm3, xmm1        ; xmm3=tmp13
-    vpsubw      xmm6, xmm6, xmm7        ; xmm6=tmp12
-
-    vpaddw      xmm6, xmm6, xmm3
-    vpsllw      xmm6, xmm6, PRE_MULTIPLY_SCALE_BITS
-    vpmulhw     xmm6, xmm6, [rel PW_F0707]  ; xmm6=z1
-
-    vpaddw      xmm1, xmm4, xmm0        ; xmm1=data0
-    vpaddw      xmm7, xmm3, xmm6        ; xmm7=data2
-    vpsubw      xmm10, xmm4, xmm0       ; xmm10=data4
-    vpsubw      xmm11, xmm3, xmm6       ; xmm11=data6
-
-    ; -- Odd part
-
-    vpaddw      xmm2, xmm2, xmm5        ; xmm2=tmp10
-    vpaddw      xmm5, xmm5, xmm8        ; xmm5=tmp11
-    vpaddw      xmm0, xmm8, xmm9        ; xmm0=tmp12, xmm9=tmp7
-
-    vpsllw      xmm2, xmm2, PRE_MULTIPLY_SCALE_BITS
-    vpsllw      xmm0, xmm0, PRE_MULTIPLY_SCALE_BITS
-
-    vpsllw      xmm5, xmm5, PRE_MULTIPLY_SCALE_BITS
-    vpmulhw     xmm5, xmm5, [rel PW_F0707]  ; xmm5=z3
-
-    vpmulhw     xmm4, xmm2, [rel PW_F0541]  ; xmm4=MULTIPLY(tmp10,FIX_0_541196)
-    vpsubw      xmm2, xmm2, xmm0
-    vpmulhw     xmm2, xmm2, [rel PW_F0382]  ; xmm2=z5
-    vpmulhw     xmm0, xmm0, [rel PW_F1306]  ; xmm0=MULTIPLY(tmp12,FIX_1_306562)
-    vpaddw      xmm4, xmm4, xmm2        ; xmm4=z2
-    vpaddw      xmm0, xmm0, xmm2        ; xmm0=z4
-
-    vpsubw      xmm6, xmm9, xmm5        ; xmm6=z13
-    vpaddw      xmm3, xmm9, xmm5        ; xmm3=z11
-
-    vpaddw      xmm2, xmm6, xmm4        ; xmm2=data5
-    vpaddw      xmm5, xmm3, xmm0        ; xmm5=data1
-    vpsubw      xmm6, xmm6, xmm4        ; xmm6=data3
-    vpsubw      xmm3, xmm3, xmm0        ; xmm3=data7
+    dodct       ymm0, ymm1, ymm2, ymm3, ymm4, ymm5, ymm6, ymm7
+    ; ymm0=data0_4, ymm1=data5_1, ymm2=data2_6, ymm3=data3_7
 
     ; ---- Pass 2: process columns.
 
-    ; xmm1=(00 10 20 30 40 50 60 70), xmm7=(02 12 22 32 42 52 62 72)
-    ; xmm5=(01 11 21 31 41 51 61 71), xmm6=(03 13 23 33 43 53 63 73)
+    vperm2i128  ymm1, ymm1, ymm1, 0x01  ; ymm1=data1_5
 
-    vpunpckhwd  xmm4, xmm1, xmm5        ; xmm4=(40 41 50 51 60 61 70 71)
-    vpunpcklwd  xmm1, xmm1, xmm5        ; xmm1=(00 01 10 11 20 21 30 31)
-    vpunpckhwd  xmm9, xmm7, xmm6        ; xmm9=(42 43 52 53 62 63 72 73)
-    vpunpcklwd  xmm8, xmm7, xmm6        ; xmm8=(02 03 12 13 22 23 32 33)
+    ymmtranspose ymm0, ymm1, ymm2, ymm3, ymm4, ymm5, ymm6, ymm7
 
-    ; xmm5=(04 14 24 34 44 54 64 74), xmm6=(06 16 26 36 46 56 66 76)
-    ; xmm2=(05 15 25 35 45 55 65 75), xmm3=(07 17 27 37 47 57 67 77)
+    dodct       ymm0, ymm1, ymm2, ymm3, ymm4, ymm5, ymm6, ymm7
+    ; ymm0=data0_4, ymm1=data5_1, ymm2=data2_6, ymm3=data3_7
 
-    vpunpcklwd  xmm5, xmm10, xmm2       ; xmm5=(04 05 14 15 24 25 34 35)
-    vpunpckhwd  xmm7, xmm10, xmm2       ; xmm7=(44 45 54 55 64 65 74 75)
-    vpunpcklwd  xmm6, xmm11, xmm3       ; xmm6=(06 07 16 17 26 27 36 37)
-    vpunpckhwd  xmm0, xmm11, xmm3       ; xmm0=(46 47 56 57 66 67 76 77)
+    vperm2i128 ymm4, ymm0, ymm1, 0x30   ; ymm4=data0_1
+    vperm2i128 ymm5, ymm2, ymm3, 0x20   ; ymm5=data2_3
+    vperm2i128 ymm6, ymm0, ymm1, 0x21   ; ymm6=data4_5
+    vperm2i128 ymm7, ymm2, ymm3, 0x31   ; ymm7=data6_7
 
-    vpunpckhdq  xmm10, xmm5, xmm6       ; xmm10=(24 25 26 27 34 35 36 37)
-    vpunpckldq  xmm5, xmm5, xmm6        ; xmm5=(04 05 06 07 14 15 16 17)
-    vpunpckhdq  xmm3, xmm7, xmm0        ; xmm3=(64 65 66 67 74 75 76 77)
-    vpunpckldq  xmm11, xmm7, xmm0       ; xmm11=(44 45 46 47 54 55 56 57)
+    vmovdqu     YMMWORD [YMMBLOCK(0,0,r10,SIZEOF_DCTELEM)], ymm4
+    vmovdqu     YMMWORD [YMMBLOCK(2,0,r10,SIZEOF_DCTELEM)], ymm5
+    vmovdqu     YMMWORD [YMMBLOCK(4,0,r10,SIZEOF_DCTELEM)], ymm6
+    vmovdqu     YMMWORD [YMMBLOCK(6,0,r10,SIZEOF_DCTELEM)], ymm7
 
-    vpunpckhdq  xmm2, xmm1, xmm8        ; xmm2=(20 21 22 23 30 31 32 33)
-    vpunpckldq  xmm1, xmm1, xmm8        ; xmm1=(00 01 02 03 10 11 12 13)
-    vpunpckhdq  xmm7, xmm4, xmm9        ; xmm7=(60 61 62 63 70 71 72 73)
-    vpunpckldq  xmm4, xmm4, xmm9        ; xmm4=(40 41 42 43 50 51 52 53)
-
-    vpunpckhqdq xmm6, xmm1, xmm5        ; xmm6=(10 11 12 13 14 15 16 17)=data1
-    vpunpcklqdq xmm1, xmm1, xmm5        ; xmm1=(00 01 02 03 04 05 06 07)=data0
-    vpunpckhqdq xmm0, xmm7, xmm3        ; xmm0=(70 71 72 73 74 75 76 77)=data7
-    vpunpcklqdq xmm7, xmm7, xmm3        ; xmm7=(60 61 62 63 64 65 66 67)=data6
-
-    vpaddw      xmm5, xmm6, xmm7        ; xmm5=data1+data6=tmp1
-    vpaddw      xmm3, xmm1, xmm0        ; xmm3=data0+data7=tmp0
-    vpsubw      xmm8, xmm6, xmm7        ; xmm6=data1-data6=tmp6
-    vpsubw      xmm9, xmm1, xmm0        ; xmm1=data0-data7=tmp7
-
-    vpunpckhqdq xmm6, xmm2, xmm10       ; xmm6=(30 31 32 33 34 35 36 37)=data3
-    vpunpcklqdq xmm2, xmm2, xmm10       ; xmm2=(20 21 22 23 24 25 26 27)=data2
-    vpunpckhqdq xmm1, xmm4, xmm11       ; xmm1=(50 51 52 53 54 55 56 57)=data5
-    vpunpcklqdq xmm4, xmm4, xmm11       ; xmm4=(40 41 42 43 44 45 46 47)=data4
-
-    vpsubw      xmm7, xmm6, xmm4        ; xmm7=data3-data4=tmp4
-    vpsubw      xmm0, xmm2, xmm1        ; xmm0=data2-data5=tmp5
-    vpaddw      xmm6, xmm6, xmm4        ; xmm6=data3+data4=tmp3
-    vpaddw      xmm2, xmm2, xmm1        ; xmm2=data2+data5=tmp2
-
-    ; -- Even part
-
-    vpaddw      xmm4, xmm3, xmm6        ; xmm4=tmp10
-    vpaddw      xmm1, xmm5, xmm2        ; xmm1=tmp11
-    vpsubw      xmm3, xmm3, xmm6        ; xmm3=tmp13
-    vpsubw      xmm5, xmm5, xmm2        ; xmm5=tmp12
-
-    vpaddw      xmm5, xmm5, xmm3
-    vpsllw      xmm5, xmm5, PRE_MULTIPLY_SCALE_BITS
-    vpmulhw     xmm5, xmm5, [rel PW_F0707]  ; xmm5=z1
-
-    vpaddw      xmm6, xmm4, xmm1        ; xmm6=data0
-    vpaddw      xmm2, xmm3, xmm5        ; xmm2=data2
-    vpsubw      xmm4, xmm4, xmm1        ; xmm4=data4
-    vpsubw      xmm3, xmm3, xmm5        ; xmm3=data6
-
-    movdqa      XMMWORD [XMMBLOCK(4,0,rdx,SIZEOF_DCTELEM)], xmm4
-    movdqa      XMMWORD [XMMBLOCK(6,0,rdx,SIZEOF_DCTELEM)], xmm3
-    movdqa      XMMWORD [XMMBLOCK(0,0,rdx,SIZEOF_DCTELEM)], xmm6
-    movdqa      XMMWORD [XMMBLOCK(2,0,rdx,SIZEOF_DCTELEM)], xmm2
-
-    ; -- Odd part
-
-    vpaddw      xmm7, xmm7, xmm0        ; xmm7=tmp10
-    vpaddw      xmm0, xmm0, xmm8        ; xmm0=tmp11
-    vpaddw      xmm1, xmm8, xmm9        ; xmm1=tmp12, xmm5=tmp7
-
-    vpsllw      xmm7, xmm7, PRE_MULTIPLY_SCALE_BITS
-    vpsllw      xmm1, xmm1, PRE_MULTIPLY_SCALE_BITS
-
-    vpsllw      xmm0, xmm0, PRE_MULTIPLY_SCALE_BITS
-    vpmulhw     xmm0, xmm0, [rel PW_F0707]  ; xmm0=z3
-
-    vpmulhw     xmm4, xmm7, [rel PW_F0541]  ; xmm4=MULTIPLY(tmp10,FIX_0_541196)
-    vpsubw      xmm7, xmm7, xmm1
-    vpmulhw     xmm7, xmm7, [rel PW_F0382]  ; xmm7=z5
-    vpmulhw     xmm1, xmm1, [rel PW_F1306]  ; xmm1=MULTIPLY(tmp12,FIX_1_306562)
-    vpaddw      xmm4, xmm4, xmm7        ; xmm4=z2
-    vpaddw      xmm1, xmm1, xmm7        ; xmm1=z4
-
-    vpsubw      xmm5, xmm9, xmm0        ; xmm5=z13
-    vpaddw      xmm3, xmm9, xmm0        ; xmm3=z11
-
-    vpaddw      xmm6, xmm5, xmm4        ; xmm6=data5
-    vpaddw      xmm2, xmm3, xmm1        ; xmm2=data1
-    vpsubw      xmm5, xmm5, xmm4        ; xmm5=data3
-    vpsubw      xmm3, xmm3, xmm1        ; xmm3=data7
-
-    movdqa      XMMWORD [XMMBLOCK(3,0,rdx,SIZEOF_DCTELEM)], xmm5
-    movdqa      XMMWORD [XMMBLOCK(7,0,rdx,SIZEOF_DCTELEM)], xmm3
-    movdqa      XMMWORD [XMMBLOCK(5,0,rdx,SIZEOF_DCTELEM)], xmm6
-    movdqa      XMMWORD [XMMBLOCK(1,0,rdx,SIZEOF_DCTELEM)], xmm2
-
+    vzeroupper
     uncollect_args 1
     pop         rbp
     ret
