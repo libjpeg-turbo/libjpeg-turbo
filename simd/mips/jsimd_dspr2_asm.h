@@ -89,11 +89,19 @@
 #define f30  $f30
 #define f31  $f31
 
+#ifdef __ELF__
+#define HIDDEN_SYMBOL(symbol) .hidden  symbol;
+#else
+#define HIDDEN_SYMBOL(symbol)
+#endif
+
+
 /*
  * LEAF_MIPS32R2 - declare leaf routine for MIPS32r2
  */
 #define LEAF_MIPS32R2(symbol)                           \
                 .globl  symbol;                         \
+                 HIDDEN_SYMBOL(symbol)                  \
                 .align  2;                              \
                 .type   symbol, @function;              \
                 .ent    symbol, 0;                      \
