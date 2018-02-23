@@ -188,6 +188,22 @@ section .note.GNU-stack noalloc noexec nowrite progbits
 %endif
 
 ; --------------------------------------------------------------------------
+;  Hidden symbols
+;
+%ifdef ELF ; ----(nasm -felf[64] -DELF ...)------------
+%define GLOBAL_FUNCTION(name) global EXTN(name):function hidden
+%define GLOBAL_DATA(name)     global EXTN(name):data hidden
+;%elifdef MACHO ; ----(nasm -fmacho -DMACHO ...)--------
+;%define GLOBAL_FUNCTION(name) global EXTN(name):private_extern
+;%define GLOBAL_DATA(name)     global EXTN(name):private_extern
+%else
+%define GLOBAL_FUNCTION(name) global EXTN(name)
+%define GLOBAL_DATA(name)     global EXTN(name)
+%endif
+
+
+
+; --------------------------------------------------------------------------
 ;  Macros for position-independent code (PIC) support
 ;
 %ifndef GOT_SYMBOL
