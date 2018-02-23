@@ -46,6 +46,7 @@
 /* Supplementary macro for setting function attributes */
 .macro asm_function fname
 #ifdef __APPLE__
+    .private_extern _\fname
     .globl _\fname
 _\fname:
 #else
