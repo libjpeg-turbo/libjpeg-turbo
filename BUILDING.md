@@ -345,6 +345,16 @@ On Un*x systems, prior to running CMake, you can set the `CC` environment
 variable to the command used to invoke the C compiler.
 
 
+### Private SIMD symbols on Mac
+
+This requires the use of the YASM assembler.
+
+    export ASM_NASM={yasm_binary_path}/yasm
+    cd {build_directory}
+    cmake -G"Unix Makefiles" -DCMAKE_ASM_NASM_FLAGS=-DMACHO_PRIVATE_EXTERN [additional CMake flags] {source_directory}
+    make
+
+
 ### 32-bit MinGW Build on Un*x (including Mac and Cygwin)
 
 Create a file called **toolchain.cmake** under *{build_directory}*, with the
