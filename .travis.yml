@@ -60,12 +60,14 @@ before_install:
         docker pull dcommander/buildljt;
       fi &&
       git clone --depth=1 https://github.com/libjpeg-turbo/buildscripts.git -b $TRAVIS_BRANCH ~/src/buildscripts &&
-      openssl aes-256-cbc -K $encrypted_f92e8533f6f1_key -iv $encrypted_f92e8533f6f1_iv -in ci/keys.enc -out ci/keys -d &&
-      tar xf ci/keys &&
-      rm ci/keys &&
-      mv ci/gpgsign ~/src/buildscripts &&
-      gpg --import ci/sign_ljt &&
-      rm ci/sign_ljt;
+      if [ -n "$encrypted_f92e8533f6f1_key" ]; then
+        openssl aes-256-cbc -K $encrypted_f92e8533f6f1_key -iv $encrypted_f92e8533f6f1_iv -in ci/keys.enc -out ci/keys -d &&
+        tar xf ci/keys &&
+        rm ci/keys &&
+        mv ci/gpgsign ~/src/buildscripts &&
+        gpg --import ci/sign_ljt &&
+        rm ci/sign_ljt;
+      fi
     fi
 
 script:
