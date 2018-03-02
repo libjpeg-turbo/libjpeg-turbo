@@ -341,10 +341,21 @@ set(EFFECTIVE_LD_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${CMAKE_EXE_LINKER_FLAGS_${CMA
 message(STATUS "Linker flags = ${EFFECTIVE_LD_FLAGS}")
 
 include(CheckCSourceCompiles)
+include(CheckIncludeFiles)
+include(CheckTypeSize)
+
+# Check for types
+check_type_size("size_t" SIZE_T)
+check_type_size("unsigned long" UNSIGNED_LONG)
+
+# check for __builtin_ctzl
+if(SIZE_T EQUAL UNSIGNED_LONG)
+  check_c_source_compiles("int main(int argc, char* argv[]) { unsigned long a = argc; return __builtin_ctzl(a); }"
+    HAVE_JCPHUFF_BUILTIN_CTZL)
+endif()
 
 if(UNIX)
   # Check for headers
-  include(CheckIncludeFiles)
   check_include_files(locale.h HAVE_LOCALE_H)
   check_include_files(stddef.h HAVE_STDDEF_H)
   check_include_files(stdlib.h HAVE_STDLIB_H)
@@ -359,10 +370,8 @@ if(UNIX)
   endif()
 
   # Check for types
-  include(CheckTypeSize)
   check_type_size("unsigned char" UNSIGNED_CHAR)
   check_type_size("unsigned short" UNSIGNED_SHORT)
-  check_type_size("size_t" SIZE_T)
 
   # Check for compiler features
   check_c_source_compiles("int main(void) { typedef struct undefined_structure *undef_struct_ptr; }"
@@ -408,6 +417,7 @@ if(UNIX)
 endif()
 
 if(MSVC)
+  check_include_files("intrin.h" HAVE_INTRIN_H)
   set(INLINE_OPTIONS "__inline;inline")
 else()
   set(INLINE_OPTIONS "__inline__;inline")
