@@ -62,6 +62,7 @@ option(WITH_JAVA "Build Java wrapper for the TurboJPEG library" FALSE)
 option(WITH_12BIT "Encode/decode JPEG images with 12-bit samples (implies WITH_SIMD=0 WITH_TURBOJPEG=0 WITH_ARITH_ENC=0 WITH_ARITH_DEC=0)" FALSE)
 option(ENABLE_STATIC "Build static libraries" TRUE)
 option(ENABLE_SHARED "Build shared libraries" TRUE)
+option(DISABLE_GETENV "Disable usage of getenv()" FALSE)
 
 if(WITH_12BIT)
   set(WITH_SIMD FALSE)
@@ -251,6 +252,10 @@ endif()
 
 if(ENABLE_SHARED)
   add_subdirectory(sharedlib)
+endif()
+
+if(DISABLE_GETENV)
+  add_definitions(-DNO_GETENV)
 endif()
 
 if(ENABLE_STATIC OR WITH_TURBOJPEG)
