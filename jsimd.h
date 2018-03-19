@@ -104,7 +104,14 @@ EXTERN(JOCTET *) jsimd_huff_encode_one_block(void *state, JOCTET *buffer,
                                              c_derived_tbl *dctbl,
                                              c_derived_tbl *actbl);
 
-EXTERN(int) jsimd_can_encode_mcu_AC_refine_prepare (void);
+EXTERN(int) jsimd_can_encode_mcu_AC_first_prepare(void);
+
+EXTERN(void) jsimd_encode_mcu_AC_first_prepare(const JCOEF* block,
+                                               const int *jpeg_natural_order_ss,
+                                               int Sl, int Al, JCOEF* values,
+                                               size_t* zerobits);
+
+EXTERN(int) jsimd_can_encode_mcu_AC_refine_prepare(void);
 
 EXTERN(int) jsimd_encode_mcu_AC_refine_prepare(const JCOEF* block,
                                                const int *jpeg_natural_order_ss,
