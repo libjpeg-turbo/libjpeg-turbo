@@ -78,7 +78,7 @@ script:
         sudo chown -R travis:travis ~/src/ljt.nightly &&
         mv ~/src/ljt.nightly/latest/log-$TRAVIS_OS_NAME.txt ~/src/ljt.nightly/latest/files/;
       else
-        PATH=$PATH:~/src/gas-preprocessor ~/src/buildscripts/buildljt -r file://$TRAVIS_BUILD_DIR $TRAVIS_BRANCH -v &&
+        PATH=$PATH:~/src/gas-preprocessor ~/src/buildscripts/buildljt -d $TRAVIS_BUILD_DIR -v &&
         mv ~/src/ljt.nightly/latest/log-$TRAVIS_OS_NAME.txt ~/src/ljt.nightly/latest/files/;
       fi
     fi
