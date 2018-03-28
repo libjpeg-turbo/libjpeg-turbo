@@ -51,6 +51,10 @@
                                        ((uint64_t)(uint16_t)b << 32) | \
                                        ((uint64_t)(uint16_t)c << 16) | \
                                        ((uint64_t)(uint16_t)d))
+#define _uint64_set1_pi16(a)          (((uint64_t)(uint16_t)a << 48) | \
+                                       ((uint64_t)(uint16_t)a << 32) | \
+                                       ((uint64_t)(uint16_t)a << 16) | \
+                                       ((uint64_t)(uint16_t)a))
 #define _uint64_set_pi32(a, b)  (((uint64_t)(uint32_t)a << 32) | \
                                  ((uint64_t)(uint32_t)b))
 

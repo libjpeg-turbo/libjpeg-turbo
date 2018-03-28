@@ -41,7 +41,7 @@ typedef float __m32;
 
 /********** Set Operations **********/
 
-extern __inline __m64
+extern __inline __m64 FUNCTION_ATTRIBS
 _mm_setzero_si64(void)
 {
   return 0.0;

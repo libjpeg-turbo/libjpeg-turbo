@@ -909,6 +909,8 @@ EXTERN(void) jsimd_fdct_ifast_neon(DCTELEM *data);
 
 EXTERN(void) jsimd_fdct_ifast_dspr2(DCTELEM *data);
 
+EXTERN(void) jsimd_fdct_ifast_mmi(DCTELEM *data);
+
 EXTERN(void) jsimd_fdct_ifast_altivec(DCTELEM *data);
 
 /* Floating Point Forward DCT */
