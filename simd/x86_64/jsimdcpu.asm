@@ -66,6 +66,20 @@ EXTN(jpeg_simd_cpu_support):
 
     or          rdi, JSIMD_AVX2
 
+    mov         rax, 1
+    mov         rcx, 0
+    cpuid
+    and         rcx, 0x8000000
+    test        rcx, 0x8000000
+    jz          short .return           ; CPU does not support AVX-512
+    mov         rcx, 0
+    xgetbv
+    and         rax, 0xe6
+    test        rax, 0xe6
+
+    jz          short .return
+    or          rdi,  JSIMD_AVX512
+
 .return:
     mov         rax, rdi
 
