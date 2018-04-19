@@ -31,7 +31,7 @@
 
 #define IS_ALIGNED_SSE(ptr)  (IS_ALIGNED(ptr, 4))    /* 16 byte alignment */
 #define IS_ALIGNED_AVX(ptr)  (IS_ALIGNED(ptr, 5))    /* 32 byte alignment */
-#define IS_ALIGNED_AVX512(ptr)  (IS_ALIGNED(ptr, 6)) /* 32 byte alignment */
+#define IS_ALIGNED_AVX512(ptr)  (IS_ALIGNED(ptr, 6)) /* 64 byte alignment */
 
 static unsigned int simd_support = (unsigned int)(~0);
 static unsigned int simd_huffman = 1;
