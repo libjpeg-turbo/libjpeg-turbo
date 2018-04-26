@@ -70,7 +70,7 @@ double benchtime=5.0, warmup=1.0;
 char *formatName(int subsamp, int cs, char *buf)
 {
 	if(cs==TJCS_YCbCr) return (char *)subNameLong[subsamp];
-	else if(cs==TJCS_YCCK)
+	else if(cs==TJCS_YCCK || cs==TJCS_CMYK)
 	{
 		snprintf(buf, 80, "%s %s", csName[cs], subNameLong[subsamp]);
 		return buf;

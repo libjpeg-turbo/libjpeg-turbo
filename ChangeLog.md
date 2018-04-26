@@ -1,6 +1,8 @@
 1.5.4
 =====
 
+### Significant changes relative to 1.5.3:
+
 1. Fixed two signed integer overflows in the arithmetic decoder, detected by
 the Clang undefined behavior sanitizer, that could be triggered by attempting
 to decompress a specially-crafted malformed JPEG image.  These issues did not
@@ -13,6 +15,14 @@ now produces bitwise-identical results to the unmerged algorithms.
 
 3. Fixed a build error when building with older MinGW releases (regression
 caused by 1.5.1[7].)
+
+4. The TurboJPEG API can now decompress CMYK JPEG images that have subsampled M
+and Y components (not to be confused with YCCK JPEG images, in which the C/M/Y
+components have been transformed into luma and chroma.)   Previously, an error
+was generated ("Could not determine subsampling type for JPEG image") when such
+an image was passed to `tjDecompressHeader3()`, `tjTransform()`,
+`tjDecompressToYUVPlanes()`, `tjDecompressToYUV2()`, or the equivalent Java
+methods.
 
 
 1.5.3
