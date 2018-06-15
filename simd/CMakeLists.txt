@@ -1,3 +1,7 @@
+# Copyright (C) 2010 D. R. Commander
+#
+# For conditions of distribution and use, see the accompanying LICENSE.md file.
+
 macro(simd_fail message)
   if(REQUIRE_SIMD)
     message(FATAL_ERROR "${message}.")
@@ -251,7 +255,9 @@ endif()
 
 file(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/gastest.S)
 
-add_library(simd OBJECT ${CPU_TYPE}/jsimd_neon.S ${CPU_TYPE}/jsimd.c)
+set(SIMD_SOURCES arm/common/jdsample-neon.c)
+
+add_library(simd OBJECT ${SIMD_SOURCES} arm/${CPU_TYPE}/jsimd_neon.S arm/${CPU_TYPE}/jsimd.c)
 
 if(CMAKE_POSITION_INDEPENDENT_CODE OR ENABLE_SHARED)
   set_target_properties(simd PROPERTIES POSITION_INDEPENDENT_CODE 1)
