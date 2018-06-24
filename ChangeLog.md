@@ -38,6 +38,11 @@ the underlying library, and because it did not involve any out-of-bounds reads
 or other exploitable behaviors, it was not believed to represent a security
 threat.
 
+6. Fixed an issue whereby certain combinations of calls to
+`jpeg_skip_scanlines()` and `jpeg_read_scanlines()` could trigger an infinite
+loop when decompressing progressive JPEG images that use vertical chroma
+subsampling (for instance, 4:2:0 or 4:4:0.)
+
 
 1.5.3
 =====
