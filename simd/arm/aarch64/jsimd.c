@@ -408,6 +408,16 @@ jsimd_can_h2v2_upsample(void)
 GLOBAL(int)
 jsimd_can_h2v1_upsample(void)
 {
+  init_simd();
+
+  /* The code is optimised for these values only */
+  if (BITS_IN_JSAMPLE != 8)
+    return 0;
+  if (sizeof(JDIMENSION) != 4)
+    return 0;
+  if (simd_support & JSIMD_NEON)
+    return 1;
+
   return 0;
 }
 
@@ -421,6 +431,8 @@ GLOBAL(void)
 jsimd_h2v1_upsample(j_decompress_ptr cinfo, jpeg_component_info *compptr,
                     JSAMPARRAY input_data, JSAMPARRAY *output_data_ptr)
 {
+  jsimd_h2v1_upsample_neon(cinfo->max_v_samp_factor, cinfo->output_width,
+                           input_data, output_data_ptr);
 }
 
 GLOBAL(int)
