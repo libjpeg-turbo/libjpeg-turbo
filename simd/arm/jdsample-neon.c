@@ -508,3 +508,45 @@ void jsimd_h2v1_upsample_neon(int max_v_samp_factor,
     }
   }
 }
+
+
+/*
+ * The diagram below shows the operation of h2v2 (simple) upsampling. Each
+ * sample in the row is duplicated to form two output pixel channel values.
+ * This horizontally-upsampled row is then also duplicated.
+ *
+ *                                  p0    p1    p2    p3
+ *       +-----+-----+           +-----+-----+-----+-----+
+ *       |  s0 |  s1 |    ->     |  s0 |  s0 |  s1 |  s1 |
+ *       +-----+-----+           +-----+-----+-----+-----+
+ *                               |  s0 |  s0 |  s1 |  s1 |
+ *                               +-----+-----+-----+-----+
+ */
+
+void jsimd_h2v2_upsample_neon(int max_v_samp_factor,
+                              JDIMENSION output_width,
+                              JSAMPARRAY input_data,
+                              JSAMPARRAY *output_data_ptr)
+{
+  JSAMPARRAY output_data = *output_data_ptr;
+  JSAMPROW inptr, outptr0, outptr1;
+
+  for (int inrow = 0, outrow = 0; outrow < max_v_samp_factor; inrow++) {
+    inptr = input_data[inrow];
+    outptr0 = output_data[outrow++];
+    outptr1 = output_data[outrow++];
+
+    for (unsigned colctr = 0; 2 * colctr < output_width; colctr += 16) {
+      uint8x16_t samples = vld1q_u8(inptr + colctr);
+      /* Duplicate the samples - the store interleaves them to produce the */
+      /* pattern in the diagram above. */
+      uint8x16x2_t output_pixels = { samples, samples };
+      /* Store pixel values to memory for both output rows. */
+      /* Due to the way sample buffers are allocated, we don't need to worry */
+      /* about tail cases when output_width is not a multiple of 32. */
+      /* See "Creation of 2-D sample arrays" in jmemmgr.c for details. */
+      vst2q_u8(outptr0 + 2 * colctr, output_pixels);
+      vst2q_u8(outptr1 + 2 * colctr, output_pixels);
+    }
+  }
+}
