@@ -431,6 +431,35 @@ grayscale_convert (j_decompress_ptr cinfo,
                     num_rows, cinfo->output_width);
 }
 
+/*
+ * Color conversion from grayscale to YCbCr .
+ *
+ * we copy Gray Level as  Y (luminance) component
+ * we set chrominance  to 128
+ */
+
+METHODDEF(void)
+gray_ycc_convert (j_decompress_ptr cinfo,
+			   JSAMPIMAGE input_buf, JDIMENSION input_row,
+			   JSAMPARRAY output_buf, int num_rows)
+
+{
+  register JSAMPROW inptr0, outptr;
+  register JDIMENSION col;
+  JDIMENSION num_cols = cinfo->output_width;
+
+  while (--num_rows >= 0) {
+    inptr0 = input_buf[0][input_row];
+    input_row++;
+    outptr = *output_buf++;
+    for (col = 0; col < num_cols; col++) {
+      *outptr++ = inptr0[col];
+      *outptr++ = 0x80 ;
+      *outptr++ = 0x80 ;
+    }
+  }
+}
+
 
 /*
  * Convert grayscale to RGB
@@ -876,6 +905,16 @@ jinit_color_deconverter (j_decompress_ptr cinfo)
       build_ycc_rgb_table(cinfo);
     } else if (cinfo->jpeg_color_space == JCS_CMYK) {
       cconvert->pub.color_convert = null_convert;
+    } else
+      ERREXIT(cinfo, JERR_CONVERSION_NOTIMPL);
+    break;
+
+  case JCS_YCbCr:
+    cinfo->out_color_components = 3;
+    if (cinfo->out_color_space == cinfo->jpeg_color_space) {
+      cconvert->pub.color_convert = null_convert;
+    } else if (cinfo->jpeg_color_space == JCS_GRAYSCALE) {
+      cconvert->pub.color_convert = gray_ycc_convert;
     } else
       ERREXIT(cinfo, JERR_CONVERSION_NOTIMPL);
     break;
