@@ -1525,14 +1525,9 @@ asm_function jsimd_idct_2x2_neon
 /*****************************************************************************/
 
 /*
- * jsimd_ycc_extrgb_convert_neon
- * jsimd_ycc_extbgr_convert_neon
- * jsimd_ycc_extrgbx_convert_neon
- * jsimd_ycc_extbgrx_convert_neon
- * jsimd_ycc_extxbgr_convert_neon
- * jsimd_ycc_extxrgb_convert_neon
+ * jsimd_ycc_rgb565_convert_neon
  *
- * Colorspace conversion YCbCr -> RGB
+ * Colorspace conversion YCbCr -> RGB565
  */
 
 .macro do_load size
@@ -1573,73 +1568,7 @@ asm_function jsimd_idct_2x2_neon
 .endm
 
 .macro do_store bpp, size, fast_st3
-  .if \bpp == 24
-    .if \size == 8
-      .if \fast_st3 == 1
-        st3         {v10.8b, v11.8b, v12.8b}, [RGB], 24
-      .else
-        st1         {v10.b}[0], [RGB], #1
-        st1         {v11.b}[0], [RGB], #1
-        st1         {v12.b}[0], [RGB], #1
-
-        st1         {v10.b}[1], [RGB], #1
-        st1         {v11.b}[1], [RGB], #1
-        st1         {v12.b}[1], [RGB], #1
-
-        st1         {v10.b}[2], [RGB], #1
-        st1         {v11.b}[2], [RGB], #1
-        st1         {v12.b}[2], [RGB], #1
-
-        st1         {v10.b}[3], [RGB], #1
-        st1         {v11.b}[3], [RGB], #1
-        st1         {v12.b}[3], [RGB], #1
-
-        st1         {v10.b}[4], [RGB], #1
-        st1         {v11.b}[4], [RGB], #1
-        st1         {v12.b}[4], [RGB], #1
-
-        st1         {v10.b}[5], [RGB], #1
-        st1         {v11.b}[5], [RGB], #1
-        st1         {v12.b}[5], [RGB], #1
-
-        st1         {v10.b}[6], [RGB], #1
-        st1         {v11.b}[6], [RGB], #1
-        st1         {v12.b}[6], [RGB], #1
-
-        st1         {v10.b}[7], [RGB], #1
-        st1         {v11.b}[7], [RGB], #1
-        st1         {v12.b}[7], [RGB], #1
-      .endif
-    .elseif \size == 4
-      st3           {v10.b, v11.b, v12.b}[0], [RGB], 3
-      st3           {v10.b, v11.b, v12.b}[1], [RGB], 3
-      st3           {v10.b, v11.b, v12.b}[2], [RGB], 3
-      st3           {v10.b, v11.b, v12.b}[3], [RGB], 3
-    .elseif \size == 2
-      st3           {v10.b, v11.b, v12.b}[4], [RGB], 3
-      st3           {v10.b, v11.b, v12.b}[5], [RGB], 3
-    .elseif \size == 1
-      st3           {v10.b, v11.b, v12.b}[6], [RGB], 3
-    .else
-     .error unsupported macroblock size
-    .endif
-  .elseif \bpp == 32
-    .if \size == 8
-      st4           {v10.8b, v11.8b, v12.8b, v13.8b}, [RGB], 32
-    .elseif \size == 4
-      st4           {v10.b, v11.b, v12.b, v13.b}[0], [RGB], 4
-      st4           {v10.b, v11.b, v12.b, v13.b}[1], [RGB], 4
-      st4           {v10.b, v11.b, v12.b, v13.b}[2], [RGB], 4
-      st4           {v10.b, v11.b, v12.b, v13.b}[3], [RGB], 4
-    .elseif \size == 2
-      st4           {v10.b, v11.b, v12.b, v13.b}[4], [RGB], 4
-      st4           {v10.b, v11.b, v12.b, v13.b}[5], [RGB], 4
-    .elseif \size == 1
-      st4           {v10.b, v11.b, v12.b, v13.b}[6], [RGB], 4
-    .else
-      .error unsupported macroblock size
-    .endif
-  .elseif \bpp == 16
+  .if \bpp == 16
     .if \size == 8
       st1           {v25.8h}, [RGB], 16
     .elseif \size == 4
@@ -1688,17 +1617,11 @@ asm_function jsimd_idct_2x2_neon
     uaddw           v20.8h, v20.8h, v0.8b
     uaddw           v24.8h, v24.8h, v0.8b
     uaddw           v28.8h, v28.8h, v0.8b
-  .if \bpp != 16
-    sqxtun          v1\g_offs\defsize, v20.8h
-    sqxtun          v1\r_offs\defsize, v24.8h
-    sqxtun          v1\b_offs\defsize, v28.8h
-  .else
     sqshlu          v21.8h, v20.8h, #8
     sqshlu          v25.8h, v24.8h, #8
     sqshlu          v29.8h, v28.8h, #8
     sri             v25.8h, v21.8h, #5
     sri             v25.8h, v29.8h, #11
-  .endif
 .endm
 
 .macro do_yuv_to_rgb_stage2_store_load_stage1 fast_st3
@@ -1713,23 +1636,6 @@ asm_function jsimd_idct_2x2_neon
     uaddw           v20.8h, v20.8h, v0.8b
     uaddw           v24.8h, v24.8h, v0.8b
     uaddw           v28.8h, v28.8h, v0.8b
-  .if \bpp != 16  /**************** rgb24/rgb32 ******************************/
-    sqxtun          v1\g_offs\defsize, v20.8h
-    ld1             {v0.8b}, [Y], 8
-    sqxtun          v1\r_offs\defsize, v24.8h
-    prfm            pldl1keep, [U, #64]
-    prfm            pldl1keep, [V, #64]
-    prfm            pldl1keep, [Y, #64]
-    sqxtun          v1\b_offs\defsize, v28.8h
-    uaddw           v6.8h, v2.8h, v4.8b     /* v6.16b = u - 128 */
-    uaddw           v8.8h, v2.8h, v5.8b     /* q2 = v - 128 */
-    smull           v20.4s, v6.4h, v1.h[1]  /* multiply by -11277 */
-    smlal           v20.4s, v8.4h, v1.h[2]  /* multiply by -23401 */
-    smull2          v22.4s, v6.8h, v1.h[1]  /* multiply by -11277 */
-    smlal2          v22.4s, v8.8h, v1.h[2]  /* multiply by -23401 */
-    smull           v24.4s, v8.4h, v1.h[0]  /* multiply by 22971 */
-    smull2          v26.4s, v8.8h, v1.h[0]  /* multiply by 22971 */
-  .else  /**************************** rgb565 ********************************/
     sqshlu          v21.8h, v20.8h, #8
     sqshlu          v25.8h, v24.8h, #8
     sqshlu          v29.8h, v28.8h, #8
@@ -1747,7 +1653,6 @@ asm_function jsimd_idct_2x2_neon
     prfm            pldl1keep, [V, #64]
     prfm            pldl1keep, [Y, #64]
     sri             v25.8h, v29.8h, #11
-  .endif
     do_store        \bpp, 8, \fast_st3
     smull           v28.4s, v6.4h, v1.h[3]  /* multiply by 29033 */
     smull2          v30.4s, v6.8h, v1.h[3]  /* multiply by 29033 */
@@ -1881,16 +1786,7 @@ asm_function jsimd_ycc_\colorid\()_convert_neon_slowst3
 .endm
 
 /*--------------------------------- id ----- bpp R  rsize G  gsize B  bsize defsize fast_st3*/
-generate_jsimd_ycc_rgb_convert_neon extrgb,  24, 0, .4h,  1, .4h,  2, .4h,  .8b,    1
-generate_jsimd_ycc_rgb_convert_neon extbgr,  24, 2, .4h,  1, .4h,  0, .4h,  .8b,    1
-generate_jsimd_ycc_rgb_convert_neon extrgbx, 32, 0, .4h,  1, .4h,  2, .4h,  .8b,    1
-generate_jsimd_ycc_rgb_convert_neon extbgrx, 32, 2, .4h,  1, .4h,  0, .4h,  .8b,    1
-generate_jsimd_ycc_rgb_convert_neon extxbgr, 32, 3, .4h,  2, .4h,  1, .4h,  .8b,    1
-generate_jsimd_ycc_rgb_convert_neon extxrgb, 32, 1, .4h,  2, .4h,  3, .4h,  .8b,    1
 generate_jsimd_ycc_rgb_convert_neon rgb565,  16, 0, .4h,  0, .4h,  0, .4h,  .8b,    1
-
-generate_jsimd_ycc_rgb_convert_neon extrgb,  24, 0, .4h,  1, .4h,  2, .4h,  .8b,    0
-generate_jsimd_ycc_rgb_convert_neon extbgr,  24, 2, .4h,  1, .4h,  0, .4h,  .8b,    0
 
 .purgem do_load
 .purgem do_store
