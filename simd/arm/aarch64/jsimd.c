@@ -28,12 +28,8 @@
 #include <string.h>
 #include <ctype.h>
 
-#define JSIMD_FASTST3  2
-#define JSIMD_FASTTBL  4
-
 static unsigned int simd_support = ~0;
 static unsigned int simd_huffman = 1;
-static unsigned int simd_features = JSIMD_FASTST3;
 
 #if defined(__linux__) || defined(ANDROID) || defined(__ANDROID__)
 
@@ -90,7 +86,7 @@ parse_proc_cpuinfo(int bufsize)
         /* The SIMD version of Huffman encoding is slower than the C version on
            Cavium ThunderX.  Also, ld3 and st3 are abyssmally slow on that
            CPU. */
-        simd_huffman = simd_features = 0;
+        simd_huffman = 0;
     }
     fclose(fd);
   }
@@ -147,11 +143,6 @@ init_simd(void)
   env = getenv("JSIMD_NOHUFFENC");
   if ((env != NULL) && (strcmp(env, "1") == 0))
     simd_huffman = 0;
-  env = getenv("JSIMD_FASTST3");
-  if ((env != NULL) && (strcmp(env, "1") == 0))
-    simd_features |= JSIMD_FASTST3;
-  if ((env != NULL) && (strcmp(env, "0") == 0))
-    simd_features &= ~JSIMD_FASTST3;
 #endif
 }
 
@@ -314,20 +305,14 @@ jsimd_ycc_rgb_convert(j_decompress_ptr cinfo, JSAMPIMAGE input_buf,
 
   switch (cinfo->out_color_space) {
   case JCS_EXT_RGB:
-    if (simd_features & JSIMD_FASTST3)
-      neonfct = jsimd_ycc_extrgb_convert_neon;
-    else
-      neonfct = jsimd_ycc_extrgb_convert_neon_slowst3;
+    neonfct = jsimd_ycc_extrgb_convert_neon;
     break;
   case JCS_EXT_RGBX:
   case JCS_EXT_RGBA:
     neonfct = jsimd_ycc_extrgbx_convert_neon;
     break;
   case JCS_EXT_BGR:
-    if (simd_features & JSIMD_FASTST3)
-      neonfct = jsimd_ycc_extbgr_convert_neon;
-    else
-      neonfct = jsimd_ycc_extbgr_convert_neon_slowst3;
+    neonfct = jsimd_ycc_extbgr_convert_neon;
     break;
   case JCS_EXT_BGRX:
   case JCS_EXT_BGRA:
@@ -342,10 +327,7 @@ jsimd_ycc_rgb_convert(j_decompress_ptr cinfo, JSAMPIMAGE input_buf,
     neonfct = jsimd_ycc_extxrgb_convert_neon;
     break;
   default:
-    if (simd_features & JSIMD_FASTST3)
-      neonfct = jsimd_ycc_extrgb_convert_neon;
-    else
-      neonfct = jsimd_ycc_extrgb_convert_neon_slowst3;
+    neonfct = jsimd_ycc_extrgb_convert_neon;
     break;
   }
 
