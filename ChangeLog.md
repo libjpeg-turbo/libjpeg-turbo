@@ -47,6 +47,11 @@ subsampling (for instance, 4:2:0 or 4:4:0.)
 a 4:2:2 or 4:2:0 JPEG image using the merged (non-fancy) upsampling algorithms
 (that is, when setting `cinfo.do_fancy_upsampling` to `FALSE`.)
 
+8. Fixed out-of-bounds read in cjpeg that occurred when attempting to compress
+a specially-crafted malformed color-index (8-bit-per-sample) BMP file in which
+some of the samples (color indices) exceeded the bounds of the BMP file's color
+table.
+
 
 1.5.3
 =====
