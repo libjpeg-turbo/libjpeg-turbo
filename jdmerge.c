@@ -452,7 +452,7 @@ h2v2_merged_upsample (j_decompress_ptr cinfo,
 /* Declarations for ordered dithering
  *
  * We use a 4x4 ordered dither array packed into 32 bits.  This array is
- * sufficent for dithering RGB888 to RGB565.
+ * sufficient for dithering RGB888 to RGB565.
  */
 
 #define DITHER_MASK       0x3
