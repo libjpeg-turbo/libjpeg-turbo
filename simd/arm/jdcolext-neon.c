@@ -116,7 +116,7 @@ void jsimd_ycc_rgb_convert_neon(JDIMENSION output_width,
       int16x8_t g_h = vreinterpretq_s16_u16(
                 vaddw_u8(vreinterpretq_u16_s16(g_sub_y_h), vget_high_u8(y)));
 
-#ifdef RGB_ALPHA
+#if RGB_PIXELSIZE == 4
       uint8x16x4_t rgba;
       /* Convert each component to unsigned and narrow, clamping to [0-255]. */
       rgba.val[RGB_RED] = vcombine_u8(vqmovun_s16(r_l), vqmovun_s16(r_h));
@@ -126,7 +126,7 @@ void jsimd_ycc_rgb_convert_neon(JDIMENSION output_width,
       rgba.val[RGB_ALPHA] = vdupq_n_u8(0xFF);
       /* Store RGBA pixel data to memory. */
       vst4q_u8(outptr, rgba);
-#else
+#elif RGB_PIXELSIZE == 3
       uint8x16x3_t rgb;
       /* Convert each component to unsigned and narrow, clamping to [0-255]. */
       rgb.val[RGB_RED] = vcombine_u8(vqmovun_s16(r_l), vqmovun_s16(r_h));
@@ -134,7 +134,19 @@ void jsimd_ycc_rgb_convert_neon(JDIMENSION output_width,
       rgb.val[RGB_BLUE] = vcombine_u8(vqmovun_s16(b_l), vqmovun_s16(b_h));
       /* Store RGB pixel data to memory. */
       vst3q_u8(outptr, rgb);
-#endif
+#else /* RGB565 */
+      /* Pack R, G and B values in ratio 5:6:5. */
+      uint16x8_t rgb565_l = vqshluq_n_s16(r_l, 8);
+      rgb565_l = vsriq_n_u16(rgb565_l, vqshluq_n_s16(g_l, 8), 5);
+      rgb565_l = vsriq_n_u16(rgb565_l, vqshluq_n_s16(b_l, 8), 11);
+      uint16x8_t rgb565_h = vqshluq_n_s16(r_h, 8);
+      rgb565_h = vsriq_n_u16(rgb565_h, vqshluq_n_s16(g_h, 8), 5);
+      rgb565_h = vsriq_n_u16(rgb565_h, vqshluq_n_s16(b_h, 8), 11);
+      /* Store RGB pixel data to memory. */
+      vst1q_u16((uint16_t *)outptr, rgb565_l);
+      vst1q_u16(((uint16_t *)outptr) + 8, rgb565_h);
+#endif /* RGB565 */
+
       /* Increment pointers. */
       inptr0 += 16;
       inptr1 += 16;
@@ -171,7 +183,7 @@ void jsimd_ycc_rgb_convert_neon(JDIMENSION output_width,
       int16x8_t g = vreinterpretq_s16_u16(
                                 vaddw_u8(vreinterpretq_u16_s16(g_sub_y), y));
 
-#ifdef RGB_ALPHA
+#if RGB_PIXELSIZE == 4
       uint8x8x4_t rgba;
       /* Convert each component to unsigned and narrow, clamping to [0-255]. */
       rgba.val[RGB_RED] = vqmovun_s16(r);
@@ -181,7 +193,7 @@ void jsimd_ycc_rgb_convert_neon(JDIMENSION output_width,
       rgba.val[RGB_ALPHA] = vdup_n_u8(0xFF);
       /* Store RGBA pixel data to memory. */
       vst4_u8(outptr, rgba);
-#else
+#elif RGB_PIXELSIZE == 3
       uint8x8x3_t rgb;
       /* Convert each component to unsigned and narrow, clamping to [0-255]. */
       rgb.val[RGB_RED] = vqmovun_s16(r);
@@ -189,7 +201,15 @@ void jsimd_ycc_rgb_convert_neon(JDIMENSION output_width,
       rgb.val[RGB_BLUE] = vqmovun_s16(b);
       /* Store RGB pixel data to memory. */
       vst3_u8(outptr, rgb);
-#endif
+#else /* RGB565 */
+      /* Pack R, G and B values in ratio 5:6:5. */
+      uint16x8_t rgb565 = vqshluq_n_s16(r, 8);
+      rgb565 = vsriq_n_u16(rgb565, vqshluq_n_s16(g, 8), 5);
+      rgb565 = vsriq_n_u16(rgb565, vqshluq_n_s16(b, 8), 11);
+      /* Store RGB pixel data to memory. */
+      vst1q_u16((uint16_t *)outptr, rgb565);
+#endif /* RGB565 */
+
       /* Increment pointers. */
       inptr0 += 8;
       inptr1 += 8;
@@ -228,7 +248,7 @@ void jsimd_ycc_rgb_convert_neon(JDIMENSION output_width,
       int16x8_t g = vreinterpretq_s16_u16(
                                 vaddw_u8(vreinterpretq_u16_s16(g_sub_y), y));
 
-#ifdef RGB_ALPHA
+#if RGB_PIXELSIZE == 4
       uint8x8x4_t rgba;
       /* Convert each component to unsigned and narrow, clamping to [0-255]. */
       rgba.val[RGB_RED] = vqmovun_s16(r);
@@ -255,7 +275,7 @@ void jsimd_ycc_rgb_convert_neon(JDIMENSION output_width,
       default:
         break;
       }
-#else
+#elif RGB_PIXELSIZE == 3
       uint8x8x3_t rgb;
       /* Convert each component to unsigned and narrow, clamping to [0-255]. */
       rgb.val[RGB_RED] = vqmovun_s16(r);
@@ -280,7 +300,31 @@ void jsimd_ycc_rgb_convert_neon(JDIMENSION output_width,
       default:
         break;
       }
-#endif
+#else /* RGB565 */
+      /* Pack R, G and B values in ratio 5:6:5. */
+      uint16x8_t rgb565 = vqshluq_n_s16(r, 8);
+      rgb565 = vsriq_n_u16(rgb565, vqshluq_n_s16(g, 8), 5);
+      rgb565 = vsriq_n_u16(rgb565, vqshluq_n_s16(b, 8), 11);
+      /* Store RGB565 pixel data to memory. */
+      switch (cols_remaining) {
+      case 7 :
+        vst1q_lane_u16((uint16_t *)(outptr + 6 * RGB_PIXELSIZE), rgb565, 6);
+      case 6 :
+        vst1q_lane_u16((uint16_t *)(outptr + 5 * RGB_PIXELSIZE), rgb565, 5);
+      case 5 :
+        vst1q_lane_u16((uint16_t *)(outptr + 4 * RGB_PIXELSIZE), rgb565, 4);
+      case 4 :
+        vst1q_lane_u16((uint16_t *)(outptr + 3 * RGB_PIXELSIZE), rgb565, 3);
+      case 3 :
+        vst1q_lane_u16((uint16_t *)(outptr + 2 * RGB_PIXELSIZE), rgb565, 2);
+      case 2 :
+        vst1q_lane_u16((uint16_t *)(outptr + RGB_PIXELSIZE), rgb565, 1);
+      case 1 :
+        vst1q_lane_u16((uint16_t *)outptr, rgb565, 0);
+      default:
+        break;
+      }
+#endif /* RGB565 */
     }
   }
 }
