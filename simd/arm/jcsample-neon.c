@@ -121,3 +121,71 @@ void jsimd_h2v1_downsample_neon(JDIMENSION image_width,
     vst1_u8(outptr + (width_in_blocks - 1) * DCTSIZE, samples_u8);
   }
 }
+
+
+/*
+ * Downsample pixel values of a single chroma component i.e. Cb, Cr.
+ * This version handles the standard case of 2:1 horizontal and 2:1 vertical,
+ * without smoothing.
+ */
+
+void jsimd_h2v2_downsample_neon(JDIMENSION image_width,
+                                int max_v_samp_factor,
+                                JDIMENSION v_samp_factor,
+                                JDIMENSION width_in_blocks,
+                                JSAMPARRAY input_data,
+                                JSAMPARRAY output_data)
+{
+  JSAMPROW inptr0, inptr1, outptr;
+  /* Load expansion mask to pad remaining elements of last DCT block. */
+  const int mask_offset = 16 * ((width_in_blocks * 2 * DCTSIZE) - image_width);
+  const uint8x16_t expand_mask = vld1q_u8(
+                                    &jsimd_h2_downsample_consts[mask_offset]);
+  /* Load bias pattern alternating every pixel. */
+  const uint16x8_t bias = { 1, 2, 1, 2, 1, 2, 1, 2 };
+
+  for (unsigned outrow = 0; outrow < v_samp_factor; outrow++) {
+    outptr = output_data[outrow];
+    inptr0 = input_data[outrow];
+    inptr1 = input_data[outrow + 1];
+
+    /* Downsample all but the last DCT block of pixels. */
+    for (unsigned i = 0; i < width_in_blocks - 1; i++) {
+      uint8x16_t pixels_r0 = vld1q_u8(inptr0 + i * 2 * DCTSIZE);
+      uint8x16_t pixels_r1 = vld1q_u8(inptr1 + i * 2 * DCTSIZE);
+      /* Add adjacent pixel values in row 0, widen to 16-bit and add bias. */
+      uint16x8_t samples_u16 = vpadalq_u8(bias, pixels_r0);
+      /* Add adjacent pixel values in row 1, widen to 16-bit and accumulate. */
+      samples_u16 = vpadalq_u8(samples_u16, pixels_r1);
+      /* Divide total by 4 and narrow to 8-bit. */
+      uint8x8_t samples_u8 = vshrn_n_u16(samples_u16, 2);
+      /* Store samples to memory and increment pointers. */
+      vst1_u8(outptr + i * DCTSIZE, samples_u8);
+    }
+
+    /* Load pixels in last DCT block into a table. */
+    uint8x16_t pixels_r0 = vld1q_u8(
+                                inptr0 + (width_in_blocks - 1) * 2 * DCTSIZE);
+    uint8x16_t pixels_r1 = vld1q_u8(
+                                inptr1 + (width_in_blocks - 1) * 2 * DCTSIZE);
+#if defined(__aarch64__)
+    /* Pad the empty elements with the value of the last pixel. */
+    pixels_r0 = vqtbl1q_u8(pixels_r0, expand_mask);
+    pixels_r1 = vqtbl1q_u8(pixels_r1, expand_mask);
+#else
+    uint8x8x2_t table_r0 = { vget_low_u8(pixels_r0), vget_high_u8(pixels_r0) };
+    uint8x8x2_t table_r1 = { vget_low_u8(pixels_r1), vget_high_u8(pixels_r1) };
+    pixels_r0 = vcombine_u8(vtbl2_u8(table_r0, vget_low_u8(expand_mask)),
+                            vtbl2_u8(table_r0, vget_high_u8(expand_mask)));
+    pixels_r1 = vcombine_u8(vtbl2_u8(table_r1, vget_low_u8(expand_mask)),
+                            vtbl2_u8(table_r1, vget_high_u8(expand_mask)));
+#endif
+    /* Add adjacent pixel values in row 0, widen to 16-bit and add bias. */
+    uint16x8_t samples_u16 = vpadalq_u8(bias, pixels_r0);
+    /* Add adjacent pixel values in row 1, widen to 16-bit and accumulate. */
+    samples_u16 = vpadalq_u8(samples_u16, pixels_r1);
+    /* Divide total by 4, narrow to 8-bit and store. */
+    uint8x8_t samples_u8 = vshrn_n_u16(samples_u16, 2);
+    vst1_u8(outptr + (width_in_blocks - 1) * DCTSIZE, samples_u8);
+  }
+}
