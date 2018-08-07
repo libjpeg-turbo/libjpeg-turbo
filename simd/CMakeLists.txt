@@ -265,10 +265,14 @@ endif()
 
 file(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/gastest.S)
 
+set(SIMD_SOURCES arm/jccolor-neon.c)
+
 if (CPU_TYPE STREQUAL "arm")
-  add_library(simd OBJECT arm/aarch32/jsimd_neon.S arm/aarch32/jsimd.c)
+  add_library(simd OBJECT ${SIMD_SOURCES} arm/aarch32/jsimd_neon.S
+                                          arm/aarch32/jsimd.c)
 else()
-  add_library(simd OBJECT arm/aarch64/jsimd_neon.S arm/aarch64/jsimd.c)
+  add_library(simd OBJECT ${SIMD_SOURCES} arm/aarch64/jsimd_neon.S
+                                          arm/aarch64/jsimd.c)
 endif()
 
 if(CMAKE_POSITION_INDEPENDENT_CODE OR ENABLE_SHARED)
