@@ -55,12 +55,14 @@ ALIGN(16) static const int16_t jsimd_ycc_rgb_convert_neon_consts[] = {
 #define RGB_BLUE  EXT_RGB_BLUE
 #define RGB_PIXELSIZE  EXT_RGB_PIXELSIZE
 #define jsimd_h2v1_merged_upsample_neon  jsimd_h2v1_extrgb_merged_upsample_neon
+#define jsimd_h2v2_merged_upsample_neon  jsimd_h2v2_extrgb_merged_upsample_neon
 #include "jdmrgext-neon.c"
 #undef RGB_RED
 #undef RGB_GREEN
 #undef RGB_BLUE
 #undef RGB_PIXELSIZE
 #undef jsimd_h2v1_merged_upsample_neon
+#undef jsimd_h2v2_merged_upsample_neon
 
 #define RGB_RED  EXT_RGBX_RED
 #define RGB_GREEN  EXT_RGBX_GREEN
@@ -68,6 +70,7 @@ ALIGN(16) static const int16_t jsimd_ycc_rgb_convert_neon_consts[] = {
 #define RGB_ALPHA  3
 #define RGB_PIXELSIZE  EXT_RGBX_PIXELSIZE
 #define jsimd_h2v1_merged_upsample_neon  jsimd_h2v1_extrgbx_merged_upsample_neon
+#define jsimd_h2v2_merged_upsample_neon  jsimd_h2v2_extrgbx_merged_upsample_neon
 #include "jdmrgext-neon.c"
 #undef RGB_RED
 #undef RGB_GREEN
@@ -75,18 +78,21 @@ ALIGN(16) static const int16_t jsimd_ycc_rgb_convert_neon_consts[] = {
 #undef RGB_ALPHA
 #undef RGB_PIXELSIZE
 #undef jsimd_h2v1_merged_upsample_neon
+#undef jsimd_h2v2_merged_upsample_neon
 
 #define RGB_RED  EXT_BGR_RED
 #define RGB_GREEN  EXT_BGR_GREEN
 #define RGB_BLUE  EXT_BGR_BLUE
 #define RGB_PIXELSIZE  EXT_BGR_PIXELSIZE
 #define jsimd_h2v1_merged_upsample_neon  jsimd_h2v1_extbgr_merged_upsample_neon
+#define jsimd_h2v2_merged_upsample_neon  jsimd_h2v2_extbgr_merged_upsample_neon
 #include "jdmrgext-neon.c"
 #undef RGB_RED
 #undef RGB_GREEN
 #undef RGB_BLUE
 #undef RGB_PIXELSIZE
 #undef jsimd_h2v1_merged_upsample_neon
+#undef jsimd_h2v2_merged_upsample_neon
 
 #define RGB_RED  EXT_BGRX_RED
 #define RGB_GREEN  EXT_BGRX_GREEN
@@ -94,6 +100,7 @@ ALIGN(16) static const int16_t jsimd_ycc_rgb_convert_neon_consts[] = {
 #define RGB_ALPHA  3
 #define RGB_PIXELSIZE  EXT_BGRX_PIXELSIZE
 #define jsimd_h2v1_merged_upsample_neon  jsimd_h2v1_extbgrx_merged_upsample_neon
+#define jsimd_h2v2_merged_upsample_neon  jsimd_h2v2_extbgrx_merged_upsample_neon
 #include "jdmrgext-neon.c"
 #undef RGB_RED
 #undef RGB_GREEN
@@ -101,6 +108,7 @@ ALIGN(16) static const int16_t jsimd_ycc_rgb_convert_neon_consts[] = {
 #undef RGB_ALPHA
 #undef RGB_PIXELSIZE
 #undef jsimd_h2v1_merged_upsample_neon
+#undef jsimd_h2v2_merged_upsample_neon
 
 #define RGB_RED  EXT_XBGR_RED
 #define RGB_GREEN  EXT_XBGR_GREEN
@@ -108,6 +116,7 @@ ALIGN(16) static const int16_t jsimd_ycc_rgb_convert_neon_consts[] = {
 #define RGB_ALPHA  0
 #define RGB_PIXELSIZE  EXT_XBGR_PIXELSIZE
 #define jsimd_h2v1_merged_upsample_neon  jsimd_h2v1_extxbgr_merged_upsample_neon
+#define jsimd_h2v2_merged_upsample_neon  jsimd_h2v2_extxbgr_merged_upsample_neon
 #include "jdmrgext-neon.c"
 #undef RGB_RED
 #undef RGB_GREEN
@@ -115,6 +124,7 @@ ALIGN(16) static const int16_t jsimd_ycc_rgb_convert_neon_consts[] = {
 #undef RGB_ALPHA
 #undef RGB_PIXELSIZE
 #undef jsimd_h2v1_merged_upsample_neon
+#undef jsimd_h2v2_merged_upsample_neon
 
 #define RGB_RED  EXT_XRGB_RED
 #define RGB_GREEN  EXT_XRGB_GREEN
@@ -122,6 +132,7 @@ ALIGN(16) static const int16_t jsimd_ycc_rgb_convert_neon_consts[] = {
 #define RGB_ALPHA  0
 #define RGB_PIXELSIZE  EXT_XRGB_PIXELSIZE
 #define jsimd_h2v1_merged_upsample_neon  jsimd_h2v1_extxrgb_merged_upsample_neon
+#define jsimd_h2v2_merged_upsample_neon  jsimd_h2v2_extxrgb_merged_upsample_neon
 #include "jdmrgext-neon.c"
 #undef RGB_RED
 #undef RGB_GREEN
