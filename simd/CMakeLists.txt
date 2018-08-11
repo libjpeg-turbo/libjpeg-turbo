@@ -273,7 +273,7 @@ message(STATUS "CMAKE_ASM_FLAGS = ${EFFECTIVE_ASM_FLAGS}")
 set(CMAKE_REQUIRED_FLAGS -mdspr2)
 
 check_c_source_compiles("
-  #if !(defined(__mips__) && __mips_isa_rev >= 2)
+  #if !(defined(__mips__) && __mips_isa_rev >= 2) && !(defined(__mips_soft_float))
   #error MIPS DSPr2 is currently only available on MIPS32r2 platforms.
   #endif
   int main(void) {
