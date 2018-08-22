@@ -564,6 +564,17 @@ jsimd_convsamp_float(JSAMPARRAY sample_data, JDIMENSION start_col,
 GLOBAL(int)
 jsimd_can_fdct_islow(void)
 {
+  init_simd();
+
+  /* The code is optimised for these values only */
+  if (DCTSIZE != 8)
+    return 0;
+  if (sizeof(DCTELEM) != 2)
+    return 0;
+
+  if (simd_support & JSIMD_NEON)
+    return 1;
+
   return 0;
 }
 
@@ -593,6 +604,7 @@ jsimd_can_fdct_float(void)
 GLOBAL(void)
 jsimd_fdct_islow(DCTELEM *data)
 {
+  jsimd_fdct_islow_neon(data);
 }
 
 GLOBAL(void)
