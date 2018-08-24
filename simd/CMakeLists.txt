@@ -265,7 +265,8 @@ endif()
 
 file(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/gastest.S)
 
-set(SIMD_SOURCES arm/jccolor-neon.c arm/jcgray-neon.c arm/jcsample-neon.c)
+set(SIMD_SOURCES arm/jccolor-neon.c arm/jcgray-neon.c arm/jcsample-neon.c
+  arm/jquanti-neon.c)
 
 if (CPU_TYPE STREQUAL "arm")
   add_library(simd OBJECT ${SIMD_SOURCES} arm/aarch32/jsimd_neon.S

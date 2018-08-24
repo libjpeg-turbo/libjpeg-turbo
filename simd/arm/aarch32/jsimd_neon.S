@@ -1610,69 +1610,6 @@ generate_jsimd_ycc_rgb_convert_neon rgb565,  16, 0, 0, 0
 /*****************************************************************************/
 
 /*
- * Load data into workspace, applying unsigned->signed conversion
- *
- * TODO: can be combined with 'jsimd_fdct_ifast_neon' to get
- *       rid of VST1.16 instructions
- */
-
-asm_function jsimd_convsamp_neon
-    SAMPLE_DATA     .req r0
-    START_COL       .req r1
-    WORKSPACE       .req r2
-    TMP1            .req r3
-    TMP2            .req r4
-    TMP3            .req r5
-    TMP4            .req ip
-
-    push            {r4, r5}
-    vmov.u8         d0, #128
-
-    ldmia           SAMPLE_DATA!, {TMP1, TMP2, TMP3, TMP4}
-    add             TMP1, TMP1, START_COL
-    add             TMP2, TMP2, START_COL
-    add             TMP3, TMP3, START_COL
-    add             TMP4, TMP4, START_COL
-    vld1.8          {d16}, [TMP1]
-    vsubl.u8        q8, d16, d0
-    vld1.8          {d18}, [TMP2]
-    vsubl.u8        q9, d18, d0
-    vld1.8          {d20}, [TMP3]
-    vsubl.u8        q10, d20, d0
-    vld1.8          {d22}, [TMP4]
-    ldmia           SAMPLE_DATA!, {TMP1, TMP2, TMP3, TMP4}
-    vsubl.u8        q11, d22, d0
-    vst1.16         {d16, d17, d18, d19}, [WORKSPACE, :128]!
-    add             TMP1, TMP1, START_COL
-    add             TMP2, TMP2, START_COL
-    vst1.16         {d20, d21, d22, d23}, [WORKSPACE, :128]!
-    add             TMP3, TMP3, START_COL
-    add             TMP4, TMP4, START_COL
-    vld1.8          {d24}, [TMP1]
-    vsubl.u8        q12, d24, d0
-    vld1.8          {d26}, [TMP2]
-    vsubl.u8        q13, d26, d0
-    vld1.8          {d28}, [TMP3]
-    vsubl.u8        q14, d28, d0
-    vld1.8          {d30}, [TMP4]
-    vsubl.u8        q15, d30, d0
-    vst1.16         {d24, d25, d26, d27}, [WORKSPACE, :128]!
-    vst1.16         {d28, d29, d30, d31}, [WORKSPACE, :128]!
-    pop             {r4, r5}
-    bx              lr
-
-    .unreq          SAMPLE_DATA
-    .unreq          START_COL
-    .unreq          WORKSPACE
-    .unreq          TMP1
-    .unreq          TMP2
-    .unreq          TMP3
-    .unreq          TMP4
-
-
-/*****************************************************************************/
-
-/*
  * jsimd_fdct_ifast_neon
  *
  * This function contains a fast, not so accurate integer implementation of
