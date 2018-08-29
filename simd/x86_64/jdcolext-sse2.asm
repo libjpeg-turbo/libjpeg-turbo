@@ -59,9 +59,9 @@ EXTN(jsimd_ycc_rgb_convert_sse2):
 
     mov         rdi, r11
     mov         ecx, r12d
-    mov         rsi, JSAMPARRAY [rdi+0*SIZEOF_JSAMPARRAY]
-    mov         rbx, JSAMPARRAY [rdi+1*SIZEOF_JSAMPARRAY]
-    mov         rdx, JSAMPARRAY [rdi+2*SIZEOF_JSAMPARRAY]
+    mov         rsip, JSAMPARRAY [rdi+0*SIZEOF_JSAMPARRAY]
+    mov         rbxp, JSAMPARRAY [rdi+1*SIZEOF_JSAMPARRAY]
+    mov         rdxp, JSAMPARRAY [rdi+2*SIZEOF_JSAMPARRAY]
     lea         rsi, [rsi+rcx*SIZEOF_JSAMPROW]
     lea         rbx, [rbx+rcx*SIZEOF_JSAMPROW]
     lea         rdx, [rdx+rcx*SIZEOF_JSAMPROW]
@@ -80,10 +80,10 @@ EXTN(jsimd_ycc_rgb_convert_sse2):
     push        rsi
     push        rcx                     ; col
 
-    mov         rsi, JSAMPROW [rsi]     ; inptr0
-    mov         rbx, JSAMPROW [rbx]     ; inptr1
-    mov         rdx, JSAMPROW [rdx]     ; inptr2
-    mov         rdi, JSAMPROW [rdi]     ; outptr
+    mov         rsip, JSAMPROW [rsi]     ; inptr0
+    mov         rbxp, JSAMPROW [rbx]     ; inptr1
+    mov         rdxp, JSAMPROW [rdx]     ; inptr2
+    mov         rdip, JSAMPROW [rdi]     ; outptr
 .columnloop:
 
     movdqa      xmm5, XMMWORD [rbx]     ; xmm5=Cb(0123456789ABCDEF)

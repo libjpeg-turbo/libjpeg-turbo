@@ -58,7 +58,7 @@ EXTN(jsimd_rgb_gray_convert_sse2):
 
     mov         rsi, r12
     mov         ecx, r13d
-    mov         rdi, JSAMPARRAY [rsi+0*SIZEOF_JSAMPARRAY]
+    mov         rdip, JSAMPARRAY [rsi+0*SIZEOF_JSAMPARRAY]
     lea         rdi, [rdi+rcx*SIZEOF_JSAMPROW]
 
     pop         rcx
@@ -72,8 +72,8 @@ EXTN(jsimd_rgb_gray_convert_sse2):
     push        rsi
     push        rcx                     ; col
 
-    mov         rsi, JSAMPROW [rsi]     ; inptr
-    mov         rdi, JSAMPROW [rdi]     ; outptr0
+    mov         rsip, JSAMPROW [rsi]     ; inptr
+    mov         rdip, JSAMPROW [rdi]     ; outptr0
 
     cmp         rcx, byte SIZEOF_XMMWORD
     jae         near .columnloop

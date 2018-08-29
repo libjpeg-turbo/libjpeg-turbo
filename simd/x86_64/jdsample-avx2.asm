@@ -78,7 +78,7 @@ EXTN(jsimd_h2v1_fancy_upsample_avx2):
 
     mov         rsi, r12                ; input_data
     mov         rdi, r13
-    mov         rdi, JSAMPARRAY [rdi]   ; output_data
+    mov         rdip, JSAMPARRAY [rdi]  ; output_data
 
     vpxor       ymm0, ymm0, ymm0                 ; ymm0=(all 0's)
     vpcmpeqb    xmm9, xmm9, xmm9
@@ -92,8 +92,8 @@ EXTN(jsimd_h2v1_fancy_upsample_avx2):
     push        rdi
     push        rsi
 
-    mov         rsi, JSAMPROW [rsi]     ; inptr
-    mov         rdi, JSAMPROW [rdi]     ; outptr
+    mov         rsip, JSAMPROW [rsi]    ; inptr
+    mov         rdip, JSAMPROW [rdi]    ; outptr
 
     test        rax, SIZEOF_YMMWORD-1
     jz          short .skip
@@ -237,18 +237,18 @@ EXTN(jsimd_h2v2_fancy_upsample_avx2):
 
     mov         rsi, r12                ; input_data
     mov         rdi, r13
-    mov         rdi, JSAMPARRAY [rdi]   ; output_data
+    mov         rdip, JSAMPARRAY [rdi]  ; output_data
 .rowloop:
     push        rax                     ; colctr
     push        rcx
     push        rdi
     push        rsi
 
-    mov         rcx, JSAMPROW [rsi-1*SIZEOF_JSAMPROW]  ; inptr1(above)
-    mov         rbx, JSAMPROW [rsi+0*SIZEOF_JSAMPROW]  ; inptr0
-    mov         rsi, JSAMPROW [rsi+1*SIZEOF_JSAMPROW]  ; inptr1(below)
-    mov         rdx, JSAMPROW [rdi+0*SIZEOF_JSAMPROW]  ; outptr0
-    mov         rdi, JSAMPROW [rdi+1*SIZEOF_JSAMPROW]  ; outptr1
+    mov         rcxp, JSAMPROW [rsi-1*SIZEOF_JSAMPROW]  ; inptr1(above)
+    mov         rbxp, JSAMPROW [rsi+0*SIZEOF_JSAMPROW]  ; inptr0
+    mov         rsip, JSAMPROW [rsi+1*SIZEOF_JSAMPROW]  ; inptr1(below)
+    mov         rdxp, JSAMPROW [rdi+0*SIZEOF_JSAMPROW]  ; outptr0
+    mov         rdip, JSAMPROW [rdi+1*SIZEOF_JSAMPROW]  ; outptr1
 
     vpxor       ymm8, ymm8, ymm8                 ; ymm8=(all 0's)
     vpcmpeqb    xmm9, xmm9, xmm9
@@ -541,13 +541,13 @@ EXTN(jsimd_h2v1_upsample_avx2):
 
     mov         rsi, r12                ; input_data
     mov         rdi, r13
-    mov         rdi, JSAMPARRAY [rdi]   ; output_data
+    mov         rdip, JSAMPARRAY [rdi]  ; output_data
 .rowloop:
     push        rdi
     push        rsi
 
-    mov         rsi, JSAMPROW [rsi]     ; inptr
-    mov         rdi, JSAMPROW [rdi]     ; outptr
+    mov         rsip, JSAMPROW [rsi]    ; inptr
+    mov         rdip, JSAMPROW [rdi]    ; outptr
     mov         rax, rdx                ; colctr
 .columnloop:
 
@@ -631,14 +631,14 @@ EXTN(jsimd_h2v2_upsample_avx2):
 
     mov         rsi, r12                ; input_data
     mov         rdi, r13
-    mov         rdi, JSAMPARRAY [rdi]   ; output_data
+    mov         rdip, JSAMPARRAY [rdi]  ; output_data
 .rowloop:
     push        rdi
     push        rsi
 
-    mov         rsi, JSAMPROW [rsi]                    ; inptr
-    mov         rbx, JSAMPROW [rdi+0*SIZEOF_JSAMPROW]  ; outptr0
-    mov         rdi, JSAMPROW [rdi+1*SIZEOF_JSAMPROW]  ; outptr1
+    mov         rsip, JSAMPROW [rsi]                   ; inptr
+    mov         rbxp, JSAMPROW [rdi+0*SIZEOF_JSAMPROW] ; outptr0
+    mov         rdip, JSAMPROW [rdi+1*SIZEOF_JSAMPROW] ; outptr1
     mov         rax, rdx                               ; colctr
 .columnloop:
 
