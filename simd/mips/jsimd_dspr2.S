@@ -2810,6 +2810,7 @@ LEAF_DSPR2(jsimd_quantize_dspr2)
 END(jsimd_quantize_dspr2)
 
 
+#ifndef __mips_soft_float
 /*****************************************************************************/
 LEAF_DSPR2(jsimd_quantize_float_dspr2)
 /*
@@ -2889,6 +2890,7 @@ LEAF_DSPR2(jsimd_quantize_float_dspr2)
      nop
 
 END(jsimd_quantize_float_dspr2)
+#endif
 
 
 /*****************************************************************************/
@@ -4110,6 +4112,7 @@ LEAF_DSPR2(jsimd_convsamp_dspr2)
 END(jsimd_convsamp_dspr2)
 
 
+#ifndef __mips_soft_float
 /*****************************************************************************/
 LEAF_DSPR2(jsimd_convsamp_float_dspr2)
 /*
@@ -4467,5 +4470,6 @@ LEAF_DSPR2(jsimd_convsamp_float_dspr2)
      nop
 
 END(jsimd_convsamp_float_dspr2)
+#endif
 
 /*****************************************************************************/

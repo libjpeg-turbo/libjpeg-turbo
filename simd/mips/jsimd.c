@@ -678,6 +678,9 @@ jsimd_can_convsamp(void)
 GLOBAL(int)
 jsimd_can_convsamp_float(void)
 {
+#ifdef __mips_soft_float
+  return 0;
+#endif
   init_simd();
 
   /* The code is optimised for these values only */
@@ -709,7 +712,9 @@ GLOBAL(void)
 jsimd_convsamp_float(JSAMPARRAY sample_data, JDIMENSION start_col,
                      FAST_FLOAT *workspace)
 {
+#ifndef __mips_soft_float
   jsimd_convsamp_float_dspr2(sample_data, start_col, workspace);
+#endif
 }
 
 GLOBAL(int)
@@ -791,6 +796,9 @@ jsimd_can_quantize(void)
 GLOBAL(int)
 jsimd_can_quantize_float(void)
 {
+#ifdef __mips_soft_float
+  return 0;
+#endif
   init_simd();
 
   /* The code is optimised for these values only */
@@ -821,7 +829,9 @@ GLOBAL(void)
 jsimd_quantize_float(JCOEFPTR coef_block, FAST_FLOAT *divisors,
                      FAST_FLOAT *workspace)
 {
+#ifndef __mips_soft_float
   jsimd_quantize_float_dspr2(coef_block, divisors, workspace);
+#endif
 }
 
 GLOBAL(int)
