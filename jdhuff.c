@@ -423,7 +423,7 @@ no_more_bytes:
   } \
 }
 
-#if SIZEOF_SIZE_T == 8 || defined(_WIN64)
+#if SIZEOF_SIZE_T == 8 || defined(_WIN64) || (defined(__x86_64) && defined(__ILP32__))
 
 /* Pre-fetch 48 bytes, because the holding register is 64-bit */
 #define FILL_BIT_BUFFER_FAST \

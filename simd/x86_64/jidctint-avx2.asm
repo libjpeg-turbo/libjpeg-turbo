@@ -389,23 +389,23 @@ EXTN(jsimd_idct_islow_avx2):
 
     mov         eax, r13d
 
-    mov         rdx, JSAMPROW [r12+0*SIZEOF_JSAMPROW]  ; (JSAMPLE *)
-    mov         rsi, JSAMPROW [r12+1*SIZEOF_JSAMPROW]  ; (JSAMPLE *)
+    mov         rdxp, JSAMPROW [r12+0*SIZEOF_JSAMPROW]  ; (JSAMPLE *)
+    mov         rsip, JSAMPROW [r12+1*SIZEOF_JSAMPROW]  ; (JSAMPLE *)
     movq        XMM_MMWORD [rdx+rax*SIZEOF_JSAMPLE], xmm0
     movq        XMM_MMWORD [rsi+rax*SIZEOF_JSAMPLE], xmm1
 
-    mov         rdx, JSAMPROW [r12+2*SIZEOF_JSAMPROW]  ; (JSAMPLE *)
-    mov         rsi, JSAMPROW [r12+3*SIZEOF_JSAMPROW]  ; (JSAMPLE *)
+    mov         rdxp, JSAMPROW [r12+2*SIZEOF_JSAMPROW]  ; (JSAMPLE *)
+    mov         rsip, JSAMPROW [r12+3*SIZEOF_JSAMPROW]  ; (JSAMPLE *)
     movq        XMM_MMWORD [rdx+rax*SIZEOF_JSAMPLE], xmm2
     movq        XMM_MMWORD [rsi+rax*SIZEOF_JSAMPLE], xmm3
 
-    mov         rdx, JSAMPROW [r12+4*SIZEOF_JSAMPROW]  ; (JSAMPLE *)
-    mov         rsi, JSAMPROW [r12+5*SIZEOF_JSAMPROW]  ; (JSAMPLE *)
+    mov         rdxp, JSAMPROW [r12+4*SIZEOF_JSAMPROW]  ; (JSAMPLE *)
+    mov         rsip, JSAMPROW [r12+5*SIZEOF_JSAMPROW]  ; (JSAMPLE *)
     movq        XMM_MMWORD [rdx+rax*SIZEOF_JSAMPLE], xmm4
     movq        XMM_MMWORD [rsi+rax*SIZEOF_JSAMPLE], xmm5
 
-    mov         rdx, JSAMPROW [r12+6*SIZEOF_JSAMPROW]  ; (JSAMPLE *)
-    mov         rsi, JSAMPROW [r12+7*SIZEOF_JSAMPROW]  ; (JSAMPLE *)
+    mov         rdxp, JSAMPROW [r12+6*SIZEOF_JSAMPROW]  ; (JSAMPLE *)
+    mov         rsip, JSAMPROW [r12+7*SIZEOF_JSAMPROW]  ; (JSAMPLE *)
     movq        XMM_MMWORD [rdx+rax*SIZEOF_JSAMPLE], xmm6
     movq        XMM_MMWORD [rsi+rax*SIZEOF_JSAMPLE], xmm7
 

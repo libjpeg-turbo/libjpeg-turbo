@@ -73,7 +73,7 @@ EXTN(jsimd_h2v1_downsample_avx2):
     push        rax
     push        rcx
 
-    mov         rdi, JSAMPROW [rsi]
+    mov         rdip, JSAMPROW [rsi]
     add         rdi, rdx
     mov         al, JSAMPLE [rdi-1]
 
@@ -109,8 +109,8 @@ EXTN(jsimd_h2v1_downsample_avx2):
     push        rdi
     push        rsi
 
-    mov         rsi, JSAMPROW [rsi]     ; inptr
-    mov         rdi, JSAMPROW [rdi]     ; outptr
+    mov         rsip, JSAMPROW [rsi]    ; inptr
+    mov         rdip, JSAMPROW [rdi]    ; outptr
 
     cmp         rcx, byte SIZEOF_YMMWORD
     jae         short .columnloop
@@ -235,7 +235,7 @@ EXTN(jsimd_h2v2_downsample_avx2):
     push        rax
     push        rcx
 
-    mov         rdi, JSAMPROW [rsi]
+    mov         rdip, JSAMPROW [rsi]
     add         rdi, rdx
     mov         al, JSAMPLE [rdi-1]
 
@@ -271,9 +271,9 @@ EXTN(jsimd_h2v2_downsample_avx2):
     push        rdi
     push        rsi
 
-    mov         rdx, JSAMPROW [rsi+0*SIZEOF_JSAMPROW]  ; inptr0
-    mov         rsi, JSAMPROW [rsi+1*SIZEOF_JSAMPROW]  ; inptr1
-    mov         rdi, JSAMPROW [rdi]                    ; outptr
+    mov         rdxp, JSAMPROW [rsi+0*SIZEOF_JSAMPROW]  ; inptr0
+    mov         rsip, JSAMPROW [rsi+1*SIZEOF_JSAMPROW]  ; inptr1
+    mov         rdip, JSAMPROW [rdi]                    ; outptr
 
     cmp         rcx, byte SIZEOF_YMMWORD
     jae         short .columnloop

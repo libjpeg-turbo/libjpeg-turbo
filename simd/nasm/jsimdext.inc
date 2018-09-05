@@ -126,19 +126,59 @@ section .note.GNU-stack noalloc noexec nowrite progbits
 
 %endif          ; ----------------------------------------------
 
+; x86_64 ILP32 ABI (x32)
+%ifidn __OUTPUT_FORMAT__,elfx32
+%define ABI_X32 1
+%endif
+
 ; ==========================================================================
 
 ; --------------------------------------------------------------------------
 ;  Common types
 ;
 %ifdef __x86_64__
+%ifndef ABI_X32
 %define POINTER         qword           ; general pointer type
 %define SIZEOF_POINTER  SIZEOF_QWORD    ; sizeof(POINTER)
 %define POINTER_BIT     QWORD_BIT       ; sizeof(POINTER)*BYTE_BIT
-%else
+%define raxp            rax
+%define rbxp            rbx
+%define rcxp            rcx
+%define rdxp            rdx
+%define rsip            rsi
+%define rdip            rdi
+%define rbpp            rbp
+%define rspp            rsp
+%define r8p             r8
+%define r9p             r9
+%define r10p            r10
+%define r11p            r11
+%define r12p            r12
+%define r13p            r13
+%define r14p            r14
+%define r15p            r15
+%endif
+%endif
+%ifndef raxp
 %define POINTER         dword           ; general pointer type
 %define SIZEOF_POINTER  SIZEOF_DWORD    ; sizeof(POINTER)
 %define POINTER_BIT     DWORD_BIT       ; sizeof(POINTER)*BYTE_BIT
+%define raxp            eax
+%define rbxp            ebx
+%define rcxp            ecx
+%define rdxp            edx
+%define rsip            esi
+%define rdip            edi
+%define rbpp            ebp
+%define rspp            esp
+%define r8p             r8d
+%define r9p             r9d
+%define r10p            r10d
+%define r11p            r11d
+%define r12p            r12d
+%define r13p            r13d
+%define r14p            r14d
+%define r15p            r15d
 %endif
 
 %define INT             dword           ; signed integer type
