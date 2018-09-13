@@ -41,7 +41,7 @@ typedef float __m32;
 
 /********** Set Operations **********/
 
-extern __inline __m64
+extern __inline __m64 FUNCTION_ATTRIBS
 _mm_setzero_si64(void)
 {
   return 0.0;
@@ -1216,12 +1216,20 @@ _mm_store_pi32(__m32 *dest, __m64 src)
 extern __inline void FUNCTION_ATTRIBS
 _mm_store_si64(__m64 *dest, __m64 src)
 {
-  asm("gssdlc1 %1, 7+%0\n\t"
-      "gssdrc1 %1, %0\n\t"
-      : "=m" (*dest)
-      : "f" (src)
-      : "memory"
-     );
+  if (!(((long)dest) & 7)) {
+    asm("sdc1 %1, %0 \n\t"
+        : "=m" (*dest)
+        : "f" (src)
+        : "memory"
+       );
+  } else {
+    asm("gssdlc1 %1, 7(%0) \n\t"
+        "gssdrc1 %1, 0(%0) \n\t"
+        :
+        : "r" (dest), "f" (src)
+        : "memory"
+       );
+  }
 }
 
 extern __inline __m64 FUNCTION_ATTRIBS
@@ -1245,6 +1253,22 @@ _mm_load_si64(const __m64 *src)
   asm("ldc1 %0, %1\n\t"
       : "=f" (ret)
       : "m" (*src)
+      : "memory"
+     );
+
+  return ret;
+}
+
+extern __inline __m64 FUNCTION_ATTRIBS
+_mm_loadgs_si64(const __m64 *src)
+{
+  __m64 ret;
+
+  asm("gsldlc1 %0,  7(%1)\n\t"
+      "gsldrc1 %0,  0(%1)\n\t"
+      : "=f" (ret)
+      : "r" (src)
+      : "memory"
      );
 
   return ret;
