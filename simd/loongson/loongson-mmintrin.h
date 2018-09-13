@@ -41,7 +41,7 @@ typedef float __m32;
 
 /********** Set Operations **********/
 
-extern __inline __m64
+extern __inline __m64 FUNCTION_ATTRIBS
 _mm_setzero_si64(void)
 {
   return 0.0;
@@ -1243,6 +1243,20 @@ _mm_load_si64(const __m64 *src)
   __m64 ret;
 
   asm("ldc1 %0, %1\n\t"
+      : "=f" (ret)
+      : "m" (*src)
+     );
+
+  return ret;
+}
+
+extern __inline __m64 FUNCTION_ATTRIBS
+_mm_loadgs_si64(const __m64 *src)
+{
+  __m64 ret;
+
+  asm("gsldlc1 %0,  7+%1\n\t"
+      "gsldrc1 %0,  %1\n\t"
       : "=f" (ret)
       : "m" (*src)
      );
