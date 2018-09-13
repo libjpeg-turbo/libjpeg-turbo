@@ -397,6 +397,17 @@ jsimd_can_fdct_islow(void)
 GLOBAL(int)
 jsimd_can_fdct_ifast(void)
 {
+  init_simd();
+
+  /* The code is optimised for these values only */
+  if (DCTSIZE != 8)
+    return 0;
+  if (sizeof(DCTELEM) != 2)
+    return 0;
+
+  if (simd_support & JSIMD_MMI)
+    return 1;
+
   return 0;
 }
 
@@ -415,6 +426,7 @@ jsimd_fdct_islow(DCTELEM *data)
 GLOBAL(void)
 jsimd_fdct_ifast(DCTELEM *data)
 {
+  jsimd_fdct_ifast_mmi(data);
 }
 
 GLOBAL(void)
@@ -537,6 +549,17 @@ jsimd_can_idct_islow(void)
 GLOBAL(int)
 jsimd_can_idct_ifast(void)
 {
+  init_simd();
+
+  /* The code is optimised for these values only */
+  if (DCTSIZE != 8)
+    return 0;
+  if (sizeof(DCTELEM) != 2)
+    return 0;
+
+  if (simd_support & JSIMD_MMI)
+    return 1;
+
   return 0;
 }
 
@@ -559,6 +582,7 @@ jsimd_idct_ifast(j_decompress_ptr cinfo, jpeg_component_info *compptr,
                  JCOEFPTR coef_block, JSAMPARRAY output_buf,
                  JDIMENSION output_col)
 {
+  jsimd_idct_ifast_mmi(compptr->dct_table, coef_block, output_buf, output_col);
 }
 
 GLOBAL(void)
