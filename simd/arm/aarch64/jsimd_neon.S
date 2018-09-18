@@ -39,24 +39,20 @@
 .section .rodata, "a", %progbits
 #endif
 
-/* Constants for jsimd_idct_4x4_neon() and jsimd_idct_2x2_neon() */
+/* Constants for jsimd_idct_4x4_neon() */
 
 #define CONST_BITS  13
 
 #define FIX_0_211164243  (1730)   /* FIX(0.211164243) */
 #define FIX_0_509795579  (4176)   /* FIX(0.509795579) */
 #define FIX_0_601344887  (4926)   /* FIX(0.601344887) */
-#define FIX_0_720959822  (5906)   /* FIX(0.720959822) */
 #define FIX_0_765366865  (6270)   /* FIX(0.765366865) */
-#define FIX_0_850430095  (6967)   /* FIX(0.850430095) */
 #define FIX_0_899976223  (7373)   /* FIX(0.899976223) */
 #define FIX_1_061594337  (8697)   /* FIX(1.061594337) */
-#define FIX_1_272758580  (10426)  /* FIX(1.272758580) */
 #define FIX_1_451774981  (11893)  /* FIX(1.451774981) */
 #define FIX_1_847759065  (15137)  /* FIX(1.847759065) */
 #define FIX_2_172734803  (17799)  /* FIX(2.172734803) */
 #define FIX_2_562915447  (20995)  /* FIX(2.562915447) */
-#define FIX_3_624509785  (29692)  /* FIX(3.624509785) */
 
 .balign 16
 Ljsimd_idct_4x4_neon_consts:
@@ -72,13 +68,6 @@ Ljsimd_idct_4x4_neon_consts:
   .short FIX_2_562915447        /* v2.h[1] */
   .short 1 << (CONST_BITS + 1)  /* v2.h[2] */
   .short 0                      /* v2.h[3] */
-
-.balign 8
-Ljsimd_idct_2x2_neon_consts:
-  .short -FIX_0_720959822  /* v14[0] */
-  .short FIX_0_850430095   /* v14[1] */
-  .short -FIX_1_272758580  /* v14[2] */
-  .short FIX_3_624509785   /* v14[3] */
 
 .text
 
@@ -113,21 +102,6 @@ _\fname:
     adrp            \reg, \symbol
     add             \reg, \reg, :lo12:\symbol
 #endif
-.endm
-
-/* Transpose elements of single 128 bit registers */
-.macro transpose_single x0, x1, xi, xilen, literal
-    ins             \xi\xilen[0], \x0\xilen[0]
-    ins             \x1\xilen[0], \x0\xilen[1]
-    trn1            \x0\literal, \x0\literal, \x1\literal
-    trn2            \x1\literal, \xi\literal, \x1\literal
-.endm
-
-/* Transpose elements of 2 different registers */
-.macro transpose x0, x1, xi, xilen, literal
-    mov             \xi\xilen, \x0\xilen
-    trn1            \x0\literal, \x0\literal, \x1\literal
-    trn2            \x1\literal, \xi\literal, \x1\literal
 .endm
 
 /* Transpose a block of 4x4 coefficients in four 64-bit registers */
@@ -366,177 +340,5 @@ asm_function jsimd_idct_4x4_neon
     .unreq          TMP2
     .unreq          TMP3
     .unreq          TMP4
-
-.purgem idct_helper
-
-
-/*****************************************************************************/
-
-/*
- * jsimd_idct_2x2_neon
- *
- * This function contains inverse-DCT code for getting reduced-size
- * 2x2 pixels output from an 8x8 DCT block. It uses the same  calculations
- * and produces exactly the same output as IJG's original 'jpeg_idct_2x2'
- * function from jpeg-6b (jidctred.c).
- *
- * NOTE: jpeg-8 has an improved implementation of 2x2 inverse-DCT, which
- *       requires much less arithmetic operations and hence should be faster.
- *       The primary purpose of this particular NEON optimized function is
- *       bit exact compatibility with jpeg-6b.
- */
-
-.macro idct_helper x4, x6, x10, x12, x16, shift, y26, y27
-    sshll           v15.4s, \x4, #15
-    smull           v26.4s, \x6, v14.h[3]
-    smlal           v26.4s, \x10, v14.h[2]
-    smlal           v26.4s, \x12, v14.h[1]
-    smlal           v26.4s, \x16, v14.h[0]
-
-    add             v20.4s, v15.4s, v26.4s
-    sub             v15.4s, v15.4s, v26.4s
-
-  .if \shift > 16
-    srshr           v20.4s, v20.4s, #\shift
-    srshr           v15.4s, v15.4s, #\shift
-    xtn             \y26, v20.4s
-    xtn             \y27, v15.4s
-  .else
-    rshrn           \y26, v20.4s, #\shift
-    rshrn           \y27, v15.4s, #\shift
-  .endif
-.endm
-
-asm_function jsimd_idct_2x2_neon
-
-    DCT_TABLE       .req x0
-    COEF_BLOCK      .req x1
-    OUTPUT_BUF      .req x2
-    OUTPUT_COL      .req x3
-    TMP1            .req x0
-    TMP2            .req x15
-
-    /* OUTPUT_COL is a JDIMENSION (unsigned int) argument, so the ABI doesn't
-       guarantee that the upper (unused) 32 bits of x3 are valid.  This
-       instruction ensures that those bits are set to zero. */
-    uxtw x3, w3
-
-    /* vpush           {v8.4h - v15.4h}            ; not available */
-    sub             sp, sp, 64
-    mov             x9, sp
-
-    /* Load constants */
-    get_symbol_loc  TMP2, Ljsimd_idct_2x2_neon_consts
-    st1             {v8.8b, v9.8b, v10.8b, v11.8b}, [x9], 32
-    st1             {v12.8b, v13.8b, v14.8b, v15.8b}, [x9], 32
-    ld1             {v14.4h}, [TMP2]
-
-    /* Load all COEF_BLOCK into NEON registers with the following allocation:
-     *       0 1 2 3 | 4 5 6 7
-     *      ---------+--------
-     *   0 | v4.4h   | v5.4h
-     *   1 | v6.4h   | v7.4h
-     *   2 | -       | -
-     *   3 | v10.4h  | v11.4h
-     *   4 | -       | -
-     *   5 | v12.4h  | v13.4h
-     *   6 | -       | -
-     *   7 | v16.4h  | v17.4h
-     */
-    ld1             {v4.4h, v5.4h, v6.4h, v7.4h}, [COEF_BLOCK], 32
-    add             COEF_BLOCK, COEF_BLOCK, #16
-    ld1             {v10.4h, v11.4h}, [COEF_BLOCK], 16
-    add             COEF_BLOCK, COEF_BLOCK, #16
-    ld1             {v12.4h, v13.4h}, [COEF_BLOCK], 16
-    add             COEF_BLOCK, COEF_BLOCK, #16
-    ld1             {v16.4h, v17.4h}, [COEF_BLOCK], 16
-    /* Dequantize */
-    ld1             {v18.4h, v19.4h, v20.4h, v21.4h}, [DCT_TABLE], 32
-    mul             v4.4h, v4.4h, v18.4h
-    mul             v5.4h, v5.4h, v19.4h
-    ins             v4.d[1], v5.d[0]
-    mul             v6.4h, v6.4h, v20.4h
-    mul             v7.4h, v7.4h, v21.4h
-    ins             v6.d[1], v7.d[0]
-    add             DCT_TABLE, DCT_TABLE, #16
-    ld1             {v24.4h, v25.4h}, [DCT_TABLE], 16
-    mul             v10.4h, v10.4h, v24.4h
-    mul             v11.4h, v11.4h, v25.4h
-    ins             v10.d[1], v11.d[0]
-    add             DCT_TABLE, DCT_TABLE, #16
-    ld1             {v26.4h, v27.4h}, [DCT_TABLE], 16
-    mul             v12.4h, v12.4h, v26.4h
-    mul             v13.4h, v13.4h, v27.4h
-    ins             v12.d[1], v13.d[0]
-    add             DCT_TABLE, DCT_TABLE, #16
-    ld1             {v30.4h, v31.4h}, [DCT_TABLE], 16
-    mul             v16.4h, v16.4h, v30.4h
-    mul             v17.4h, v17.4h, v31.4h
-    ins             v16.d[1], v17.d[0]
-
-    /* Pass 1 */
-#if 0
-    idct_helper     v4.4h, v6.4h, v10.4h, v12.4h, v16.4h, 13, v4.4h, v6.4h
-    transpose_4x4   v4.4h, v6.4h, v8.4h, v10.4h
-    idct_helper     v5.4h, v7.4h, v11.4h, v13.4h, v17.4h, 13, v5.4h, v7.4h
-    transpose_4x4   v5.4h, v7.4h, v9.4h, v11.4h
-#else
-    smull           v26.4s, v6.4h, v14.h[3]
-    smlal           v26.4s, v10.4h, v14.h[2]
-    smlal           v26.4s, v12.4h, v14.h[1]
-    smlal           v26.4s, v16.4h, v14.h[0]
-    smull           v24.4s, v7.4h, v14.h[3]
-    smlal           v24.4s, v11.4h, v14.h[2]
-    smlal           v24.4s, v13.4h, v14.h[1]
-    smlal           v24.4s, v17.4h, v14.h[0]
-    sshll           v15.4s, v4.4h, #15
-    sshll           v30.4s, v5.4h, #15
-    add             v20.4s, v15.4s, v26.4s
-    sub             v15.4s, v15.4s, v26.4s
-    rshrn           v4.4h, v20.4s, #13
-    rshrn           v6.4h, v15.4s, #13
-    add             v20.4s, v30.4s, v24.4s
-    sub             v15.4s, v30.4s, v24.4s
-    rshrn           v5.4h, v20.4s, #13
-    rshrn           v7.4h, v15.4s, #13
-    ins             v4.d[1], v5.d[0]
-    ins             v6.d[1], v7.d[0]
-    transpose       v4, v6, v3, .16b, .8h
-    transpose       v6, v10, v3, .16b, .4s
-    ins             v11.d[0], v10.d[1]
-    ins             v7.d[0], v6.d[1]
-#endif
-
-    /* Pass 2 */
-    idct_helper     v4.4h, v6.4h, v10.4h, v7.4h, v11.4h, 20, v26.4h, v27.4h
-
-    /* Range limit */
-    movi            v30.8h, #0x80
-    ins             v26.d[1], v27.d[0]
-    add             v26.8h, v26.8h, v30.8h
-    sqxtun          v30.8b, v26.8h
-    ins             v26.d[0], v30.d[0]
-    sqxtun          v27.8b, v26.8h
-
-    /* Store results to the output buffer */
-    ldp             TMP1, TMP2, [OUTPUT_BUF]
-    add             TMP1, TMP1, OUTPUT_COL
-    add             TMP2, TMP2, OUTPUT_COL
-
-    st1             {v26.b}[0], [TMP1], 1
-    st1             {v27.b}[4], [TMP1], 1
-    st1             {v26.b}[1], [TMP2], 1
-    st1             {v27.b}[5], [TMP2], 1
-
-    ld1             {v8.8b, v9.8b, v10.8b, v11.8b}, [sp], 32
-    ld1             {v12.8b, v13.8b, v14.8b, v15.8b}, [sp], 32
-    blr             x30
-
-    .unreq          DCT_TABLE
-    .unreq          COEF_BLOCK
-    .unreq          OUTPUT_BUF
-    .unreq          OUTPUT_COL
-    .unreq          TMP1
-    .unreq          TMP2
 
 .purgem idct_helper

@@ -96,17 +96,13 @@ _\fname:
 #define FIX_0_211164243  (1730)   /* FIX(0.211164243) */
 #define FIX_0_509795579  (4176)   /* FIX(0.509795579) */
 #define FIX_0_601344887  (4926)   /* FIX(0.601344887) */
-#define FIX_0_720959822  (5906)   /* FIX(0.720959822) */
 #define FIX_0_765366865  (6270)   /* FIX(0.765366865) */
-#define FIX_0_850430095  (6967)   /* FIX(0.850430095) */
 #define FIX_0_899976223  (7373)   /* FIX(0.899976223) */
 #define FIX_1_061594337  (8697)   /* FIX(1.061594337) */
-#define FIX_1_272758580  (10426)  /* FIX(1.272758580) */
 #define FIX_1_451774981  (11893)  /* FIX(1.451774981) */
 #define FIX_1_847759065  (15137)  /* FIX(1.847759065) */
 #define FIX_2_172734803  (17799)  /* FIX(2.172734803) */
 #define FIX_2_562915447  (20995)  /* FIX(2.562915447) */
-#define FIX_3_624509785  (29692)  /* FIX(3.624509785) */
 
 .balign 16
 jsimd_idct_4x4_neon_consts:
@@ -280,158 +276,5 @@ asm_function jsimd_idct_4x4_neon
     .unreq          TMP2
     .unreq          TMP3
     .unreq          TMP4
-
-.purgem idct_helper
-
-
-/*****************************************************************************/
-
-/*
- * jsimd_idct_2x2_neon
- *
- * This function contains inverse-DCT code for getting reduced-size
- * 2x2 pixels output from an 8x8 DCT block. It uses the same  calculations
- * and produces exactly the same output as IJG's original 'jpeg_idct_2x2'
- * function from jpeg-6b (jidctred.c).
- *
- * NOTE: jpeg-8 has an improved implementation of 2x2 inverse-DCT, which
- *       requires much less arithmetic operations and hence should be faster.
- *       The primary purpose of this particular NEON optimized function is
- *       bit exact compatibility with jpeg-6b.
- */
-
-.balign 8
-jsimd_idct_2x2_neon_consts:
-  .short -FIX_0_720959822  /* d0[0] */
-  .short FIX_0_850430095   /* d0[1] */
-  .short -FIX_1_272758580  /* d0[2] */
-  .short FIX_3_624509785   /* d0[3] */
-
-.macro idct_helper x4, x6, x10, x12, x16, shift, y26, y27
-    vshll.s16       q14, \x4, #15
-    vmull.s16       q13, \x6, d0[3]
-    vmlal.s16       q13, \x10, d0[2]
-    vmlal.s16       q13, \x12, d0[1]
-    vmlal.s16       q13, \x16, d0[0]
-
-    vadd.s32        q10, q14, q13
-    vsub.s32        q14, q14, q13
-
-  .if \shift > 16
-    vrshr.s32       q10, q10, #\shift
-    vrshr.s32       q14, q14, #\shift
-    vmovn.s32       \y26, q10
-    vmovn.s32       \y27, q14
-  .else
-    vrshrn.s32      \y26, q10, #\shift
-    vrshrn.s32      \y27, q14, #\shift
-  .endif
-.endm
-
-asm_function jsimd_idct_2x2_neon
-
-    DCT_TABLE       .req r0
-    COEF_BLOCK      .req r1
-    OUTPUT_BUF      .req r2
-    OUTPUT_COL      .req r3
-    TMP1            .req r0
-    TMP2            .req ip
-
-    vpush           {d8-d15}
-
-    /* Load constants */
-    adr             TMP2, jsimd_idct_2x2_neon_consts
-    vld1.16         {d0}, [TMP2, :64]
-
-    /* Load all COEF_BLOCK into NEON registers with the following allocation:
-     *       0 1 2 3 | 4 5 6 7
-     *      ---------+--------
-     *   0 | d4      | d5
-     *   1 | d6      | d7
-     *   2 | -       | -
-     *   3 | d10     | d11
-     *   4 | -       | -
-     *   5 | d12     | d13
-     *   6 | -       | -
-     *   7 | d16     | d17
-     */
-    vld1.16         {d4, d5, d6, d7}, [COEF_BLOCK, :128]!
-    add             COEF_BLOCK, COEF_BLOCK, #16
-    vld1.16         {d10, d11}, [COEF_BLOCK, :128]!
-    add             COEF_BLOCK, COEF_BLOCK, #16
-    vld1.16         {d12, d13}, [COEF_BLOCK, :128]!
-    add             COEF_BLOCK, COEF_BLOCK, #16
-    vld1.16         {d16, d17}, [COEF_BLOCK, :128]!
-    /* Dequantize */
-    vld1.16         {d18, d19, d20, d21}, [DCT_TABLE, :128]!
-    vmul.s16        q2, q2, q9
-    vmul.s16        q3, q3, q10
-    add             DCT_TABLE, DCT_TABLE, #16
-    vld1.16         {d24, d25}, [DCT_TABLE, :128]!
-    vmul.s16        q5, q5, q12
-    add             DCT_TABLE, DCT_TABLE, #16
-    vld1.16         {d26, d27}, [DCT_TABLE, :128]!
-    vmul.s16        q6, q6, q13
-    add             DCT_TABLE, DCT_TABLE, #16
-    vld1.16         {d30, d31}, [DCT_TABLE, :128]!
-    vmul.s16        q8, q8, q15
-
-    /* Pass 1 */
-#if 0
-    idct_helper     d4, d6, d10, d12, d16, 13, d4, d6
-    transpose_4x4   d4, d6, d8, d10
-    idct_helper     d5, d7, d11, d13, d17, 13, d5, d7
-    transpose_4x4   d5, d7, d9, d11
-#else
-    vmull.s16       q13, d6, d0[3]
-    vmlal.s16       q13, d10, d0[2]
-    vmlal.s16       q13, d12, d0[1]
-    vmlal.s16       q13, d16, d0[0]
-    vmull.s16       q12, d7, d0[3]
-    vmlal.s16       q12, d11, d0[2]
-    vmlal.s16       q12, d13, d0[1]
-    vmlal.s16       q12, d17, d0[0]
-    vshll.s16       q14, d4, #15
-    vshll.s16       q15, d5, #15
-    vadd.s32        q10, q14, q13
-    vsub.s32        q14, q14, q13
-    vrshrn.s32      d4, q10, #13
-    vrshrn.s32      d6, q14, #13
-    vadd.s32        q10, q15, q12
-    vsub.s32        q14, q15, q12
-    vrshrn.s32      d5, q10, #13
-    vrshrn.s32      d7, q14, #13
-    vtrn.16         q2, q3
-    vtrn.32         q3, q5
-#endif
-
-    /* Pass 2 */
-    idct_helper     d4, d6, d10, d7, d11, 20, d26, d27
-
-    /* Range limit */
-    vmov.u16        q15, #0x80
-    vadd.s16        q13, q13, q15
-    vqmovun.s16     d26, q13
-    vqmovun.s16     d27, q13
-
-    /* Store results to the output buffer */
-    ldmia           OUTPUT_BUF, {TMP1, TMP2}
-    add             TMP1, TMP1, OUTPUT_COL
-    add             TMP2, TMP2, OUTPUT_COL
-
-    vst1.8          {d26[0]}, [TMP1]!
-    vst1.8          {d27[4]}, [TMP1]!
-    vst1.8          {d26[1]}, [TMP2]!
-    vst1.8          {d27[5]}, [TMP2]!
-
-    vpop            {d8-d15}
-    bx              lr
-
-    .unreq          DCT_TABLE
-    .unreq          COEF_BLOCK
-    .unreq          OUTPUT_BUF
-    .unreq          OUTPUT_COL
-    .unreq          TMP1
-    .unreq          TMP2
 
 .purgem idct_helper
