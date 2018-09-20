@@ -1275,6 +1275,20 @@ _mm_loadgs_si64(const __m64 *src)
 }
 
 extern __inline __m64 FUNCTION_ATTRIBS
+_mm_loadgs_si64(const __m64 *src)
+{
+  __m64 ret;
+
+  asm("gsldlc1 %0,  7+%1\n\t"
+      "gsldrc1 %0,  %1\n\t"
+      : "=f" (ret)
+      : "m" (*src)
+     );
+
+  return ret;
+}
+
+extern __inline __m64 FUNCTION_ATTRIBS
 _mm_loadlo_pi8(const uint32_t *src)
 {
   return _mm_unpacklo_pi8_f(*(__m32 *)src, _mm_setzero_si64());
