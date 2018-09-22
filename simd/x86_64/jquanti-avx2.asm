@@ -48,23 +48,23 @@ EXTN(jsimd_convsamp_avx2):
 
     mov         rsi, JSAMPROW [r10+0*SIZEOF_JSAMPROW]  ; (JSAMPLE *)
     mov         rdi, JSAMPROW [r10+1*SIZEOF_JSAMPROW]  ; (JSAMPLE *)
-    movq        xmm0, XMM_MMWORD [rsi+rax*SIZEOF_JSAMPLE]
-    pinsrq      xmm0, XMM_MMWORD [rdi+rax*SIZEOF_JSAMPLE], 1
+    vmovq        xmm0, XMM_MMWORD [rsi+rax*SIZEOF_JSAMPLE]
+    vpinsrq      xmm0, XMM_MMWORD [rdi+rax*SIZEOF_JSAMPLE], 1
 
     mov         rsi, JSAMPROW [r10+2*SIZEOF_JSAMPROW]  ; (JSAMPLE *)
     mov         rdi, JSAMPROW [r10+3*SIZEOF_JSAMPROW]  ; (JSAMPLE *)
-    movq        xmm1, XMM_MMWORD [rsi+rax*SIZEOF_JSAMPLE]
-    pinsrq      xmm1, XMM_MMWORD [rdi+rax*SIZEOF_JSAMPLE], 1
+    vmovq        xmm1, XMM_MMWORD [rsi+rax*SIZEOF_JSAMPLE]
+    vpinsrq      xmm1, XMM_MMWORD [rdi+rax*SIZEOF_JSAMPLE], 1
 
     mov         rsi, JSAMPROW [r10+4*SIZEOF_JSAMPROW]  ; (JSAMPLE *)
     mov         rdi, JSAMPROW [r10+5*SIZEOF_JSAMPROW]  ; (JSAMPLE *)
-    movq        xmm2, XMM_MMWORD [rsi+rax*SIZEOF_JSAMPLE]
-    pinsrq      xmm2, XMM_MMWORD [rdi+rax*SIZEOF_JSAMPLE], 1
+    vmovq        xmm2, XMM_MMWORD [rsi+rax*SIZEOF_JSAMPLE]
+    vpinsrq      xmm2, XMM_MMWORD [rdi+rax*SIZEOF_JSAMPLE], 1
 
     mov         rsi, JSAMPROW [r10+6*SIZEOF_JSAMPROW]  ; (JSAMPLE *)
     mov         rdi, JSAMPROW [r10+7*SIZEOF_JSAMPROW]  ; (JSAMPLE *)
-    movq        xmm3, XMM_MMWORD [rsi+rax*SIZEOF_JSAMPLE]
-    pinsrq      xmm3, XMM_MMWORD [rdi+rax*SIZEOF_JSAMPLE], 1
+    vmovq        xmm3, XMM_MMWORD [rsi+rax*SIZEOF_JSAMPLE]
+    vpinsrq      xmm3, XMM_MMWORD [rdi+rax*SIZEOF_JSAMPLE], 1
 
     vpmovzxbw   ymm0, xmm0              ; ymm0=(00 01 02 03 04 05 06 07 10 11 12 13 14 15 16 17)
     vpmovzxbw   ymm1, xmm1              ; ymm1=(20 21 22 23 24 25 26 27 30 31 32 33 34 35 36 37)
