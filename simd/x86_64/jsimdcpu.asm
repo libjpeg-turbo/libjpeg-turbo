@@ -36,38 +36,37 @@ EXTN(jpeg_simd_cpu_support):
     push        rbx
     push        rdi
 
-    xor         rdi, rdi                ; simd support flag
+    xor         edi, edi                ; simd support flag
 
     ; Check for AVX2 instruction support
-    mov         rax, 7
-    xor         rcx, rcx
+    lea         eax, [rdi+7]
+    xor         ecx, ecx
     cpuid
-    mov         rax, rbx                ; rax = Extended feature flags
 
-    or          rdi, JSIMD_SSE2
-    or          rdi, JSIMD_SSE
-    test        rax, 1<<5               ; bit5:AVX2
+    or          edi, JSIMD_SSE2|JSIMD_SSE
+    test        bl, 1<<5               ; bit5:AVX2
     jz          short .return
 
     ; Check for AVX2 O/S support
-    mov         rax, 1
-    xor         rcx, rcx
+    xor         ecx, ecx
+    lea         eax, [rcx+1]
     cpuid
-    test        rcx, 1<<27
+    mov		eax, ecx
+    shr		eax, 27			; bring XSAVE bit to lsb
+    test        al, 1
     jz          short .return           ; O/S does not support XSAVE
-    test        rcx, 1<<28
+    test        al, 2
     jz          short .return           ; CPU does not support AVX2
 
-    xor         rcx, rcx
+    xor         ecx, ecx
     xgetbv
-    test        rax, 6                  ; O/S does not manage XMM/YMM state
-                                        ; using XSAVE
-    jz          short .return
+    test        al, 6			;O/S does not manage XMM/YMM state
+    jz          short .return		; using XSAVE
 
-    or          rdi, JSIMD_AVX2
+    bts         edi, 7 			;JSIMD_AVX2=0x80
 
 .return:
-    mov         rax, rdi
+    mov         eax, edi
 
     pop         rdi
     pop         rbx
