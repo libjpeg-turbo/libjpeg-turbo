@@ -72,10 +72,6 @@ typedef unsigned long long bit_buf_type;
 typedef size_t bit_buf_type;
 #endif
 
-/* NOTE: The more optimal Huffman encoding algorithm has not yet been
- * implemented in the ARM NEON SIMD extensions, which is why we retain the old
- * Huffman encoder behavior for that platform.
- */
 #if defined(WITH_SIMD) && !(defined(__arm__) || defined(__aarch64__))
 typedef unsigned long long simd_bit_buf_type;
 #else
@@ -98,7 +94,6 @@ typedef struct {
     simd_bit_buf_type simd;
   } put_buffer;                         /* current bit accumulation buffer */
   int free_bits;                        /* # of bits available in it */
-                                        /* (ARM SIMD: # of bits now in it) */
   int last_dc_val[MAX_COMPS_IN_SCAN];   /* last DC coef for each component */
 } savable_state;
 
@@ -215,11 +210,7 @@ start_pass_huff(j_compress_ptr cinfo, boolean gather_statistics)
   /* Initialize bit buffer to empty */
   if (entropy->simd) {
     entropy->saved.put_buffer.simd = 0;
-#if defined(__arm__) || defined(__aarch64__)
-    entropy->saved.free_bits = 0;
-#else
     entropy->saved.free_bits = SIMD_BIT_BUF_SIZE;
-#endif
   } else {
     entropy->saved.put_buffer.c = 0;
     entropy->saved.free_bits = BIT_BUF_SIZE;
@@ -493,11 +484,7 @@ flush_bits(working_state *state)
   int localbuf = 0;
 
   if (state->simd) {
-#if defined(__arm__) || defined(__aarch64__)
-    put_bits = state->cur.free_bits;
-#else
     put_bits = SIMD_BIT_BUF_SIZE - state->cur.free_bits;
-#endif
     put_buffer = state->cur.put_buffer.simd;
   } else {
     put_bits = BIT_BUF_SIZE - state->cur.free_bits;
@@ -519,11 +506,7 @@ flush_bits(working_state *state)
 
   if (state->simd) {                    /* and reset bit buffer to empty */
     state->cur.put_buffer.simd = 0;
-#if defined(__arm__) || defined(__aarch64__)
-    state->cur.free_bits = 0;
-#else
     state->cur.free_bits = SIMD_BIT_BUF_SIZE;
-#endif
   } else {
     state->cur.put_buffer.c = 0;
     state->cur.free_bits = BIT_BUF_SIZE;
