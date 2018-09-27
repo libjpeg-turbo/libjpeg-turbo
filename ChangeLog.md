@@ -13,8 +13,6 @@ compiler flags.
 automatically detect an x32 build.
      - Java does not support the x32 ABI, and thus the TurboJPEG Java API will
 automatically be disabled with x32 builds.
-     - SIMD acceleration for progressive Huffman encoding does not (currently)
-work with the x32 ABI and will be disabled in x32 builds.
 
 
 2.0.1
