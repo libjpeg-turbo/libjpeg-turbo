@@ -165,6 +165,8 @@ option(WITH_SIMD "Include SIMD extensions, if available for this platform" TRUE)
 boolean_number(WITH_SIMD)
 option(WITH_TURBOJPEG "Include the TurboJPEG API library and associated test programs" TRUE)
 boolean_number(WITH_TURBOJPEG)
+option(WITH_3DNOW "Enable 3DNow supprt" TRUE)
+boolean_number(WITH_3DNOW)
 
 macro(report_option var desc)
   if(${var})
@@ -237,6 +239,8 @@ endif()
 if(NOT WITH_JPEG8)
   report_option(WITH_MEM_SRCDST "In-memory source/destination managers")
 endif()
+
+report_option(WITH_3DNOW "AMD 3DNow support")
 
 set(SO_AGE 2)
 if(WITH_MEM_SRCDST)

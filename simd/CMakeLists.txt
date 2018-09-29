@@ -114,8 +114,7 @@ if(CPU_TYPE STREQUAL "x86_64")
     x86_64/jdcolor-avx2.asm x86_64/jdmerge-avx2.asm x86_64/jdsample-avx2.asm
     x86_64/jfdctint-avx2.asm x86_64/jidctint-avx2.asm x86_64/jquanti-avx2.asm)
 else()
-  set(SIMD_SOURCES i386/jsimdcpu.asm i386/jfdctflt-3dn.asm
-    i386/jidctflt-3dn.asm i386/jquant-3dn.asm
+  set(SIMD_SOURCES i386/jsimdcpu.asm
     i386/jccolor-mmx.asm i386/jcgray-mmx.asm i386/jcsample-mmx.asm
     i386/jdcolor-mmx.asm i386/jdmerge-mmx.asm i386/jdsample-mmx.asm
     i386/jfdctfst-mmx.asm i386/jfdctint-mmx.asm i386/jidctfst-mmx.asm
@@ -130,6 +129,10 @@ else()
     i386/jccolor-avx2.asm i386/jcgray-avx2.asm i386/jcsample-avx2.asm
     i386/jdcolor-avx2.asm i386/jdmerge-avx2.asm i386/jdsample-avx2.asm
     i386/jfdctint-avx2.asm i386/jidctint-avx2.asm i386/jquanti-avx2.asm)
+  if(WITH_3DNOW)
+    set(SIMD_SOURCES ${SIMD_SOURCES} i386/jfdctflt-3dn.asm
+      i386/jidctflt-3dn.asm i386/jquant-3dn.asm)
+  endif()
 endif()
 
 if(MSVC_IDE)
