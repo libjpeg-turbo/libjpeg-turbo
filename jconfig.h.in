@@ -21,6 +21,9 @@
 /* Use accelerated SIMD routines. */
 #cmakedefine WITH_SIMD 1
 
+/* Disable GETENV */
+#cmakedefine NO_GETENV
+
 /*
  * Define BITS_IN_JSAMPLE as either
  *   8   for 8-bit sample values (the usual setting)
