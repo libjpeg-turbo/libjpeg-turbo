@@ -6,6 +6,7 @@
 #cmakedefine D_ARITH_CODING_SUPPORTED
 #cmakedefine MEM_SRCDST_SUPPORTED
 #cmakedefine WITH_SIMD
+#cmakedefine NO_GETENV
 
 #define BITS_IN_JSAMPLE  @BITS_IN_JSAMPLE@      /* use 8 or 12 */
 
