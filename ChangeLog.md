@@ -58,6 +58,11 @@ attempting to decompress a specially-crafted malformed JPEG image.  This issue
 did not pose a security threat, but removing the warning made it easier to
 detect actual security issues, should they arise in the future.
 
+10. Fixed out-of-bounds read in cjpeg that occurred when attempting to compress
+a specially-crafted malformed color-index (8-bit-per-sample) Targa file in
+which some of the samples (color indices) exceeded the bounds of the Targa
+file's color table.
+
 
 1.5.3
 =====
