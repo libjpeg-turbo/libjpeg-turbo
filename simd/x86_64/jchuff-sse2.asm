@@ -201,7 +201,8 @@ EXTN(jsimd_huff_encode_one_block_sse2):
     mov         buffer, r11                  ; r11 is now sratch
 
     mov         put_buffer, MMWORD [r10+SIZEOF_POINTER*2]    ; put_buffer = state->cur.put_buffer;
-    mov         put_bits,    DWORD [r10+SIZEOF_POINTER*2+8]  ; put_bits = state->cur.put_bits;
+    mov         put_bits, 64
+    sub         put_bits,    DWORD [r10+SIZEOF_POINTER*2+8]  ; put_bits = state->cur.put_bits;
     push        r10                          ; r10 is now scratch
 
     ; Encode the DC coefficient difference per section F.1.2.1
@@ -334,6 +335,8 @@ EXTN(jsimd_huff_encode_one_block_sse2):
     pop         r10
     ; Save put_buffer & put_bits
     mov         MMWORD [r10+SIZEOF_POINTER*2], put_buffer  ; state->cur.put_buffer = put_buffer;
+    sub         put_bits, 64
+    neg         put_bits
     mov         DWORD  [r10+SIZEOF_POINTER*2+8], put_bits  ; state->cur.put_bits = put_bits;
 
     pop         rbx

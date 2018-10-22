@@ -198,7 +198,8 @@ EXTN(jsimd_huff_encode_one_block_sse2):
 
     mov         esi, POINTER [eax+8]       ; (working_state *state)
     mov         put_buffer, DWORD [esi+8]  ; put_buffer = state->cur.put_buffer;
-    mov         put_bits, DWORD [esi+12]   ; put_bits = state->cur.put_bits;
+    mov         put_bits, 64
+    sub         put_bits, DWORD [esi+16]   ; put_bits = state->cur.put_bits;
     push        esi                        ; esi is now scratch
 
     get_GOT     edx                        ; get GOT address
@@ -408,7 +409,9 @@ EXTN(jsimd_huff_encode_one_block_sse2):
     pop         esi
     ; Save put_buffer & put_bits
     mov         DWORD [esi+8], put_buffer  ; state->cur.put_buffer = put_buffer;
-    mov         DWORD [esi+12], put_bits   ; state->cur.put_bits = put_bits;
+    sub         put_bits, 64
+    neg         put_bits
+    mov         DWORD [esi+16], put_bits   ; state->cur.put_bits = put_bits;
 
     pop         ebp
     pop         edi

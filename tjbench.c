@@ -472,6 +472,8 @@ int fullTest(unsigned char *srcBuf, int w, int h, int subsamp, int jpegQual,
       if (decomp(srcBuf, jpegBuf, jpegSize, tmpBuf, w, h, subsamp, jpegQual,
                  fileName, tilew, tileh) == -1)
         goto bailout;
+    } else if (quiet) {
+      printf("N/A\n");
     }
 
     for (i = 0; i < ntilesw * ntilesh; i++) {
