@@ -3,6 +3,7 @@
 ;
 ; Copyright (C) 2009-2011, 2014-2017, D. R. Commander.
 ; Copyright (C) 2015, Matthieu Darbois.
+; Copyright (C) 2018, Matthias Räncker.
 ;
 ; Based on the x86 SIMD extension for IJG JPEG library
 ; Copyright (C) 1999-2006, MIYASAKA Masaru.
@@ -15,136 +16,232 @@
 ; http://sourceforge.net/project/showfiles.php?group_id=6208
 ;
 ; This file contains an SSE2 implementation for Huffman coding of one block.
-; The following code is based directly on jchuff.c; see jchuff.c for more
-; details.
+; The following code is based on jchuff.c; see jchuff.c for more details.
 ;
 ; [TAB8]
 
 %include "jsimdext.inc"
 
+struc working_state
+.next_output_byte:   resp    1   ; => next byte to write in buffer
+.free_in_buffer:     resp    1   ; # of byte spaces remaining in buffer
+.cur.put.buffer_simd resq    1   ; current bit-accumulation buffer
+.cur.free_bits       resd    1   ; # of free bits now in it
+.cur.last_dc_val     resd    4   ; last DC coef for each component
+.cinfo:              resp    1   ; dump_buffer needs access to this
+endstruc
+
+struc c_derived_tbl
+.ehufco:             resd    256 ; code for each symbol
+.ehufsi:             resb    256 ; length of code for each symbol
+; If no code has been allocated for a symbol S, ehufsi[S] contains 0
+endstruc
+
 ; --------------------------------------------------------------------------
     SECTION     SEG_CONST
 
-    alignz      32
     GLOBAL_DATA(jconst_huff_encode_one_block)
-
 EXTN(jconst_huff_encode_one_block):
 
-%include "jpeg_nbits_table.inc"
+    alignz      32
+
+jpeg_mask_bits  dq 0x0000, 0x0001, 0x0003, 0x0007
+                dq 0x000f, 0x001f, 0x003f, 0x007f
+                dq 0x00ff, 0x01ff, 0x03ff, 0x07ff
+                dq 0x0fff, 0x1fff, 0x3fff, 0x7fff
+
+       times 1 << 14 db 15
+       times 1 << 13 db 14
+       times 1 << 12 db 13
+       times 1 << 11 db 12
+       times 1 << 10 db 11
+       times 1 <<  9 db 10
+       times 1 <<  8 db  9
+       times 1 <<  7 db  8
+       times 1 <<  6 db  7
+       times 1 <<  5 db  6
+       times 1 <<  4 db  5
+       times 1 <<  3 db  4
+       times 1 <<  2 db  3
+       times 1 <<  1 db  2
+       times 1 <<  0 db  1
+       times 1       db  0
+jpeg_nbits_table:
+       times 1       db  0
+       times 1 <<  0 db  1
+       times 1 <<  1 db  2
+       times 1 <<  2 db  3
+       times 1 <<  3 db  4
+       times 1 <<  4 db  5
+       times 1 <<  5 db  6
+       times 1 <<  6 db  7
+       times 1 <<  7 db  8
+       times 1 <<  8 db  9
+       times 1 <<  9 db 10
+       times 1 << 10 db 11
+       times 1 << 11 db 12
+       times 1 << 12 db 13
+       times 1 << 13 db 14
+       times 1 << 14 db 15
 
     alignz      32
+
+%ifdef PIC
+%define NBITS_(x) nbits_base + x
+%else
+%define NBITS_(x) jpeg_nbits_table + x
+%endif
+%define MASK_BITS(x) NBITS_((x) * 8) + (jpeg_mask_bits - jpeg_nbits_table)
 
 ; --------------------------------------------------------------------------
     SECTION     SEG_TEXT
     BITS        32
 
-; These macros perform the same task as the emit_bits() function in the
-; original libjpeg code.  In addition to reducing overhead by explicitly
-; inlining the code, additional performance is achieved by taking into
-; account the size of the bit buffer and waiting until it is almost full
-; before emptying it.  This mostly benefits 64-bit platforms, since 6
-; bytes can be stored in a 64-bit bit buffer before it has to be emptied.
+%define put_buffer     mm0
+%define all_0xff       mm1
+%define mmtemp         mm2
+%define code_bits      mm3
+%define code           mm4
+%define overflow_bits  mm5
+%define save_nbits     mm6
+%define save_buffer    mm7
 
-%macro EMIT_BYTE 0
-    sub         put_bits, 8             ; put_bits -= 8;
-    mov         edx, put_buffer
-    mov         ecx, put_bits
-    shr         edx, cl                 ; c = (JOCTET)GETJOCTET(put_buffer >> put_bits);
-    mov         byte [eax], dl          ; *buffer++ = c;
-    add         eax, 1
-    cmp         dl, 0xFF                ; need to stuff a zero byte?
-    jne         %%.EMIT_BYTE_END
-    mov         byte [eax], 0           ; *buffer++ = 0;
-    add         eax, 1
-%%.EMIT_BYTE_END:
-%endmacro
-
-%macro PUT_BITS 1
-    add         put_bits, ecx           ; put_bits += size;
-    shl         put_buffer, cl          ; put_buffer = (put_buffer << size);
-    or          put_buffer, %1
-%endmacro
-
-%macro CHECKBUF15 0
-    cmp         put_bits, 16            ; if (put_bits > 31) {
-    jl          %%.CHECKBUF15_END
-    mov         eax, POINTER [esp+buffer]
-    EMIT_BYTE
-    EMIT_BYTE
-    mov         POINTER [esp+buffer], eax
-%%.CHECKBUF15_END:
-%endmacro
-
-%macro EMIT_BITS 1
-    PUT_BITS    %1
-    CHECKBUF15
-%endmacro
-
-%macro kloop_prepare 37                 ;(ko, jno0, ..., jno31, xmm0, xmm1, xmm2, xmm3)
-    pxor        xmm4, xmm4              ; __m128i neg = _mm_setzero_si128();
-    pxor        xmm5, xmm5              ; __m128i neg = _mm_setzero_si128();
-    pxor        xmm6, xmm6              ; __m128i neg = _mm_setzero_si128();
-    pxor        xmm7, xmm7              ; __m128i neg = _mm_setzero_si128();
-    pinsrw      %34, word [esi + %2  * SIZEOF_WORD], 0  ; xmm_shadow[0] = block[jno0];
-    pinsrw      %35, word [esi + %10 * SIZEOF_WORD], 0  ; xmm_shadow[8] = block[jno8];
-    pinsrw      %36, word [esi + %18 * SIZEOF_WORD], 0  ; xmm_shadow[16] = block[jno16];
-    pinsrw      %37, word [esi + %26 * SIZEOF_WORD], 0  ; xmm_shadow[24] = block[jno24];
-    pinsrw      %34, word [esi + %3  * SIZEOF_WORD], 1  ; xmm_shadow[1] = block[jno1];
-    pinsrw      %35, word [esi + %11 * SIZEOF_WORD], 1  ; xmm_shadow[9] = block[jno9];
-    pinsrw      %36, word [esi + %19 * SIZEOF_WORD], 1  ; xmm_shadow[17] = block[jno17];
-    pinsrw      %37, word [esi + %27 * SIZEOF_WORD], 1  ; xmm_shadow[25] = block[jno25];
-    pinsrw      %34, word [esi + %4  * SIZEOF_WORD], 2  ; xmm_shadow[2] = block[jno2];
-    pinsrw      %35, word [esi + %12 * SIZEOF_WORD], 2  ; xmm_shadow[10] = block[jno10];
-    pinsrw      %36, word [esi + %20 * SIZEOF_WORD], 2  ; xmm_shadow[18] = block[jno18];
-    pinsrw      %37, word [esi + %28 * SIZEOF_WORD], 2  ; xmm_shadow[26] = block[jno26];
-    pinsrw      %34, word [esi + %5  * SIZEOF_WORD], 3  ; xmm_shadow[3] = block[jno3];
-    pinsrw      %35, word [esi + %13 * SIZEOF_WORD], 3  ; xmm_shadow[11] = block[jno11];
-    pinsrw      %36, word [esi + %21 * SIZEOF_WORD], 3  ; xmm_shadow[19] = block[jno19];
-    pinsrw      %37, word [esi + %29 * SIZEOF_WORD], 3  ; xmm_shadow[27] = block[jno27];
-    pinsrw      %34, word [esi + %6  * SIZEOF_WORD], 4  ; xmm_shadow[4] = block[jno4];
-    pinsrw      %35, word [esi + %14 * SIZEOF_WORD], 4  ; xmm_shadow[12] = block[jno12];
-    pinsrw      %36, word [esi + %22 * SIZEOF_WORD], 4  ; xmm_shadow[20] = block[jno20];
-    pinsrw      %37, word [esi + %30 * SIZEOF_WORD], 4  ; xmm_shadow[28] = block[jno28];
-    pinsrw      %34, word [esi + %7  * SIZEOF_WORD], 5  ; xmm_shadow[5] = block[jno5];
-    pinsrw      %35, word [esi + %15 * SIZEOF_WORD], 5  ; xmm_shadow[13] = block[jno13];
-    pinsrw      %36, word [esi + %23 * SIZEOF_WORD], 5  ; xmm_shadow[21] = block[jno21];
-    pinsrw      %37, word [esi + %31 * SIZEOF_WORD], 5  ; xmm_shadow[29] = block[jno29];
-    pinsrw      %34, word [esi + %8  * SIZEOF_WORD], 6  ; xmm_shadow[6] = block[jno6];
-    pinsrw      %35, word [esi + %16 * SIZEOF_WORD], 6  ; xmm_shadow[14] = block[jno14];
-    pinsrw      %36, word [esi + %24 * SIZEOF_WORD], 6  ; xmm_shadow[22] = block[jno22];
-    pinsrw      %37, word [esi + %32 * SIZEOF_WORD], 6  ; xmm_shadow[30] = block[jno30];
-    pinsrw      %34, word [esi + %9  * SIZEOF_WORD], 7  ; xmm_shadow[7] = block[jno7];
-    pinsrw      %35, word [esi + %17 * SIZEOF_WORD], 7  ; xmm_shadow[15] = block[jno15];
-    pinsrw      %36, word [esi + %25 * SIZEOF_WORD], 7  ; xmm_shadow[23] = block[jno23];
-%if %1 != 32
-    pinsrw      %37, word [esi + %33 * SIZEOF_WORD], 7  ; xmm_shadow[31] = block[jno31];
-%else
-    pinsrw      %37, ecx, 7             ; xmm_shadow[31] = block[jno31];
+; Insert %%code into put_buffer, flush put_buffer and put the overflowing
+; bits of %%code into the now empty put_buffer.
+%macro EMIT_QWORD 9 ; temp, temph, tempb, insn1, insn2, insn3, insn4, insn5, insn6
+%define %%temp     %1
+%define %%temph    %2
+%define %%tempb    %3
+%define %%insn1    %4
+%define %%insn2    %5
+%define %%insn3    %6
+%define %%insn4    %7
+%define %%insn5    %8
+%define %%insn6    %9
+    add         nbits, free_bits            ; nbits += free_bits
+    neg         free_bits                   ; free_bits = -free_bits
+    movq        mmtemp, code                ; mmtemp = code
+    movd        code_bits, nbits            ; code_bits = nbits
+    movd        overflow_bits, free_bits    ; (b) #bits in put_buffer after flush
+    neg         free_bits                   ; free_bits = -free_bits
+    psllq       put_buffer, code_bits       ; put_buffer <<= code_bits
+    psrlq       mmtemp, overflow_bits       ; mmtemp >>= (b)
+    add         free_bits, 64               ; free_bits += 64
+    por         mmtemp, put_buffer          ; (c) code' |= put_buffer
+%ifidn %%temp, nbits_base
+    movd        save_nbits, nbits_base      ; save nbits_base
 %endif
-    pcmpgtw     xmm4, %34               ; neg = _mm_cmpgt_epi16(neg, x1);
-    pcmpgtw     xmm5, %35               ; neg = _mm_cmpgt_epi16(neg, x1);
-    pcmpgtw     xmm6, %36               ; neg = _mm_cmpgt_epi16(neg, x1);
-    pcmpgtw     xmm7, %37               ; neg = _mm_cmpgt_epi16(neg, x1);
-    paddw       %34, xmm4               ; x1 = _mm_add_epi16(x1, neg);
-    paddw       %35, xmm5               ; x1 = _mm_add_epi16(x1, neg);
-    paddw       %36, xmm6               ; x1 = _mm_add_epi16(x1, neg);
-    paddw       %37, xmm7               ; x1 = _mm_add_epi16(x1, neg);
-    pxor        %34, xmm4               ; x1 = _mm_xor_si128(x1, neg);
-    pxor        %35, xmm5               ; x1 = _mm_xor_si128(x1, neg);
-    pxor        %36, xmm6               ; x1 = _mm_xor_si128(x1, neg);
-    pxor        %37, xmm7               ; x1 = _mm_xor_si128(x1, neg);
-    pxor        xmm4, %34               ; neg = _mm_xor_si128(neg, x1);
-    pxor        xmm5, %35               ; neg = _mm_xor_si128(neg, x1);
-    pxor        xmm6, %36               ; neg = _mm_xor_si128(neg, x1);
-    pxor        xmm7, %37               ; neg = _mm_xor_si128(neg, x1);
-    movdqa      XMMWORD [esp + t1 + %1 * SIZEOF_WORD], %34          ; _mm_storeu_si128((__m128i *)(t1 + ko), x1);
-    movdqa      XMMWORD [esp + t1 + (%1 + 8) * SIZEOF_WORD], %35    ; _mm_storeu_si128((__m128i *)(t1 + ko + 8), x1);
-    movdqa      XMMWORD [esp + t1 + (%1 + 16) * SIZEOF_WORD], %36   ; _mm_storeu_si128((__m128i *)(t1 + ko + 16), x1);
-    movdqa      XMMWORD [esp + t1 + (%1 + 24) * SIZEOF_WORD], %37   ; _mm_storeu_si128((__m128i *)(t1 + ko + 24), x1);
-    movdqa      XMMWORD [esp + t2 + %1 * SIZEOF_WORD], xmm4         ; _mm_storeu_si128((__m128i *)(t2 + ko), neg);
-    movdqa      XMMWORD [esp + t2 + (%1 + 8) * SIZEOF_WORD], xmm5   ; _mm_storeu_si128((__m128i *)(t2 + ko + 8), neg);
-    movdqa      XMMWORD [esp + t2 + (%1 + 16) * SIZEOF_WORD], xmm6  ; _mm_storeu_si128((__m128i *)(t2 + ko + 16), neg);
-    movdqa      XMMWORD [esp + t2 + (%1 + 24) * SIZEOF_WORD], xmm7  ; _mm_storeu_si128((__m128i *)(t2 + ko + 24), neg);
+    movq        code_bits, mmtemp           ; c'' = mmtemp
+    movq        put_buffer, code            ; put_buffer = code
+    pcmpeqb     mmtemp, all_0xff            ; i = 0..7: (mmtemp[i] = (mmtemp[i] == 0xff ? -1 : 0))...
+    movq        code, code_bits             ; code = c''
+    psrlq       code_bits, 32               ; mmtemp >>= 32
+    pmovmskb    nbits, mmtemp               ; i = 0..7: size = ((sign(mmtemp[i]) << i) | ...)
+    movd        %%temp, code_bits           ; temp = c''
+    bswap       %%temp                      ; temp = htonl(temp)
+    test        nbits, nbits                ; size == 0 => (no 0xff bytes to store)
+    jnz         %%.SLOW                     ; jmp if != 0
+    mov         dword [buffer], %%temp      ; *(uint32_t)buffer = temp
+%ifidn %%temp, nbits_base
+    movd        nbits_base, save_nbits      ; restore nbits_base
+%endif
+    %%insn1
+    movd        nbits, code                 ; size = (uint32_t)(c)
+    %%insn2
+    bswap       nbits                       ; size = htonl(size)
+    mov         dword [buffer + 4], nbits   ; *(uint32_t)(buffer + 4) = size
+    lea         buffer, [buffer + 8]        ; buffer += 8;
+    %%insn3
+    %%insn4
+    %%insn5
+    %%insn6                                 ; return
+%%.SLOW:
+    mov         byte [buffer], %%tempb      ; buffer[0] = temp[0]
+    cmp         %%tempb, 0xff               ; temp[0] - 0xff ?
+    mov         byte [buffer+1], 0          ; buffer[1] = 0
+    sbb         buffer, -2                  ; buffer -= -2 + (temp[0] - 0xff < 0) (unsigned compare)
+    mov         byte [buffer], %%temph      ; buffer[0] = temp[1]
+    cmp         %%temph, 0xff               ; temp[1] - 0xff ?
+    mov         byte [buffer+1], 0          ; buffer[1] = 0
+    sbb         buffer, -2                  ; buffer -= -2 + (temp[1] - 0xff < 0) (unsigned compare)
+    shr         %%temp, 16                  ; temp >>= 16 (unsigned arithmetic)
+    mov         byte [buffer], %%tempb      ; buffer[0] = temp[0]
+    cmp         %%tempb, 0xff               ; temp[0] - 0xff ?
+    mov         byte [buffer+1], 0          ; buffer[1] = 0
+    sbb         buffer, -2                  ; buffer -= -2 + (temp[0] - 0xff < 0) (unsigned compare)
+    mov         byte [buffer], %%temph      ; buffer[0] = temp[1]
+    cmp         %%temph, 0xff               ; temp[1] - 0xff ?
+    mov         byte [buffer+1], 0          ; buffer[1] = 0
+    sbb         buffer, -2                  ; buffer -= -2 + (temp[1] - 0xff < 0) (unsigned compare)
+    movd        nbits, code                 ; size = (uint32_t)(c)
+%ifidn %%temp, nbits_base
+    movd        nbits_base, save_nbits      ; restore nbits_base
+%endif
+    bswap       nbits                       ; size = htonl(size)
+    mov         byte [buffer], nbitsb       ; buffer[0] = size[0]
+    cmp         nbitsb, 0xff                ; size[0] - 0xff ?
+    mov         byte [buffer+1], 0          ; buffer[1] = 0
+    sbb         buffer, -2                  ; buffer -= -2 + (size[0] - 0xff < 0) (unsigned compare)
+    mov         byte [buffer], nbitsh       ; buffer[0] = size[1]
+    cmp         nbitsh, 0xff                ; size[1] - 0xff ?
+    mov         byte [buffer+1], 0          ; buffer[1] = 0
+    sbb         buffer, -2                  ; buffer -= -2 + (size[1] - 0xff < 0) (unsigned compare)
+    shr         nbits, 16                   ; size >>= 16 (unsigned arithmetic)
+    mov         byte [buffer], nbitsb       ; buffer[0] = size[0]
+    cmp         nbitsb, 0xff                ; size[0] - 0xff ?
+    mov         byte [buffer+1], 0          ; buffer[1] = 0
+    sbb         buffer, -2                  ; buffer -= -2 + (size[0] - 0xff < 0) (unsigned compare)
+    mov         byte [buffer], nbitsh       ; buffer[0] = size[1]
+    %%insn1
+    cmp         nbitsh, 0xff                ; size[1] - 0xff ?
+    mov         byte [buffer+1], 0          ; buffer[1] = 0
+    sbb         buffer, -2                  ; buffer -= -2 + (size[1] - 0xff < 0) (unsigned compare)
+    %%insn2
+    %%insn3
+    %%insn4
+    %%insn5
+    %%insn6                                 ; return
+%endmacro
+
+%macro PUSH 1
+    push        %1
+%ifidn frame, esp
+%assign stack_offset stack_offset + 4
+%endif
+%endmacro
+
+%macro POP 1
+    pop         %1
+%ifidn frame, esp
+%assign stack_offset stack_offset - 4
+%endif
+%endmacro
+
+; Macro to load the address of a symbol defined in this file into a register if PIC is defined.
+; Equivalent to
+; get_GOT %1
+; lea %1, [GOTOFF(%1, %2)]
+; without using the GOT.
+; Optional arguments may be multi line macros to execute between call/ret/jmp.
+; If PIC is not defined, only execute extra instructions.
+%macro GET_SYM 2-4 ; reg, sym, insn1, insn2
+%ifdef PIC
+    call        %%.geteip
+%%.ref:
+    %4
+    add         %1, %2 - %%.ref
+    jmp         short %%.done
+align 32
+%%.geteip:
+    %3          4  ; indicate stack pointer adjustment due to call
+    mov         %1, POINTER [esp]
+    ret
+align 32
+%%.done:
+%else
+    %3          0
+    %4
+%endif
 %endmacro
 
 ;
@@ -155,274 +252,423 @@ EXTN(jconst_huff_encode_one_block):
 ;                                  JCOEFPTR block, int last_dc_val,
 ;                                  c_derived_tbl *dctbl, c_derived_tbl *actbl)
 ;
+; stack layout:
+;
+; function args
+; return address
+; saved ebx
+; saved ebp
+; saved esi
+; saved edi   <- esp_save
+; ...
+; esp_save
+; t_ 64*2 bytes  aligned at 128 bytes
+; esp is used (as t) to point into t_ (data in lower indexes
+; is not used once esp passes over them, so this is signal safe).
+; Realigning to 128 bytes allows us to find the rest of the data again.
 
-; eax + 8 = working_state *state
-; eax + 12 = JOCTET *buffer
-; eax + 16 = JCOEFPTR block
-; eax + 20 = int last_dc_val
-; eax + 24 = c_derived_tbl *dctbl
-; eax + 28 = c_derived_tbl *actbl
+; Notes:
+; When shuffling data we try to avoid pinsrw as much as possible as it is slow on many processors.
+; Its reciprocal throughput (issue latency) is 1 even on modern cpus, so chains
+; even with different outputs can limit performance. pinsrw is a vectorpath instruction
+; on amd K8 and requires 2 µops (with mem operand) on intel. In either case only one pinsrw
+; instruction can be decoded per cycle (and nothing else if they are back to back) so out-of-order
+; execution cannot be used to work around long pinsrw chains, though for Sandy Bridge and later
+; this may be less of a problem if the code runs out of the µop cache.
+;
+; We use tzcnt instead of bsf without checking for support, the instruction is executed
+; as bsf on processors that don't support tzcnt (encoding is equivalent to rep bsf).
+; bsf (and tzcnt on some processors) carries an input dependency on its first operand
+; (although formally undefinied, intel processors usually leave the destination
+; unmodified, if source is zero). This can prevent out-of-order execution, therefore we
+; clear dst before tzcnt.
 
-%define pad         6 * SIZEOF_DWORD    ; Align to 16 bytes
-%define t1          pad
-%define t2          t1 + (DCTSIZE2 * SIZEOF_WORD)
-%define block       t2 + (DCTSIZE2 * SIZEOF_WORD)
-%define actbl       block + SIZEOF_DWORD
-%define buffer      actbl + SIZEOF_DWORD
-%define temp        buffer + SIZEOF_DWORD
-%define temp2       temp + SIZEOF_DWORD
-%define temp3       temp2 + SIZEOF_DWORD
-%define temp4       temp3 + SIZEOF_DWORD
-%define temp5       temp4 + SIZEOF_DWORD
-%define gotptr      temp5 + SIZEOF_DWORD  ; void *gotptr
-%define put_buffer  ebx
-%define put_bits    edi
+%assign stack_offset     0
+%define arg_actbl       24 + stack_offset
+%define arg_dctbl       20 + stack_offset
+%define arg_last_dc_val 16 + stack_offset
+%define arg_block       12 + stack_offset
+%define arg_buffer       8 + stack_offset
+%define arg_state        4 + stack_offset
 
     align       32
     GLOBAL_FUNCTION(jsimd_huff_encode_one_block_sse2)
 
 EXTN(jsimd_huff_encode_one_block_sse2):
-    push        ebp
-    mov         eax, esp                     ; eax = original ebp
-    sub         esp, byte 4
-    and         esp, byte (-SIZEOF_XMMWORD)  ; align to 128 bits
-    mov         [esp], eax
-    mov         ebp, esp                     ; ebp = aligned ebp
-    sub         esp, temp5+9*SIZEOF_DWORD-pad
-    push        ebx
-    push        ecx
-;   push        edx                     ; need not be preserved
-    push        esi
-    push        edi
-    push        ebp
 
-    mov         esi, POINTER [eax+8]       ; (working_state *state)
-    mov         put_buffer, DWORD [esi+8]  ; put_buffer = state->cur.put_buffer;
-    mov         put_bits, 64
-    sub         put_bits, DWORD [esi+16]   ; put_bits = state->cur.put_bits;
-    push        esi                        ; esi is now scratch
+; initial register allocation
+; eax - frame -> buffer
+; ebx - nbits_base (PIC) / emit_temp
+; ecx - dctbl -> size
+; edx - block -> nbits
+; esi - code_temp -> actbl
+; edi - index_temp -> free_bits
+; ebp - index
+; esp - t
 
-    get_GOT     edx                        ; get GOT address
-    movpic      POINTER [esp+gotptr], edx  ; save GOT address
+; step 1: arrange input data according to jpeg_natural_order
+;  0                       d3 d2 b6 b5 a5 a4 a0 xx a b   d             a7 a6 a5 a4 a3 a2 a1 a0
+;  8                    f1 d4 d1 b7 b4 a6 a3 a1    a b   d   f         b7 b6 b5 b4 b3 b2 b1 b0
+; 16                 f2 f0 d5 d0 c0 b3 a7 a2       a b c d   f         c7 c6 c5 c4 c3 c2 c1 c0
+; 24              g4 f3 e7 d6 c7 c1 b2 b0            b c d e f g   ==> d7 d6 d5 d4 d3 d2 d1 d0
+; 32           g5 g3 f4 e6 d7 c6 c2 b1               b c d e f g       e7 e6 e5 e4 e3 e2 e1 e0
+; 40        h3 g6 g2 f5 e5 e0 c5 c3                    c   e f g h     f7 f6 f5 f4 f3 f2 f1 f0
+; 48     h4 h2 g7 g1 f6 e4 e1 c4                       c   e f g h     g7 g6 g5 g4 g3 g2 g1 g0
+; 56  h6 h5 h1 h0 g0 f7 e3 e2                              e f g h     00 h6 h5 h4 h3 h2 h1 h0
 
-    mov         ecx, POINTER [eax+28]
-    mov         edx, POINTER [eax+16]
-    mov         esi, POINTER [eax+12]
-    mov         POINTER [esp+actbl], ecx
-    mov         POINTER [esp+block], edx
-    mov         POINTER [esp+buffer], esi
+%ifdef PIC
+%define nbits_base     ebx
+%endif
+%define emit_temp      ebx
+%define emit_temph     bh
+%define emit_tempb     bl
+%define dctbl          ecx
+%define block          edx
+%define code_temp      esi
+%define index_temp     edi
+%define index          ebp
+                                                         ; i: 0..7
+%define frame   esp
+    mov         block, [frame + arg_block]
+    PUSH        ebx
+    PUSH        ebp
+    movups      xmm3, XMMWORD [block +  0 * SIZEOF_WORD] ; w3: d3 d2 b6 b5 a5 a4 a0 xx
+    PUSH        esi
+    PUSH        edi
+    movdqa      xmm0, xmm3                               ; w0: d3 d2 b6 b5 a5 a4 a0 xx
+    mov         eax, esp
+%define frame   eax
+%define t       esp
+%assign save_frame     DCTSIZE2 * SIZEOF_WORD
+    lea         t, [frame - (save_frame + 4)]
+    movups      xmm1, XMMWORD [block +  8 * SIZEOF_WORD] ; w1: f1 d4 d1 b7 b4 a6 a3 a1
+    and         t, -DCTSIZE2 * SIZEOF_WORD                                             ; t = &t_[0]
+    mov         [t + save_frame], frame
+    pxor        xmm4, xmm4                               ; w4[i] = 0
+    punpckldq   xmm0, xmm1                               ; w0: b4 a6 a5 a4 a3 a1 a0 xx
+    pshuflw     xmm0, xmm0, 11001001b                    ; w0: b4 a6 a5 a4 a3 xx a1 a0
+    pinsrw      xmm0, word [block + 16 * SIZEOF_WORD], 2 ; w0: b4 a6 a5 a4 a3 a2 a1 a0
+    punpckhdq   xmm3, xmm1                               ; w3: f1 d4 d3 d2 d1 b7 b6 b5
+    punpcklqdq  xmm1, xmm3                               ; w1: d1 b7 b6 b5 b4 a6 a3 a1
+    pinsrw      xmm0, word [block + 17 * SIZEOF_WORD], 7 ; w0: a7 a6 a5 a4 a3 a2 a1 a0
+    pcmpgtw     xmm4, xmm0                               ; w4[i] = -(w4[i] > w0[i])
+    paddw       xmm0, xmm4                               ; w0[i] += w4[i]
+    movaps      XMMWORD [t + 0 * SIZEOF_WORD], xmm0      ; t[i] = w0[i]
+    movq        xmm2, qword [block + 24 * SIZEOF_WORD]   ; w2: 00 00 00 00 c7 c1 b2 b0
+    pshuflw     xmm2, xmm2, 11011000b                    ; w2: 00 00 00 00 c7 b2 c1 b0
+    pslldq      xmm1, 1 * SIZEOF_WORD                    ; w1: b7 b6 b5 b4 a6 a3 a1 00
+    movups      xmm5, XMMWORD [block + 48 * SIZEOF_WORD] ; w5: h4 h2 g7 g1 f6 e4 e1 c4
+    movsd       xmm1, xmm2                               ; w1: b7 b6 b5 b4 c7 b2 c1 b0
+    punpcklqdq  xmm2, xmm5                               ; w2: f6 e4 e1 c4 c7 b2 c1 b0
+    pinsrw      xmm1, word [block + 32 * SIZEOF_WORD], 1 ; w1: b7 b6 b5 b4 c7 b2 b1 b0
+    pxor        xmm4, xmm4                               ; w4[i] = 0
+    psrldq      xmm3, 2 * SIZEOF_WORD                    ; w3: 00 00 f1 d4 d3 d2 d1 b7
+    pcmpeqw     xmm0, xmm4                               ; w0[i] = -(w0[i] == w4[i])
+    pinsrw      xmm1, word [block + 18 * SIZEOF_WORD], 3 ; w1: b7 b6 b5 b4 b3 b2 b1 b0
+    pcmpgtw     xmm4, xmm1                               ; w4[i] = -(w4[i] > w1[i])
+    paddw       xmm1, xmm4                               ; w1[i] += w4[i]
+    movaps      XMMWORD [t + 8 * SIZEOF_WORD], xmm1      ; t[i+8] = w1[i]
+    pxor        xmm4, xmm4                               ; w4[i] = 0
+    pcmpeqw     xmm1, xmm4                               ; w1[i] = -(w1[i] == w4[i])
+    packsswb    xmm0, xmm1                               ; b0[i] = w0[i], b0[i+8] = w1[i], sign saturated
+    pinsrw      xmm3, word [block + 20 * SIZEOF_WORD], 0 ; w3: 00 00 f1 d4 d3 d2 d1 d0
+    pinsrw      xmm3, word [block + 21 * SIZEOF_WORD], 5 ; w3: 00 00 d5 d4 d3 d2 d1 d0
+    pinsrw      xmm3, word [block + 28 * SIZEOF_WORD], 6 ; w3: 00 f6 d5 d4 d3 d2 d1 d0
+    pinsrw      xmm3, word [block + 35 * SIZEOF_WORD], 7 ; w3: d7 d6 d5 d4 d3 d2 d1 d0
+    pcmpgtw     xmm4, xmm3                               ; w4[i] = -(w4[i] > w3[i])
+    paddw       xmm3, xmm4                               ; w3[i] += w4[i]
+    movaps      XMMWORD [t + 24 * SIZEOF_WORD], xmm3     ; t[i+24] = w3[i]
+    pxor        xmm4, xmm4                               ; w4[i] = 0
+    pcmpeqw     xmm3, xmm4                               ; w3[i] = -(w3[i] == w4[i])
+    pinsrw      xmm2, word [block + 19 * SIZEOF_WORD], 0 ; w2: f6 e4 e1 c4 c7 b2 c1 c0
+    pinsrw      xmm2, word [block + 33 * SIZEOF_WORD], 2 ; w2: f6 e4 e1 c4 c7 c2 c1 c0
+    pinsrw      xmm2, word [block + 40 * SIZEOF_WORD], 3 ; w2: f6 e4 e1 c4 c3 c2 c1 c0
+    pinsrw      xmm2, word [block + 41 * SIZEOF_WORD], 5 ; w2: f6 e4 c5 c4 c3 c2 c1 c0
+    pinsrw      xmm2, word [block + 34 * SIZEOF_WORD], 6 ; w2: f6 c6 c5 c4 c3 c2 c1 c0
+    pinsrw      xmm2, word [block + 27 * SIZEOF_WORD], 7 ; w2: c7 c6 c5 c4 c3 c2 c1 c0
+    pcmpgtw     xmm4, xmm2                               ; w4[i] = -(w4[i] > w2[i])
+    paddw       xmm2, xmm4                               ; w2[i] += w4[i]
+    movsx       code_temp, word [block]                                                ; code_temp = block[0];
+%macro GET_SYM_INSN1 1
+    movaps      XMMWORD [t + 16 * SIZEOF_WORD + %1], xmm2; t[i+16] = w2[i]
+    pxor        xmm4, xmm4                               ; w4[i] = 0
+    pcmpeqw     xmm2, xmm4                               ; w2[i] = -(w2[i] == w4[i])
+    sub         code_temp, [frame + arg_last_dc_val]                                   ; code_temp -= last_dc_val;
+    packsswb    xmm2, xmm3                               ; b2[i] = w2[i], b2[i+8] = w3[i], sign saturated
+    movdqa      xmm3, xmm5                               ; w3: h4 h2 g7 g1 f6 e4 e1 c4
+    pmovmskb    index_temp, xmm2                                                       ; index_temp = (((b2[i] >> 7) << i) | ...);
+    pmovmskb    index, xmm0                                                            ; index = (((b0[i] >> 7) << i) | ...);
+    movups      xmm0, XMMWORD [block + 56 * SIZEOF_WORD] ; w0: h6 h5 h1 h0 g0 f7 e3 e2
+    punpckhdq   xmm3, xmm0                               ; w3: h6 h5 h4 h2 h1 h0 g7 g1
+    shl         index_temp, 16                                                         ; index_temp <<= 16;
+    psrldq      xmm3, 1 * SIZEOF_WORD                    ; w3: 00 h6 h5 h4 h2 h1 h0 g7
+    pxor        xmm2, xmm2                               ; w2[i] = 0
+    pshuflw     xmm3, xmm3, 00111001b                    ; w3: 00 h6 h5 h4 g7 h2 h1 h0
+    or          index, index_temp                                                      ; index |= index_temp
+; index_temp -> free_bits
+%xdefine free_bits index_temp
+%undef index_temp
+%endmacro
 
-    ; Encode the DC coefficient difference per section F.1.2.1
-    mov         esi, POINTER [esp+block]  ; block
-    movsx       ecx, word [esi]           ; temp = temp2 = block[0] - last_dc_val;
-    sub         ecx, DWORD [eax+20]
-    mov         esi, ecx
+%macro GET_SYM_INSN2 0
+    movq        xmm1, qword [block + 44 * SIZEOF_WORD]   ; w1: 00 00 00 00 h3 g6 g2 f5
+    unpcklps    xmm5, xmm0                               ; w5: g0 f7 f6 e4 e3 e2 e1 c4
+    pxor        xmm0, xmm0                               ; w0[i] = 0
+    not         index                                                                  ; index = ~index;
+    pinsrw      xmm3, word [block + 47 * SIZEOF_WORD], 3 ; w3: 00 h6 h5 h4 h3 h2 h1 h0
+    pcmpgtw     xmm2, xmm3                               ; w2[i] = -(w2[i] > w3[i])
+    mov         dctbl, [frame + arg_dctbl]
+    paddw       xmm3, xmm2                               ; w3[i] += w2[i]
+    movaps      XMMWORD [t + 56 * SIZEOF_WORD], xmm3     ; t[i+56] = w3[i]
+    movq        xmm4, qword [block + 36 * SIZEOF_WORD]   ; w4: 00 00 00 00 g5 g3 f4 e6
+    pcmpeqw     xmm3, xmm0                               ; w3[i] = -(w3[i] == w[0])
+    punpckldq   xmm4, xmm1                               ; w4: h3 g6 g5 g3 g2 f5 f4 e6
+    movdqa      xmm1, xmm4                               ; w1: h3 g6 g5 g3 g2 f5 f4 e6
+    pcmpeqw     all_0xff, all_0xff                       ; all_0xff[i] = 0xff
+%endmacro
 
-    ; This is a well-known technique for obtaining the absolute value
-    ; with out a branch.  It is derived from an assembly language technique
-    ; presented in "How to Optimize for the Pentium Processors",
-    ; Copyright (c) 1996, 1997 by Agner Fog.
-    mov         edx, ecx
-    sar         edx, 31                 ; temp3 = temp >> (CHAR_BIT * sizeof(int) - 1);
-    xor         ecx, edx                ; temp ^= temp3;
-    sub         ecx, edx                ; temp -= temp3;
+    GET_SYM     nbits_base, jpeg_nbits_table, GET_SYM_INSN1, GET_SYM_INSN2
 
-    ; For a negative input, want temp2 = bitwise complement of abs(input)
-    ; This code assumes we are on a two's complement machine
-    add         esi, edx                ; temp2 += temp3;
-    mov         DWORD [esp+temp], esi   ; backup temp2 in temp
+    psrldq      xmm4, 1 * SIZEOF_WORD                    ; w4: 00 h3 g6 g5 g3 g2 f5 f4
+    shufpd      xmm1, xmm5, 10b                          ; w1: g0 f7 f6 e4 g2 f5 f4 e6
+    pshufhw     xmm4, xmm4, 11010011b                    ; w4: 00 g6 g5 00 g3 g2 f5 f4
+    pslldq      xmm1, 1 * SIZEOF_WORD                    ; w1: f7 f6 e4 g2 f5 f4 e6 00
+    pinsrw      xmm4, word [block + 59 * SIZEOF_WORD], 0 ; w4: 00 g6 g5 00 g3 g2 f5 g0
+    pshufd      xmm1, xmm1, 11011000b                    ; w1: f7 f6 f5 f4 e4 g2 e6 00
+    cmp         code_temp, 1 << 31                                                     ; code_temp - (1u << 31) ?
+    pinsrw      xmm4, word [block + 52 * SIZEOF_WORD], 1 ; w4: 00 g6 g5 00 g3 g2 g1 g0
+    movlps      xmm1, qword [block + 20 * SIZEOF_WORD]   ; w1: f7 f6 f5 f4 f2 f0 d5 d0
+    pinsrw      xmm4, word [block + 31 * SIZEOF_WORD], 4 ; w4: 00 g6 g5 g4 g3 g2 g1 g0
+    pshuflw     xmm1, xmm1, 01110010b                    ; w1: f7 f6 f5 f4 d5 f2 d0 f0
+    pinsrw      xmm4, word [block + 53 * SIZEOF_WORD], 7 ; w4: g7 g6 g5 g4 g3 g2 g1 g0
+    adc         code_temp, -1                                                          ; code_temp += -1 + (code_temp >= 0);
+    pxor        xmm2, xmm2                               ; w2[i] = 0
+    pcmpgtw     xmm0, xmm4                               ; w0[i] = -(w0[i] < w4[i])
+    pinsrw      xmm1, word [block + 15 * SIZEOF_WORD], 1 ; w1: f7 f6 f5 f4 d5 f2 f1 f0
+    paddw       xmm4, xmm0                               ; w4[i] += w0[i]
+    movaps      XMMWORD [t + 48 * SIZEOF_WORD], xmm4     ; t[48+i] = w4[i]
+    movd        mmtemp, code_temp                                                      ; mmtemp = code_temp
+    pinsrw      xmm1, word [block + 30 * SIZEOF_WORD], 3 ; w1: f7 f6 f5 f4 f3 f2 f1 f0
+    pcmpeqw     xmm4, xmm2                               ; w4[i] = -(w4[i] == w2[i])
+    packsswb    xmm4, xmm3                               ; b4[i] = w4[i], b4[i+8] = w3[i], sign saturated
+    lea         t, [t - SIZEOF_WORD]                                                   ; t = &t[-1]
+    pxor        xmm0, xmm0                               ; w0[i] = 0
+    pcmpgtw     xmm2, xmm1                               ; w2[i] = -(w2[i] < w1[i])
+    paddw       xmm1, xmm2                               ; w1[i] += w2[i]
+    movaps      XMMWORD [t + (40+1) * SIZEOF_WORD], xmm1 ; t[40+i] = w1[i]
+    pcmpeqw     xmm1, xmm0                               ; w1[i] = -(w1[i] == w0[i])
+    pinsrw      xmm5, word [block + 42 * SIZEOF_WORD], 0 ; w5: g0 f7 f6 e4 e3 e2 e1 e0
+    pinsrw      xmm5, word [block + 43 * SIZEOF_WORD], 5 ; w5: g0 f7 e5 e4 e3 e2 e1 e0
+    pinsrw      xmm5, word [block + 36 * SIZEOF_WORD], 6 ; w5: g0 e6 e5 e4 e3 e2 e1 e0
+    pinsrw      xmm5, word [block + 29 * SIZEOF_WORD], 7 ; w5: e7 e6 e5 e4 e3 e2 e1 e0
+; block -> nbits
+%xdefine nbits  block
+%define nbitsh dh
+%define nbitsb dl
+%undef block
+    movzx       nbits, byte [NBITS_(code_temp)]                                        ; nbits = JPEG_NBITS_(code_temp);
+%xdefine actbl code_temp
+%undef code_temp
+    pxor        xmm2, xmm2                               ; w2[i] = 0
+    mov         actbl, [frame + arg_state]
+    movd        code_bits, nbits                                                       ; code_bits = nbits;
+    pcmpgtw     xmm0, xmm5                               ; w5[i] = -(w5[i] < w0[i])
+    movd        code, dword [dctbl + c_derived_tbl.ehufco + nbits * 4]                 ; code = dctbl->ehufco[nbits];
+%xdefine size dctbl
+%define sizeh ch
+%define sizeb cl
+    paddw       xmm5, xmm0                               ; w5[i] += w0[i]
+    movaps      XMMWORD [t + (32+1) * SIZEOF_WORD], xmm5 ; t[i] = w0[i]
+    movzx       size, byte [dctbl + c_derived_tbl.ehufsi + nbits]                      ; size = dctbl->ehufsi[nbits];
+%undef dctbl
+    pcmpeqw     xmm5, xmm2                               ; w5[i] = -(w5[i] == w2[i])
+    packsswb    xmm5, xmm1                               ; b5[i] = w5[i], b5[i+8] = w1[i], sign saturated
+    movq        put_buffer, [actbl + working_state.cur.put.buffer_simd]                ; put_buffer = state->cur.put.buffer;
+    mov         free_bits, [actbl + working_state.cur.free_bits]                       ; free_bits -= state->cur.free_bits;
+    mov         actbl, [frame + arg_actbl]
+%define buffer eax
+    mov         buffer, [frame + arg_buffer]
+%undef frame
+    jmp        .BEGIN
+    align       16
+; size <= 32, so not really a loop
+.BRLOOP1:                                                             ; .BRLOOP1:
+    movzx       nbits, byte [actbl + c_derived_tbl.ehufsi + 0xf0]     ;     nbits = actbl->ehufsi[0xf0];
+    movd        code, dword [actbl + c_derived_tbl.ehufco + 0xf0 * 4] ;     code = actbl->ehufco[0xf0];
+    and         index, 0x7ffffff ; clear index if size == 32          ;     index &= 0x7fffffff; // fix case size == 32
+    sub         size, 16                                              ;     size -= 16;
+    sub         free_bits, nbits                                      ;     if ((free_bits -= nbits) <= 0)
+    jle         .EMIT_BRLOOP1                                         ;         insert code and flush put_buffer
+    movd        code_bits, nbits                                      ;     else { code_bits = nbits;
+    psllq       put_buffer, code_bits                                 ;         put_buffer <<= code_bits;
+    por         put_buffer, code                                      ;         put_buffer |= code;
+    jmp        .ERLOOP1                                               ;     goto .ERLOOP1;
+    align       16
+%ifdef PIC
+    times 6 nop
+%else
+    times 2 nop
+%endif
+.BLOOP1:                                                                                       ; do { // size == #zero bits/elements to skip
+; if size == 32 index remains unchanged, correct in BRLOOP
+    shr         index, sizeb                                                                   ;    index >>= size;
+    lea         t, [t + size * SIZEOF_WORD]                                                    ;    t += size;
+    cmp         size, 16                                                                       ;    if (size > 16)
+    jg          .BRLOOP1                                                                       ;        goto .BRLOOP1;
+.ERLOOP1:                                                                                      ; .ERLOOP1:
+    movsx       nbits, word [t]                                                                ;     nbits = *t;
+%ifdef PIC
+    add         size, size                                                                     ;     size += size;
+%else
+    lea         size, [size * 2]                                                               ;     size += size;
+%endif
+    movd        mmtemp, nbits                                                                  ;     mmtemp = nbits;
+    movzx       nbits, byte [NBITS_(nbits)]                                                    ;     nbits = JPEG_NBITS_(nbits);
+    lea         size, [size * 8 + nbits]                                                       ;     size = size * 8 + nbits;
+    movd        code_bits, nbits                                                               ;     code_bits = nbits;
+    movd        code, dword [actbl + c_derived_tbl.ehufco + (size - 16) * 4]                   ;     code = actbl->ehufco[size-16];
+    movzx       size, byte [actbl + c_derived_tbl.ehufsi + (size - 16)]                        ;     size = actbl->ehufsi[size-16];
+.BEGIN:                                                                                        ; .BEGIN:
+    pand        mmtemp, [MASK_BITS(nbits)]                                                     ;     mmtemp &= (1 << nbits) - 1;
+    psllq       code, code_bits                                                                ;     code <<= code_bits;
+    add         nbits, size                                                                    ;     nbits += size;
+    por         code, mmtemp                                                                   ;     code |= mmtemp;
+    sub         free_bits, nbits                                                               ;     if ((free_bits -= nbits) <= 0)
+    jle         .EMIT_ERLOOP1                                                                  ;         insert code,flush put_buffer, init size, goto BLOOP
+    xor         size, size ; kill tzcnt input dependency                                       ;     size = 0;
+    tzcnt       size, index                                                                    ;     size = #trailing 0-bits in index
+    movd        code_bits, nbits                                                               ;     code_bits = nbits;
+    psllq       put_buffer, code_bits                                                          ;     put_buffer <<= code_bits;
+    inc         size                                                                           ;     ++size;
+    por         put_buffer, code                                                               ;     put_buffer |= code;
+    test        index, index                                                                   ;     index & index ?
+    jnz         .BLOOP1                                                                        ; } while (index != 0);
+; round 2
+; t points to the last used word, possibly below t_ if previous index had 32 zero bits
+.ELOOP1:
+    pmovmskb    size, xmm4                                                                     ; size = (((b4[i] >> 7) << i) | ...);
+    pmovmskb    index, xmm5                                                                    ; index = (((b5[i] >> 7) << i) | ...);
+    shl         size, 16                                                                       ; size <<= 16;
+    or          index, size                                                                    ; index |= size;
+    not         index                                                                          ; index = ~index;
+    lea         nbits, [t + (1 + DCTSIZE2) * SIZEOF_WORD]                                      ; nbits = t + 1 + 64
+    and         nbits, -DCTSIZE2 * SIZEOF_WORD                                                 ; nbits &= -128 // now points at &t_[64]
+    sub         nbits, t                                                                       ; nbits -= t;
+    shr         nbits, 1 ; #leading-zero-bits_old_index + 33                                   ; nbits >>= 1;
+    tzcnt       size, index                                                                    ; size = #trailing 0-bits in index
+    inc         size                                                                           ; ++size;
+    test        index, index                                                                   ; index & index ?
+    jz          .ELOOP2                                                                        ; if (index == 0) goto .ELOOP2;
+; note: size == 32 cannot happen, since the last element is always 0
+    shr         index, sizeb                                                                   ; index >>= size;
+    lea         size, [size + nbits - 33]                                                      ; size = size + nbits - 33;
+    lea         t, [t + size * SIZEOF_WORD]                                                    ; t += size;
+    cmp         size, 16                                                                       ; if (size <= 16)
+    jle         .ERLOOP2                                                                       ;     goto .ERLOOP2;
+.BRLOOP2:                                                                                      ; .BRLOOP2: do {
+    movzx       nbits, byte [actbl + c_derived_tbl.ehufsi + 0xf0]                              ;    nbits = actbl->ehufsi[0xf0];
+    sub         size, 16                                                                       ;    size -= 16;
+    movd        code, dword [actbl + c_derived_tbl.ehufco + 0xf0 * 4]                          ;    code = actbl->ehufco[0xf0];
+    sub         free_bits, nbits                                                               ;    if ((free_bits -= nbits) <= 0)
+    jle         .EMIT_BRLOOP2                                                                  ;        insert code and flush put_buffer
+    movd        code_bits, nbits                                                               ;    else { code_bits = nbits;
+    psllq       put_buffer, code_bits                                                          ;        put_buffer <<= code_bits;
+    por         put_buffer, code                                                               ;        put_buffer |= code;
+    cmp         size, 16                                                                       ;    if (size <= 16)
+    jle        .ERLOOP2                                                                        ;        goto .ERLOOP2;
+    jmp        .BRLOOP2                                                                        ; } while(1);
 
-    ; Find the number of bits needed for the magnitude of the coefficient
-    movpic      ebp, POINTER [esp+gotptr]                        ; load GOT address (ebp)
-    movzx       edx, byte [GOTOFF(ebp, jpeg_nbits_table + ecx)]  ; nbits = JPEG_NBITS(temp);
-    mov         DWORD [esp+temp2], edx                           ; backup nbits in temp2
-
-    ; Emit the Huffman-coded symbol for the number of bits
-    mov         ebp, POINTER [eax+24]         ; After this point, arguments are not accessible anymore
-    mov         eax,  INT [ebp + edx * 4]     ; code = dctbl->ehufco[nbits];
-    movzx       ecx, byte [ebp + edx + 1024]  ; size = dctbl->ehufsi[nbits];
-    EMIT_BITS   eax                           ; EMIT_BITS(code, size)
-
-    mov         ecx, DWORD [esp+temp2]        ; restore nbits
-
-    ; Mask off any extra bits in code
-    mov         eax, 1
-    shl         eax, cl
-    dec         eax
-    and         eax, DWORD [esp+temp]   ; temp2 &= (((JLONG)1)<<nbits) - 1;
-
-    ; Emit that number of bits of the value, if positive,
-    ; or the complement of its magnitude, if negative.
-    EMIT_BITS   eax                     ; EMIT_BITS(temp2, nbits)
-
-    ; Prepare data
-    xor         ecx, ecx
-    mov         esi, POINTER [esp+block]
-    kloop_prepare  0,  1,  8,  16, 9,  2,  3,  10, 17, 24, 32, 25, \
-                   18, 11, 4,  5,  12, 19, 26, 33, 40, 48, 41, 34, \
-                   27, 20, 13, 6,  7,  14, 21, 28, 35, \
-                   xmm0, xmm1, xmm2, xmm3
-    kloop_prepare  32, 42, 49, 56, 57, 50, 43, 36, 29, 22, 15, 23, \
-                   30, 37, 44, 51, 58, 59, 52, 45, 38, 31, 39, 46, \
-                   53, 60, 61, 54, 47, 55, 62, 63, 63, \
-                   xmm0, xmm1, xmm2, xmm3
-
-    pxor        xmm7, xmm7
-    movdqa      xmm0, XMMWORD [esp + t1 + 0 * SIZEOF_WORD]   ; __m128i tmp0 = _mm_loadu_si128((__m128i *)(t1 + 0));
-    movdqa      xmm1, XMMWORD [esp + t1 + 8 * SIZEOF_WORD]   ; __m128i tmp1 = _mm_loadu_si128((__m128i *)(t1 + 8));
-    movdqa      xmm2, XMMWORD [esp + t1 + 16 * SIZEOF_WORD]  ; __m128i tmp2 = _mm_loadu_si128((__m128i *)(t1 + 16));
-    movdqa      xmm3, XMMWORD [esp + t1 + 24 * SIZEOF_WORD]  ; __m128i tmp3 = _mm_loadu_si128((__m128i *)(t1 + 24));
-    pcmpeqw     xmm0, xmm7              ; tmp0 = _mm_cmpeq_epi16(tmp0, zero);
-    pcmpeqw     xmm1, xmm7              ; tmp1 = _mm_cmpeq_epi16(tmp1, zero);
-    pcmpeqw     xmm2, xmm7              ; tmp2 = _mm_cmpeq_epi16(tmp2, zero);
-    pcmpeqw     xmm3, xmm7              ; tmp3 = _mm_cmpeq_epi16(tmp3, zero);
-    packsswb    xmm0, xmm1              ; tmp0 = _mm_packs_epi16(tmp0, tmp1);
-    packsswb    xmm2, xmm3              ; tmp2 = _mm_packs_epi16(tmp2, tmp3);
-    pmovmskb    edx, xmm0               ; index  = ((uint64_t)_mm_movemask_epi8(tmp0)) << 0;
-    pmovmskb    ecx, xmm2               ; index  = ((uint64_t)_mm_movemask_epi8(tmp2)) << 16;
-    shl         ecx, 16
-    or          edx, ecx
-    not         edx                     ; index = ~index;
-
-    lea         esi, [esp+t1]
-    mov         ebp, POINTER [esp+actbl]  ; ebp = actbl
-
-.BLOOP:
-    bsf         ecx, edx                ; r = __builtin_ctzl(index);
-    jz          near .ELOOP
-    lea         esi, [esi+ecx*2]        ; k += r;
-    shr         edx, cl                 ; index >>= r;
-    mov         DWORD [esp+temp3], edx
-.BRLOOP:
-    cmp         ecx, 16                       ; while (r > 15) {
-    jl          near .ERLOOP
-    sub         ecx, 16                       ; r -= 16;
-    mov         DWORD [esp+temp], ecx
-    mov         eax, INT [ebp + 240 * 4]      ; code_0xf0 = actbl->ehufco[0xf0];
-    movzx       ecx, byte [ebp + 1024 + 240]  ; size_0xf0 = actbl->ehufsi[0xf0];
-    EMIT_BITS   eax                           ; EMIT_BITS(code_0xf0, size_0xf0)
-    mov         ecx, DWORD [esp+temp]
-    jmp         .BRLOOP
-.ERLOOP:
-    movsx       eax, word [esi]                                  ; temp = t1[k];
-    movpic      edx, POINTER [esp+gotptr]                        ; load GOT address (edx)
-    movzx       eax, byte [GOTOFF(edx, jpeg_nbits_table + eax)]  ; nbits = JPEG_NBITS(temp);
-    mov         DWORD [esp+temp2], eax
-    ; Emit Huffman symbol for run length / number of bits
-    shl         ecx, 4                        ; temp3 = (r << 4) + nbits;
-    add         ecx, eax
-    mov         eax,  INT [ebp + ecx * 4]     ; code = actbl->ehufco[temp3];
-    movzx       ecx, byte [ebp + ecx + 1024]  ; size = actbl->ehufsi[temp3];
-    EMIT_BITS   eax
-
-    movsx       edx, word [esi+DCTSIZE2*2]    ; temp2 = t2[k];
-    ; Mask off any extra bits in code
-    mov         ecx, DWORD [esp+temp2]
-    mov         eax, 1
-    shl         eax, cl
-    dec         eax
-    and         eax, edx                ; temp2 &= (((JLONG)1)<<nbits) - 1;
-    EMIT_BITS   eax                     ; PUT_BITS(temp2, nbits)
-    mov         edx, DWORD [esp+temp3]
-    add         esi, 2                  ; ++k;
-    shr         edx, 1                  ; index >>= 1;
-
-    jmp         .BLOOP
-.ELOOP:
-    movdqa      xmm0, XMMWORD [esp + t1 + 32 * SIZEOF_WORD]  ; __m128i tmp0 = _mm_loadu_si128((__m128i *)(t1 + 0));
-    movdqa      xmm1, XMMWORD [esp + t1 + 40 * SIZEOF_WORD]  ; __m128i tmp1 = _mm_loadu_si128((__m128i *)(t1 + 8));
-    movdqa      xmm2, XMMWORD [esp + t1 + 48 * SIZEOF_WORD]  ; __m128i tmp2 = _mm_loadu_si128((__m128i *)(t1 + 16));
-    movdqa      xmm3, XMMWORD [esp + t1 + 56 * SIZEOF_WORD]  ; __m128i tmp3 = _mm_loadu_si128((__m128i *)(t1 + 24));
-    pcmpeqw     xmm0, xmm7              ; tmp0 = _mm_cmpeq_epi16(tmp0, zero);
-    pcmpeqw     xmm1, xmm7              ; tmp1 = _mm_cmpeq_epi16(tmp1, zero);
-    pcmpeqw     xmm2, xmm7              ; tmp2 = _mm_cmpeq_epi16(tmp2, zero);
-    pcmpeqw     xmm3, xmm7              ; tmp3 = _mm_cmpeq_epi16(tmp3, zero);
-    packsswb    xmm0, xmm1              ; tmp0 = _mm_packs_epi16(tmp0, tmp1);
-    packsswb    xmm2, xmm3              ; tmp2 = _mm_packs_epi16(tmp2, tmp3);
-    pmovmskb    edx, xmm0               ; index  = ((uint64_t)_mm_movemask_epi8(tmp0)) << 0;
-    pmovmskb    ecx, xmm2               ; index  = ((uint64_t)_mm_movemask_epi8(tmp2)) << 16;
-    shl         ecx, 16
-    or          edx, ecx
-    not         edx                     ; index = ~index;
-
-    lea         eax, [esp + t1 + (DCTSIZE2/2) * 2]
-    sub         eax, esi
-    shr         eax, 1
-    bsf         ecx, edx                ; r = __builtin_ctzl(index);
-    jz          near .ELOOP2
-    shr         edx, cl                 ; index >>= r;
-    add         ecx, eax
-    lea         esi, [esi+ecx*2]        ; k += r;
-    mov         DWORD [esp+temp3], edx
-    jmp         .BRLOOP2
-.BLOOP2:
-    bsf         ecx, edx                ; r = __builtin_ctzl(index);
-    jz          near .ELOOP2
-    lea         esi, [esi+ecx*2]        ; k += r;
-    shr         edx, cl                 ; index >>= r;
-    mov         DWORD [esp+temp3], edx
-.BRLOOP2:
-    cmp         ecx, 16                       ; while (r > 15) {
-    jl          near .ERLOOP2
-    sub         ecx, 16                       ; r -= 16;
-    mov         DWORD [esp+temp], ecx
-    mov         eax, INT [ebp + 240 * 4]      ; code_0xf0 = actbl->ehufco[0xf0];
-    movzx       ecx, byte [ebp + 1024 + 240]  ; size_0xf0 = actbl->ehufsi[0xf0];
-    EMIT_BITS   eax                           ; EMIT_BITS(code_0xf0, size_0xf0)
-    mov         ecx, DWORD [esp+temp]
-    jmp         .BRLOOP2
-.ERLOOP2:
-    movsx       eax, word [esi]         ; temp = t1[k];
-    bsr         eax, eax                ; nbits = 32 - __builtin_clz(temp);
-    inc         eax
-    mov         DWORD [esp+temp2], eax
-    ; Emit Huffman symbol for run length / number of bits
-    shl         ecx, 4                        ; temp3 = (r << 4) + nbits;
-    add         ecx, eax
-    mov         eax,  INT [ebp + ecx * 4]     ; code = actbl->ehufco[temp3];
-    movzx       ecx, byte [ebp + ecx + 1024]  ; size = actbl->ehufsi[temp3];
-    EMIT_BITS   eax
-
-    movsx       edx, word [esi+DCTSIZE2*2]    ; temp2 = t2[k];
-    ; Mask off any extra bits in code
-    mov         ecx, DWORD [esp+temp2]
-    mov         eax, 1
-    shl         eax, cl
-    dec         eax
-    and         eax, edx                ; temp2 &= (((JLONG)1)<<nbits) - 1;
-    EMIT_BITS   eax                     ; PUT_BITS(temp2, nbits)
-    mov         edx, DWORD [esp+temp3]
-    add         esi, 2                  ; ++k;
-    shr         edx, 1                  ; index >>= 1;
-
-    jmp         .BLOOP2
-.ELOOP2:
-    ; If the last coef(s) were zero, emit an end-of-block code
-    lea         edx, [esp + t1 + (DCTSIZE2-1) * 2]  ; r = DCTSIZE2-1-k;
-    cmp         edx, esi                            ; if (r > 0) {
-    je          .EFN
-    mov         eax,  INT [ebp]                     ; code = actbl->ehufco[0];
-    movzx       ecx, byte [ebp + 1024]              ; size = actbl->ehufsi[0];
-    EMIT_BITS   eax
-.EFN:
-    mov         eax, [esp+buffer]
-    pop         esi
+    align      16
+.BLOOP2:                                                                                       ; .BLOOP2: do {
+    shr         index, sizeb                                                                   ;     index >>= size;
+    lea         t, [t + size * SIZEOF_WORD]                                                    ;     t += size;
+    cmp         size, 16                                                                       ;     if (size > 16)
+    jg          .BRLOOP2                                                                       ;         goto .BRLOOP2;
+.ERLOOP2:                                                                                      ; .ERLOOP2:
+    movsx       nbits, word [t]                                                                ;     nbits = *t;
+    add         size, size                                                                     ;     size *= 2;
+    movd        mmtemp, nbits                                                                  ;     mmtemp = nbits;
+    movzx       nbits, byte [NBITS_(nbits)]                                                    ;     nbits = JPEG_NBITS_(nbits);
+    movd        code_bits, nbits                                                               ;     code_bits = nbits;
+    lea         size, [size * 8 + nbits]                                                       ;     size = size * 8 + nbits;
+    movd        code, dword [actbl + c_derived_tbl.ehufco + (size - 16) * 4]                   ;     code = actbl->ehufco[size-16];
+    movzx       size, byte [actbl + c_derived_tbl.ehufsi + (size - 16)]                        ;     size = actbl->ehufsi[size-16];
+    psllq       code, code_bits                                                                ;     code <<= code_bits;
+    pand        mmtemp, [MASK_BITS(nbits)]                                                     ;     mmtemp &= (1 << nbits) - 1;
+    lea         nbits, [nbits + size]                                                          ;     nbits += size;
+    por         code, mmtemp                                                                   ;     code |= mmtemp;
+    xor         size, size ; kill tzcnt input dependency                                       ;     size = 0;
+    sub         free_bits, nbits                                                               ;     if ((free_bits -= nbits) <= 0)
+    jle         .EMIT_ERLOOP2                                                                  ;         insert code, flush put_buffer, init size, goto BLOOP2
+    tzcnt       size, index                                                                    ;     size = #trailing 0-bits in index
+    movd        code_bits, nbits                                                               ;     code_bits = nbits;
+    psllq       put_buffer, code_bits                                                          ;     put_buffer <<= code_bits;
+    inc         size                                                                           ;     ++size;
+    por         put_buffer, code                                                               ;     put_buffer |= code;
+    test        index, index                                                                   ;     index & index ?
+    jnz         .BLOOP2                                                                        ; } while (index != 0);
+.ELOOP2:                                                                                       ; .ELOOP2:
+    mov         nbits, t                                                                       ; nbits = t;
+    lea         t, [t + SIZEOF_WORD]                                                              ; t = &t[1];
+    and         nbits, DCTSIZE2 * SIZEOF_WORD - 1                                                 ; nbits &= 127;
+    and         t, -DCTSIZE2 * SIZEOF_WORD                                                        ; t &= -128; // &t_[0]
+    cmp         nbits, (DCTSIZE2 - 2) * SIZEOF_WORD                                               ; if (nbits == 62 * 2)
+    je          .EFN                                                                           ;     goto .EFN;
+    movd        code, dword [actbl + c_derived_tbl.ehufco + 0]                                 ; code = actbl->ehufco[0];
+    movzx       nbits, byte [actbl + c_derived_tbl.ehufsi + 0]                                 ; size = actbl->ehufsi[0];
+    sub         free_bits, nbits                                                               ; free_bits -= nbits;
+    jg         .EMIT_EFN_SKIP                                                                  ; if (free_bits <= 0)
+    EMIT_QWORD  size, sizeh, sizeb, , , , , , jmp .EFN                                         ;     insert code, flush put_buffer
+    align      16
+.EMIT_EFN_SKIP:                                                                                ; else {
+    movd        code_bits, nbits                                                               ;     code_bits = free_bits;
+    psllq       put_buffer, code_bits                                                          ;     put_buffer <<= code_bits;
+    por         put_buffer, code                                                               ;     put_buffer |= code;
+.EFN:                                                                                          ; }
+    mov         esp, [t + save_frame]
+%define frame   esp
     ; Save put_buffer & put_bits
-    mov         DWORD [esi+8], put_buffer  ; state->cur.put_buffer = put_buffer;
-    sub         put_bits, 64
-    neg         put_bits
-    mov         DWORD [esi+16], put_bits   ; state->cur.put_bits = put_bits;
-
-    pop         ebp
-    pop         edi
-    pop         esi
-;   pop         edx                     ; need not be preserved
-    pop         ecx
-    pop         ebx
-    mov         esp, ebp                ; esp <- aligned ebp
-    pop         esp                     ; esp <- original ebp
-    pop         ebp
+    mov         size, [frame + arg_state]                                                      ; size = state;
+    movq        [size + working_state.cur.put.buffer_simd], put_buffer                         ; state->cur.put.buffer_size = put_buffer;
+    emms
+    mov         [size + working_state.cur.free_bits], free_bits                                ; state->cur.put_bits = free_bits;
+    POP         edi
+    POP         esi
+    POP         ebp
+    POP         ebx
     ret
+
+    align      16
+.EMIT_BRLOOP1:
+    EMIT_QWORD        emit_temp, emit_temph, emit_tempb, , , , , , \
+      {jmp         .ERLOOP1}
+
+    align      16
+.EMIT_ERLOOP1:
+    EMIT_QWORD        size, sizeh, sizeb, \
+      {xor         size, size}, \
+      {tzcnt       size, index}, \
+      {inc         size}, \
+      {test        index, index}, \
+      {jnz         .BLOOP1}, \
+      {jmp         .ELOOP1}
+
+    align      16
+.EMIT_BRLOOP2:
+    EMIT_QWORD        emit_temp, emit_temph, emit_tempb, , , , \
+      {cmp         size, 16}, \
+      {jle        .ERLOOP2}, \
+      {jmp        .BRLOOP2}
+
+    align      16
+.EMIT_ERLOOP2:
+    EMIT_QWORD        size, sizeh, sizeb, \
+      {xor         size, size}, \
+      {tzcnt       size, index}, \
+      {inc         size}, \
+      {test        index, index}, \
+      {jnz         .BLOOP2}, \
+      {jmp         .ELOOP2}
 
 ; For some reason, the OS X linker does not honor the request to align the
 ; segment unless we do this.
