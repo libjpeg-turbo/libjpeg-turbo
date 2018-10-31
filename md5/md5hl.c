@@ -96,14 +96,18 @@ char *MD5FileChunk(const char *filename, char *buf, off_t ofs, off_t len)
 #endif
   if (f < 0)
     return 0;
-  if (fstat(f, &stbuf) < 0)
+  if (fstat(f, &stbuf) < 0) {
+    close(f);
     return 0;
+  }
   if (ofs > stbuf.st_size)
     ofs = stbuf.st_size;
   if ((len == 0) || (len > stbuf.st_size - ofs))
     len = stbuf.st_size - ofs;
-  if (lseek(f, ofs, SEEK_SET) < 0)
+  if (lseek(f, ofs, SEEK_SET) < 0) {
+    close(f);
     return 0;
+  }
   n = len;
   i = 0;
   while (n > 0) {
