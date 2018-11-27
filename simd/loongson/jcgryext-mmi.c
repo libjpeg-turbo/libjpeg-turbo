@@ -1,17 +1,9 @@
 /*
  * Loongson MMI optimizations for libjpeg-turbo
  *
- * Copyright 2009 Pierre Ossman <ossman@cendio.se> for Cendio AB
- * Copyright (C) 2014-2015, 2019, D. R. Commander.  All Rights Reserved.
- * Copyright (C) 2016-2018, Loongson Technology Corporation Limited, BeiJing.
- *                          All Rights Reserved.
- * Authors:  ZhuChen     <zhuchen@loongson.cn>
- *           SunZhangzhi <sunzhangzhi-cq@loongson.cn>
- *           CaiWanwei   <caiwanwei@loongson.cn>
- *           ZhangLixia  <zhanglixia-hf@loongson.cn>
- *
- * Based on the x86 SIMD extension for IJG JPEG library
- * Copyright (C) 1999-2006, MIYASAKA Masaru.
+ * Copyright (C) 2018, Loongson Technology Corporation Limited, BeiJing.
+ *                     All Rights Reserved.
+ * Authors:  ZhangLixia  <zhanglixia-hf@loongson.cn>
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the authors be held liable for any damages
@@ -30,7 +22,7 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
-/* This file is included by jccolor-mmi.c */
+/* This file is included by jcgray-mmi.c */
 
 
 #if RGB_RED == 0
@@ -90,25 +82,22 @@
 #endif
 
 
-void jsimd_rgb_ycc_convert_mmi(JDIMENSION image_width, JSAMPARRAY input_buf,
+void jsimd_rgb_gray_convert_mmi(JDIMENSION image_width, JSAMPARRAY input_buf,
                                JSAMPIMAGE output_buf, JDIMENSION output_row,
                                int num_rows)
 {
-  JSAMPROW inptr, outptr0, outptr1, outptr2;
+  JSAMPROW inptr, outptr;
   int num_cols, col;
   __m64 mm0, mm1, mm2, mm3, mm4, mm5, mm6, mm7;
-  __m64 wk[7];
-  __m64 Y_BG, Cb_RG, Cr_BG;
+  __m64 Y_BG;
 
   while (--num_rows >= 0) {
     inptr = *input_buf++;
-    outptr0 = output_buf[0][output_row];
-    outptr1 = output_buf[1][output_row];
-    outptr2 = output_buf[2][output_row];
+    outptr = output_buf[0][output_row];
     output_row++;
 
     for (num_cols = image_width; num_cols > 0; num_cols -= 8,
-         outptr0 += 8, outptr1 += 8, outptr2 += 8) {
+         outptr += 8) {
 
 #if RGB_PIXELSIZE == 3
 
@@ -190,9 +179,9 @@ void jsimd_rgb_ycc_convert_mmi(JDIMENSION image_width, JSAMPARRAY input_buf,
           mmG = _mm_load_si64((__m64 *)&inptr[8]);
           mmF = _mm_load_si64((__m64 *)&inptr[16]);
         } else {
-          mmA = _mm_loadu_si64((__m64 *)&inptr[0]);
-          mmG = _mm_loadu_si64((__m64 *)&inptr[8]);
-          mmF = _mm_loadu_si64((__m64 *)&inptr[16]);
+          mmA = _mm_loadgs_si64((__m64 *)&inptr[0]);
+          mmG = _mm_loadgs_si64((__m64 *)&inptr[8]);
+          mmF = _mm_loadgs_si64((__m64 *)&inptr[16]);
         }
         inptr += RGB_PIXELSIZE * 8;
       }
@@ -275,17 +264,10 @@ void jsimd_rgb_ycc_convert_mmi(JDIMENSION image_width, JSAMPARRAY input_buf,
             : "$f0", "$f2", "$8", "$9", "$10", "$11", "$13", "memory"
            );
       } else {
-        if (!(((long)inptr) & 7)) {
-          mmA = _mm_load_si64((__m64 *)&inptr[0]);
-          mmF = _mm_load_si64((__m64 *)&inptr[8]);
-          mmD = _mm_load_si64((__m64 *)&inptr[16]);
-          mmC = _mm_load_si64((__m64 *)&inptr[24]);
-        } else {
-          mmA = _mm_loadu_si64((__m64 *)&inptr[0]);
-          mmF = _mm_loadu_si64((__m64 *)&inptr[8]);
-          mmD = _mm_loadu_si64((__m64 *)&inptr[16]);
-          mmC = _mm_loadu_si64((__m64 *)&inptr[24]);
-        }
+        mmA = _mm_load_si64((__m64 *)&inptr[0]);
+        mmF = _mm_load_si64((__m64 *)&inptr[8]);
+        mmD = _mm_load_si64((__m64 *)&inptr[16]);
+        mmC = _mm_load_si64((__m64 *)&inptr[24]);
         inptr += RGB_PIXELSIZE * 8;
       }
       mmB = mmA;
@@ -324,151 +306,53 @@ void jsimd_rgb_ycc_convert_mmi(JDIMENSION image_width, JSAMPARRAY input_buf,
 
 #endif
 
-      wk[0] = mm0;
-      wk[1] = mm1;
-      wk[2] = mm4;
-      wk[3] = mm5;
-
       mm6 = mm1;
       mm1 = _mm_unpacklo_pi16(mm1, mm3);
       mm6 = _mm_unpackhi_pi16(mm6, mm3);
-      mm7 = mm1;
-      mm4 = mm6;
       mm1 = _mm_madd_pi16(mm1, PW_F0299_F0337);
       mm6 = _mm_madd_pi16(mm6, PW_F0299_F0337);
-      mm7 = _mm_madd_pi16(mm7, PW_MF016_MF033);
-      mm4 = _mm_madd_pi16(mm4, PW_MF016_MF033);
 
-      wk[4] = mm1;
-      wk[5] = mm6;
-
-      mm1 = _mm_loadlo_pi16_f(mm5);
-      mm6 = _mm_loadhi_pi16_f(mm5);
-      mm1 = _mm_srli_pi32(mm1, 1);
-      mm6 = _mm_srli_pi32(mm6, 1);
-
-      mm5 = PD_ONEHALFM1_CJ;
-      mm7 = _mm_add_pi32(mm7, mm1);
-      mm4 = _mm_add_pi32(mm4, mm6);
-      mm7 = _mm_add_pi32(mm7, mm5);
-      mm4 = _mm_add_pi32(mm4, mm5);
-      mm7 = _mm_srli_pi32(mm7, SCALEBITS);
-      mm4 = _mm_srli_pi32(mm4, SCALEBITS);
-      mm7 = _mm_packs_pi32(mm7, mm4);
-
-      mm1 = wk[2];
-      mm6 = mm0;
-      mm0 = _mm_unpacklo_pi16(mm0, mm2);
-      mm6 = _mm_unpackhi_pi16(mm6, mm2);
-      mm5 = mm0;
-      mm4 = mm6;
-      mm0 = _mm_madd_pi16(mm0, PW_F0299_F0337);
-      mm6 = _mm_madd_pi16(mm6, PW_F0299_F0337);
-      mm5 = _mm_madd_pi16(mm5, PW_MF016_MF033);
-      mm4 = _mm_madd_pi16(mm4, PW_MF016_MF033);
-
-      wk[6] = mm0;
-      wk[7] = mm6;
-      mm0 = _mm_loadlo_pi16_f(mm1);
-      mm6 = _mm_loadhi_pi16_f(mm1);
-      mm0 = _mm_srli_pi32(mm0, 1);
-      mm6 = _mm_srli_pi32(mm6, 1);
-
-      mm1 = PD_ONEHALFM1_CJ;
-      mm5 = _mm_add_pi32(mm5, mm0);
-      mm4 = _mm_add_pi32(mm4, mm6);
-      mm5 = _mm_add_pi32(mm5, mm1);
-      mm4 = _mm_add_pi32(mm4, mm1);
-      mm5 = _mm_srli_pi32(mm5, SCALEBITS);
-      mm4 = _mm_srli_pi32(mm4, SCALEBITS);
-      mm5 = _mm_packs_pi32(mm5, mm4);
-
-      mm7 = _mm_slli_pi16(mm7, BYTE_BIT);
-      mm5  = _mm_or_si64(mm5, mm7);
-      Cb_RG = mm5;
-
-      mm0 = wk[3];
-      mm6 = wk[2];
-      mm1 = wk[1];
-
-      mm4 = mm0;
-      mm0 = _mm_unpacklo_pi16(mm0, mm3);
-      mm4 = _mm_unpackhi_pi16(mm4, mm3);
-      mm7 = mm0;
-      mm5 = mm4;
-      mm0 = _mm_madd_pi16(mm0, PW_F0114_F0250);
-      mm4 = _mm_madd_pi16(mm4, PW_F0114_F0250);
-      mm7 = _mm_madd_pi16(mm7, PW_MF008_MF041);
-      mm5 = _mm_madd_pi16(mm5, PW_MF008_MF041);
+      mm7 = mm5;
+      mm5 = _mm_unpacklo_pi16(mm5, mm3);
+      mm7 = _mm_unpackhi_pi16(mm7, mm3);
+      mm5 = _mm_madd_pi16(mm5, PW_F0114_F0250);
+      mm7 = _mm_madd_pi16(mm7, PW_F0114_F0250);
 
       mm3 = PD_ONEHALF;
-      mm0 = _mm_add_pi32(mm0, wk[4]);
-      mm4 = _mm_add_pi32(mm4, wk[5]);
-      mm0 = _mm_add_pi32(mm0, mm3);
-      mm4 = _mm_add_pi32(mm4, mm3);
-      mm0 = _mm_srli_pi32(mm0, SCALEBITS);
-      mm4 = _mm_srli_pi32(mm4, SCALEBITS);
-      mm0 = _mm_packs_pi32(mm0, mm4);
-
-      mm3 = _mm_loadlo_pi16_f(mm1);
-      mm4 = _mm_loadhi_pi16_f(mm1);
-      mm3 = _mm_srli_pi32(mm3, 1);
-      mm4 = _mm_srli_pi32(mm4, 1);
-
-      mm1 = PD_ONEHALFM1_CJ;
-      mm7 = _mm_add_pi32(mm7, mm3);
-      mm5 = _mm_add_pi32(mm5, mm4);
-      mm7 = _mm_add_pi32(mm7, mm1);
       mm5 = _mm_add_pi32(mm5, mm1);
-      mm7 = _mm_srli_pi32(mm7, SCALEBITS);
+      mm7 = _mm_add_pi32(mm7, mm6);
+      mm5 = _mm_add_pi32(mm5, mm3);
+      mm7 = _mm_add_pi32(mm7, mm3);
       mm5 = _mm_srli_pi32(mm5, SCALEBITS);
-      mm7 = _mm_packs_pi32(mm7, mm5);
+      mm7 = _mm_srli_pi32(mm7, SCALEBITS);
+      mm5 = _mm_packs_pi32(mm5, mm7);
 
-      mm3 = wk[0];
-      mm4 = mm6;
-      mm6 = _mm_unpacklo_pi16(mm6, mm2);
-      mm4 = _mm_unpackhi_pi16(mm4, mm2);
-      mm1 = mm6;
-      mm5 = mm4;
-      mm6 = _mm_madd_pi16(mm6, PW_F0114_F0250);
+      mm7 = mm0;
+      mm0 = _mm_unpacklo_pi16(mm0, mm2);
+      mm7 = _mm_unpackhi_pi16(mm7, mm2);
+      mm0 = _mm_madd_pi16(mm0, PW_F0299_F0337);
+      mm7 = _mm_madd_pi16(mm7, PW_F0299_F0337);
+
+      mm6 = mm4;
+      mm4 = _mm_unpacklo_pi16(mm4, mm2);
+      mm6 = _mm_unpackhi_pi16(mm6, mm2);
       mm4 = _mm_madd_pi16(mm4, PW_F0114_F0250);
-      mm1 = _mm_madd_pi16(mm1, PW_MF008_MF041);
-      mm5 = _mm_madd_pi16(mm5, PW_MF008_MF041);
+      mm6 = _mm_madd_pi16(mm6, PW_F0114_F0250);
 
       mm2 = PD_ONEHALF;
-      mm6 = _mm_add_pi32(mm6, wk[6]);
-      mm4 = _mm_add_pi32(mm4, wk[7]);
-      mm6 = _mm_add_pi32(mm6, mm2);
+      mm4 = _mm_add_pi32(mm4, mm0);
+      mm6 = _mm_add_pi32(mm6, mm7);
       mm4 = _mm_add_pi32(mm4, mm2);
-      mm6 = _mm_srli_pi32(mm6, SCALEBITS);
+      mm6 = _mm_add_pi32(mm6, mm2);
       mm4 = _mm_srli_pi32(mm4, SCALEBITS);
-      mm6 = _mm_packs_pi32(mm6, mm4);
+      mm6 = _mm_srli_pi32(mm6, SCALEBITS);
+      mm6 = _mm_packs_pi32(mm4, mm6);
 
-      mm0 = _mm_slli_pi16(mm0, BYTE_BIT);
-      mm6 = _mm_or_si64(mm6, mm0);
+      mm5 = _mm_slli_pi16(mm5, BYTE_BIT);
+      mm6 = _mm_or_si64(mm6, mm5);
       Y_BG = mm6;
 
-      mm2 = _mm_loadlo_pi16_f(mm3);
-      mm4 = _mm_loadhi_pi16_f(mm3);
-      mm2 = _mm_srli_pi32(mm2, 1);
-      mm4 = _mm_srli_pi32(mm4, 1);
-
-      mm0 = PD_ONEHALFM1_CJ;
-      mm1 = _mm_add_pi32(mm1, mm2);
-      mm5 = _mm_add_pi32(mm5, mm4);
-      mm1 = _mm_add_pi32(mm1, mm0);
-      mm5 = _mm_add_pi32(mm5, mm0);
-      mm1 = _mm_srli_pi32(mm1, SCALEBITS);
-      mm5 = _mm_srli_pi32(mm5, SCALEBITS);
-      mm1 = _mm_packs_pi32(mm1, mm5);
-
-      mm7 = _mm_slli_pi16(mm7, BYTE_BIT);
-      mm1 = _mm_or_si64(mm1, mm7);
-      Cr_BG = mm1;
-
-      _mm_store_si64((__m64 *)&outptr0[0], Y_BG);
-      _mm_store_si64((__m64 *)&outptr1[0], Cb_RG);
-      _mm_store_si64((__m64 *)&outptr2[0], Cr_BG);
+      _mm_store_si64((__m64 *)&outptr[0], Y_BG);
     }
   }
 }

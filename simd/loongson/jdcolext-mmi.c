@@ -3,11 +3,12 @@
  *
  * Copyright 2009 Pierre Ossman <ossman@cendio.se> for Cendio AB
  * Copyright (C) 2015, D. R. Commander.  All Rights Reserved.
- * Copyright (C) 2016-2017, Loongson Technology Corporation Limited, BeiJing.
+ * Copyright (C) 2016-2018, Loongson Technology Corporation Limited, BeiJing.
  *                          All Rights Reserved.
  * Authors:  ZhuChen     <zhuchen@loongson.cn>
  *           SunZhangzhi <sunzhangzhi-cq@loongson.cn>
  *           CaiWanwei   <caiwanwei@loongson.cn>
+ *           ZhangLixia  <zhanglixia-hf@loongson.cn>
  *
  * Based on the x86 SIMD extension for IJG JPEG library
  * Copyright (C) 1999-2006, MIYASAKA Masaru.
@@ -259,64 +260,64 @@ void jsimd_ycc_rgb_convert_mmi(JDIMENSION out_width, JSAMPIMAGE input_buf,
         col = num_cols * 3;
         asm(".set noreorder\r\n"
 
-            "li      $8, 16\r\n"
-            "move    $9, %4\r\n"
-            "mov.s   $f4, %1\r\n"
-            "mov.s   $f6, %3\r\n"
-            "move    $10, %5\r\n"
-            "bltu    $9, $8, 1f\r\n"
-            "nop     \r\n"
-            "gssdlc1 $f4, 7($10)\r\n"
-            "gssdrc1 $f4, 0($10)\r\n"
-            "gssdlc1 $f6, 7+8($10)\r\n"
-            "gssdrc1 $f6, 8($10)\r\n"
-            "mov.s   $f4, %2\r\n"
-            "subu    $9, $9, 16\r\n"
-            "daddu   $10, $10, 16\r\n"
-            "b       2f\r\n"
-            "nop     \r\n"
+            "li       $8, 16\r\n"
+            "move     $9, %4\r\n"
+            "mov.s    $f4, %1\r\n"
+            "mov.s    $f6, %3\r\n"
+            "move     $10, %5\r\n"
+            "bltu     $9, $8, 1f\r\n"
+            "nop      \r\n"
+            "gssdlc1  $f4, 7($10)\r\n"
+            "gssdrc1  $f4, 0($10)\r\n"
+            "gssdlc1  $f6, 7+8($10)\r\n"
+            "gssdrc1  $f6, 8($10)\r\n"
+            "mov.s    $f4, %2\r\n"
+            "subu     $9, $9, 16\r\n"
+            PTR_ADDU  "$10, $10, 16\r\n"
+            "b        2f\r\n"
+            "nop      \r\n"
 
-            "1:      \r\n"
-            "li      $8, 8\r\n"               /* st8 */
-            "bltu    $9, $8, 2f\r\n"
-            "nop     \r\n"
-            "gssdlc1 $f4, 7($10)\r\n"
-            "gssdrc1 $f4, ($10)\r\n"
-            "mov.s   $f4, %3\r\n"
-            "subu    $9, $9, 8\r\n"
-            "daddu   $10, $10, 8\r\n"
+            "1:       \r\n"
+            "li       $8, 8\r\n"               /* st8 */
+            "bltu     $9, $8, 2f\r\n"
+            "nop      \r\n"
+            "gssdlc1  $f4, 7($10)\r\n"
+            "gssdrc1  $f4, ($10)\r\n"
+            "mov.s    $f4, %3\r\n"
+            "subu     $9, $9, 8\r\n"
+            PTR_ADDU  "$10, $10, 8\r\n"
 
-            "2:      \r\n"
-            "li      $8, 4\r\n"               /* st4 */
-            "mfc1    $11, $f4\r\n"
-            "bltu    $9, $8, 3f\r\n"
-            "nop     \r\n"
-            "swl     $11, 3($10)\r\n"
-            "swr     $11, 0($10)\r\n"
-            "li      $8, 32\r\n"
-            "mtc1    $8, $f6\r\n"
-            "dsrl    $f4, $f4, $f6\r\n"
-            "mfc1    $11, $f4\r\n"
-            "subu    $9, $9, 4\r\n"
-            "daddu   $10, $10, 4\r\n"
+            "2:       \r\n"
+            "li       $8, 4\r\n"               /* st4 */
+            "mfc1     $11, $f4\r\n"
+            "bltu     $9, $8, 3f\r\n"
+            "nop      \r\n"
+            "swl      $11, 3($10)\r\n"
+            "swr      $11, 0($10)\r\n"
+            "li       $8, 32\r\n"
+            "mtc1     $8, $f6\r\n"
+            "dsrl     $f4, $f4, $f6\r\n"
+            "mfc1     $11, $f4\r\n"
+            "subu     $9, $9, 4\r\n"
+            PTR_ADDU  "$10, $10, 4\r\n"
 
-            "3:      \r\n"
-            "li      $8, 2\r\n"               /* st2 */
-            "bltu    $9, $8, 4f\r\n"
-            "nop     \r\n"
-            "ush     $11, 0($10)\r\n"
-            "srl     $11, 16\r\n"
-            "subu    $9, $9, 2\r\n"
-            "daddu   $10, $10, 2\r\n"
+            "3:       \r\n"
+            "li       $8, 2\r\n"               /* st2 */
+            "bltu     $9, $8, 4f\r\n"
+            "nop      \r\n"
+            "ush      $11, 0($10)\r\n"
+            "srl      $11, 16\r\n"
+            "subu     $9, $9, 2\r\n"
+            PTR_ADDU  "$10, $10, 2\r\n"
 
-            "4:      \r\n"
-            "li      $8, 1\r\n"               /* st1 */
-            "bltu    $9, $8, 5f\r\n"
-            "nop     \r\n"
-            "sb      $11, 0($10)\r\n"
+            "4:       \r\n"
+            "li       $8, 1\r\n"               /* st1 */
+            "bltu     $9, $8, 5f\r\n"
+            "nop      \r\n"
+            "sb       $11, 0($10)\r\n"
 
-            "5:      \r\n"
-            "nop     \r\n"                    /* end */
+            "5:       \r\n"
+            "nop      \r\n"                    /* end */
             : "=m" (*outptr)
             : "f" (mmA), "f" (mmC), "f" (mmE), "r" (col), "r" (outptr)
             : "$f4", "$f6", "$8", "$9", "$10", "$11", "memory"
@@ -366,41 +367,41 @@ void jsimd_ycc_rgb_convert_mmi(JDIMENSION out_width, JSAMPIMAGE input_buf,
         col = num_cols;
         asm(".set noreorder\r\n"              /* st16 */
 
-            "li      $8, 4\r\n"
-            "move    $9, %6\r\n"
-            "move    $10, %7\r\n"
-            "mov.s   $f4, %2\r\n"
-            "mov.s   $f6, %4\r\n"
-            "bltu    $9, $8, 1f\r\n"
-            "nop     \r\n"
-            "gssdlc1 $f4, 7($10)\r\n"
-            "gssdrc1 $f4, ($10)\r\n"
-            "gssdlc1 $f6, 7+8($10)\r\n"
-            "gssdrc1 $f6, 8($10)\r\n"
-            "mov.s   $f4, %3\r\n"
-            "mov.s   $f6, %5\r\n"
-            "subu    $9, $9, 4\r\n"
-            "daddu   $10, $10, 16\r\n"
+            "li       $8, 4\r\n"
+            "move     $9, %6\r\n"
+            "move     $10, %7\r\n"
+            "mov.s    $f4, %2\r\n"
+            "mov.s    $f6, %4\r\n"
+            "bltu     $9, $8, 1f\r\n"
+            "nop      \r\n"
+            "gssdlc1  $f4, 7($10)\r\n"
+            "gssdrc1  $f4, ($10)\r\n"
+            "gssdlc1  $f6, 7+8($10)\r\n"
+            "gssdrc1  $f6, 8($10)\r\n"
+            "mov.s    $f4, %3\r\n"
+            "mov.s    $f6, %5\r\n"
+            "subu     $9, $9, 4\r\n"
+            PTR_ADDU  "$10, $10, 16\r\n"
 
-            "1:      \r\n"
-            "li      $8, 2\r\n"               /* st8 */
-            "bltu    $9, $8, 2f\r\n"
-            "nop     \r\n"
-            "gssdlc1 $f4, 7($10)\r\n"
-            "gssdrc1 $f4, 0($10)\r\n"
-            "mov.s   $f4, $f6\r\n"
-            "subu    $9, $9, 2\r\n"
-            "daddu   $10, $10, 8\r\n"
+            "1:       \r\n"
+            "li       $8, 2\r\n"               /* st8 */
+            "bltu     $9, $8, 2f\r\n"
+            "nop      \r\n"
+            "gssdlc1  $f4, 7($10)\r\n"
+            "gssdrc1  $f4, 0($10)\r\n"
+            "mov.s    $f4, $f6\r\n"
+            "subu     $9, $9, 2\r\n"
+            PTR_ADDU  "$10, $10, 8\r\n"
 
-            "2:      \r\n"
-            "li      $8, 1\r\n"               /* st4 */
-            "bltu    $9, $8, 3f\r\n"
-            "nop     \r\n"
-            "gsswlc1 $f4, 3($10)\r\n"
-            "gsswrc1 $f4, 0($10)\r\n"
+            "2:       \r\n"
+            "li       $8, 1\r\n"               /* st4 */
+            "bltu     $9, $8, 3f\r\n"
+            "nop      \r\n"
+            "gsswlc1  $f4, 3($10)\r\n"
+            "gsswrc1  $f4, 0($10)\r\n"
 
-            "3:      \r\n"
-            "li      %1, 0\r\n"               /* end */
+            "3:       \r\n"
+            "li       %1, 0\r\n"               /* end */
             : "=m" (*outptr), "=r" (col)
             : "f" (mmA), "f" (mmC), "f" (mmD), "f" (mmH), "r" (col),
               "r" (outptr)
