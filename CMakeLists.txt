@@ -1335,8 +1335,8 @@ if(WITH_TURBOJPEG)
     install(TARGETS turbojpeg-static ARCHIVE
       DESTINATION ${CMAKE_INSTALL_LIBDIR})
     if(NOT ENABLE_SHARED)
-      install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/tjbench-static${EXE}
-        DESTINATION ${CMAKE_INSTALL_BINDIR} RENAME tjbench${EXE})
+      set_target_properties(tjbench-static PROPERTIES OUTPUT_NAME "tjbench")
+      install(TARGETS tjbench-static DESTINATION ${CMAKE_INSTALL_BINDIR})
     endif()
   endif()
   install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/turbojpeg.h
@@ -1346,12 +1346,12 @@ endif()
 if(ENABLE_STATIC)
   install(TARGETS jpeg-static ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
   if(NOT ENABLE_SHARED)
-    install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/cjpeg-static${EXE}
-      DESTINATION ${CMAKE_INSTALL_BINDIR} RENAME cjpeg${EXE})
-    install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/djpeg-static${EXE}
-      DESTINATION ${CMAKE_INSTALL_BINDIR} RENAME djpeg${EXE})
-    install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/jpegtran-static${EXE}
-      DESTINATION ${CMAKE_INSTALL_BINDIR} RENAME jpegtran${EXE})
+    set_target_properties(cjpeg-static PROPERTIES OUTPUT_NAME "cjpeg")
+    set_target_properties(djpeg-static PROPERTIES OUTPUT_NAME "djpeg")
+    set_target_properties(jpegtran-static PROPERTIES OUTPUT_NAME "jpegtran")
+    install(TARGETS cjpeg-static DESTINATION ${CMAKE_INSTALL_BINDIR})
+    install(TARGETS djpeg-static DESTINATION ${CMAKE_INSTALL_BINDIR})
+    install(TARGETS jpegtran-static DESTINATION ${CMAKE_INSTALL_BINDIR})
   endif()
 endif()
 
