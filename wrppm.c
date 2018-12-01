@@ -337,13 +337,14 @@ jinit_write_ppm(j_decompress_ptr cinfo)
       ((j_common_ptr)cinfo, JPOOL_IMAGE,
        cinfo->output_width * cinfo->output_components, (JDIMENSION)1);
     dest->pub.buffer_height = 1;
-    if (IsExtRGB(cinfo->out_color_space))
-      dest->pub.put_pixel_rows = put_rgb;
-    else if (cinfo->out_color_space == JCS_CMYK)
-      dest->pub.put_pixel_rows = put_cmyk;
-    else if (!cinfo->quantize_colors)
-      dest->pub.put_pixel_rows = copy_pixel_rows;
-    else if (cinfo->out_color_space == JCS_GRAYSCALE)
+    if (!cinfo->quantize_colors) {
+      if (IsExtRGB(cinfo->out_color_space))
+        dest->pub.put_pixel_rows = put_rgb;
+      else if (cinfo->out_color_space == JCS_CMYK)
+        dest->pub.put_pixel_rows = put_cmyk;
+      else
+        dest->pub.put_pixel_rows = copy_pixel_rows;
+    } else if (cinfo->out_color_space == JCS_GRAYSCALE)
       dest->pub.put_pixel_rows = put_demapped_gray;
     else
       dest->pub.put_pixel_rows = put_demapped_rgb;
