@@ -63,17 +63,21 @@ a specially-crafted malformed color-index (8-bit-per-sample) Targa file in
 which some of the samples (color indices) exceeded the bounds of the Targa
 file's color table.
 
-11. Fixed a floating point exception that occurred when attempting to
+11. Fixed a buffer overrun (CVE-2018-19664) that occurred when attempting to
+decompress a specially-crafted malformed JPEG image to a 256-color BMP using
+djpeg.
+
+12. Fixed a floating point exception that occurred when attempting to
 decompress a specially-crafted malformed JPEG image with a specified image
 width or height of 0 using the C version of TJBench.
 
-12. The TurboJPEG API will now decompress 4:4:4 JPEG images with 2x1, 1x2, 3x1,
+13. The TurboJPEG API will now decompress 4:4:4 JPEG images with 2x1, 1x2, 3x1,
 or 1x3 luminance and chrominance sampling factors.  This is a non-standard way
 of specifying 1x subsampling (normally 4:4:4 JPEGs have 1x1 luminance and
 chrominance sampling factors), but the JPEG format and the libjpeg API both
 allow it.
 
-13. Fixed an issue whereby a static build of libjpeg-turbo (a build in which
+14. Fixed an issue whereby a static build of libjpeg-turbo (a build in which
 `ENABLE_SHARED` is `0`) could not be installed using the Visual Studio IDE.
 
 
