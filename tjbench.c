@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2009-2017 D. R. Commander.  All Rights Reserved.
+ * Copyright (C)2009-2017, 2019 D. R. Commander.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -523,6 +523,8 @@ int decompTest(char *filename)
 		_throwtj("executing tjInitTransform()");
 	if(tjDecompressHeader3(handle, srcbuf, srcsize, &w, &h, &subsamp, &cs)==-1)
 		_throwtj("executing tjDecompressHeader3()");
+	if(w<1 || h<1)
+		_throw("reading JPEG header", "Invalid image dimensions");
 	if(cs==TJCS_YCCK || cs==TJCS_CMYK)
 	{
 		pf=TJPF_CMYK;  ps=tjPixelSize[pf];

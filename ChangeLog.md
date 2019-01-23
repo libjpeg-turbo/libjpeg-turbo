@@ -63,6 +63,10 @@ a specially-crafted malformed color-index (8-bit-per-sample) Targa file in
 which some of the samples (color indices) exceeded the bounds of the Targa
 file's color table.
 
+11. Fixed a floating-point exception that occurred when attempting to
+decompress a specially-crafted malformed JPEG image with a specified image
+width or height of 0 using the C version of TJBench.
+
 
 1.5.3
 =====
