@@ -106,3 +106,5 @@ EXPORTS
   jpeg_crop_scanline @ 105 ;
   jpeg_read_icc_profile @ 106 ;
   jpeg_write_icc_profile @ 107 ;
+  jpeg_CreateCompressWithMem @ 108 ;
+  jpeg_CreateDecompressWithMem @ 109 ;

@@ -903,10 +903,21 @@ EXTERN(struct jpeg_error_mgr *) jpeg_std_error(struct jpeg_error_mgr *err);
 #define jpeg_create_decompress(cinfo) \
   jpeg_CreateDecompress((cinfo), JPEG_LIB_VERSION, \
                         (size_t)sizeof(struct jpeg_decompress_struct))
+#define jpeg_create_compress_with_mem(cinfo) \
+  jpeg_CreateCompressWithMem((cinfo), JPEG_LIB_VERSION, \
+                             (size_t)sizeof(struct jpeg_compress_struct))
+#define jpeg_create_decompress_with_mem(cinfo) \
+  jpeg_CreateDecompressWithMem((cinfo), JPEG_LIB_VERSION, \
+                               (size_t)sizeof(struct jpeg_decompress_struct))
+
 EXTERN(void) jpeg_CreateCompress(j_compress_ptr cinfo, int version,
                                  size_t structsize);
 EXTERN(void) jpeg_CreateDecompress(j_decompress_ptr cinfo, int version,
                                    size_t structsize);
+EXTERN(void) jpeg_CreateCompressWithMem(j_compress_ptr cinfo, int version,
+                                        size_t structsize);
+EXTERN(void) jpeg_CreateDecompressWithMem(j_decompress_ptr cinfo, int version,
+                                          size_t structsize);
 /* Destruction of JPEG compression objects */
 EXTERN(void) jpeg_destroy_compress(j_compress_ptr cinfo);
 EXTERN(void) jpeg_destroy_decompress(j_decompress_ptr cinfo);

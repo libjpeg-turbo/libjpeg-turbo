@@ -30,13 +30,15 @@
  * The error manager must already be set up (in case memory manager fails).
  */
 
-GLOBAL(void)
-jpeg_CreateCompress(j_compress_ptr cinfo, int version, size_t structsize)
+LOCAL(void)
+jpeg_create_compress_internal(j_compress_ptr cinfo, int version, size_t structsize, boolean withmem)
 {
   int i;
 
+  if (!withmem) {
+    cinfo->mem = NULL;            /* so jpeg_destroy knows mem mgr not called */
+  }
   /* Guard against version mismatches between library and caller. */
-  cinfo->mem = NULL;            /* so jpeg_destroy knows mem mgr not called */
   if (version != JPEG_LIB_VERSION)
     ERREXIT2(cinfo, JERR_BAD_LIB_VERSION, JPEG_LIB_VERSION, version);
   if (structsize != sizeof(struct jpeg_compress_struct))
@@ -52,14 +54,18 @@ jpeg_CreateCompress(j_compress_ptr cinfo, int version, size_t structsize)
   {
     struct jpeg_error_mgr *err = cinfo->err;
     void *client_data = cinfo->client_data; /* ignore Purify complaint here */
+    struct jpeg_memory_mgr *mem = cinfo->mem;
     MEMZERO(cinfo, sizeof(struct jpeg_compress_struct));
     cinfo->err = err;
     cinfo->client_data = client_data;
+    cinfo->mem = mem;
   }
   cinfo->is_decompressor = FALSE;
 
-  /* Initialize a memory manager instance for this object */
-  jinit_memory_mgr((j_common_ptr)cinfo);
+  if (cinfo->mem == NULL) {
+    /* Initialize a memory manager instance for this object */
+    jinit_memory_mgr((j_common_ptr)cinfo);
+  }
 
   /* Zero out pointers to permanent structures. */
   cinfo->progress = NULL;
@@ -92,6 +98,18 @@ jpeg_CreateCompress(j_compress_ptr cinfo, int version, size_t structsize)
 
   /* OK, I'm ready */
   cinfo->global_state = CSTATE_START;
+}
+
+GLOBAL(void)
+jpeg_CreateCompressWithMem(j_compress_ptr cinfo, int version, size_t structsize)
+{
+  jpeg_create_compress_internal(cinfo, version, structsize, TRUE);
+}
+
+GLOBAL(void)
+jpeg_CreateCompress(j_compress_ptr cinfo, int version, size_t structsize)
+{
+  jpeg_create_compress_internal(cinfo, version, structsize, FALSE);
 }
 
 

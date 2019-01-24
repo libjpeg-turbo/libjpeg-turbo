@@ -30,13 +30,15 @@
  * The error manager must already be set up (in case memory manager fails).
  */
 
-GLOBAL(void)
-jpeg_CreateDecompress(j_decompress_ptr cinfo, int version, size_t structsize)
+LOCAL(void)
+jpeg_create_decompress_internal(j_decompress_ptr cinfo, int version, size_t structsize, boolean withmem)
 {
   int i;
 
+  if (!withmem) {
+    cinfo->mem = NULL;            /* so jpeg_destroy knows mem mgr not called */
+  }
   /* Guard against version mismatches between library and caller. */
-  cinfo->mem = NULL;            /* so jpeg_destroy knows mem mgr not called */
   if (version != JPEG_LIB_VERSION)
     ERREXIT2(cinfo, JERR_BAD_LIB_VERSION, JPEG_LIB_VERSION, version);
   if (structsize != sizeof(struct jpeg_decompress_struct))
@@ -52,14 +54,18 @@ jpeg_CreateDecompress(j_decompress_ptr cinfo, int version, size_t structsize)
   {
     struct jpeg_error_mgr *err = cinfo->err;
     void *client_data = cinfo->client_data; /* ignore Purify complaint here */
+    struct jpeg_memory_mgr *mem = cinfo->mem;
     MEMZERO(cinfo, sizeof(struct jpeg_decompress_struct));
     cinfo->err = err;
     cinfo->client_data = client_data;
+    cinfo->mem = mem;
   }
   cinfo->is_decompressor = TRUE;
 
-  /* Initialize a memory manager instance for this object */
-  jinit_memory_mgr((j_common_ptr)cinfo);
+  if (cinfo->mem == NULL) {
+    /* Initialize a memory manager instance for this object */
+    jinit_memory_mgr((j_common_ptr)cinfo);
+  }
 
   /* Zero out pointers to permanent structures. */
   cinfo->progress = NULL;
@@ -92,6 +98,18 @@ jpeg_CreateDecompress(j_decompress_ptr cinfo, int version, size_t structsize)
     (*cinfo->mem->alloc_small) ((j_common_ptr)cinfo, JPOOL_PERMANENT,
                                 sizeof(my_decomp_master));
   MEMZERO(cinfo->master, sizeof(my_decomp_master));
+}
+
+GLOBAL(void)
+jpeg_CreateDecompressWithMem(j_decompress_ptr cinfo, int version, size_t structsize)
+{
+    jpeg_create_decompress_internal(cinfo, version, structsize, TRUE);
+}
+
+GLOBAL(void)
+jpeg_CreateDecompress(j_decompress_ptr cinfo, int version, size_t structsize)
+{
+    jpeg_create_decompress_internal(cinfo, version, structsize, FALSE);
 }
 
 

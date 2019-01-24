@@ -52,6 +52,7 @@ Advanced features:
         Really raw data: DCT coefficients
         Progress monitoring
         Memory management
+        Custom memory management
         Memory usage
         Library compile-time options
         Portability considerations
@@ -3000,6 +3001,23 @@ malloc()s and free()s virtual arrays, and an error occurs if the required
 memory exceeds the limit specified in cinfo->mem->max_memory_to_use.
 
 
+Custom memory management
+------------------------
+
+The default memory manager can be replaced with a custom one for special cases
+where the default memory manager is not sufficient. This is done by filling out
+the jpeg_memory_manager structure before calling one of the jpeg_create_
+functions. When the jpeg_create_ function is called it needs to be one of the
+_with_mem versions (jpeg_create_compress_with_mem or
+jpeg_create_decompress_with_mem).  If one of the jpeg_create_ functions that
+does not have _with_mem is called the custom memory manager will be replaced
+with the standard one, so it is important to call the _with_mem versions.
+
+The custom memory manager must fill out the jpeg_memory_manager structure with
+functions for all of the callbacks in the jpeg_memory_mgr structure, as these
+will all be called by libjpeg.
+
+
 Memory usage
 ------------
 
@@ -3044,7 +3062,6 @@ requested.
 
 If you need more detailed information about memory usage in a particular
 situation, you can enable the MEM_STATS code in jmemmgr.c.
-
 
 Library compile-time options
 ----------------------------
