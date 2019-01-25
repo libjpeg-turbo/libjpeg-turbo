@@ -925,7 +925,12 @@ if(WITH_TURBOJPEG)
   if(ENABLE_STATIC)
     install(TARGETS turbojpeg-static ARCHIVE DESTINATION lib)
     if(NOT ENABLE_SHARED)
-      install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/tjbench-static.exe
+      if(MSVC_IDE)
+        set(DIR "${CMAKE_CURRENT_BINARY_DIR}/\${CMAKE_INSTALL_CONFIG_NAME}")
+      else()
+        set(DIR ${CMAKE_CURRENT_BINARY_DIR})
+      endif()
+      install(PROGRAMS ${DIR}/tjbench-static.exe
         DESTINATION bin RENAME tjbench.exe)
     endif()
   endif()
@@ -935,11 +940,16 @@ endif()
 if(ENABLE_STATIC)
   install(TARGETS jpeg-static ARCHIVE DESTINATION lib)
   if(NOT ENABLE_SHARED)
-    install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/cjpeg-static.exe
+    if(MSVC_IDE)
+      set(DIR "${CMAKE_CURRENT_BINARY_DIR}/\${CMAKE_INSTALL_CONFIG_NAME}")
+    else()
+      set(DIR ${CMAKE_CURRENT_BINARY_DIR})
+    endif()
+    install(PROGRAMS ${DIR}/cjpeg-static.exe
       DESTINATION bin RENAME cjpeg.exe)
-    install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/djpeg-static.exe
+    install(PROGRAMS ${DIR}/djpeg-static.exe
       DESTINATION bin RENAME djpeg.exe)
-    install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/jpegtran-static.exe
+    install(PROGRAMS ${DIR}/jpegtran-static.exe
       DESTINATION bin RENAME jpegtran.exe)
   endif()
 endif()

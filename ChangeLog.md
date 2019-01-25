@@ -73,6 +73,9 @@ of specifying 1x subsampling (normally 4:4:4 JPEGs have 1x1 luminance and
 chrominance sampling factors), but the JPEG format and the libjpeg API both
 allow it.
 
+13. Fixed an issue whereby a static build of libjpeg-turbo (a build in which
+`ENABLE_SHARED` is `0`) could not be installed using the Visual Studio IDE.
+
 
 1.5.3
 =====
