@@ -163,6 +163,10 @@ option(WITH_SIMD "Include SIMD extensions, if available for this platform" TRUE)
 boolean_number(WITH_SIMD)
 option(WITH_TURBOJPEG "Include the TurboJPEG API library and associated test programs" TRUE)
 boolean_number(WITH_TURBOJPEG)
+option(INSTALL_DOCS "Install the docs, man pages and example" TRUE)
+boolean_number(INSTALL_DOCS)
+option(INSTALL_UTILS "Install executables e.g. cjpeg, djpeg and jpegtran" TRUE)
+boolean_number(INSTALL_UTILS)
 
 macro(report_option var desc)
   if(${var})
@@ -658,7 +662,6 @@ endif()
 add_executable(rdjpgcom rdjpgcom.c)
 
 add_executable(wrjpgcom wrjpgcom.c)
-
 
 ###############################################################################
 # TESTS
@@ -1328,7 +1331,7 @@ set(EXE ${CMAKE_EXECUTABLE_SUFFIX})
 
 if(WITH_TURBOJPEG)
   if(ENABLE_SHARED)
-    install(TARGETS turbojpeg tjbench
+    install(TARGETS turbojpeg
       ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
       LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
       RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
@@ -1337,11 +1340,17 @@ if(WITH_TURBOJPEG)
       install(FILES "$<TARGET_PDB_FILE:turbojpeg>"
         DESTINATION ${CMAKE_INSTALL_BINDIR} OPTIONAL)
     endif()
+    if(INSTALL_UTILS)
+      install(TARGETS tjbench
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+    endif()
   endif()
   if(ENABLE_STATIC)
     install(TARGETS turbojpeg-static ARCHIVE
       DESTINATION ${CMAKE_INSTALL_LIBDIR})
-    if(NOT ENABLE_SHARED)
+    if(NOT ENABLE_SHARED AND INSTALL_UTILS)
       if(MSVC_IDE)
         set(DIR "${CMAKE_CURRENT_BINARY_DIR}/\${CMAKE_INSTALL_CONFIG_NAME}")
       else()
@@ -1357,7 +1366,7 @@ endif()
 
 if(ENABLE_STATIC)
   install(TARGETS jpeg-static ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
-  if(NOT ENABLE_SHARED)
+  if(NOT ENABLE_SHARED AND INSTALL_UTILS)
     if(MSVC_IDE)
       set(DIR "${CMAKE_CURRENT_BINARY_DIR}/\${CMAKE_INSTALL_CONFIG_NAME}")
     else()
@@ -1372,27 +1381,34 @@ if(ENABLE_STATIC)
   endif()
 endif()
 
-install(TARGETS rdjpgcom wrjpgcom RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/README.ijg
-  ${CMAKE_CURRENT_SOURCE_DIR}/README.md ${CMAKE_CURRENT_SOURCE_DIR}/example.txt
-  ${CMAKE_CURRENT_SOURCE_DIR}/tjexample.c
-  ${CMAKE_CURRENT_SOURCE_DIR}/libjpeg.txt
-  ${CMAKE_CURRENT_SOURCE_DIR}/structure.txt
-  ${CMAKE_CURRENT_SOURCE_DIR}/usage.txt ${CMAKE_CURRENT_SOURCE_DIR}/wizard.txt
-  ${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.md DESTINATION ${CMAKE_INSTALL_DOCDIR})
-if(WITH_JAVA)
-  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/java/TJExample.java
-    DESTINATION ${CMAKE_INSTALL_DOCDIR})
+if(INSTALL_UTILS)
+  install(TARGETS rdjpgcom wrjpgcom RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()
 
-if(UNIX OR MINGW)
-  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/cjpeg.1
-    ${CMAKE_CURRENT_SOURCE_DIR}/djpeg.1 ${CMAKE_CURRENT_SOURCE_DIR}/jpegtran.1
-    ${CMAKE_CURRENT_SOURCE_DIR}/rdjpgcom.1
-    ${CMAKE_CURRENT_SOURCE_DIR}/wrjpgcom.1
-    DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
+if(INSTALL_DOCS)
+  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/README.ijg
+    ${CMAKE_CURRENT_SOURCE_DIR}/README.md ${CMAKE_CURRENT_SOURCE_DIR}/example.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/tjexample.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/libjpeg.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/structure.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/usage.txt ${CMAKE_CURRENT_SOURCE_DIR}/wizard.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.md DESTINATION ${CMAKE_INSTALL_DOCDIR})
+  if(WITH_JAVA)
+    install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/java/TJExample.java
+      DESTINATION ${CMAKE_INSTALL_DOCDIR})
+  endif()
+
+  if(INSTALL_UTILS)
+    if(UNIX OR MINGW)
+      install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/cjpeg.1
+        ${CMAKE_CURRENT_SOURCE_DIR}/djpeg.1 ${CMAKE_CURRENT_SOURCE_DIR}/jpegtran.1
+        ${CMAKE_CURRENT_SOURCE_DIR}/rdjpgcom.1
+        ${CMAKE_CURRENT_SOURCE_DIR}/wrjpgcom.1
+        DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
+    endif()
+  endif()
 endif()
+
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pkgscripts/libjpeg.pc
   ${CMAKE_CURRENT_BINARY_DIR}/pkgscripts/libturbojpeg.pc
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)

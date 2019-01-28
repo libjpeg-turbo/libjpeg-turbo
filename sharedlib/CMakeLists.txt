@@ -88,7 +88,14 @@ set_property(TARGET jpegtran PROPERTY COMPILE_FLAGS "${USE_SETMODE}")
 add_executable(jcstest ../jcstest.c)
 target_link_libraries(jcstest jpeg)
 
-install(TARGETS jpeg cjpeg djpeg jpegtran
+if(INSTALL_UTILS)
+  install(TARGETS cjpeg djpeg jpegtran
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+endif()
+
+install(TARGETS jpeg
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
