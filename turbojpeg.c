@@ -175,7 +175,9 @@ static int setCompDefaults(struct jpeg_compress_struct *cinfo,
 	int pixelFormat, int subsamp, int jpegQual, int flags)
 {
 	int retval=0;
+#ifndef NO_GETENV
 	char *env=NULL;
+#endif
 
 	switch(pixelFormat)
 	{
