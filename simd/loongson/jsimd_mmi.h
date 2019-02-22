@@ -1,11 +1,12 @@
 /*
  * Loongson MMI optimizations for libjpeg-turbo
  *
- * Copyright (C) 2016-2017, Loongson Technology Corporation Limited, BeiJing.
+ * Copyright (C) 2016-2018, Loongson Technology Corporation Limited, BeiJing.
  *                          All Rights Reserved.
  * Authors:  ZhuChen     <zhuchen@loongson.cn>
  *           CaiWanwei   <caiwanwei@loongson.cn>
  *           SunZhangzhi <sunzhangzhi-cq@loongson.cn>
+ *           ZhangLixia  <zhanglixia-hf@loongson.cn>
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the authors be held liable for any damages
@@ -32,6 +33,34 @@
 
 
 /* Common code */
+
+#if defined(_ABI64) && _MIPS_SIM == _ABI64
+#define mips_reg int64_t
+# define PTR_ADDU       "daddu "
+# define PTR_ADDIU      "daddiu "
+# define PTR_ADDI       "daddi "
+# define PTR_SUBU       "dsubu "
+# define PTR_L          "ld "
+# define PTR_LI         "dli "
+# define PTR_S          "sd "
+# define PTR_SRA        "dsra "
+# define PTR_SRL        "dsrl "
+# define PTR_SLL        "dsll "
+# define MTC1           "dmtc1 "
+#else
+#define mips_reg int32_t
+# define PTR_ADDU       "addu "
+# define PTR_ADDIU      "addiu "
+# define PTR_ADDI       "addi "
+# define PTR_SUBU       "subu "
+# define PTR_L          "lw "
+# define PTR_LI         "li "
+# define PTR_S          "sw "
+# define PTR_SRA        "sra "
+# define PTR_SRL        "srl "
+# define PTR_SLL        "sll "
+# define MTC1           "mtc1 "
+#endif
 
 #define SIZEOF_MMWORD  8
 #define BYTE_BIT  8
