@@ -60,35 +60,7 @@ elseif(MINGW)
   set_target_properties(jpeg PROPERTIES SUFFIX -${SO_MAJOR_VERSION}.dll)
 endif()
 
-if(WIN32)
-  set(USE_SETMODE "-DUSE_SETMODE")
-endif()
-if(WITH_12BIT)
-  set(COMPILE_FLAGS "-DGIF_SUPPORTED -DPPM_SUPPORTED ${USE_SETMODE}")
-else()
-  set(COMPILE_FLAGS "-DBMP_SUPPORTED -DGIF_SUPPORTED -DPPM_SUPPORTED -DTARGA_SUPPORTED ${USE_SETMODE}")
-  set(CJPEG_BMP_SOURCES ../rdbmp.c ../rdtarga.c)
-  set(DJPEG_BMP_SOURCES ../wrbmp.c ../wrtarga.c)
-endif()
-
-add_executable(cjpeg ../cjpeg.c ../cdjpeg.c ../rdgif.c ../rdppm.c
-  ../rdswitch.c ${CJPEG_BMP_SOURCES})
-set_property(TARGET cjpeg PROPERTY COMPILE_FLAGS ${COMPILE_FLAGS})
-target_link_libraries(cjpeg jpeg)
-
-add_executable(djpeg ../djpeg.c ../cdjpeg.c ../rdcolmap.c ../rdswitch.c
-  ../wrgif.c ../wrppm.c ${DJPEG_BMP_SOURCES})
-set_property(TARGET djpeg PROPERTY COMPILE_FLAGS ${COMPILE_FLAGS})
-target_link_libraries(djpeg jpeg)
-
-add_executable(jpegtran ../jpegtran.c ../cdjpeg.c ../rdswitch.c ../transupp.c)
-target_link_libraries(jpegtran jpeg)
-set_property(TARGET jpegtran PROPERTY COMPILE_FLAGS "${USE_SETMODE}")
-
-add_executable(jcstest ../jcstest.c)
-target_link_libraries(jcstest jpeg)
-
-install(TARGETS jpeg cjpeg djpeg jpegtran
+install(TARGETS jpeg
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
@@ -96,4 +68,39 @@ if(NOT CMAKE_VERSION VERSION_LESS "3.1" AND MSVC AND
   CMAKE_C_LINKER_SUPPORTS_PDB)
   install(FILES "$<TARGET_PDB_FILE:jpeg>"
     DESTINATION ${CMAKE_INSTALL_BINDIR} OPTIONAL)
+endif()
+
+if(ENABLE_EXECUTABLES)
+  if(WIN32)
+    set(USE_SETMODE "-DUSE_SETMODE")
+  endif()
+  if(WITH_12BIT)
+    set(COMPILE_FLAGS "-DGIF_SUPPORTED -DPPM_SUPPORTED ${USE_SETMODE}")
+  else()
+    set(COMPILE_FLAGS "-DBMP_SUPPORTED -DGIF_SUPPORTED -DPPM_SUPPORTED -DTARGA_SUPPORTED ${USE_SETMODE}")
+    set(CJPEG_BMP_SOURCES ../rdbmp.c ../rdtarga.c)
+    set(DJPEG_BMP_SOURCES ../wrbmp.c ../wrtarga.c)
+  endif()
+
+  add_executable(cjpeg ../cjpeg.c ../cdjpeg.c ../rdgif.c ../rdppm.c
+    ../rdswitch.c ${CJPEG_BMP_SOURCES})
+  set_property(TARGET cjpeg PROPERTY COMPILE_FLAGS ${COMPILE_FLAGS})
+  target_link_libraries(cjpeg jpeg)
+
+  add_executable(djpeg ../djpeg.c ../cdjpeg.c ../rdcolmap.c ../rdswitch.c
+    ../wrgif.c ../wrppm.c ${DJPEG_BMP_SOURCES})
+  set_property(TARGET djpeg PROPERTY COMPILE_FLAGS ${COMPILE_FLAGS})
+  target_link_libraries(djpeg jpeg)
+
+  add_executable(jpegtran ../jpegtran.c ../cdjpeg.c ../rdswitch.c ../transupp.c)
+  target_link_libraries(jpegtran jpeg)
+  set_property(TARGET jpegtran PROPERTY COMPILE_FLAGS "${USE_SETMODE}")
+
+  add_executable(jcstest ../jcstest.c)
+  target_link_libraries(jcstest jpeg)
+
+  install(TARGETS cjpeg djpeg jpegtran
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()
