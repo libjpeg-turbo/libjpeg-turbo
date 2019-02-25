@@ -305,10 +305,37 @@ endif()
 
 elseif(CPU_TYPE STREQUAL "loongson")
 
-set(SIMD_SOURCES loongson/jccolor-mmi.c loongson/jcsample-mmi.c
-  loongson/jdcolor-mmi.c loongson/jdsample-mmi.c loongson/jfdctfst-mmi.c
-  loongson/jfdctint-mmi.c loongson/jidctfst-mmi.c loongson/jidctint-mmi.c
-  loongson/jquanti-mmi.c)
+set(CMAKE_REQUIRED_FLAGS -march=loongson3a)
+
+check_c_source_compiles("
+  #ifndef __mips_loongson_vector_rev
+  #error \"Loongson Multimedia Instructions are only available on Loongson\"
+  #endif
+  #if defined(__GNUC__) && (__GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 4))
+  #error \"Need GCC >= 4.4 for Loongson MMI compilation\"
+  #endif
+  #include \"${CMAKE_CURRENT_SOURCE_DIR}/loongson/loongson-mmintrin.h\"
+  int main() {
+      union {
+         __m64 v;
+         char c[8];
+      } a = { .c = {1, 2, 3, 4, 5, 6, 7, 8} };
+      int b = 4;
+      __m64 c = _mm_srli_pi16(a.v, b);
+      return 0;
+  }" HAVE_MMI)
+
+unset(CMAKE_REQUIRED_FLAGS)
+
+if(NOT HAVE_MMI)
+  simd_fail("SIMD extensions not available for this CPU (Loongson3a)")
+  return()
+endif()
+
+set(SIMD_SOURCES loongson/jccolor-mmi.c loongson/jcgray-mmi.c
+  loongson/jcsample-mmi.c loongson/jdcolor-mmi.c loongson/jdsample-mmi.c
+  loongson/jdmerge-mmi.c loongson/jfdctfst-mmi.c loongson/jfdctint-mmi.c
+  loongson/jidctfst-mmi.c loongson/jidctint-mmi.c loongson/jquanti-mmi.c)
 
 if(CMAKE_COMPILER_IS_GNUCC)
   foreach(file ${SIMD_SOURCES})
