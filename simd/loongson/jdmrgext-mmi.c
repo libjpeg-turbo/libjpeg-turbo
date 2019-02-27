@@ -252,12 +252,21 @@ void jsimd_h2v1_merged_upsample_mmi(JDIMENSION output_width, JSAMPIMAGE input_bu
     mmG = _mm_unpackhi_pi32(mmH, mmG);     /* mmG=(1D 2D 0E 1E 2E 0F 1F 2F)*/
 
     if (num_cols >= 8) {
-      _mm_store_si64((__m64 *)outptr, mmA);
-      _mm_store_si64((__m64 *)(outptr + 8), mmB);
-      _mm_store_si64((__m64 *)(outptr + 16), mmC);
-      _mm_store_si64((__m64 *)(outptr + 24), mmE);
-      _mm_store_si64((__m64 *)(outptr + 32), mmF);
-      _mm_store_si64((__m64 *)(outptr + 40), mmG);
+      if (!(((long)outptr) & 7)) {
+        _mm_store_si64((__m64 *)outptr, mmA);
+        _mm_store_si64((__m64 *)(outptr + 8), mmB);
+        _mm_store_si64((__m64 *)(outptr + 16), mmC);
+        _mm_store_si64((__m64 *)(outptr + 24), mmE);
+        _mm_store_si64((__m64 *)(outptr + 32), mmF);
+        _mm_store_si64((__m64 *)(outptr + 40), mmG);
+      } else {
+        _mm_storeu_si64((__m64 *)outptr, mmA);
+        _mm_storeu_si64((__m64 *)(outptr + 8), mmB);
+        _mm_storeu_si64((__m64 *)(outptr + 16), mmC);
+        _mm_storeu_si64((__m64 *)(outptr + 24), mmE);
+        _mm_storeu_si64((__m64 *)(outptr + 32), mmF);
+        _mm_storeu_si64((__m64 *)(outptr + 40), mmG);
+      }
       outptr += RGB_PIXELSIZE * 16;
     } else {
       if(output_width & 1)
@@ -392,14 +401,25 @@ void jsimd_h2v1_merged_upsample_mmi(JDIMENSION output_width, JSAMPIMAGE input_bu
     mmE = _mm_unpacklo_pi32(mm9, mmE);    /* mmE=(08 18 28 38 09 19 29 39) */
 
     if (num_cols >= 8) {
-      _mm_store_si64((__m64 *)outptr, mmA);
-      _mm_store_si64((__m64 *)(outptr + 8), mmB);
-      _mm_store_si64((__m64 *)(outptr + 16), mmC);
-      _mm_store_si64((__m64 *)(outptr + 24), mmD);
-      _mm_store_si64((__m64 *)(outptr + 32), mmE);
-      _mm_store_si64((__m64 *)(outptr + 40), mmF);
-      _mm_store_si64((__m64 *)(outptr + 48), mmG);
-      _mm_store_si64((__m64 *)(outptr + 56), mmH);
+      if (!(((long)outptr) & 7)) {
+        _mm_store_si64((__m64 *)outptr, mmA);
+        _mm_store_si64((__m64 *)(outptr + 8), mmB);
+        _mm_store_si64((__m64 *)(outptr + 16), mmC);
+        _mm_store_si64((__m64 *)(outptr + 24), mmD);
+        _mm_store_si64((__m64 *)(outptr + 32), mmE);
+        _mm_store_si64((__m64 *)(outptr + 40), mmF);
+        _mm_store_si64((__m64 *)(outptr + 48), mmG);
+        _mm_store_si64((__m64 *)(outptr + 56), mmH);
+      } else {
+        _mm_storeu_si64((__m64 *)outptr, mmA);
+        _mm_storeu_si64((__m64 *)(outptr + 8), mmB);
+        _mm_storeu_si64((__m64 *)(outptr + 16), mmC);
+        _mm_storeu_si64((__m64 *)(outptr + 24), mmD);
+        _mm_storeu_si64((__m64 *)(outptr + 32), mmE);
+        _mm_storeu_si64((__m64 *)(outptr + 40), mmF);
+        _mm_storeu_si64((__m64 *)(outptr + 48), mmG);
+        _mm_storeu_si64((__m64 *)(outptr + 56), mmH);
+      }
       outptr += RGB_PIXELSIZE * 16;
     } else {
       if(output_width & 1)
@@ -418,7 +438,7 @@ void jsimd_h2v1_merged_upsample_mmi(JDIMENSION output_width, JSAMPIMAGE input_bu
           "bltu     $9, $8, 1f\r\n"
           "nop      \r\n"
           "gssdlc1  $f4, 7($10)\r\n"
-          "gssdrc1  $f4, ($10)\r\n"
+          "gssdrc1  $f4, 0($10)\r\n"
           "gssdlc1  $f6, 7+8($10)\r\n"
           "gssdrc1  $f6, 8($10)\r\n"
           "gssdlc1  $f8, 7+16($10)\r\n"
@@ -477,9 +497,9 @@ void jsimd_h2v1_merged_upsample_mmi(JDIMENSION output_width, JSAMPIMAGE input_bu
 
   if(!((output_width >> 1) & 7)) {
     if(output_width & 1) {
-      mm5 = _mm_load_si32((__m32 *)inptr1);
-      mm1 = _mm_load_si32((__m32 *)inptr2);
-      mm8 = _mm_load_si32((__m32 *)inptr0);
+      mm5 = _mm_load_si64((__m64 *)inptr1);
+      mm1 = _mm_load_si64((__m64 *)inptr2);
+      mm8 = _mm_load_si64((__m64 *)inptr0);
       mm4 = 0;
       mm7 = 0;
       mm3 = _mm_xor_si64(mm4, mm4);
@@ -585,17 +605,17 @@ void jsimd_h2v2_merged_upsample_mmi(JDIMENSION output_width, JSAMPIMAGE input_bu
     if (!(((long)inptr1) & 7))
       mm5 = _mm_load_si64((__m64 *)inptr1);
     else
-      mm5 = _mm_loadgs_si64((__m64 *)inptr1);
+      mm5 = _mm_loadu_si64((__m64 *)inptr1);
     if (!(((long)inptr2) & 7))
       mm1 = _mm_load_si64((__m64 *)inptr2);
     else
-      mm1 = _mm_loadgs_si64((__m64 *)inptr2);
+      mm1 = _mm_loadu_si64((__m64 *)inptr2);
     if (!(((long)inptr00) & 7)) {
       mm8 = _mm_load_si64((__m64 *)inptr00);
       mm9 = _mm_load_si64((__m64 *)inptr01);
     } else {
-      mm8 = _mm_loadgs_si64((__m64 *)inptr00);
-      mm9 = _mm_loadgs_si64((__m64 *)inptr01);
+      mm8 = _mm_loadu_si64((__m64 *)inptr00);
+      mm9 = _mm_loadu_si64((__m64 *)inptr01);
     }
     mm4 = 0;
     mm7 = 0;
@@ -719,12 +739,27 @@ void jsimd_h2v2_merged_upsample_mmi(JDIMENSION output_width, JSAMPIMAGE input_bu
     mmG = _mm_unpackhi_pi32(mmH, mmG);     /* mmG=(115 215 016 116 216 017 117 217)*/
 
     if (num_cols >= 4) {
-      _mm_store_si64((__m64 *)outptr0, mmA);
-      _mm_store_si64((__m64 *)(outptr0 + 8), mmB);
-      _mm_store_si64((__m64 *)(outptr0 + 16), mmC);
-      _mm_store_si64((__m64 *)outptr1, mmE);
-      _mm_store_si64((__m64 *)(outptr1 + 8), mmF);
-      _mm_store_si64((__m64 *)(outptr1 + 16), mmG);
+
+      if (!(((long)outptr0) & 7)) {
+        _mm_store_si64((__m64 *)outptr0, mmA);
+        _mm_store_si64((__m64 *)(outptr0 + 8), mmB);
+        _mm_store_si64((__m64 *)(outptr0 + 16), mmC);
+      } else {
+        _mm_storeu_si64((__m64 *)outptr0, mmA);
+        _mm_storeu_si64((__m64 *)(outptr0 + 8), mmB);
+        _mm_storeu_si64((__m64 *)(outptr0 + 16), mmC);
+      }
+
+      if (!(((long)outptr1) & 7)) {
+        _mm_store_si64((__m64 *)outptr1, mmE);
+        _mm_store_si64((__m64 *)(outptr1 + 8), mmF);
+        _mm_store_si64((__m64 *)(outptr1 + 16), mmG);
+      } else {
+        _mm_storeu_si64((__m64 *)outptr1, mmE);
+        _mm_storeu_si64((__m64 *)(outptr1 + 8), mmF);
+        _mm_storeu_si64((__m64 *)(outptr1 + 16), mmG);
+      }
+
       outptr0 += RGB_PIXELSIZE * 8;
       outptr1 += RGB_PIXELSIZE * 8;
     } else {
@@ -866,14 +901,29 @@ void jsimd_h2v2_merged_upsample_mmi(JDIMENSION output_width, JSAMPIMAGE input_bu
     mmE = _mm_unpacklo_pi32(mm9, mmE);    /* mmE=(010 110 210 310 011 111 211 311) */
 
     if (num_cols >= 4) {
-      _mm_store_si64((__m64 *)outptr0, mmA);
-      _mm_store_si64((__m64 *)(outptr0 + 8), mmB);
-      _mm_store_si64((__m64 *)(outptr0 + 16), mmC);
-      _mm_store_si64((__m64 *)(outptr0 + 24), mmD);
-      _mm_store_si64((__m64 *)outptr1, mmE);
-      _mm_store_si64((__m64 *)(outptr1 + 8), mmF);
-      _mm_store_si64((__m64 *)(outptr1 + 16), mmG);
-      _mm_store_si64((__m64 *)(outptr1 + 24), mmH);
+      if (!(((long)outptr0) & 7)) {
+        _mm_store_si64((__m64 *)outptr0, mmA);
+        _mm_store_si64((__m64 *)(outptr0 + 8), mmB);
+        _mm_store_si64((__m64 *)(outptr0 + 16), mmC);
+        _mm_store_si64((__m64 *)(outptr0 + 24), mmD);
+      } else {
+        _mm_storeu_si64((__m64 *)outptr0, mmA);
+        _mm_storeu_si64((__m64 *)(outptr0 + 8), mmB);
+        _mm_storeu_si64((__m64 *)(outptr0 + 16), mmC);
+        _mm_storeu_si64((__m64 *)(outptr0 + 24), mmD);
+      }
+
+      if (!(((long)outptr1) & 7)) {
+        _mm_store_si64((__m64 *)outptr1, mmE);
+        _mm_store_si64((__m64 *)(outptr1 + 8), mmF);
+        _mm_store_si64((__m64 *)(outptr1 + 16), mmG);
+        _mm_store_si64((__m64 *)(outptr1 + 24), mmH);
+      } else {
+        _mm_storeu_si64((__m64 *)outptr1, mmE);
+        _mm_storeu_si64((__m64 *)(outptr1 + 8), mmF);
+        _mm_storeu_si64((__m64 *)(outptr1 + 16), mmG);
+        _mm_storeu_si64((__m64 *)(outptr1 + 24), mmH);
+      }
       outptr0 += RGB_PIXELSIZE * 8;
       outptr1 += RGB_PIXELSIZE * 8;
     } else {

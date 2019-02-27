@@ -1,7 +1,7 @@
 /*
  * Loongson MMI optimizations for libjpeg-turbo
  *
- * Copyright (C) 2016-2017, Loongson Technology Corporation Limited, BeiJing.
+ * Copyright (C) 2016-2018, Loongson Technology Corporation Limited, BeiJing.
  *                          All Rights Reserved.
  * Authors:  LiuQingfa     <liuqingfa-hf@loongson.cn>
  *

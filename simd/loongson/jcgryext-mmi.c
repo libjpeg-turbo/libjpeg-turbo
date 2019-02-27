@@ -179,9 +179,9 @@ void jsimd_rgb_gray_convert_mmi(JDIMENSION image_width, JSAMPARRAY input_buf,
           mmG = _mm_load_si64((__m64 *)&inptr[8]);
           mmF = _mm_load_si64((__m64 *)&inptr[16]);
         } else {
-          mmA = _mm_loadgs_si64((__m64 *)&inptr[0]);
-          mmG = _mm_loadgs_si64((__m64 *)&inptr[8]);
-          mmF = _mm_loadgs_si64((__m64 *)&inptr[16]);
+          mmA = _mm_loadu_si64((__m64 *)&inptr[0]);
+          mmG = _mm_loadu_si64((__m64 *)&inptr[8]);
+          mmF = _mm_loadu_si64((__m64 *)&inptr[16]);
         }
         inptr += RGB_PIXELSIZE * 8;
       }

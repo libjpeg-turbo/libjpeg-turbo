@@ -1,7 +1,7 @@
 /*
  * Loongson MMI optimizations for libjpeg-turbo
  *
- * Copyright (C) 2015, 2018, D. R. Commander.  All Rights Reserved.
+ * Copyright (C) 2015, 2019, D. R. Commander.  All Rights Reserved.
  * Copyright (C) 2016-2018, Loongson Technology Corporation Limited, BeiJing.
  *                          All Rights Reserved.
  * Authors:  ZhuChen     <zhuchen@loongson.cn>

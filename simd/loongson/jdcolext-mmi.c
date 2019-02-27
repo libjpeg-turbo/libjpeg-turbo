@@ -2,7 +2,7 @@
  * Loongson MMI optimizations for libjpeg-turbo
  *
  * Copyright 2009 Pierre Ossman <ossman@cendio.se> for Cendio AB
- * Copyright (C) 2015, D. R. Commander.  All Rights Reserved.
+ * Copyright (C) 2015, 2019, D. R. Commander.  All Rights Reserved.
  * Copyright (C) 2016-2018, Loongson Technology Corporation Limited, BeiJing.
  *                          All Rights Reserved.
  * Authors:  ZhuChen     <zhuchen@loongson.cn>
@@ -252,9 +252,15 @@ void jsimd_ycc_rgb_convert_mmi(JDIMENSION out_width, JSAMPIMAGE input_buf,
       mmC = _mm_unpacklo_pi32(mmC, mmF);    /* mmC=(15 25 06 16 26 07 17 27) */
 
       if (num_cols >= 8) {
-        _mm_store_si64((__m64 *)outptr, mmA);
-        _mm_store_si64((__m64 *)(outptr + 8), mmE);
-        _mm_store_si64((__m64 *)(outptr + 16), mmC);
+        if (!(((long)outptr) & 7)) {
+          _mm_store_si64((__m64 *)outptr, mmA);
+          _mm_store_si64((__m64 *)(outptr + 8), mmE);
+          _mm_store_si64((__m64 *)(outptr + 16), mmC);
+        } else {
+          _mm_storeu_si64((__m64 *)outptr, mmA);
+          _mm_storeu_si64((__m64 *)(outptr + 8), mmE);
+          _mm_storeu_si64((__m64 *)(outptr + 16), mmC);
+        }
         outptr += RGB_PIXELSIZE * 8;
       } else {
         col = num_cols * 3;
@@ -282,7 +288,7 @@ void jsimd_ycc_rgb_convert_mmi(JDIMENSION out_width, JSAMPIMAGE input_buf,
             "bltu     $9, $8, 2f\r\n"
             "nop      \r\n"
             "gssdlc1  $f4, 7($10)\r\n"
-            "gssdrc1  $f4, ($10)\r\n"
+            "gssdrc1  $f4, 0($10)\r\n"
             "mov.s    $f4, %3\r\n"
             "subu     $9, $9, 8\r\n"
             PTR_ADDU  "$10, $10, 8\r\n"
@@ -375,7 +381,7 @@ void jsimd_ycc_rgb_convert_mmi(JDIMENSION out_width, JSAMPIMAGE input_buf,
             "bltu     $9, $8, 1f\r\n"
             "nop      \r\n"
             "gssdlc1  $f4, 7($10)\r\n"
-            "gssdrc1  $f4, ($10)\r\n"
+            "gssdrc1  $f4, 0($10)\r\n"
             "gssdlc1  $f6, 7+8($10)\r\n"
             "gssdrc1  $f6, 8($10)\r\n"
             "mov.s    $f4, %3\r\n"

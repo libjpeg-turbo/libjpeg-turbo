@@ -303,7 +303,7 @@ endif()
 # Loongson (Intrinsics)
 ###############################################################################
 
-elseif(CPU_TYPE STREQUAL "mips64" OR CPU_TYPE STREQUAL "mips64el")
+elseif(CPU_TYPE STREQUAL "loongson")
 
 set(CMAKE_REQUIRED_FLAGS -march=loongson3a)
 
