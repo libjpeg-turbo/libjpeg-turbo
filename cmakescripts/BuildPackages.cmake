@@ -180,3 +180,22 @@ add_custom_target(tarball sh pkgscripts/maketarball
 configure_file(release/libjpeg.pc.in pkgscripts/libjpeg.pc @ONLY)
 
 configure_file(release/libturbojpeg.pc.in pkgscripts/libturbojpeg.pc @ONLY)
+
+###############################################################################
+# CMake Package
+###############################################################################
+
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(
+  pkgscripts/${PROJECT_NAME}ConfigVersion.cmake
+  VERSION ${VERSION}
+  COMPATIBILITY SameMajorVersion
+)
+
+include(GNUInstallDirs)
+
+configure_package_config_file (
+  release/Config.cmake.in
+  pkgscripts/${PROJECT_NAME}Config.cmake
+  INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
+)

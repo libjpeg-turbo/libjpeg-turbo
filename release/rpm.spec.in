@@ -185,6 +185,7 @@ rm -rf $RPM_BUILD_ROOT
 %endif
 %dir %{_libdir}/pkgconfig
 %{_libdir}/pkgconfig/libjpeg.pc
+%{_libdir}/cmake/libjpeg-turbo
 %if "%{_with_turbojpeg}" == "1"
  %if "%{_enable_shared}" == "1" || "%{_with_java}" == "1"
   %{_libdir}/libturbojpeg.so.@TURBOJPEG_SO_VERSION@
