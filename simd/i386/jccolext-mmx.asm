@@ -44,6 +44,7 @@
     GLOBAL_FUNCTION(jsimd_rgb_ycc_convert_mmx)
 
 EXTN(jsimd_rgb_ycc_convert_mmx):
+    _endbr32
     push        ebp
     mov         eax, esp                    ; eax = original ebp
     sub         esp, byte 4

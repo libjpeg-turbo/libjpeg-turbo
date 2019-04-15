@@ -283,6 +283,7 @@
     GLOBAL_FUNCTION(jsimd_encode_mcu_AC_first_prepare_sse2)
 
 EXTN(jsimd_encode_mcu_AC_first_prepare_sse2):
+    _endbr32
     push        ebp
     mov         eax, esp                     ; eax = original ebp
     sub         esp, byte 4
@@ -460,6 +461,7 @@ EXTN(jsimd_encode_mcu_AC_first_prepare_sse2):
     GLOBAL_FUNCTION(jsimd_encode_mcu_AC_refine_prepare_sse2)
 
 EXTN(jsimd_encode_mcu_AC_refine_prepare_sse2):
+    _endbr32
     push        ebp
     mov         eax, esp                     ; eax = original ebp
     sub         esp, byte 4

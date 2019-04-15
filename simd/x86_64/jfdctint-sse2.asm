@@ -103,6 +103,7 @@ PW_DESCALE_P2X times 8 dw  1 << (PASS1_BITS - 1)
     GLOBAL_FUNCTION(jsimd_fdct_islow_sse2)
 
 EXTN(jsimd_fdct_islow_sse2):
+    _endbr64
     push        rbp
     mov         rax, rsp                     ; rax = original rbp
     sub         rsp, byte 4

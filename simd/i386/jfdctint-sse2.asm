@@ -105,6 +105,7 @@ PW_DESCALE_P2X times 8 dw  1 << (PASS1_BITS - 1)
     GLOBAL_FUNCTION(jsimd_fdct_islow_sse2)
 
 EXTN(jsimd_fdct_islow_sse2):
+    _endbr32
     push        ebp
     mov         eax, esp                     ; eax = original ebp
     sub         esp, byte 4

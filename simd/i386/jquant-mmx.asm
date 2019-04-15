@@ -38,6 +38,7 @@
     GLOBAL_FUNCTION(jsimd_convsamp_mmx)
 
 EXTN(jsimd_convsamp_mmx):
+    _endbr32
     push        ebp
     mov         ebp, esp
     push        ebx
@@ -147,6 +148,7 @@ EXTN(jsimd_convsamp_mmx):
     GLOBAL_FUNCTION(jsimd_quantize_mmx)
 
 EXTN(jsimd_quantize_mmx):
+    _endbr32
     push        ebp
     mov         ebp, esp
 ;   push        ebx                     ; unused

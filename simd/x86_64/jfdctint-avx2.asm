@@ -262,6 +262,7 @@ PW_1_NEG1                  times 8  dw  1
     GLOBAL_FUNCTION(jsimd_fdct_islow_avx2)
 
 EXTN(jsimd_fdct_islow_avx2):
+    _endbr64
     push        rbp
     mov         rax, rsp
     mov         rbp, rsp

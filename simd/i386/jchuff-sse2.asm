@@ -182,6 +182,7 @@ EXTN(jconst_huff_encode_one_block):
     GLOBAL_FUNCTION(jsimd_huff_encode_one_block_sse2)
 
 EXTN(jsimd_huff_encode_one_block_sse2):
+    _endbr32
     push        ebp
     mov         eax, esp                     ; eax = original ebp
     sub         esp, byte 4

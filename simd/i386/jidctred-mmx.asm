@@ -119,6 +119,7 @@ PB_CENTERJSAMP  times 8 db  CENTERJSAMPLE
     GLOBAL_FUNCTION(jsimd_idct_4x4_mmx)
 
 EXTN(jsimd_idct_4x4_mmx):
+    _endbr32
     push        ebp
     mov         eax, esp                    ; eax = original ebp
     sub         esp, byte 4
@@ -506,6 +507,7 @@ EXTN(jsimd_idct_4x4_mmx):
     GLOBAL_FUNCTION(jsimd_idct_2x2_mmx)
 
 EXTN(jsimd_idct_2x2_mmx):
+    _endbr32
     push        ebp
     mov         ebp, esp
     push        ebx

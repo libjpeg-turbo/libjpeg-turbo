@@ -283,6 +283,7 @@
     GLOBAL_FUNCTION(jsimd_encode_mcu_AC_first_prepare_sse2)
 
 EXTN(jsimd_encode_mcu_AC_first_prepare_sse2):
+    _endbr64
     push        rbp
     mov         rax, rsp                     ; rax = original rbp
     sub         rsp, byte 4
@@ -449,6 +450,7 @@ EXTN(jsimd_encode_mcu_AC_first_prepare_sse2):
     GLOBAL_FUNCTION(jsimd_encode_mcu_AC_refine_prepare_sse2)
 
 EXTN(jsimd_encode_mcu_AC_refine_prepare_sse2):
+    _endbr64
     push        rbp
     mov         rax, rsp                     ; rax = original rbp
     sub         rsp, byte 4

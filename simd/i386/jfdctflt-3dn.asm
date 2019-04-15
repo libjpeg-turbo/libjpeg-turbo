@@ -58,6 +58,7 @@ PD_1_306 times 2 dd 1.306562964876376527856643
     GLOBAL_FUNCTION(jsimd_fdct_float_3dnow)
 
 EXTN(jsimd_fdct_float_3dnow):
+    _endbr32
     push        ebp
     mov         eax, esp                    ; eax = original ebp
     sub         esp, byte 4

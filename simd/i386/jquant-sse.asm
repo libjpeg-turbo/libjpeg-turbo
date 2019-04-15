@@ -38,6 +38,7 @@
     GLOBAL_FUNCTION(jsimd_convsamp_float_sse)
 
 EXTN(jsimd_convsamp_float_sse):
+    _endbr32
     push        ebp
     mov         ebp, esp
     push        ebx
@@ -140,6 +141,7 @@ EXTN(jsimd_convsamp_float_sse):
     GLOBAL_FUNCTION(jsimd_quantize_float_sse)
 
 EXTN(jsimd_quantize_float_sse):
+    _endbr32
     push        ebp
     mov         ebp, esp
 ;   push        ebx                     ; unused

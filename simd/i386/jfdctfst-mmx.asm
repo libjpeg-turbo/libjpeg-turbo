@@ -83,6 +83,7 @@ PW_F1306 times 4 dw F_1_306 << CONST_SHIFT
     GLOBAL_FUNCTION(jsimd_fdct_ifast_mmx)
 
 EXTN(jsimd_fdct_ifast_mmx):
+    _endbr32
     push        ebp
     mov         eax, esp                    ; eax = original ebp
     sub         esp, byte 4

@@ -69,6 +69,7 @@ PD_1_306 times 4 dd 1.306562964876376527856643
     GLOBAL_FUNCTION(jsimd_fdct_float_sse)
 
 EXTN(jsimd_fdct_float_sse):
+    _endbr32
     push        ebp
     mov         eax, esp                     ; eax = original ebp
     sub         esp, byte 4

@@ -42,6 +42,7 @@
     GLOBAL_FUNCTION(jsimd_h2v1_merged_upsample_avx2)
 
 EXTN(jsimd_h2v1_merged_upsample_avx2):
+    _endbr64
     push        rbp
     mov         rax, rsp                     ; rax = original rbp
     sub         rsp, byte 4
@@ -506,6 +507,7 @@ EXTN(jsimd_h2v1_merged_upsample_avx2):
     GLOBAL_FUNCTION(jsimd_h2v2_merged_upsample_avx2)
 
 EXTN(jsimd_h2v2_merged_upsample_avx2):
+    _endbr64
     push        rbp
     mov         rax, rsp
     mov         rbp, rsp

@@ -40,6 +40,7 @@
     GLOBAL_FUNCTION(jsimd_rgb_ycc_convert_sse2)
 
 EXTN(jsimd_rgb_ycc_convert_sse2):
+    _endbr64
     push        rbp
     mov         rax, rsp                     ; rax = original rbp
     sub         rsp, byte 4

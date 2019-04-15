@@ -186,6 +186,7 @@ EXTN(jconst_huff_encode_one_block):
     GLOBAL_FUNCTION(jsimd_huff_encode_one_block_sse2)
 
 EXTN(jsimd_huff_encode_one_block_sse2):
+    _endbr64
     push        rbp
     mov         rax, rsp                     ; rax = original rbp
     sub         rsp, byte 4

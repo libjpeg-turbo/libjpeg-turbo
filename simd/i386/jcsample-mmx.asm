@@ -44,6 +44,7 @@
     GLOBAL_FUNCTION(jsimd_h2v1_downsample_mmx)
 
 EXTN(jsimd_h2v1_downsample_mmx):
+    _endbr32
     push        ebp
     mov         ebp, esp
 ;   push        ebx                     ; unused
@@ -187,6 +188,7 @@ EXTN(jsimd_h2v1_downsample_mmx):
     GLOBAL_FUNCTION(jsimd_h2v2_downsample_mmx)
 
 EXTN(jsimd_h2v2_downsample_mmx):
+    _endbr32
     push        ebp
     mov         ebp, esp
 ;   push        ebx                     ; unused

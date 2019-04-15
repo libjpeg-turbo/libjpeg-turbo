@@ -468,6 +468,14 @@ const_base:
 
 %endif
 
+%imacro _endbr32 0
+    dd 0xfb1e0ff3
+%endmacro
+
+%imacro _endbr64 0
+    dd 0xfa1e0ff3
+%endmacro
+
 ; --------------------------------------------------------------------------
 ;  Defines picked up from the C headers
 ;
