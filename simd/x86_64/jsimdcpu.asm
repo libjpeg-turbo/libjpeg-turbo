@@ -44,7 +44,6 @@ EXTN(jpeg_simd_cpu_support):
 
     ; Check maximum supported CPUID leaf
     mov         rax, 0
-    xor         rcx, rcx
     cpuid
     cmp         rax, 7                  ; Exit if the maximum leaf < AVX2's
                                         ; leaf
