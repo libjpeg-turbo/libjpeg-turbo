@@ -38,14 +38,24 @@ EXTN(jpeg_simd_cpu_support):
 
     xor         rdi, rdi                ; simd support flag
 
+    ; Assume SSE & SSE2 support for x86-64 processors
+    or          rdi, JSIMD_SSE2
+    or          rdi, JSIMD_SSE
+
+    ; Check maximum supported CPUID leaf
+    mov         rax, 0
+    xor         rcx, rcx
+    cpuid
+    cmp         rax, 7                  ; Exit if the maximum leaf < AVX2's
+                                        ; leaf
+    jl          short .return
+
     ; Check for AVX2 instruction support
     mov         rax, 7
     xor         rcx, rcx
     cpuid
     mov         rax, rbx                ; rax = Extended feature flags
 
-    or          rdi, JSIMD_SSE2
-    or          rdi, JSIMD_SSE
     test        rax, 1<<5               ; bit5:AVX2
     jz          short .return
 
