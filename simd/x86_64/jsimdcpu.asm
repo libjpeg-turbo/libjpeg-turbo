@@ -38,7 +38,7 @@ EXTN(jpeg_simd_cpu_support):
 
     xor         rdi, rdi                ; simd support flag
 
-    ; Assume SSE & SSE2 support for x86-64 processors
+    ; Assume SSE & SSE2 support in all x86-64 processors
     or          rdi, JSIMD_SSE2
     or          rdi, JSIMD_SSE
 

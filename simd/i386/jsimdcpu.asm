@@ -57,7 +57,7 @@ EXTN(jpeg_simd_cpu_support):
     test        eax, eax
     jz          near .return
     cmp         eax, 7                  ; Skip AVX2 check if its leaf
-                                        ; isn't supported
+                                        ; is not supported
     jl          short .no_avx2
 
     ; Check for AVX2 instruction support
