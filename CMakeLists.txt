@@ -1267,7 +1267,7 @@ foreach(libtype ${TEST_LIBTYPES})
 
 endforeach()
 
-add_custom_target(testclean COMMAND ${CMAKE_COMMAND} -P
+add_custom_target(testclean_${CMAKE_PROJECT_NAME} COMMAND ${CMAKE_COMMAND} -P
   ${CMAKE_CURRENT_SOURCE_DIR}/cmakescripts/testclean.cmake)
 
 if(WITH_TURBOJPEG)
@@ -1279,7 +1279,7 @@ if(WITH_TURBOJPEG)
   if(WITH_JAVA)
     configure_file(tjbenchtest.java.in tjbenchtest.java @ONLY)
     configure_file(tjexampletest.java.in tjexampletest.java @ONLY)
-    add_custom_target(tjtest
+    add_custom_target(tjtest_${CMAKE_PROJECT_NAME}
       COMMAND echo tjbenchtest
       COMMAND ${BASH} ${CMAKE_CURRENT_BINARY_DIR}/tjbenchtest
       COMMAND echo tjbenchtest -alloc
@@ -1304,7 +1304,7 @@ if(WITH_TURBOJPEG)
         ${CMAKE_CURRENT_BINARY_DIR}/tjbenchtest.java
         ${CMAKE_CURRENT_BINARY_DIR}/tjexampletest)
   else()
-    add_custom_target(tjtest
+    add_custom_target(tjtest_${CMAKE_PROJECT_NAME}
       COMMAND echo tjbenchtest
       COMMAND ${BASH} ${CMAKE_CURRENT_BINARY_DIR}/tjbenchtest
       COMMAND echo tjbenchtest -alloc
@@ -1407,4 +1407,4 @@ include(cmakescripts/BuildPackages.cmake)
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmakescripts/cmake_uninstall.cmake.in"
   "cmake_uninstall.cmake" IMMEDIATE @ONLY)
 
-add_custom_target(uninstall COMMAND ${CMAKE_COMMAND} -P cmake_uninstall.cmake)
+add_custom_target(uninstall_${CMAKE_PROJECT_NAME} COMMAND ${CMAKE_COMMAND} -P cmake_uninstall.cmake)
