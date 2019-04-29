@@ -1,5 +1,5 @@
 {
-  "checksum": "0cc961f41dbf4ff5ab5654751a4ba36e",
+  "checksum": "79395ce80f6cb7e96cf659f7ff47c332",
   "root": "esy-libjpeg-turbo@link-dev:./package.json",
   "node": {
     "esy-libjpeg-turbo@link-dev:./package.json": {
@@ -10,6 +10,37 @@
         "type": "link-dev",
         "path": ".",
         "manifest": "package.json"
+      },
+      "overrides": [],
+      "dependencies": [
+        "esy-cmake@0.3.5@d41d8cd9",
+        "@esy-cross/ninja-build@1.8.2001@d41d8cd9"
+      ],
+      "devDependencies": []
+    },
+    "esy-cmake@0.3.5@d41d8cd9": {
+      "id": "esy-cmake@0.3.5@d41d8cd9",
+      "name": "esy-cmake",
+      "version": "0.3.5",
+      "source": {
+        "type": "install",
+        "source": [
+          "archive:https://registry.npmjs.org/esy-cmake/-/esy-cmake-0.3.5.tgz#sha1:2df0bdfe9317fbcded5f463fca1f346464494c7a"
+        ]
+      },
+      "overrides": [],
+      "dependencies": [],
+      "devDependencies": []
+    },
+    "@esy-cross/ninja-build@1.8.2001@d41d8cd9": {
+      "id": "@esy-cross/ninja-build@1.8.2001@d41d8cd9",
+      "name": "@esy-cross/ninja-build",
+      "version": "1.8.2001",
+      "source": {
+        "type": "install",
+        "source": [
+          "archive:https://registry.npmjs.org/@esy-cross/ninja-build/-/ninja-build-1.8.2001.tgz#sha1:d223b3b9e73e14ef2f241ddc522fa330f94b8602"
+        ]
       },
       "overrides": [],
       "dependencies": [],

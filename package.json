@@ -9,14 +9,10 @@
         "val": "#{self.lib / 'pkgconfig' : $PKG_CONFIG_PATH}"
       }
     },
-    "build": [
-      [
-        "bash",
-        "-c",
-        "#{os == 'windows' ? 'cmake -G\"NMake Makefiles\" -DCMAKE_BUILD_TYPE=Release -DMAKE_INSTALL_PREFIX=$cur__install -S $cur__root -B $cur__target_dir' : 'cmake -G\"Unix Makefiles\" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$cur__install -S $cur__root -B $cur__target_dir'}"
-      ],
-      "make -C #{self.target_dir}",
-      "make -C #{self.target_dir} install"
-    ]
+    "build": "#{os == 'windows' ? 'echo esy-libjpeg-turbo currently works on on Linux/OSX': './esy-build.sh'}"
+  },
+  "dependencies": {
+    "esy-cmake": "*",
+    "@esy-cross/ninja-build": "^1.8.2001"
   }
 }
