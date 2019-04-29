@@ -4,13 +4,9 @@
   "description": "libjpeg-turbo packaged for esy",
   "esy": {
     "exportedEnv": {
-      "LDFLAGS": {
+      "PKG_CONFIG_PATH": {
         "scope": "global",
-        "val": "-L#{self.lib} -ljpeg $LDFLAGS"
-      },
-      "CFLAGS": {
-        "scope": "global",
-        "val": "-I#{self.install / 'include'} $CFLAGS"
+        "val": "#{self.lib / 'pkgconfig' : $PKG_CONFIG_PATH}"
       }
     },
     "build": [
