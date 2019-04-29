@@ -9,7 +9,7 @@
         "val": "#{self.lib / 'pkgconfig' : $PKG_CONFIG_PATH}"
       }
     },
-    "build": "#{os == 'windows' ? 'echo esy-libjpeg-turbo currently works on on Linux/OSX': './esy-build.sh'}"
+    "build": "#{os == 'windows' ? 'echo esy-libjpeg-turbo currently works on on Linux/OSX': 'bash ./esy-build.sh'}"
   },
   "dependencies": {
     "esy-cmake": "*",

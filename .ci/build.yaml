@@ -1,0 +1,37 @@
+parameters:
+  host: ''
+  pool: ''
+  sign: false
+
+jobs:
+- job: ${{ parameters.host }}
+  pool: ${{ parameters.pool }}
+  steps:
+  - ${{ if eq(parameters.sign, 'true') }}:
+    - script: 'npm install -g esy@latest --unsafe-perm'
+      displayName: 'Installing deps'
+  - ${{ if eq(parameters.sign, 'false') }}:
+    - script: 'sudo npm install -g esy@latest --unsafe-perm'
+      displayName: 'Installing deps'
+  - script: esy i
+    displayName: 'esy i'
+  - script: esy x pkg-config --libs libjpeg
+    displayName: 'Build and Dry run'
+  # - bash: |
+  #     PKG=~/foo/esy-pkgconfig
+  #     APP=~/foo/test-app
+  #     mkdir -p $PKG
+  #     mkdir -p $APP
+  #     cp -R * $PKG/
+  #     cp test-app.json $APP/package.json
+
+  # - ${{ if eq(parameters.sign, 'false') }}:
+  #     - bash: |
+  #         cd ~/foo/test-app/
+  #         esy
+      
+  # - ${{ if eq(parameters.sign, 'true') }}:
+  #     - bash: |
+  #         cd ~/foo/test-app/
+  #         C:/npm/prefix/node_modules/esy/_build/default/bin/esy.exe
+      
