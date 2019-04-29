@@ -1,0 +1,26 @@
+{
+  "name": "esy-libjpeg-turbo",
+  "version": "2.0.2000",
+  "description": "libjpeg-turbo packaged for esy",
+  "esy": {
+    "exportedEnv": {
+      "LDFLAGS": {
+        "scope": "global",
+        "val": "-L#{self.lib} -ljpeg $LDFLAGS"
+      },
+      "CFLAGS": {
+        "scope": "global",
+        "val": "-I#{self.install / 'include'} $CFLAGS"
+      }
+    },
+    "build": [
+      [
+        "bash",
+        "-c",
+        "#{os == 'windows' ? 'cmake -G\"NMake Makefiles\" -DCMAKE_BUILD_TYPE=Release -DMAKE_INSTALL_PREFIX=$cur__install -S $cur__root -B $cur__target_dir' : 'cmake -G\"Unix Makefiles\" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$cur__install -S $cur__root -B $cur__target_dir'}"
+      ],
+      "make -C #{self.target_dir}",
+      "make -C #{self.target_dir} install"
+    ]
+  }
+}
