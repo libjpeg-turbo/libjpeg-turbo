@@ -1,5 +1,5 @@
 {
-  "checksum": "045554e9e13a5a1a59e50a6433d47280",
+  "checksum": "0cce6c9c5f4911099212d332ecfa8073",
   "root": "esy-libjpeg-turbo@link-dev:./package.json",
   "node": {
     "esy-libjpeg-turbo@link-dev:./package.json": {
@@ -13,21 +13,21 @@
       },
       "overrides": [],
       "dependencies": [
-        "esy-cmake@github:prometheansacrifice/esy-cmake#449d78ab51a4606a874fe94e58074507aa72054a@d41d8cd9",
+        "esy-cmake@github:prometheansacrifice/esy-cmake#2a47392def755074afbf63eb794b94135476b1d1@d41d8cd9",
         "@esy-cross/ninja-build@1.8.2001@d41d8cd9"
       ],
       "devDependencies": []
     },
-    "esy-cmake@github:prometheansacrifice/esy-cmake#449d78ab51a4606a874fe94e58074507aa72054a@d41d8cd9": {
+    "esy-cmake@github:prometheansacrifice/esy-cmake#2a47392def755074afbf63eb794b94135476b1d1@d41d8cd9": {
       "id":
-        "esy-cmake@github:prometheansacrifice/esy-cmake#449d78ab51a4606a874fe94e58074507aa72054a@d41d8cd9",
+        "esy-cmake@github:prometheansacrifice/esy-cmake#2a47392def755074afbf63eb794b94135476b1d1@d41d8cd9",
       "name": "esy-cmake",
       "version":
-        "github:prometheansacrifice/esy-cmake#449d78ab51a4606a874fe94e58074507aa72054a",
+        "github:prometheansacrifice/esy-cmake#2a47392def755074afbf63eb794b94135476b1d1",
       "source": {
         "type": "install",
         "source": [
-          "github:prometheansacrifice/esy-cmake#449d78ab51a4606a874fe94e58074507aa72054a"
+          "github:prometheansacrifice/esy-cmake#2a47392def755074afbf63eb794b94135476b1d1"
         ]
       },
       "overrides": [],

@@ -16,6 +16,6 @@
     "@esy-cross/ninja-build": "^1.8.2001"
   },
   "resolutions": {
-    "esy-cmake": "prometheansacrifice/esy-cmake#449d78ab51a4606a874fe94e58074507aa72054a"
+    "esy-cmake": "prometheansacrifice/esy-cmake#2a47392def755074afbf63eb794b94135476b1d1"
   }
 }
