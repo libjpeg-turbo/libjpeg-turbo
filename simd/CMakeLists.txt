@@ -174,6 +174,22 @@ foreach(file ${SIMD_SOURCES})
         ${CMAKE_ASM_NASM_FLAGS} ${CMAKE_CURRENT_SOURCE_DIR}/${file}
         -o${SIMD_OBJ})
     set(SIMD_OBJS ${SIMD_OBJS} ${SIMD_OBJ})
+  elseif(XCODE)
+    # build objects for simd manually
+    set(SIMD_OBJ ${CMAKE_CURRENT_BINARY_DIR}/${file}.o)
+    set(ARGS
+        "-g"
+        "${CMAKE_ASM_NASM_FLAGS}"
+        "-f${CMAKE_ASM_NASM_OBJECT_FORMAT}"
+        "-o${SIMD_OBJ}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/${file}"
+        )
+    separate_arguments(ARGS)
+    add_custom_command(OUTPUT ${SIMD_OBJ} DEPENDS ${file} ${OBJECT_DEPENDS}
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+      COMMAND mkdir -p `dirname ${SIMD_OBJ}`
+      COMMAND ${CMAKE_ASM_NASM_COMPILER} ${ARGS})
+    set(SIMD_OBJS ${SIMD_OBJS} ${SIMD_OBJ})
   else()
     set_source_files_properties(${file} PROPERTIES OBJECT_DEPENDS
       "${OBJECT_DEPENDS}")
@@ -185,6 +201,11 @@ if(MSVC_IDE)
   add_library(simd OBJECT ${CPU_TYPE}/jsimd.c)
   add_custom_target(simd-objs DEPENDS ${SIMD_OBJS})
   add_dependencies(simd simd-objs)
+elseif(XCODE)
+  # $<TARGET_OBJECTS:simd> should list all objects but NOT
+  # so, always link simd & ${SIMD_OBJS} manually
+  set(SIMD_OBJS ${SIMD_OBJS} PARENT_SCOPE)
+  add_library(simd OBJECT ${CPU_TYPE}/jsimd.c ${SIMD_OBJS})
 else()
   add_library(simd OBJECT ${SIMD_SOURCES} ${CPU_TYPE}/jsimd.c)
 endif()
