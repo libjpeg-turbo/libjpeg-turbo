@@ -477,7 +477,10 @@ jinit_upsampler(j_decompress_ptr cinfo)
     } else if (h_in_group == h_out_group &&
                v_in_group * 2 == v_out_group && do_fancy) {
       /* Non-fancy upsampling is handled by the generic method */
-      upsample->methods[ci] = h1v2_fancy_upsample;
+      if (jsimd_can_h1v2_fancy_upsample())
+        upsample->methods[ci] = jsimd_h1v2_fancy_upsample;
+      else
+        upsample->methods[ci] = h1v2_fancy_upsample;
       upsample->pub.need_context_rows = TRUE;
     } else if (h_in_group * 2 == h_out_group &&
                v_in_group * 2 == v_out_group) {
