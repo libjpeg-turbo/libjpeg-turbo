@@ -315,9 +315,9 @@ h1v2_fancy_upsample(j_decompress_ptr cinfo, jpeg_component_info *compptr,
   JSAMPARRAY output_data = *output_data_ptr;
   JSAMPROW inptr0, inptr1, outptr;
 #if BITS_IN_JSAMPLE == 8
-  int thiscolsum;
+  int thiscolsum, bias;
 #else
-  JLONG thiscolsum;
+  JLONG thiscolsum, bias;
 #endif
   JDIMENSION colctr;
   int inrow, outrow, v;
@@ -327,15 +327,18 @@ h1v2_fancy_upsample(j_decompress_ptr cinfo, jpeg_component_info *compptr,
     for (v = 0; v < 2; v++) {
       /* inptr0 points to nearest input row, inptr1 points to next nearest */
       inptr0 = input_data[inrow];
-      if (v == 0)               /* next nearest is row above */
+      if (v == 0) {             /* next nearest is row above */
         inptr1 = input_data[inrow - 1];
-      else                      /* next nearest is row below */
+        bias = 1;
+      } else {                  /* next nearest is row below */
         inptr1 = input_data[inrow + 1];
+        bias = 2;
+      }
       outptr = output_data[outrow++];
 
       for (colctr = 0; colctr < compptr->downsampled_width; colctr++) {
         thiscolsum = GETJSAMPLE(*inptr0++) * 3 + GETJSAMPLE(*inptr1++);
-        *outptr++ = (JSAMPLE)((thiscolsum + 1) >> 2);
+        *outptr++ = (JSAMPLE)((thiscolsum + bias) >> 2);
       }
     }
     inrow++;
