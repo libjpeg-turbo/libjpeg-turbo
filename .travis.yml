@@ -59,6 +59,8 @@ addons:
 
 before_install:
   - if [ "$TRAVIS_OS_NAME" = "osx" ]; then
+      brew install https://raw.githubusercontent.com/Homebrew/homebrew-core/537f3703aa41c550edbaaf28dd280c6ec929f946/Formula/yasm.rb &&
+      brew install https://raw.githubusercontent.com/Homebrew/homebrew-core/e54bdbab6fa2903d4c27984ca9858f546293880c/Formula/gcc@5.rb &&
       ln -fs /usr/local/bin/gpg1 /usr/local/bin/gpg &&
       git clone --depth=1 https://github.com/libjpeg-turbo/gas-preprocessor.git ~/src/gas-preprocessor &&
       ln -fs /Applications/Xcode.app /Applications/Xcode72.app;
