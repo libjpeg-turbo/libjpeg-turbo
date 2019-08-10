@@ -1128,11 +1128,32 @@ jsimd_can_idct_float(void)
   return 0;
 }
 
+#if defined(__has_feature)
+#  if __has_feature(memory_sanitizer)
+/* -fsanitize=memory fails to detect that output_buf is initialized in the */
+/* assembly code */
+static void init_output_buf(JSAMPARRAY output_buf, JDIMENSION output_col)
+{
+  int ctr;
+  for (ctr = 0; ctr < DCTSIZE; ctr++) {
+    JSAMPROW outptr = output_buf[ctr] + output_col;
+    memset(outptr, 0, DCTSIZE);
+  }
+}
+#  else
+#    define init_output_buf(output_buf, output_col) do {} while(0)
+#  endif
+#else
+#  define init_output_buf(output_buf, output_col) do {} while(0)
+#endif
+
+
 GLOBAL(void)
 jsimd_idct_islow(j_decompress_ptr cinfo, jpeg_component_info *compptr,
                  JCOEFPTR coef_block, JSAMPARRAY output_buf,
                  JDIMENSION output_col)
 {
+  init_output_buf(output_buf, output_col);
   if (simd_support & JSIMD_AVX2)
     jsimd_idct_islow_avx2(compptr->dct_table, coef_block, output_buf,
                           output_col);
@@ -1149,6 +1170,7 @@ jsimd_idct_ifast(j_decompress_ptr cinfo, jpeg_component_info *compptr,
                  JCOEFPTR coef_block, JSAMPARRAY output_buf,
                  JDIMENSION output_col)
 {
+  init_output_buf(output_buf, output_col);
   if ((simd_support & JSIMD_SSE2) && IS_ALIGNED_SSE(jconst_idct_ifast_sse2))
     jsimd_idct_ifast_sse2(compptr->dct_table, coef_block, output_buf,
                           output_col);
@@ -1162,6 +1184,7 @@ jsimd_idct_float(j_decompress_ptr cinfo, jpeg_component_info *compptr,
                  JCOEFPTR coef_block, JSAMPARRAY output_buf,
                  JDIMENSION output_col)
 {
+  init_output_buf(output_buf, output_col);
   if ((simd_support & JSIMD_SSE2) && IS_ALIGNED_SSE(jconst_idct_float_sse2))
     jsimd_idct_float_sse2(compptr->dct_table, coef_block, output_buf,
                           output_col);
