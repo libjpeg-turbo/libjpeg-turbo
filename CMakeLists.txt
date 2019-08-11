@@ -720,6 +720,7 @@ if(WITH_12BIT)
   set(MD5_PPM_444_ISLOW_SKIP1_6 ef63901f71ef7a75cd78253fc0914f84)
   set(MD5_PPM_444_ISLOW_PROG_CROP98x98_13_13 15b173fb5872d9575572fbcc1b05956f)
   set(MD5_JPEG_CROP cdb35ff4b4519392690ea040c56ea99c)
+  set(MD5_JPEG_SCANS_16 d4d6e03300262fb294948daec71f6be4)
 else()
   set(TESTORIG testorig.jpg)
   set(MD5_JPEG_RGB_ISLOW 1d44a406f61da743b5fd31c0a9abdca3)
@@ -784,6 +785,7 @@ else()
   set(MD5_PPM_444_ISLOW_PROG_CROP98x98_13_13 db87dc7ce26bcdc7a6b56239ce2b9d6c)
   set(MD5_PPM_444_ISLOW_ARI_CROP37x37_0_0 cb57b32bd6d03e35432362f7bf184b6d)
   set(MD5_JPEG_CROP b4197f377e621c4e9b1d20471432610d)
+  set(MD5_JPEG_SCANS_16 bf1e87d7639f61186690ce912211d879)
 endif()
 
 if(WITH_JAVA)
@@ -1264,6 +1266,10 @@ foreach(libtype ${TEST_LIBTYPES})
   add_bittest(jpegtran crop "-crop;120x90+20+50;-transpose;-perfect"
     testout_crop.jpg ${TESTIMAGES}/${TESTORIG}
     ${MD5_JPEG_CROP})
+
+  add_bittest(jpegtran scans_16 "-copy;all;-scans;${TESTIMAGES}/test_scans_16.scan"
+    testout_scans_16.jpg ${TESTIMAGES}/${TESTORIG}
+    ${MD5_JPEG_SCANS_16})
 
 endforeach()
 
