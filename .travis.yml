@@ -34,6 +34,17 @@ matrix:
     - os: linux
       dist: trusty
       compiler: gcc
+      env:
+        CFLAGS="-m32"
+        LDFLAGS="-m32"
+      addons:
+        apt:
+          packages:
+            - nasm
+            - gcc-multilib
+    - os: linux
+      dist: trusty
+      compiler: gcc
       env: CMAKE_FLAGS="-DWITH_JPEG7=1"
       addons:
         apt:
@@ -101,12 +112,13 @@ script:
   - if [ "${BUILD_OFFICIAL:-}" == "" ]; then
       mkdir build &&
       pushd build &&
-      cmake -G"Unix Makefiles" -DCMAKE_BUILD_TYPE=$CMAKE_BUILD_TYPE "-DCMAKE_C_FLAGS_RELWITHDEBINFO=$CFLAGS_RELWITHDEBINFO" $CMAKE_FLAGS .. &&
+      cmake -G"Unix Makefiles" -DCMAKE_BUILD_TYPE=$CMAKE_BUILD_TYPE "-DCMAKE_C_FLAGS_RELWITHDEBINFO=$CFLAGS_RELWITHDEBINFO" "-DCMAKE_C_FLAGS=$CFLAGS" "-DCMAKE_LD_FLAGS=$LDFLAGS" $CMAKE_FLAGS .. &&
       export NUMCPUS=`grep -c '^processor' /proc/cpuinfo` &&
       make -j$NUMCPUS --load-average=$NUMCPUS &&
       make test &&
       if [[ ! "${CMAKE_FLAGS[0]}" =~ "WITH_12BIT" &&
-            ! "${CMAKE_FLAGS[0]}" =~ "WITH_SIMD" ]]; then
+            ! "${CMAKE_FLAGS[0]}" =~ "WITH_SIMD" &&
+            ! "${CFLAGS[0]}" =~ "-m32" ]]; then
         JSIMD_FORCESSE2=1 make test &&
         cmake -DFLOATTEST=32bit .. &&
         JSIMD_FORCENONE=1 make test;
