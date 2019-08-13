@@ -13,7 +13,7 @@ matrix:
     - os: linux
       compiler: clang
       env:
-        CFLAGS="-O1 -g -fsanitize=address -fno-omit-frame-pointer"
+        CFLAGS="-O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer"
         CONFIGURE_FLAGS="--disable-shared"
         ASAN_OPTIONS="detect_leaks=1 symbolize=1"
       addons:
@@ -38,8 +38,10 @@ matrix:
           packages:
             - nasm
     - os: linux
-      compiler: gcc
-      env: CONFIGURE_FLAGS="--without-simd"
+      compiler: clang
+      env:
+        CFLAGS="-O3 -g -fsanitize=memory -fPIE"
+        CONFIGURE_FLAGS="--without-simd"
 
 addons:
   homebrew:
