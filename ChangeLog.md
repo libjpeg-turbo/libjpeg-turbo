@@ -80,6 +80,11 @@ allow it.
 14. Fixed an issue whereby a static build of libjpeg-turbo (a build in which
 `ENABLE_SHARED` is `0`) could not be installed using the Visual Studio IDE.
 
+15. Fixed an issue whereby `tjDecodeYUV()` and `tjDecodeYUVPlanes()` would
+throw an error ("Invalid progressive parameters") or a warning ("Inconsistent
+progression sequence") if passed a TurboJPEG instance that was previously used
+to decompress a progressive JPEG image.
+
 
 1.5.3
 =====
