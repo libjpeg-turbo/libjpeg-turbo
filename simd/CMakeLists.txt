@@ -265,7 +265,7 @@ endif()
 # MIPS (GAS)
 ###############################################################################
 
-elseif(CPU_TYPE STREQUAL "mips" OR CPU_TYPE STREQUAL "mipsel")
+elseif(CPU_TYPE STREQUAL "mips" OR CPU_TYPE STREQUAL "mipsel" OR CPU_TYPE STREQUAL "mips64" OR CPU_TYPE STREQUAL "mips64el")
 
 enable_language(ASM)
 
@@ -273,8 +273,7 @@ string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE_UC)
 set(EFFECTIVE_ASM_FLAGS "${CMAKE_ASM_FLAGS} ${CMAKE_ASM_FLAGS_${CMAKE_BUILD_TYPE_UC}}")
 message(STATUS "CMAKE_ASM_FLAGS = ${EFFECTIVE_ASM_FLAGS}")
 
-set(CMAKE_REQUIRED_FLAGS -mdspr2)
-
+set(CMAKE_REQUIRED_FLAGS "${CMAKE_C_FLAGS}")
 check_c_source_compiles("
   #if !(defined(__mips__) && __mips_isa_rev >= 2)
   #error MIPS DSPr2 is currently only available on MIPS32r2 platforms.
@@ -288,15 +287,30 @@ check_c_source_compiles("
     );
     return c;
   }" HAVE_DSPR2)
-
 unset(CMAKE_REQUIRED_FLAGS)
 
 if(NOT HAVE_DSPR2)
+set(CMAKE_REQUIRED_FLAGS "${CMAKE_C_FLAGS}")
+check_c_source_compiles("
+  #include <msa.h>
+  int main (void) {
+    v8i16 a0 = {0}, a1 = {0};
+    a0 = a0 + a1;
+    return 0;
+  }" HAVE_MSA)
+unset(CMAKE_REQUIRED_FLAGS)
+endif()
+
+if(HAVE_DSPR2)
+  add_library(simd OBJECT mips/jsimd_dspr2.S mips/jsimd_dspr2.c)
+elseif(HAVE_MSA)
+  add_library(simd OBJECT mips/jccolext_msa.c mips/jcgray_msa.c mips/jcsample_msa.c
+    mips/jdcol565_msa.c mips/jdcolext_msa.c mips/jdmrgext_msa.c mips/jdsample_msa.c
+    mips/jfdct_msa.c mips/jidct_msa.c mips/jquanti_msa.c mips/jsimd_msa.c)
+else()
   simd_fail("SIMD extensions not available for this CPU")
   return()
 endif()
-
-add_library(simd OBJECT mips/jsimd_dspr2.S mips/jsimd.c)
 
 if(CMAKE_POSITION_INDEPENDENT_CODE OR ENABLE_SHARED)
   set_target_properties(simd PROPERTIES POSITION_INDEPENDENT_CODE 1)
