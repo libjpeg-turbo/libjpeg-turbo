@@ -273,11 +273,9 @@ set(SIMD_SOURCES arm/jccolor-neon.c arm/jcgray-neon.c arm/jcphuff-neon.c
 
 if (CPU_TYPE STREQUAL "arm")
   add_library(simd OBJECT ${SIMD_SOURCES} arm/aarch32/jchuff-neon.c
-                                          arm/aarch32/jsimd_neon.S
                                           arm/aarch32/jsimd.c)
 else()
   add_library(simd OBJECT ${SIMD_SOURCES} arm/aarch64/jchuff-neon.c
-                                          arm/aarch64/jsimd_neon.S
                                           arm/aarch64/jsimd.c)
 endif()
 
