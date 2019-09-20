@@ -139,15 +139,12 @@ jsimd_fdct_islow_msa(DCTELEM *data)
   v8i16 dst0, dst1, dst2, dst3, dst4, dst5, dst6, dst7;
   v4i32 z1_r, z1_l, z2_r, z2_l, z3_r, z3_l, z4_r, z4_l;
   v4i32 z5_r, z5_l, z12_r, z12_l, z13_r, z13_l;
-  v4i32 const0 = { FIX_0_298631336, FIX_2_053119869,
-                   FIX_3_072711026, FIX_1_501321110
-                 };
-  v4i32 const1 = { -FIX_0_899976223, -FIX_2_562915447,
-                   -FIX_1_961570560, -FIX_0_390180644
-                 };
-  v4i32 const2 = { FIX_0_541196100, -FIX_1_847759065,
-                   FIX_0_765366865, FIX_1_175875602
-                 };
+  v4i32 const0 =
+    { FIX_0_298631336, FIX_2_053119869, FIX_3_072711026, FIX_1_501321110 };
+  v4i32 const1 =
+    { -FIX_0_899976223, -FIX_2_562915447, -FIX_1_961570560, -FIX_0_390180644 };
+  v4i32 const2 =
+    { FIX_0_541196100, -FIX_1_847759065, FIX_0_765366865, FIX_1_175875602 };
 
   /* Load 8 rows */
   LD_SH8(data, DCTSIZE, val0, val1, val2, val3, val4, val5, val6, val7);
@@ -193,8 +190,8 @@ jsimd_fdct_islow_msa(DCTELEM *data)
   z5_r = z5_r * __msa_splati_w(const2, 3);
   z5_l = z5_l * __msa_splati_w(const2, 3);
 
-  UNPCK_SH4_SW(tmp4, tmp5, tmp6, tmp7, tmp4_r, tmp4_l, tmp5_r, tmp5_l, tmp6_r,
-               tmp6_l, tmp7_r, tmp7_l);
+  UNPCK_SH4_SW(tmp4, tmp5, tmp6, tmp7, tmp4_r, tmp4_l, tmp5_r, tmp5_l,
+               tmp6_r, tmp6_l, tmp7_r, tmp7_l);
   FDCT_ISLOW_ODD_MULTIPLY(tmp4_r, tmp4_l, tmp5_r, tmp5_l, tmp6_r, tmp6_l,
                           tmp7_r, tmp7_l, z1_r, z1_l, z2_r, z2_l, z3_r, z3_l,
                           z4_r, z4_l, const0, const1);
@@ -260,14 +257,14 @@ jsimd_fdct_islow_msa(DCTELEM *data)
   z5_r = z5_r * __msa_splati_w(const2, 3);
   z5_l = z5_l * __msa_splati_w(const2, 3);
 
-  UNPCK_SH4_SW(tmp4, tmp5, tmp6, tmp7, tmp4_r, tmp4_l, tmp5_r, tmp5_l, tmp6_r,
-               tmp6_l, tmp7_r, tmp7_l);
+  UNPCK_SH4_SW(tmp4, tmp5, tmp6, tmp7, tmp4_r, tmp4_l, tmp5_r, tmp5_l,
+               tmp6_r, tmp6_l, tmp7_r, tmp7_l);
   FDCT_ISLOW_ODD_MULTIPLY(tmp4_r, tmp4_l, tmp5_r, tmp5_l, tmp6_r, tmp6_l,
                           tmp7_r, tmp7_l, z1_r, z1_l, z2_r, z2_l, z3_r, z3_l,
                           z4_r, z4_l, const0, const1);
 
-  ADD4(z3_r, z5_r, z3_l, z5_l, z4_r, z5_r, z4_l, z5_l, z3_r, z3_l, z4_r,
-       z4_l);
+  ADD4(z3_r, z5_r, z3_l, z5_l, z4_r, z5_r, z4_l, z5_l,
+       z3_r, z3_l, z4_r, z4_l);
 
   tmp4_r += z1_r + z3_r;
   tmp5_r += z2_r + z4_r;

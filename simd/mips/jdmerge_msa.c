@@ -61,8 +61,8 @@ out_g0, out_g1) { \
   DPADD_SH2_SW(tmp0_m, tmp1_m, const0_m, const0_m, out2_m, out3_m); \
   SRARI_W4_SW(out0_m, out1_m, out2_m, out3_m, 16); \
   PCKEV_H2_SH(out1_m, out0_m, out3_m, out2_m, tmp0_m, tmp1_m); \
-  ADD4(y_h2, tmp0_m, y_h3, tmp1_m, y_h0, tmp0_m, y_h1, tmp1_m, tmp2_m, \
-       tmp3_m, tmp0_m, tmp1_m); \
+  ADD4(y_h2, tmp0_m, y_h3, tmp1_m, y_h0, tmp0_m, y_h1, tmp1_m, \
+       tmp2_m, tmp3_m, tmp0_m, tmp1_m); \
   CLIP_SH4_0_255(tmp0_m, tmp1_m, tmp2_m, tmp3_m); \
   PCKEV_B2_SB(tmp1_m, tmp0_m, tmp3_m, tmp2_m, out_g0, out_g1); \
 }
@@ -96,8 +96,8 @@ out_r0, out_r1) { \
        out0_m, out1_m, out2_m, out3_m); \
   SRARI_W4_SW(out0_m, out1_m, out2_m, out3_m, 16); \
   PCKEV_H2_SH(out1_m, out0_m, out3_m, out2_m, tmp0_m, tmp1_m); \
-  ADD4(y_h2, tmp0_m, y_h3, tmp1_m, y_h0, tmp0_m, y_h1, tmp1_m, tmp2_m, \
-       tmp3_m, tmp0_m, tmp1_m); \
+  ADD4(y_h2, tmp0_m, y_h3, tmp1_m, y_h0, tmp0_m, y_h1, tmp1_m, \
+       tmp2_m, tmp3_m, tmp0_m, tmp1_m); \
   CLIP_SH4_0_255(tmp0_m, tmp1_m, tmp2_m, tmp3_m); \
   PCKEV_B2_SB(tmp1_m, tmp0_m, tmp3_m, tmp2_m, out_r0, out_r1); \
 }
@@ -125,8 +125,8 @@ out_b0, out_b1) { \
        out0_m, out1_m, out2_m, out3_m); \
   SRARI_W4_SW(out0_m, out1_m, out2_m, out3_m, 16); \
   PCKEV_H2_SH(out1_m, out0_m, out3_m, out2_m, tmp0_m, tmp1_m); \
-  ADD4(y_h2, tmp0_m, y_h3, tmp1_m, y_h0, tmp0_m, y_h1, tmp1_m, tmp2_m, \
-       tmp3_m, tmp0_m, tmp1_m); \
+  ADD4(y_h2, tmp0_m, y_h3, tmp1_m, y_h0, tmp0_m, y_h1, tmp1_m, \
+       tmp2_m, tmp3_m, tmp0_m, tmp1_m); \
   CLIP_SH4_0_255(tmp0_m, tmp1_m, tmp2_m, tmp3_m); \
   PCKEV_B2_SB(tmp1_m, tmp0_m, tmp3_m, tmp2_m, out_b0, out_b1); \
 }
@@ -138,7 +138,7 @@ out_b0, out_b1) { \
   \
   MUL2(const0_m, cb_w0, const0_m, cb_w1, out0_m, out1_m); \
   SRARI_W2_SW(out0_m, out1_m, 16); \
-  tmp0_m = __msa_pckev_h((v8i16)out1_m,(v8i16)out0_m); \
+  tmp0_m = __msa_pckev_h((v8i16)out1_m, (v8i16)out0_m); \
   ADD2(y_h1, tmp0_m, y_h0, tmp0_m, tmp2_m, tmp0_m); \
   CLIP_SH2_0_255(tmp0_m, tmp2_m); \
   PCKEV_B2_SB(tmp0_m, tmp0_m, tmp2_m, tmp2_m, out_b0, out_b1); \
@@ -164,12 +164,12 @@ cb_h0, cb_h1, cr_h0, cr_h1, out_g0, out_g1, out_g2, out_g3) { \
   DPADD_SH2_SW(tmp0_m, tmp1_m, const0_m, const0_m, out2_m, out3_m); \
   SRARI_W4_SW(out0_m, out1_m, out2_m, out3_m, 16); \
   PCKEV_H2_SH(out1_m, out0_m, out3_m, out2_m, tmp0_m, tmp1_m); \
-  ADD4(y_h4, tmp0_m, y_h5, tmp1_m, y_h6, tmp0_m, y_h7, tmp1_m, tmp4_m, \
-       tmp5_m, tmp6_m, tmp7_m); \
+  ADD4(y_h4, tmp0_m, y_h5, tmp1_m, y_h6, tmp0_m, y_h7, tmp1_m, \
+       tmp4_m, tmp5_m, tmp6_m, tmp7_m); \
   CLIP_SH4_0_255(tmp4_m, tmp5_m, tmp6_m, tmp7_m); \
   PCKEV_B2_SB(tmp5_m, tmp4_m, tmp7_m, tmp6_m, out_g2, out_g3); \
-  ADD4(y_h3, tmp1_m, y_h2, tmp0_m, y_h1, tmp1_m, y_h0, tmp0_m, tmp3_m, \
-       tmp2_m, tmp1_m, tmp0_m); \
+  ADD4(y_h3, tmp1_m, y_h2, tmp0_m, y_h1, tmp1_m, y_h0, tmp0_m, \
+       tmp3_m, tmp2_m, tmp1_m, tmp0_m); \
   CLIP_SH4_0_255(tmp0_m, tmp1_m, tmp2_m, tmp3_m); \
   PCKEV_B2_SB(tmp1_m, tmp0_m, tmp3_m, tmp2_m, out_g0, out_g1); \
 }
@@ -189,8 +189,8 @@ out_g0, out_g1) { \
   DPADD_SH2_SW(tmp0_m, tmp1_m, const0_m, const0_m, out0_m, out1_m); \
   SRARI_W2_SW(out0_m, out1_m, 16); \
   tmp0_m = __msa_pckev_h((v8i16)out1_m, (v8i16)out0_m); \
-  ADD4(y_h3, tmp0_m, y_h2, tmp0_m, y_h1, tmp0_m, y_h0, tmp0_m, tmp3_m,\
-       tmp1_m, tmp2_m, tmp0_m); \
+  ADD4(y_h3, tmp0_m, y_h2, tmp0_m, y_h1, tmp0_m, y_h0, tmp0_m, \
+       tmp3_m, tmp1_m, tmp2_m, tmp0_m); \
   CLIP_SH4_0_255(tmp0_m, tmp2_m, tmp1_m, tmp3_m); \
   PCKEV_B2_SB(tmp1_m, tmp0_m, tmp3_m, tmp2_m, out_g0, out_g1); \
 }
@@ -205,12 +205,12 @@ cr_w0, cr_w1, cr_w2, cr_w3, out_r0, out_r1, out_r2, out_r3) { \
        out0_m, out1_m, out2_m, out3_m); \
   SRARI_W4_SW(out0_m, out1_m, out2_m, out3_m, 16); \
   PCKEV_H2_SH(out1_m, out0_m, out3_m, out2_m, tmp0_m, tmp1_m); \
-  ADD4(y_h4, tmp0_m, y_h5, tmp1_m, y_h6, tmp0_m, y_h7, tmp1_m, tmp4_m, \
-       tmp5_m, tmp6_m, tmp7_m); \
+  ADD4(y_h4, tmp0_m, y_h5, tmp1_m, y_h6, tmp0_m, y_h7, tmp1_m, \
+       tmp4_m, tmp5_m, tmp6_m, tmp7_m); \
   CLIP_SH4_0_255(tmp4_m, tmp5_m, tmp6_m, tmp7_m); \
   PCKEV_B2_SB(tmp5_m, tmp4_m, tmp7_m, tmp6_m, out_r2, out_r3); \
-  ADD4(y_h3, tmp1_m, y_h2, tmp0_m, y_h1, tmp1_m, y_h0, tmp0_m, tmp3_m, \
-       tmp2_m, tmp1_m, tmp0_m); \
+  ADD4(y_h3, tmp1_m, y_h2, tmp0_m, y_h1, tmp1_m, y_h0, tmp0_m, \
+       tmp3_m, tmp2_m, tmp1_m, tmp0_m); \
   CLIP_SH4_0_255(tmp0_m, tmp1_m, tmp2_m, tmp3_m); \
   PCKEV_B2_SB(tmp1_m, tmp0_m, tmp3_m, tmp2_m, out_r0, out_r1); \
 }
@@ -224,8 +224,8 @@ out_r0, out_r1) { \
   MUL2(const0_m, cr_w0, const0_m, cr_w1, out0_m, out1_m); \
   SRARI_W2_SW(out0_m, out1_m, 16); \
   tmp0_m = __msa_pckev_h((v8i16)out1_m, (v8i16)out0_m); \
-  ADD4(y_h3, tmp0_m, y_h2, tmp0_m, y_h1, tmp0_m, y_h0, tmp0_m, tmp3_m, \
-       tmp1_m, tmp2_m, tmp0_m); \
+  ADD4(y_h3, tmp0_m, y_h2, tmp0_m, y_h1, tmp0_m, y_h0, tmp0_m, \
+       tmp3_m, tmp1_m, tmp2_m, tmp0_m); \
   CLIP_SH4_0_255(tmp0_m, tmp2_m, tmp1_m, tmp3_m); \
   PCKEV_B2_SB(tmp1_m, tmp0_m, tmp3_m, tmp2_m, out_r0, out_r1); \
 }
@@ -240,12 +240,12 @@ cb_w0, cb_w1, cb_w2, cb_w3, out_b0, out_b1, out_b2, out_b3) { \
        out0_m, out1_m, out2_m, out3_m); \
   SRARI_W4_SW(out0_m, out1_m, out2_m, out3_m, 16); \
   PCKEV_H2_SH(out1_m, out0_m, out3_m, out2_m, tmp0_m, tmp1_m); \
-  ADD4(y_h4, tmp0_m, y_h5, tmp1_m, y_h6, tmp0_m, y_h7, tmp1_m, tmp4_m, \
-       tmp5_m, tmp6_m, tmp7_m); \
+  ADD4(y_h4, tmp0_m, y_h5, tmp1_m, y_h6, tmp0_m, y_h7, tmp1_m, \
+       tmp4_m, tmp5_m, tmp6_m, tmp7_m); \
   CLIP_SH4_0_255(tmp4_m, tmp5_m, tmp6_m, tmp7_m); \
   PCKEV_B2_SB(tmp5_m, tmp4_m, tmp7_m, tmp6_m, out_b2, out_b3); \
-  ADD4(y_h3, tmp1_m, y_h2, tmp0_m, y_h1, tmp1_m, y_h0, tmp0_m, tmp3_m, \
-       tmp2_m, tmp1_m, tmp0_m); \
+  ADD4(y_h3, tmp1_m, y_h2, tmp0_m, y_h1, tmp1_m, y_h0, tmp0_m, \
+       tmp3_m, tmp2_m, tmp1_m, tmp0_m); \
   CLIP_SH4_0_255(tmp0_m, tmp1_m, tmp2_m, tmp3_m); \
   PCKEV_B2_SB(tmp1_m, tmp0_m, tmp3_m, tmp2_m, out_b0, out_b1); \
 }
@@ -259,8 +259,8 @@ out_b0, out_b1) { \
   MUL2(const0_m, cb_w0, const0_m, cb_w1, out0_m, out1_m); \
   SRARI_W2_SW(out0_m, out1_m, 16); \
   tmp0_m = __msa_pckev_h((v8i16)out1_m, (v8i16)out0_m); \
-  ADD4(y_h3, tmp0_m, y_h2, tmp0_m, y_h1, tmp0_m, y_h0, tmp0_m, tmp3_m, \
-       tmp1_m, tmp2_m, tmp0_m); \
+  ADD4(y_h3, tmp0_m, y_h2, tmp0_m, y_h1, tmp0_m, y_h0, tmp0_m, \
+       tmp3_m, tmp1_m, tmp2_m, tmp0_m); \
   CLIP_SH4_0_255(tmp0_m, tmp2_m, tmp1_m, tmp3_m); \
   PCKEV_B2_SB(tmp1_m, tmp0_m, tmp3_m, tmp2_m, out_b0, out_b1); \
 }

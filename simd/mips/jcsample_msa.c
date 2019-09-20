@@ -54,8 +54,8 @@ jsimd_h2v1_downsample_msa(JDIMENSION image_width, int max_v_samp_factor,
 
       HADD_UB2_SH(src0, src1, tmp0_r, tmp0_l);
       HADD_UB2_SH(src2, src3, tmp1_r, tmp1_l);
-      ADD4(tmp0_r, bias, tmp0_l, bias, tmp1_r, bias, tmp1_l, bias, tmp0_r,
-           tmp0_l, tmp1_r, tmp1_l);
+      ADD4(tmp0_r, bias, tmp0_l, bias, tmp1_r, bias, tmp1_l, bias,
+           tmp0_r, tmp0_l, tmp1_r, tmp1_l);
       SRAI_H4_SH(tmp0_r, tmp0_l, tmp1_r, tmp1_l, 1);
       dst0 = __msa_pckev_b((v16i8)tmp0_l, (v16i8)tmp0_r);
       dst1 = __msa_pckev_b((v16i8)tmp1_l, (v16i8)tmp1_r);
@@ -64,8 +64,8 @@ jsimd_h2v1_downsample_msa(JDIMENSION image_width, int max_v_samp_factor,
 
       HADD_UB2_SH(src4, src5, tmp0_r, tmp0_l);
       HADD_UB2_SH(src6, src7, tmp1_r, tmp1_l);
-      ADD4(tmp0_r, bias, tmp0_l, bias, tmp1_r, bias, tmp1_l, bias, tmp0_r,
-           tmp0_l, tmp1_r, tmp1_l);
+      ADD4(tmp0_r, bias, tmp0_l, bias, tmp1_r, bias, tmp1_l, bias,
+           tmp0_r, tmp0_l, tmp1_r, tmp1_l);
       SRAI_H4_SH(tmp0_r, tmp0_l, tmp1_r, tmp1_l, 1);
       dst0 = __msa_pckev_b((v16i8)tmp0_l, (v16i8)tmp0_r);
       dst1 = __msa_pckev_b((v16i8)tmp1_l, (v16i8)tmp1_r);
@@ -80,8 +80,8 @@ jsimd_h2v1_downsample_msa(JDIMENSION image_width, int max_v_samp_factor,
 
       HADD_UB2_SH(src0, src1, tmp0_r, tmp0_l);
       HADD_UB2_SH(src2, src3, tmp1_r, tmp1_l);
-      ADD4(tmp0_r, bias, tmp0_l, bias, tmp1_r, bias, tmp1_l, bias, tmp0_r,
-           tmp0_l, tmp1_r, tmp1_l);
+      ADD4(tmp0_r, bias, tmp0_l, bias, tmp1_r, bias, tmp1_l, bias,
+           tmp0_r, tmp0_l, tmp1_r, tmp1_l);
       SRAI_H4_SH(tmp0_r, tmp0_l, tmp1_r, tmp1_l, 1);
       dst0 = __msa_pckev_b((v16i8)tmp0_l, (v16i8)tmp0_r);
       dst1 = __msa_pckev_b((v16i8)tmp1_l, (v16i8)tmp1_r);
@@ -161,8 +161,8 @@ jsimd_h2v2_downsample_msa(JDIMENSION image_width, int max_v_samp_factor,
       HADD_UB4_SH(src8, src9, src10, src11, tmp2_r, tmp2_l, tmp3_r, tmp3_l);
       ADD4(tmp0_r, tmp2_r, tmp0_l, tmp2_l, tmp1_r, tmp3_r, tmp1_l, tmp3_l,
            tmp0_r, tmp0_l, tmp1_r, tmp1_l);
-      ADD4(tmp0_r, bias, tmp0_l, bias, tmp1_r, bias, tmp1_l, bias, tmp0_r,
-           tmp0_l, tmp1_r, tmp1_l);
+      ADD4(tmp0_r, bias, tmp0_l, bias, tmp1_r, bias, tmp1_l, bias,
+           tmp0_r, tmp0_l, tmp1_r, tmp1_l);
       SRAI_H4_SH(tmp0_r, tmp0_l, tmp1_r, tmp1_l, 2);
       PCKEV_B2_SB(tmp0_l, tmp0_r, tmp1_l, tmp1_r, dst0, dst1);
 
@@ -170,8 +170,8 @@ jsimd_h2v2_downsample_msa(JDIMENSION image_width, int max_v_samp_factor,
       HADD_UB4_SH(src12, src13, src14, src15, tmp2_r, tmp2_l, tmp3_r, tmp3_l);
       ADD4(tmp0_r, tmp2_r, tmp0_l, tmp2_l, tmp1_r, tmp3_r, tmp1_l, tmp3_l,
            tmp0_r, tmp0_l, tmp1_r, tmp1_l);
-      ADD4(tmp0_r, bias, tmp0_l, bias, tmp1_r, bias, tmp1_l, bias, tmp0_r,
-           tmp0_l, tmp1_r, tmp1_l);
+      ADD4(tmp0_r, bias, tmp0_l, bias, tmp1_r, bias, tmp1_l, bias,
+           tmp0_r, tmp0_l, tmp1_r, tmp1_l);
       SRAI_H4_SH(tmp0_r, tmp0_l, tmp1_r, tmp1_l, 2);
       PCKEV_B2_SB(tmp0_l, tmp0_r, tmp1_l, tmp1_r, dst2, dst3);
 
