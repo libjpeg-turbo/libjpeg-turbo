@@ -25,131 +25,8 @@
 #include "../../jinclude.h"
 #include "../../jpeglib.h"
 #include "../../jsimd.h"
-
 #include "jmacros_msa.h"
 
-#define GETSAMPLE(value)  ((int) (value))
-
-void
-image_upsample_h2v1_msa (JSAMPARRAY src, JSAMPARRAY dst,
-                         JDIMENSION width, JDIMENSION height)
-{
-  JSAMPROW inptr, inptr1, outptr, outptr1, out32end, out64end;
-  JDIMENSION inrow, out_width = (width + 31) & (~31);
-  v16u8 src0, src1, src2, src3;
-  v16u8 dst0_l, dst0_r, dst1_l, dst1_r, dst2_l, dst2_r, dst3_l, dst3_r;
-
-  inrow = 0;
-
-  /* Height multiple of 2 */
-  for (; inrow < (height & ~1); inrow += 2) {
-    inptr = src[inrow];
-    inptr1 = src[inrow + 1];
-    outptr = dst[inrow];
-    outptr1 = dst[inrow + 1];
-    out32end = outptr + out_width;
-    out64end = outptr + ((out_width >> 6) << 6);
-
-    src0 = LD_UB(inptr);
-    src2 = LD_UB(inptr + width);
-
-    while (outptr < out64end) {
-      src1 = LD_UB(inptr + 16);
-      src3 = LD_UB(inptr1 + 16);
-      ILVRL_B2_UB(src0, src0, dst0_r, dst0_l);
-      ILVRL_B2_UB(src1, src1, dst1_r, dst1_l);
-      ILVRL_B2_UB(src2, src2, dst2_r, dst2_l);
-      ILVRL_B2_UB(src3, src3, dst3_r, dst3_l);
-      ST_UB4(dst0_r, dst0_l, dst1_r, dst1_l, outptr, 16);
-      ST_UB4(dst2_r, dst2_l, dst3_r, dst3_l, outptr1, 16);
-      inptr += 32;
-      inptr1 += 32;
-      outptr += 64;
-      outptr1 += 64;
-
-      src0 = LD_UB(inptr);
-      src2 = LD_UB(inptr1);
-    }
-
-    if (out32end > out64end) {
-      ILVRL_B2_UB(src0, src0, dst0_r, dst0_l);
-      ILVRL_B2_UB(src2, src2, dst2_r, dst2_l);
-      ST_UB2(dst0_r, dst0_l, outptr, 16);
-      ST_UB2(dst2_r, dst2_l, outptr1, 16);
-    }
-  }
-
-  /* Remaining row */
-  if (inrow < height) {
-    inptr = src[inrow];
-    outptr = dst[inrow];
-    out32end = outptr + out_width;
-    out64end = outptr + ((out_width >> 6) << 6);
-
-    src0 = LD_UB(inptr);
-
-    while (outptr < out64end) {
-      src1 = LD_UB(inptr + 16);
-      ILVRL_B2_UB(src0, src0, dst0_r, dst0_l);
-      ILVRL_B2_UB(src1, src1, dst1_r, dst1_l);
-      ST_UB4(dst0_r, dst0_l, dst1_r, dst1_l, outptr, 16);
-      inptr += 32;
-      outptr += 64;
-
-      src0 = LD_UB(inptr);
-    }
-
-    if (out32end > out64end) {
-      ILVRL_B2_UB(src0, src0, dst0_r, dst0_l);
-      ST_UB2(dst0_r, dst0_l, outptr, 16);
-    }
-  }
-}
-
-void
-image_upsample_h2v2_msa (JSAMPARRAY src, JSAMPARRAY dst,
-                         JDIMENSION width, JDIMENSION height)
-{
-  JSAMPROW inptr, outptr;
-  JDIMENSION out_width = (width + 31) & (~31);
-  JSAMPROW out32end, out64end;
-  int inrow, outrow;
-  v16u8 src0, src1, dst0_l, dst0_r, dst1_l, dst1_r;
-
-  inrow = outrow = 0;
-
-  while (outrow < height) {
-    inptr = src[inrow];
-    outptr = dst[outrow];
-    out32end = outptr + out_width;
-    out64end = outptr + ((out_width >> 6) << 6);
-
-    src0 = LD_UB(inptr);
-
-    while (outptr < out64end) {
-      src1 = LD_UB(inptr + 16);
-      ILVRL_B2_UB(src0, src0, dst0_r, dst0_l);
-      ILVRL_B2_UB(src1, src1, dst1_r, dst1_l);
-      ST_UB4(dst0_r, dst0_l, dst1_r, dst1_l, outptr, 16);
-      ST_UB4(dst0_r, dst0_l, dst1_r, dst1_l, outptr + out_width, 16);
-      inptr += 32;
-      outptr += 64;
-
-      src0 = LD_UB(inptr);
-    }
-
-    if (out32end > out64end) {
-      ILVRL_B2_UB(src0, src0, dst0_r, dst0_l);
-      ST_UB2(dst0_r, dst0_l, outptr, 16);
-      ST_UB2(dst0_r, dst0_l, outptr + out_width, 16);
-      inptr += 16;
-      outptr += 32;
-    }
-
-    inrow++;
-    outrow += 2;
-  }
-}
 
 /*
  * Fancy processing for the common case of 2:1 horizontal and 1:1 vertical.
@@ -159,19 +36,21 @@ image_upsample_h2v2_msa (JSAMPARRAY src, JSAMPARRAY dst,
  *
  * height = 1 to 4, width = multiple of 16
 */
-
-void
-image_upsample_fancy_h2v1_msa (JSAMPARRAY src, JSAMPARRAY dst,
-                               JDIMENSION width, JDIMENSION height)
+GLOBAL(void)
+jsimd_h2v1_fancy_upsample_msa(int max_v_samp_factor,
+                              JDIMENSION downsampled_width,
+                              JSAMPARRAY input_data,
+                              JSAMPARRAY *output_data_ptr)
 {
-  JDIMENSION col, row;
-  v8i16 left_r, left_l, cur_r, cur_l, right_r, right_l, zero = {0};
+  JDIMENSION col, row, width = downsampled_width;
+  JSAMPARRAY dst = *output_data_ptr;
+  v8i16 left_r, left_l, cur_r, cur_l, right_r, right_l, zero = { 0 };
   v16i8 out0, out1, src2, src0, src1, left, right;
 
-  for (row = 0; row < height; row++) {
+  for (row = 0; row < max_v_samp_factor; row++) {
     /* Prepare first 16 width column */
-    src1 = LD_SB(src[row]);
-    src2 = LD_SB(src[row] + 16);
+    src1 = LD_SB(input_data[row]);
+    src2 = LD_SB(input_data[row] + 16);
     src0 = __msa_splati_b(src1, 0);
 
     for (col = 0; col < width; col += 16) {
@@ -201,11 +80,11 @@ image_upsample_fancy_h2v1_msa (JSAMPARRAY src, JSAMPARRAY dst,
       /* Prepare for next 16 width column */
       src0 = src1;
       src1 = src2;
-      src2 = LD_SB(src[row] + col + 32);
+      src2 = LD_SB(input_data[row] + col + 32);
     }
 
     /* Re-substitute last pixel */
-    *(dst[row] + 2 * width - 1) = *(src[row] + width - 1);
+    *(dst[row] + 2 * width - 1) = *(input_data[row] + width - 1);
   }
 }
 
@@ -216,11 +95,14 @@ image_upsample_fancy_h2v1_msa (JSAMPARRAY src, JSAMPARRAY dst,
  * It is OK for us to reference the adjacent input rows because we demanded
  * context from the main buffer controller (see initialization code).
  */
-void
-image_upsample_fancy_h2v2_msa (JSAMPARRAY src, JSAMPARRAY dst,
-                               JDIMENSION width, JDIMENSION height)
+GLOBAL(void)
+jsimd_h2v2_fancy_upsample_msa(int max_v_samp_factor,
+                              JDIMENSION downsampled_width,
+                              JSAMPARRAY input_data,
+                              JSAMPARRAY *output_data_ptr)
 {
-  JDIMENSION col;
+  JDIMENSION col, width = downsampled_width;
+  JSAMPARRAY dst = *output_data_ptr;
   int inrow = 0, outrow = 0;
   JSAMPROW inptr0, inptr1, inptr2, outptr0, outptr1;
   v8i16 lastcolsum0_r, lastcolsum0_l, lastcolsum1_r, lastcolsum1_l;
@@ -230,18 +112,18 @@ image_upsample_fancy_h2v2_msa (JSAMPARRAY src, JSAMPARRAY dst,
   v8i16 dst10_r, dst10_l, dst11_r, dst11_l;
   v8i16 cur0_r, cur1_r, cur2_r, cur0_l, cur1_l, cur2_l;
   v8i16 const_3 = __msa_ldi_h(3);
-  v16i8 tmp0_l, tmp1_l, tmp2_l, tmp0_r, tmp1_r, tmp2_r, zero = {0};
+  v16i8 tmp0_l, tmp1_l, tmp2_l, tmp0_r, tmp1_r, tmp2_r, zero = { 0 };
   v16i8 left0, left1, left2, cur0, cur1, cur2, right0, right1, right2;
   v16i8 dst00, dst01, dst10, dst11, out00, out01, out10, out11;
 
-  while (outrow < height) {
+  while (outrow < max_v_samp_factor) {
     /* Current row; Nearest to output pixel */
-    inptr0 = src[inrow];
+    inptr0 = input_data[inrow];
 
     /* Above row */
-    inptr1 = src[inrow - 1];
+    inptr1 = input_data[inrow - 1];
     /* Below row */
-    inptr2 = src[inrow + 1];
+    inptr2 = input_data[inrow + 1];
 
     /* Output pointers */
     outptr0 = dst[outrow];
@@ -339,10 +221,10 @@ image_upsample_fancy_h2v2_msa (JSAMPARRAY src, JSAMPARRAY dst,
     }
 
     /* Special case for last column */
-    outptr0[2 * width - 1] = (uint8_t) (((GETSAMPLE(inptr0[width - 1]) * 3
-                            + GETSAMPLE(inptr1[width - 1])) * 4 + 7) >> 4);
-    outptr1[2 * width - 1] = (uint8_t) (((GETSAMPLE(inptr0[width - 1]) * 3
-                            + GETSAMPLE(inptr2[width - 1])) * 4 + 7) >> 4);
+    outptr0[2 * width - 1] = (uint8_t)((((int)(inptr0[width - 1]) * 3 +
+                             (int)(inptr1[width - 1])) * 4 + 7) >> 4);
+    outptr1[2 * width - 1] = (uint8_t)((((int)(inptr0[width - 1]) * 3 +
+                             (int)(inptr2[width - 1])) * 4 + 7) >> 4);
 
     /* Update input and output pointers */
     inrow++;
@@ -350,42 +232,129 @@ image_upsample_fancy_h2v2_msa (JSAMPARRAY src, JSAMPARRAY dst,
   }
 }
 
-void
-jsimd_h2v1_fancy_upsample_msa (int max_v_samp_factor,
-                               JDIMENSION downsampled_width,
-                               JSAMPARRAY input_data,
-                               JSAMPARRAY *output_data_ptr)
+GLOBAL(void)
+jsimd_h2v1_upsample_msa(int max_v_samp_factor,
+                        JDIMENSION output_width,
+                        JSAMPARRAY input_data,
+                        JSAMPARRAY *output_data_ptr)
 {
-  image_upsample_fancy_h2v1_msa(input_data, *output_data_ptr,
-                                downsampled_width, max_v_samp_factor);
+  JSAMPROW inptr, inptr1, outptr, outptr1, out32end, out64end;
+  JDIMENSION inrow, out_width = (output_width + 31) & (~31);
+  JSAMPARRAY dst = *output_data_ptr;
+  v16u8 src0, src1, src2, src3;
+  v16u8 dst0_l, dst0_r, dst1_l, dst1_r, dst2_l, dst2_r, dst3_l, dst3_r;
+
+  inrow = 0;
+
+  /* Height multiple of 2 */
+  for (; inrow < (max_v_samp_factor & ~1); inrow += 2) {
+    inptr = input_data[inrow];
+    inptr1 = input_data[inrow + 1];
+    outptr = dst[inrow];
+    outptr1 = dst[inrow + 1];
+    out32end = outptr + out_width;
+    out64end = outptr + ((out_width >> 6) << 6);
+
+    src0 = LD_UB(inptr);
+    src2 = LD_UB(inptr + output_width);
+
+    while (outptr < out64end) {
+      src1 = LD_UB(inptr + 16);
+      src3 = LD_UB(inptr1 + 16);
+      ILVRL_B2_UB(src0, src0, dst0_r, dst0_l);
+      ILVRL_B2_UB(src1, src1, dst1_r, dst1_l);
+      ILVRL_B2_UB(src2, src2, dst2_r, dst2_l);
+      ILVRL_B2_UB(src3, src3, dst3_r, dst3_l);
+      ST_UB4(dst0_r, dst0_l, dst1_r, dst1_l, outptr, 16);
+      ST_UB4(dst2_r, dst2_l, dst3_r, dst3_l, outptr1, 16);
+      inptr += 32;
+      inptr1 += 32;
+      outptr += 64;
+      outptr1 += 64;
+
+      src0 = LD_UB(inptr);
+      src2 = LD_UB(inptr1);
+    }
+
+    if (out32end > out64end) {
+      ILVRL_B2_UB(src0, src0, dst0_r, dst0_l);
+      ILVRL_B2_UB(src2, src2, dst2_r, dst2_l);
+      ST_UB2(dst0_r, dst0_l, outptr, 16);
+      ST_UB2(dst2_r, dst2_l, outptr1, 16);
+    }
+  }
+
+  /* Remaining row */
+  if (inrow < max_v_samp_factor) {
+    inptr = input_data[inrow];
+    outptr = dst[inrow];
+    out32end = outptr + out_width;
+    out64end = outptr + ((out_width >> 6) << 6);
+
+    src0 = LD_UB(inptr);
+
+    while (outptr < out64end) {
+      src1 = LD_UB(inptr + 16);
+      ILVRL_B2_UB(src0, src0, dst0_r, dst0_l);
+      ILVRL_B2_UB(src1, src1, dst1_r, dst1_l);
+      ST_UB4(dst0_r, dst0_l, dst1_r, dst1_l, outptr, 16);
+      inptr += 32;
+      outptr += 64;
+
+      src0 = LD_UB(inptr);
+    }
+
+    if (out32end > out64end) {
+      ILVRL_B2_UB(src0, src0, dst0_r, dst0_l);
+      ST_UB2(dst0_r, dst0_l, outptr, 16);
+    }
+  }
 }
 
-void
-jsimd_h2v2_fancy_upsample_msa (int max_v_samp_factor,
-                               JDIMENSION downsampled_width,
-                               JSAMPARRAY input_data,
-                               JSAMPARRAY *output_data_ptr)
+GLOBAL(void)
+jsimd_h2v2_upsample_msa(int max_v_samp_factor,
+                        JDIMENSION output_width,
+                        JSAMPARRAY input_data,
+                        JSAMPARRAY *output_data_ptr)
 {
-  image_upsample_fancy_h2v2_msa(input_data, *output_data_ptr,
-                                downsampled_width, max_v_samp_factor);
-}
+  JSAMPROW inptr, outptr;
+  JDIMENSION out_width = (output_width + 31) & (~31);
+  JSAMPARRAY dst = *output_data_ptr;
+  JSAMPROW out32end, out64end;
+  int inrow, outrow;
+  v16u8 src0, src1, dst0_l, dst0_r, dst1_l, dst1_r;
 
-void
-jsimd_h2v1_upsample_msa (int max_v_samp_factor,
-                         JDIMENSION output_width,
-                         JSAMPARRAY input_data,
-                         JSAMPARRAY *output_data_ptr)
-{
-  image_upsample_h2v1_msa(input_data, *output_data_ptr,
-                          output_width, max_v_samp_factor);
-}
+  inrow = outrow = 0;
 
-void
-jsimd_h2v2_upsample_msa (int max_v_samp_factor,
-                         JDIMENSION output_width,
-                         JSAMPARRAY input_data,
-                         JSAMPARRAY *output_data_ptr)
-{
-  image_upsample_h2v2_msa(input_data, *output_data_ptr,
-                          output_width, max_v_samp_factor);
+  while (outrow < max_v_samp_factor) {
+    inptr = input_data[inrow];
+    outptr = dst[outrow];
+    out32end = outptr + out_width;
+    out64end = outptr + ((out_width >> 6) << 6);
+
+    src0 = LD_UB(inptr);
+
+    while (outptr < out64end) {
+      src1 = LD_UB(inptr + 16);
+      ILVRL_B2_UB(src0, src0, dst0_r, dst0_l);
+      ILVRL_B2_UB(src1, src1, dst1_r, dst1_l);
+      ST_UB4(dst0_r, dst0_l, dst1_r, dst1_l, outptr, 16);
+      ST_UB4(dst0_r, dst0_l, dst1_r, dst1_l, outptr + out_width, 16);
+      inptr += 32;
+      outptr += 64;
+
+      src0 = LD_UB(inptr);
+    }
+
+    if (out32end > out64end) {
+      ILVRL_B2_UB(src0, src0, dst0_r, dst0_l);
+      ST_UB2(dst0_r, dst0_l, outptr, 16);
+      ST_UB2(dst0_r, dst0_l, outptr + out_width, 16);
+      inptr += 16;
+      outptr += 32;
+    }
+
+    inrow++;
+    outrow += 2;
+  }
 }

@@ -28,27 +28,26 @@
 #include "../../jpeglib.h"
 #include "../../jsimd.h"
 #include "../../jdct.h"
-
 #include "jmacros_msa.h"
 
-#define CENTERSAMPLE 128
 
-void
-conv_u8_s16_msa (JSAMPARRAY in_ptr, DCTELEM *out_ptr, JDIMENSION in_stride)
+GLOBAL(void)
+jsimd_convsamp_msa(JSAMPARRAY sample_data, JDIMENSION start_col,
+                   DCTELEM *workspace)
 {
   v16u8 val0, val1, val2, val3, val4, val5, val6, val7;
   v16u8 tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7;
   v8i16 dst0, dst1, dst2, dst3, dst4, dst5, dst6, dst7;
-  v16u8 reg_128 = (v16u8) __msa_ldi_b(CENTERSAMPLE);
+  v16u8 reg_128 = (v16u8)__msa_ldi_b(128);
 
-  val0 = LD_UB(in_ptr[0] + in_stride);
-  val1 = LD_UB(in_ptr[1] + in_stride);
-  val2 = LD_UB(in_ptr[2] + in_stride);
-  val3 = LD_UB(in_ptr[3] + in_stride);
-  val4 = LD_UB(in_ptr[4] + in_stride);
-  val5 = LD_UB(in_ptr[5] + in_stride);
-  val6 = LD_UB(in_ptr[6] + in_stride);
-  val7 = LD_UB(in_ptr[7] + in_stride);
+  val0 = LD_UB(sample_data[0] + start_col);
+  val1 = LD_UB(sample_data[1] + start_col);
+  val2 = LD_UB(sample_data[2] + start_col);
+  val3 = LD_UB(sample_data[3] + start_col);
+  val4 = LD_UB(sample_data[4] + start_col);
+  val5 = LD_UB(sample_data[5] + start_col);
+  val6 = LD_UB(sample_data[6] + start_col);
+  val7 = LD_UB(sample_data[7] + start_col);
 
   /* Interleave with CENTERSAMPLE */
   ILVR_B4_UB(val0, reg_128, val1, reg_128, val2, reg_128, val3, reg_128,
@@ -61,11 +60,11 @@ conv_u8_s16_msa (JSAMPARRAY in_ptr, DCTELEM *out_ptr, JDIMENSION in_stride)
   HSUB_UB4_SH(tmp4, tmp5, tmp6, tmp7, dst4, dst5, dst6, dst7);
 
   /* Store results */
-  ST_SH8(dst0, dst1, dst2, dst3, dst4, dst5, dst6, dst7, out_ptr, 8);
+  ST_SH8(dst0, dst1, dst2, dst3, dst4, dst5, dst6, dst7, workspace, 8);
 }
 
-void
-quantize_msa (DCTELEM *in_ptr, DCTELEM *divisors, JCOEFPTR out_ptr)
+GLOBAL(void)
+jsimd_quantize_msa(JCOEFPTR coef_block, DCTELEM *divisors, DCTELEM *workspace)
 {
   DCTELEM *recip, *corr, *shift;
   JDIMENSION cnt;
@@ -75,16 +74,15 @@ quantize_msa (DCTELEM *in_ptr, DCTELEM *divisors, JCOEFPTR out_ptr)
   v4i32 recip2_r, recip2_l, recip3_r, recip3_l;
   v8i16 val0, val1, val2, val3, recip0, recip1, recip2, recip3;
   v8i16 corr0, corr1, corr2, corr3, shift0, shift1, shift2, shift3;
-  v8i16 sign0, sign1, sign2, sign3, zero = {0};
+  v8i16 sign0, sign1, sign2, sign3, zero = { 0 };
 
   recip = divisors + 0 * 64;
   corr = divisors + 1 * 64;
   shift = divisors + 3 * 64;
 
-
   for (cnt = 0; cnt < 2; cnt++) {
     /* Load data, recip, corr, shift vectors */
-    LD_SH4((in_ptr + cnt * 32), 8, val0, val1, val2, val3);
+    LD_SH4((workspace + cnt * 32), 8, val0, val1, val2, val3);
     LD_SH4((recip + cnt * 32), 8, recip0, recip1, recip2, recip3);
     LD_SH4((corr + cnt * 32), 8, corr0, corr1, corr2, corr3);
     LD_SH4((shift + cnt * 32), 8, shift0, shift1, shift2, shift3);
@@ -96,14 +94,14 @@ quantize_msa (DCTELEM *in_ptr, DCTELEM *divisors, JCOEFPTR out_ptr)
     sign3 = MSA_SRAI_H(val3, 15);
 
     /* Calculate absolute */
-    XOR_V4_SH(val0, sign0, val1, sign1, val2, sign2, val3, sign3, val0, val1,
-              val2, val3);
-    SUB4(val0, sign0, val1, sign1, val2, sign2, val3, sign3, val0, val1, val2,
-         val3);
+    XOR_V4_SH(val0, sign0, val1, sign1, val2, sign2, val3, sign3,
+              val0, val1, val2, val3);
+    SUB4(val0, sign0, val1, sign1, val2, sign2, val3, sign3,
+         val0, val1, val2, val3);
 
     /* Add correction factor */
-    ADD4(val0, corr0, val1, corr1, val2, corr2, val3, corr3, val0, val1, val2,
-         val3);
+    ADD4(val0, corr0, val1, corr1, val2, corr2, val3, corr3,
+         val0, val1, val2, val3);
 
     /* Prepare for multiplication; Promote to 32 bit */
     ILVRL_H2_SW(zero, val0, tmp0_r, tmp0_l);
@@ -116,10 +114,10 @@ quantize_msa (DCTELEM *in_ptr, DCTELEM *divisors, JCOEFPTR out_ptr)
     ILVRL_H2_SW(zero, recip3, recip3_r, recip3_l);
 
     /* Multiply: val * recip */
-    MUL4(tmp0_r, recip0_r, tmp0_l, recip0_l, tmp1_r, recip1_r, tmp1_l,
-         recip1_l, tmp0_r, tmp0_l, tmp1_r, tmp1_l);
-    MUL4(tmp2_r, recip2_r, tmp2_l, recip2_l, tmp3_r, recip3_r, tmp3_l,
-         recip3_l, tmp2_r, tmp2_l, tmp3_r, tmp3_l);
+    MUL4(tmp0_r, recip0_r, tmp0_l, recip0_l, tmp1_r, recip1_r,
+         tmp1_l, recip1_l, tmp0_r, tmp0_l, tmp1_r, tmp1_l);
+    MUL4(tmp2_r, recip2_r, tmp2_l, recip2_l, tmp3_r, recip3_r,
+         tmp3_l, recip3_l, tmp2_r, tmp2_l, tmp3_r, tmp3_l);
 
     /* Promote shift to 32 bit */
     ILVRL_H2_SW(zero, shift0, shift0_r, shift0_l);
@@ -143,25 +141,12 @@ quantize_msa (DCTELEM *in_ptr, DCTELEM *divisors, JCOEFPTR out_ptr)
     PCKOD_H2_SH(tmp2_l, tmp2_r, tmp3_l, tmp3_r, val2, val3);
 
     /* Apply back original signs */
-    XOR_V4_SH(val0, sign0, val1, sign1, val2, sign2, val3, sign3, val0, val1,
-              val2, val3);
-    SUB4(val0, sign0, val1, sign1, val2, sign2, val3, sign3, val0, val1, val2,
-         val3);
+    XOR_V4_SH(val0, sign0, val1, sign1, val2, sign2, val3, sign3,
+              val0, val1, val2, val3);
+    SUB4(val0, sign0, val1, sign1, val2, sign2, val3, sign3,
+         val0, val1, val2, val3);
 
     /* Store results */
-    ST_SH4(val0, val1, val2, val3, (out_ptr + cnt * 32), 8);
+    ST_SH4(val0, val1, val2, val3, (coef_block + cnt * 32), 8);
   }
-}
-
-void
-jsimd_convsamp_msa (JSAMPARRAY sample_data, JDIMENSION start_col,
-                    DCTELEM *workspace)
-{
-  conv_u8_s16_msa(sample_data, workspace, start_col);
-}
-
-void
-jsimd_quantize_msa (JCOEFPTR coef_block, DCTELEM *divisors, DCTELEM *workspace)
-{
-  quantize_msa(workspace, divisors, coef_block);
 }

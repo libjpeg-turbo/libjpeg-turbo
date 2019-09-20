@@ -32,11 +32,13 @@
 #define ONE_HALF  (1 << (SCALE - 1))
 #define CBCR_OFFSET  (128 << SCALE)
 #define GETSAMPLE(value)  ((int)(value))
-#define RGB_CONVERT_COEFF  { 19595, 16384, 22086, 7471, 0, 0, 0, 0 }
-#define BGR_CONVERT_COEFF  { 7471, 22086, 16384, 19595, 0, 0, 0, 0 }
+#define RGB_CONVERT_COEFF \
+  { 19595, 16384, 22086, 7471, -11059, -21709, -27439, -5329 }
+#define BGR_CONVERT_COEFF \
+  { 7471, 22086, 16384, 19595, -21709, -11059, -5329, -27439 }
 
 #define COEFF_CONST  RGB_CONVERT_COEFF
-#include "jcgryext_msa.c"
+#include "jccolext_msa.c"
 #undef RGB_RED
 #undef RGB_GREEN
 #undef RGB_BLUE
@@ -48,81 +50,81 @@
 #define RGB_BLUE       EXT_RGB_BLUE
 #define RGB_PIXELSIZE  EXT_RGB_PIXELSIZE
 #define COEFF_CONST    RGB_CONVERT_COEFF
-#define jsimd_rgb_gray_convert_msa  jsimd_extrgb_gray_convert_msa
-#include "jcgryext_msa.c"
+#define jsimd_rgb_ycc_convert_msa  jsimd_extrgb_ycc_convert_msa
+#include "jccolext_msa.c"
 #undef RGB_RED
 #undef RGB_GREEN
 #undef RGB_BLUE
 #undef RGB_PIXELSIZE
 #undef COEFF_CONST
-#undef jsimd_rgb_gray_convert_msa
+#undef jsimd_rgb_ycc_convert_msa
 
 #define RGB_RED        EXT_BGR_RED
 #define RGB_GREEN      EXT_BGR_GREEN
 #define RGB_BLUE       EXT_BGR_BLUE
 #define RGB_PIXELSIZE  EXT_BGR_PIXELSIZE
 #define COEFF_CONST    BGR_CONVERT_COEFF
-#define jsimd_rgb_gray_convert_msa  jsimd_extbgr_gray_convert_msa
-#include "jcgryext_msa.c"
+#define jsimd_rgb_ycc_convert_msa  jsimd_extbgr_ycc_convert_msa
+#include "jccolext_msa.c"
 #undef RGB_RED
 #undef RGB_GREEN
 #undef RGB_BLUE
 #undef RGB_PIXELSIZE
 #undef COEFF_CONST
-#undef jsimd_rgb_gray_convert_msa
+#undef jsimd_rgb_ycc_convert_msa
 
 #define RGB_RED        EXT_RGBX_RED
 #define RGB_GREEN      EXT_RGBX_GREEN
 #define RGB_BLUE       EXT_RGBX_BLUE
 #define RGB_PIXELSIZE  EXT_RGBX_PIXELSIZE
 #define COEFF_CONST    RGB_CONVERT_COEFF
-#define jsimd_rgb_gray_convert_msa  jsimd_extrgbx_gray_convert_msa
-#include "jcgryext_msa.c"
+#define jsimd_rgb_ycc_convert_msa  jsimd_extrgbx_ycc_convert_msa
+#include "jccolext_msa.c"
 #undef RGB_RED
 #undef RGB_GREEN
 #undef RGB_BLUE
 #undef RGB_PIXELSIZE
 #undef COEFF_CONST
-#undef jsimd_rgb_gray_convert_msa
+#undef jsimd_rgb_ycc_convert_msa
 
 #define RGB_RED        EXT_BGRX_RED
 #define RGB_GREEN      EXT_BGRX_GREEN
 #define RGB_BLUE       EXT_BGRX_BLUE
 #define RGB_PIXELSIZE  EXT_BGRX_PIXELSIZE
 #define COEFF_CONST    BGR_CONVERT_COEFF
-#define jsimd_rgb_gray_convert_msa  jsimd_extbgrx_gray_convert_msa
-#include "jcgryext_msa.c"
+#define jsimd_rgb_ycc_convert_msa  jsimd_extbgrx_ycc_convert_msa
+#include "jccolext_msa.c"
 #undef RGB_RED
 #undef RGB_GREEN
 #undef RGB_BLUE
 #undef RGB_PIXELSIZE
 #undef COEFF_CONST
-#undef jsimd_rgb_gray_convert_msa
+#undef jsimd_rgb_ycc_convert_msa
 
 #define RGB_RED        EXT_XRGB_RED
 #define RGB_GREEN      EXT_XRGB_GREEN
 #define RGB_BLUE       EXT_XRGB_BLUE
 #define RGB_PIXELSIZE  EXT_XRGB_PIXELSIZE
 #define COEFF_CONST    RGB_CONVERT_COEFF
-#define jsimd_rgb_gray_convert_msa  jsimd_extxrgb_gray_convert_msa
-#include "jcgryext_msa.c"
+#define jsimd_rgb_ycc_convert_msa  jsimd_extxrgb_ycc_convert_msa
+#include "jccolext_msa.c"
 #undef RGB_RED
 #undef RGB_GREEN
 #undef RGB_BLUE
 #undef RGB_PIXELSIZE
 #undef COEFF_CONST
-#undef jsimd_rgb_gray_convert_msa
+#undef jsimd_rgb_ycc_convert_msa
 
 #define RGB_RED        EXT_XBGR_RED
 #define RGB_GREEN      EXT_XBGR_GREEN
 #define RGB_BLUE       EXT_XBGR_BLUE
 #define RGB_PIXELSIZE  EXT_XBGR_PIXELSIZE
 #define COEFF_CONST    BGR_CONVERT_COEFF
-#define jsimd_rgb_gray_convert_msa  jsimd_extxbgr_gray_convert_msa
-#include "jcgryext_msa.c"
+#define jsimd_rgb_ycc_convert_msa  jsimd_extxbgr_ycc_convert_msa
+#include "jccolext_msa.c"
 #undef RGB_RED
 #undef RGB_GREEN
 #undef RGB_BLUE
 #undef RGB_PIXELSIZE
 #undef COEFF_CONST
-#undef jsimd_rgb_gray_convert_msa
+#undef jsimd_rgb_ycc_convert_msa
