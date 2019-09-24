@@ -268,7 +268,7 @@ endif()
 # MIPS (GAS)
 ###############################################################################
 
-elseif(CPU_TYPE STREQUAL "mips" OR CPU_TYPE STREQUAL "mipsel")
+elseif(CPU_TYPE STREQUAL "mips" OR CPU_TYPE STREQUAL "mipsel" OR CPU_TYPE STREQUAL "mips64" OR CPU_TYPE STREQUAL "mips64el")
 
 enable_language(ASM)
 
@@ -294,12 +294,38 @@ check_c_source_compiles("
 
 unset(CMAKE_REQUIRED_FLAGS)
 
-if(NOT HAVE_DSPR2)
+set(CMAKE_REQUIRED_FLAGS "-mmsa ${CMAKE_C_FLAGS}")
+
+check_c_source_compiles("
+  #include <msa.h>
+  #if !(defined(__mips__) && __mips_isa_rev >= 5)
+  #error MIPS MSA is currently only available on release 5 or later platforms.
+  #endif
+  int main (void) {
+    v8i16 a0 = {0}, a1 = {0};
+    a0 = a0 + a1;
+    return 0;
+  }" HAVE_MSA)
+
+unset(CMAKE_REQUIRED_FLAGS)
+
+if(HAVE_MSA)
+  set(SIMD_SOURCES mips/jccolor_msa.c mips/jcgray_msa.c
+    mips/jcsample_msa.c mips/jdcol565_msa.c mips/jdcolor_msa.c
+    mips/jdmerge_msa.c mips/jdsample_msa.c mips/jfdctfst_msa.c
+    mips/jfdctint_msa.c mips/jidctfst_msa.c mips/jidctint_msa.c
+    mips/jidctred_msa.c mips/jquanti_msa.c)
+
+  set_source_files_properties(${SIMD_SOURCES} PROPERTIES
+    COMPILE_FLAGS -mmsa)
+
+  add_library(simd OBJECT ${SIMD_SOURCES} mips/jsimd_msa.c)
+elseif(HAVE_DSPR2)
+  add_library(simd OBJECT mips/jsimd_dspr2.S mips/jsimd_dspr2.c)
+else()
   simd_fail("SIMD extensions not available for this CPU")
   return()
 endif()
-
-add_library(simd OBJECT mips/jsimd_dspr2.S mips/jsimd.c)
 
 if(CMAKE_POSITION_INDEPENDENT_CODE OR ENABLE_SHARED)
   set_target_properties(simd PROPERTIES POSITION_INDEPENDENT_CODE 1)
