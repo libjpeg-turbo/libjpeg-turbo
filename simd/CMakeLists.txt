@@ -274,6 +274,7 @@ set(EFFECTIVE_ASM_FLAGS "${CMAKE_ASM_FLAGS} ${CMAKE_ASM_FLAGS_${CMAKE_BUILD_TYPE
 message(STATUS "CMAKE_ASM_FLAGS = ${EFFECTIVE_ASM_FLAGS}")
 
 set(CMAKE_REQUIRED_FLAGS -mdspr2)
+
 check_c_source_compiles("
   #if !(defined(__mips__) && __mips_isa_rev >= 2)
   #error MIPS DSPr2 is currently only available on MIPS32r2 platforms.
@@ -287,22 +288,35 @@ check_c_source_compiles("
     );
     return c;
   }" HAVE_DSPR2)
+
 unset(CMAKE_REQUIRED_FLAGS)
 
-set(CMAKE_REQUIRED_FLAGS "${CMAKE_C_FLAGS}")
+set(CMAKE_REQUIRED_FLAGS "-mmsa ${CMAKE_C_FLAGS}")
+
 check_c_source_compiles("
   #include <msa.h>
+  #if !(defined(__mips__) && __mips_isa_rev >= 5)
+  #error MIPS MSA is currently only available on release 5 or later platforms.
+  #endif
   int main (void) {
     v8i16 a0 = {0}, a1 = {0};
     a0 = a0 + a1;
     return 0;
   }" HAVE_MSA)
+
 unset(CMAKE_REQUIRED_FLAGS)
 
 if(HAVE_MSA)
-  add_library(simd OBJECT mips/jccolor_msa.c mips/jcgray_msa.c mips/jcsample_msa.c
-    mips/jdcol565_msa.c mips/jdcolor_msa.c mips/jdmerge_msa.c mips/jdsample_msa.c
-    mips/jfdct_msa.c mips/jidct_msa.c mips/jquanti_msa.c mips/jsimd_msa.c)
+  set(SIMD_SOURCES mips/jccolor_msa.c mips/jcgray_msa.c
+    mips/jcsample_msa.c mips/jdcol565_msa.c mips/jdcolor_msa.c
+    mips/jdmerge_msa.c mips/jdsample_msa.c mips/jfdctfst_msa.c
+    mips/jfdctint_msa.c mips/jidctfst_msa.c mips/jidctint_msa.c
+    mips/jidctred_msa.c mips/jquanti_msa.c)
+
+  set_source_files_properties(${SIMD_SOURCES} PROPERTIES
+    COMPILE_FLAGS -mmsa)
+
+  add_library(simd OBJECT ${SIMD_SOURCES} mips/jsimd_msa.c)
 elseif(HAVE_DSPR2)
   add_library(simd OBJECT mips/jsimd_dspr2.S mips/jsimd_dspr2.c)
 else()
