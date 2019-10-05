@@ -256,7 +256,7 @@ jpeg_read_header(j_decompress_ptr cinfo, boolean require_image)
 
   if (cinfo->global_state != DSTATE_START &&
       cinfo->global_state != DSTATE_INHEADER)
-    ERREXIT1(cinfo, JERR_BAD_STATE, cinfo->global_state);
+    jabort_bad_state("jpeg_read_header", cinfo->global_state);
 
   retcode = jpeg_consume_input(cinfo);
 
@@ -332,7 +332,7 @@ jpeg_consume_input(j_decompress_ptr cinfo)
     retcode = (*cinfo->inputctl->consume_input) (cinfo);
     break;
   default:
-    ERREXIT1(cinfo, JERR_BAD_STATE, cinfo->global_state);
+    jabort_bad_state("jpeg_consume_input", cinfo->global_state);
   }
   return retcode;
 }
@@ -348,7 +348,7 @@ jpeg_input_complete(j_decompress_ptr cinfo)
   /* Check for valid jpeg object */
   if (cinfo->global_state < DSTATE_START ||
       cinfo->global_state > DSTATE_STOPPING)
-    ERREXIT1(cinfo, JERR_BAD_STATE, cinfo->global_state);
+    jabort_bad_state("jpeg_input_complete", cinfo->global_state);
   return cinfo->inputctl->eoi_reached;
 }
 
@@ -363,7 +363,7 @@ jpeg_has_multiple_scans(j_decompress_ptr cinfo)
   /* Only valid after jpeg_read_header completes */
   if (cinfo->global_state < DSTATE_READY ||
       cinfo->global_state > DSTATE_STOPPING)
-    ERREXIT1(cinfo, JERR_BAD_STATE, cinfo->global_state);
+    jabort_bad_state("jpeg_has_multiple_scans", cinfo->global_state);
   return cinfo->inputctl->has_multiple_scans;
 }
 
@@ -392,7 +392,7 @@ jpeg_finish_decompress(j_decompress_ptr cinfo)
     cinfo->global_state = DSTATE_STOPPING;
   } else if (cinfo->global_state != DSTATE_STOPPING) {
     /* STOPPING = repeat call after a suspension, anything else is error */
-    ERREXIT1(cinfo, JERR_BAD_STATE, cinfo->global_state);
+    jabort_bad_state("jpeg_finish_decompress", cinfo->global_state);
   }
   /* Read until EOI */
   while (!cinfo->inputctl->eoi_reached) {

@@ -42,7 +42,7 @@ GLOBAL(void)
 jpeg_write_coefficients(j_compress_ptr cinfo, jvirt_barray_ptr *coef_arrays)
 {
   if (cinfo->global_state != CSTATE_START)
-    ERREXIT1(cinfo, JERR_BAD_STATE, cinfo->global_state);
+    jabort_bad_state("jpeg_write_coefficients", cinfo->global_state);
   /* Mark all tables to be written */
   jpeg_suppress_tables(cinfo, FALSE);
   /* (Re)initialize error mgr and destination modules */
@@ -73,7 +73,7 @@ jpeg_copy_critical_parameters(j_decompress_ptr srcinfo, j_compress_ptr dstinfo)
 
   /* Safety check to ensure start_compress not called yet. */
   if (dstinfo->global_state != CSTATE_START)
-    ERREXIT1(dstinfo, JERR_BAD_STATE, dstinfo->global_state);
+    jabort_bad_state("jpeg_copy_critical_parameters", dstinfo->global_state);
   /* Copy fundamental image dimensions */
   dstinfo->image_width = srcinfo->image_width;
   dstinfo->image_height = srcinfo->image_height;

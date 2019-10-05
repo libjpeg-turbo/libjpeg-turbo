@@ -40,7 +40,7 @@ jpeg_add_quant_table(j_compress_ptr cinfo, int which_tbl,
 
   /* Safety check to ensure start_compress not called yet. */
   if (cinfo->global_state != CSTATE_START)
-    ERREXIT1(cinfo, JERR_BAD_STATE, cinfo->global_state);
+    jabort_bad_state("jpeg_add_quant_table", cinfo->global_state);
 
   if (which_tbl < 0 || which_tbl >= NUM_QUANT_TBLS)
     ERREXIT1(cinfo, JERR_DQT_INDEX, which_tbl);
@@ -185,7 +185,7 @@ jpeg_set_defaults(j_compress_ptr cinfo)
 
   /* Safety check to ensure start_compress not called yet. */
   if (cinfo->global_state != CSTATE_START)
-    ERREXIT1(cinfo, JERR_BAD_STATE, cinfo->global_state);
+    jabort_bad_state("jpeg_set_defaults", cinfo->global_state);
 
   /* Allocate comp_info array large enough for maximum component count.
    * Array is made permanent in case application wants to compress
@@ -337,7 +337,7 @@ jpeg_set_colorspace(j_compress_ptr cinfo, J_COLOR_SPACE colorspace)
 
   /* Safety check to ensure start_compress not called yet. */
   if (cinfo->global_state != CSTATE_START)
-    ERREXIT1(cinfo, JERR_BAD_STATE, cinfo->global_state);
+    jabort_bad_state("jpeg_set_colorspace", cinfo->global_state);
 
   /* For all colorspaces, we use Q and Huff tables 0 for luminance components,
    * tables 1 for chrominance components.
@@ -473,7 +473,7 @@ jpeg_simple_progression(j_compress_ptr cinfo)
 
   /* Safety check to ensure start_compress not called yet. */
   if (cinfo->global_state != CSTATE_START)
-    ERREXIT1(cinfo, JERR_BAD_STATE, cinfo->global_state);
+    jabort_bad_state("jpeg_simple_progression", cinfo->global_state);
 
   /* Figure space needed for script.  Calculation must match code below! */
   if (ncomps == 3 && cinfo->jpeg_color_space == JCS_YCbCr) {

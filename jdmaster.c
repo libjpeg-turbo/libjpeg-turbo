@@ -278,7 +278,7 @@ jpeg_calc_output_dimensions(j_decompress_ptr cinfo)
 
   /* Prevent application from calling me at wrong times */
   if (cinfo->global_state != DSTATE_READY)
-    ERREXIT1(cinfo, JERR_BAD_STATE, cinfo->global_state);
+    jabort_bad_state("jpeg_calc_output_dimensions", cinfo->global_state);
 
   /* Compute core output image dimensions and DCT scaling choices. */
   jpeg_core_output_dimensions(cinfo);
@@ -701,7 +701,7 @@ jpeg_new_colormap(j_decompress_ptr cinfo)
 
   /* Prevent application from calling me at wrong times */
   if (cinfo->global_state != DSTATE_BUFIMAGE)
-    ERREXIT1(cinfo, JERR_BAD_STATE, cinfo->global_state);
+    jabort_bad_state("jpeg_new_colormap", cinfo->global_state);
 
   if (cinfo->quantize_colors && cinfo->enable_external_quant &&
       cinfo->colormap != NULL) {

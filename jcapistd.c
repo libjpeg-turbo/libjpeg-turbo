@@ -39,7 +39,7 @@ GLOBAL(void)
 jpeg_start_compress(j_compress_ptr cinfo, boolean write_all_tables)
 {
   if (cinfo->global_state != CSTATE_START)
-    ERREXIT1(cinfo, JERR_BAD_STATE, cinfo->global_state);
+    jabort_bad_state("jpeg_start_compress", cinfo->global_state);
 
   if (write_all_tables)
     jpeg_suppress_tables(cinfo, FALSE); /* mark all tables to be written */
@@ -81,7 +81,7 @@ jpeg_write_scanlines(j_compress_ptr cinfo, JSAMPARRAY scanlines,
   JDIMENSION row_ctr, rows_left;
 
   if (cinfo->global_state != CSTATE_SCANNING)
-    ERREXIT1(cinfo, JERR_BAD_STATE, cinfo->global_state);
+    jabort_bad_state("jpeg_write_scanlines", cinfo->global_state);
   if (cinfo->next_scanline >= cinfo->image_height)
     WARNMS(cinfo, JWRN_TOO_MUCH_DATA);
 
@@ -124,7 +124,7 @@ jpeg_write_raw_data(j_compress_ptr cinfo, JSAMPIMAGE data,
   JDIMENSION lines_per_iMCU_row;
 
   if (cinfo->global_state != CSTATE_RAW_OK)
-    ERREXIT1(cinfo, JERR_BAD_STATE, cinfo->global_state);
+    jabort_bad_state("jpeg_write_raw_data", cinfo->global_state);
   if (cinfo->next_scanline >= cinfo->image_height) {
     WARNMS(cinfo, JWRN_TOO_MUCH_DATA);
     return 0;

@@ -87,7 +87,7 @@ jpeg_read_icc_profile(j_decompress_ptr cinfo, JOCTET **icc_data_ptr,
   if (icc_data_ptr == NULL || icc_data_len == NULL)
     ERREXIT(cinfo, JERR_BUFFER_SIZE);
   if (cinfo->global_state < DSTATE_READY)
-    ERREXIT1(cinfo, JERR_BAD_STATE, cinfo->global_state);
+    jabort_bad_state("jpeg_read_icc_profile", cinfo->global_state);
 
   *icc_data_ptr = NULL;         /* avoid confusion if FALSE return */
   *icc_data_len = 0;

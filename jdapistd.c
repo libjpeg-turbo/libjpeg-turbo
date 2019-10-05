@@ -82,7 +82,7 @@ jpeg_start_decompress(j_decompress_ptr cinfo)
     }
     cinfo->output_scan_number = cinfo->input_scan_number;
   } else if (cinfo->global_state != DSTATE_PRESCAN)
-    ERREXIT1(cinfo, JERR_BAD_STATE, cinfo->global_state);
+    jabort_bad_state("jpeg_start_decompress", cinfo->global_state);
   /* Perform any dummy output passes, and set up for the final pass */
   return output_pass_setup(cinfo);
 }
@@ -159,7 +159,7 @@ jpeg_crop_scanline(j_decompress_ptr cinfo, JDIMENSION *xoffset,
   jpeg_component_info *compptr;
 
   if (cinfo->global_state != DSTATE_SCANNING || cinfo->output_scanline != 0)
-    ERREXIT1(cinfo, JERR_BAD_STATE, cinfo->global_state);
+    jabort_bad_state("jpeg_crop_scanline", cinfo->global_state);
 
   if (!xoffset || !width)
     ERREXIT(cinfo, JERR_BAD_CROP_SPEC);
@@ -267,7 +267,7 @@ jpeg_read_scanlines(j_decompress_ptr cinfo, JSAMPARRAY scanlines,
   JDIMENSION row_ctr;
 
   if (cinfo->global_state != DSTATE_SCANNING)
-    ERREXIT1(cinfo, JERR_BAD_STATE, cinfo->global_state);
+    jabort_bad_state("jpeg_read_scanlines", cinfo->global_state);
   if (cinfo->output_scanline >= cinfo->output_height) {
     WARNMS(cinfo, JWRN_TOO_MUCH_DATA);
     return 0;
@@ -389,7 +389,7 @@ jpeg_skip_scanlines(j_decompress_ptr cinfo, JDIMENSION num_lines)
   JDIMENSION lines_to_skip, lines_to_read;
 
   if (cinfo->global_state != DSTATE_SCANNING)
-    ERREXIT1(cinfo, JERR_BAD_STATE, cinfo->global_state);
+    jabort_bad_state("jpeg_skip_scanlines", cinfo->global_state);
 
   /* Do not skip past the bottom of the image. */
   if (cinfo->output_scanline + num_lines >= cinfo->output_height) {
@@ -553,7 +553,7 @@ jpeg_read_raw_data(j_decompress_ptr cinfo, JSAMPIMAGE data,
   JDIMENSION lines_per_iMCU_row;
 
   if (cinfo->global_state != DSTATE_RAW_OK)
-    ERREXIT1(cinfo, JERR_BAD_STATE, cinfo->global_state);
+    jabort_bad_state("jpeg_read_raw_data", cinfo->global_state);
   if (cinfo->output_scanline >= cinfo->output_height) {
     WARNMS(cinfo, JWRN_TOO_MUCH_DATA);
     return 0;
@@ -594,7 +594,7 @@ jpeg_start_output(j_decompress_ptr cinfo, int scan_number)
 {
   if (cinfo->global_state != DSTATE_BUFIMAGE &&
       cinfo->global_state != DSTATE_PRESCAN)
-    ERREXIT1(cinfo, JERR_BAD_STATE, cinfo->global_state);
+    jabort_bad_state("jpeg_start_output", cinfo->global_state);
   /* Limit scan number to valid range */
   if (scan_number <= 0)
     scan_number = 1;
@@ -624,7 +624,7 @@ jpeg_finish_output(j_decompress_ptr cinfo)
     cinfo->global_state = DSTATE_BUFPOST;
   } else if (cinfo->global_state != DSTATE_BUFPOST) {
     /* BUFPOST = repeat call after a suspension, anything else is error */
-    ERREXIT1(cinfo, JERR_BAD_STATE, cinfo->global_state);
+    jabort_bad_state("jpeg_finish_output", cinfo->global_state);
   }
   /* Read markers looking for SOS or EOI */
   while (cinfo->input_scan_number <= cinfo->output_scan_number &&

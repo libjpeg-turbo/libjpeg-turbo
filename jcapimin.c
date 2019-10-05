@@ -170,7 +170,7 @@ jpeg_finish_compress(j_compress_ptr cinfo)
       ERREXIT(cinfo, JERR_TOO_LITTLE_DATA);
     (*cinfo->master->finish_pass) (cinfo);
   } else if (cinfo->global_state != CSTATE_WRCOEFS)
-    ERREXIT1(cinfo, JERR_BAD_STATE, cinfo->global_state);
+    jabort_bad_state("jpeg_finish_compress", cinfo->global_state);
   /* Perform any remaining passes */
   while (!cinfo->master->is_last_pass) {
     (*cinfo->master->prepare_for_pass) (cinfo);
@@ -213,7 +213,7 @@ jpeg_write_marker(j_compress_ptr cinfo, int marker, const JOCTET *dataptr,
       (cinfo->global_state != CSTATE_SCANNING &&
        cinfo->global_state != CSTATE_RAW_OK &&
        cinfo->global_state != CSTATE_WRCOEFS))
-    ERREXIT1(cinfo, JERR_BAD_STATE, cinfo->global_state);
+    jabort_bad_state("jpeg_write_marker", cinfo->global_state);
 
   (*cinfo->marker->write_marker_header) (cinfo, marker, datalen);
   write_marker_byte = cinfo->marker->write_marker_byte; /* copy for speed */
@@ -232,7 +232,7 @@ jpeg_write_m_header(j_compress_ptr cinfo, int marker, unsigned int datalen)
       (cinfo->global_state != CSTATE_SCANNING &&
        cinfo->global_state != CSTATE_RAW_OK &&
        cinfo->global_state != CSTATE_WRCOEFS))
-    ERREXIT1(cinfo, JERR_BAD_STATE, cinfo->global_state);
+    jabort_bad_state("jpeg_write_m_header", cinfo->global_state);
 
   (*cinfo->marker->write_marker_header) (cinfo, marker, datalen);
 }
@@ -269,7 +269,7 @@ GLOBAL(void)
 jpeg_write_tables(j_compress_ptr cinfo)
 {
   if (cinfo->global_state != CSTATE_START)
-    ERREXIT1(cinfo, JERR_BAD_STATE, cinfo->global_state);
+    jabort_bad_state("jpeg_write_tables", cinfo->global_state);
 
   /* (Re)initialize error mgr and destination modules */
   (*cinfo->err->reset_error_mgr) ((j_common_ptr)cinfo);

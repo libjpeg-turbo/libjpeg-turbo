@@ -86,7 +86,7 @@ jpeg_read_coefficients(j_decompress_ptr cinfo)
     return cinfo->coef->coef_arrays;
   }
   /* Oops, improper usage */
-  ERREXIT1(cinfo, JERR_BAD_STATE, cinfo->global_state);
+  jabort_bad_state("jpeg_read_coefficients", cinfo->global_state);
   return NULL;                  /* keep compiler happy */
 }
 
