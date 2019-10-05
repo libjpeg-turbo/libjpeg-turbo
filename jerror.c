@@ -52,6 +52,22 @@ const char * const jpeg_std_message_table[] = {
 };
 
 
+
+/*
+ * Aborts the program when the library is called in an improper state.
+ *
+ * When this is called, it means that the libjpeg-turbo API has been called in
+ * an incorrect order.  This is a programming error and the caller cannot
+ * recover from it.  Thus, we'll make the library abort instead of
+ * transferring control back to the caller.
+ */
+GLOBAL(void)
+jabort_bad_state(const char *func, int state)
+{
+  fprintf(stderr, "Improper call to JPEG function %s in state %d\n", func, state);
+  abort();
+}
+
 /*
  * Error exit handler: must not return to caller.
  *

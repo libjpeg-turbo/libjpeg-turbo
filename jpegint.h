@@ -300,6 +300,7 @@ struct jpeg_color_quantizer {
 #define RIGHT_SHIFT(x, shft)    ((x) >> (shft))
 #endif
 
+EXTERN(void) jabort_bad_state(const char *func, int state);
 
 /* Compression module initialization routines */
 EXTERN(void) jinit_compress_master(j_compress_ptr cinfo);
