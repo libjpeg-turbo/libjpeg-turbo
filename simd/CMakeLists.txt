@@ -30,9 +30,6 @@ if(CPU_TYPE STREQUAL "x86_64")
   if(CYGWIN)
     set(CMAKE_ASM_NASM_OBJECT_FORMAT win64)
   endif()
-  if(CMAKE_C_COMPILER_ABI MATCHES "ELF X32")
-    set(CMAKE_ASM_NASM_OBJECT_FORMAT elfx32)
-  endif()
 elseif(CPU_TYPE STREQUAL "i386")
   if(BORLAND)
     set(CMAKE_ASM_NASM_OBJECT_FORMAT obj)
@@ -268,62 +265,76 @@ endif()
 # MIPS (GAS)
 ###############################################################################
 
-elseif(CPU_TYPE STREQUAL "mips" OR CPU_TYPE STREQUAL "mipsel")
+elseif(CPU_TYPE MATCHES "mips*" OR  CPU_TYPE STREQUAL "loongson")
 
-enable_language(ASM)
 
-string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE_UC)
-set(EFFECTIVE_ASM_FLAGS "${CMAKE_ASM_FLAGS} ${CMAKE_ASM_FLAGS_${CMAKE_BUILD_TYPE_UC}}")
-message(STATUS "CMAKE_ASM_FLAGS = ${EFFECTIVE_ASM_FLAGS}")
+if(CPU_TYPE STREQUAL "mips" OR CPU_TYPE STREQUAL "mipsel")
+  # Only enable DSPr2 for 32-bit MIPS systems
+  enable_language(ASM)
+  string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE_UC)
+  set(EFFECTIVE_ASM_FLAGS "${CMAKE_ASM_FLAGS} ${CMAKE_ASM_FLAGS_${CMAKE_BUILD_TYPE_UC}}")
+  message(STATUS "CMAKE_ASM_FLAGS = ${EFFECTIVE_ASM_FLAGS}")
 
-set(CMAKE_REQUIRED_FLAGS -mdspr2)
+  set(CMAKE_REQUIRED_FLAGS -mdspr2)
 
-check_c_source_compiles("
-  #if !(defined(__mips__) && __mips_isa_rev >= 2)
-  #error MIPS DSPr2 is currently only available on MIPS32r2 platforms.
-  #endif
-  int main(void) {
-    int c = 0, a = 0, b = 0;
-    __asm__ __volatile__ (
-      \"precr.qb.ph %[c], %[a], %[b]\"
-      : [c] \"=r\" (c)
-      : [a] \"r\" (a), [b] \"r\" (b)
+  check_c_source_compiles("
+    #if !(defined(__mips__) && __mips_isa_rev >= 2)
+    #error MIPS DSPr2 is currently only available on MIPS32r2 platforms.
+    #endif
+    int main(void) {
+      int c = 0, a = 0, b = 0;
+      __asm__ __volatile__ (
+        \"precr.qb.ph %[c], %[a], %[b]\"
+        : [c] \"=r\" (c)
+        : [a] \"r\" (a), [b] \"r\" (b)
+      );
+      return c;
+    }" HAVE_DSPR2)
+
+  unset(CMAKE_REQUIRED_FLAGS)
+endif()
+
+if(CPU_TYPE STREQUAL "loongson" OR CPU_TYPE MATCHES "mips64*")
+  set(CMAKE_REQUIRED_FLAGS -Wa,-mloongson-mmi,-mloongson-ext)
+  check_c_source_compiles("
+    int main(void) {
+      int c = 0, a = 0, b = 0;
+      asm(\"paddb %0, %1, %2\"
+      : \"=f\" (c)
+      : \"f\" (a), \"f\" (b)
     );
     return c;
-  }" HAVE_DSPR2)
+  }" HAVE_MMI)
 
-unset(CMAKE_REQUIRED_FLAGS)
+  unset(CMAKE_REQUIRED_FLAGS)
+endif()
 
-if(NOT HAVE_DSPR2)
+if((NOT HAVE_DSPR2) AND (NOT HAVE_MMI))
   simd_fail("SIMD extensions not available for this CPU")
   return()
 endif()
 
-add_library(simd OBJECT mips/jsimd_dspr2.S mips/jsimd.c)
-
-if(CMAKE_POSITION_INDEPENDENT_CODE OR ENABLE_SHARED)
-  set_target_properties(simd PROPERTIES POSITION_INDEPENDENT_CODE 1)
+if(HAVE_DSPR2)
+  set(SIMD_SOURCES mips/jsimd_dspr2.S)
+  set_property(SOURCE mips/jsimd.c APPEND_STRING PROPERTY COMPILE_FLAGS "-DHAVE_DSPR2")
 endif()
 
-###############################################################################
-# Loongson (Intrinsics)
-###############################################################################
-
-elseif(CPU_TYPE STREQUAL "loongson")
-
-set(SIMD_SOURCES loongson/jccolor-mmi.c loongson/jcgray-mmi.c
-  loongson/jcsample-mmi.c loongson/jdcolor-mmi.c loongson/jdsample-mmi.c
-  loongson/jdmerge-mmi.c loongson/jfdctfst-mmi.c loongson/jfdctint-mmi.c
-  loongson/jidctfst-mmi.c loongson/jidctint-mmi.c loongson/jquanti-mmi.c)
-
-if(CMAKE_COMPILER_IS_GNUCC)
-  foreach(file ${SIMD_SOURCES})
+if(HAVE_MMI)
+  set(MMI_SOURCES mips/jccolor-mmi.c mips/jcsample-mmi.c
+    mips/jdcolor-mmi.c mips/jdsample-mmi.c mips/jfdctint-mmi.c
+    mips/jidctint-mmi.c mips/jquanti-mmi.c)
+  set_property(SOURCE mips/jsimd.c APPEND_STRING PROPERTY COMPILE_FLAGS "-DHAVE_MMI")
+  if(CMAKE_COMPILER_IS_GNUCC)
+  foreach(file ${MMI_SOURCES})
     set_property(SOURCE ${file} APPEND_STRING PROPERTY COMPILE_FLAGS
-      " -fno-strict-aliasing")
+      "-Wa,-mloongson-mmi,-mloongson-ext -fno-strict-aliasing")
   endforeach()
+  endif()
+
+  set(SIMD_SOURCES ${SIMD_SOURCES} ${MMI_SOURCES})
 endif()
 
-add_library(simd OBJECT ${SIMD_SOURCES} loongson/jsimd.c)
+add_library(simd OBJECT  mips/jsimd.c ${SIMD_SOURCES})
 
 if(CMAKE_POSITION_INDEPENDENT_CODE OR ENABLE_SHARED)
   set_target_properties(simd PROPERTIES POSITION_INDEPENDENT_CODE 1)
