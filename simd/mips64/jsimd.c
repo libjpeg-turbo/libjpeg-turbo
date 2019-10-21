@@ -26,6 +26,34 @@
 
 static unsigned int simd_support = ~0;
 
+#if defined(__linux__)
+/*
+ * Parse cpuinfo to check if ASEs are available.
+ *
+ * FIXME: This code is racy under a multi-threaded environment.
+ */
+LOCAL(void)
+parse_proc_cpuinfo()
+{
+  char buf[200];
+  FILE* f = fopen ("/proc/cpuinfo", "r");
+
+  if (!f) {
+    return;
+  }
+
+  while (fgets (buf, sizeof (buf), f)) {
+    if (!strncmp (buf, "ASEs implemented", strlen ("ASEs implemented"))) {
+      if (strstr (buf, " loongson-mmi "))
+        simd_support |= JSIMD_MMI;
+      break;
+    }
+  }
+  fclose (f);
+  return;
+}
+#endif
+
 /*
  * Check what SIMD accelerations are supported.
  *
@@ -41,10 +69,22 @@ init_simd(void)
   if (simd_support != ~0U)
     return;
 
+  simd_support = 0;
+
+#if defined(__linux__)
+  parse_proc_cpuinfo();
+#else
+#if defined(__mips_loongson_vector_rev)
+  /* Only defaultly enable MMI when compiler march support it for non-Linux */
   simd_support |= JSIMD_MMI;
+#endif
+#endif
 
 #ifndef NO_GETENV
   /* Force different settings through environment variables */
+  env = getenv("JSIMD_FORCEMMI");
+  if ((env != NULL) && (strcmp(env, "1") == 0))
+    simd_support |= JSIMD_MMI;
   env = getenv("JSIMD_FORCENONE");
   if ((env != NULL) && (strcmp(env, "1") == 0))
     simd_support = 0;
