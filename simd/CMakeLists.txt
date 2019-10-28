@@ -38,6 +38,13 @@ elseif(CPU_TYPE STREQUAL "i386")
   endif()
 endif()
 
+include(CheckLanguage)
+check_language(ASM_NASM)
+if(NOT CMAKE_ASM_NASM_COMPILER)
+  simd_fail("SIMD extensions disabled: could not find NASM compiler")
+  return()
+endif()
+
 enable_language(ASM_NASM)
 message(STATUS "CMAKE_ASM_NASM_COMPILER = ${CMAKE_ASM_NASM_COMPILER}")
 
