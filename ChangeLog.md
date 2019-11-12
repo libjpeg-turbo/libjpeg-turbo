@@ -85,6 +85,12 @@ throw an error ("Invalid progressive parameters") or a warning ("Inconsistent
 progression sequence") if passed a TurboJPEG instance that was previously used
 to decompress a progressive JPEG image.
 
+16. Fixed out-of-bounds write in `tjDecompressToYUV2()` and
+`tjDecompressToYUVPlanes()` (sometimes manifesting as a double free) that
+occurred when attempting to decompress grayscale JPEG images that were
+compressed with a sampling factor other than 1 (for instance, with
+`cjpeg -grayscale -sample 2x2`).
+
 
 1.5.3
 =====
