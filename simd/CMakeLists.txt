@@ -265,7 +265,11 @@ endif()
 
 file(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/gastest.S)
 
-add_library(simd OBJECT ${CPU_TYPE}/jsimd_neon.S ${CPU_TYPE}/jsimd.c)
+if (CPU_TYPE STREQUAL "arm")
+  add_library(simd OBJECT arm/aarch32/jsimd_neon.S arm/aarch32/jsimd.c)
+else()
+  add_library(simd OBJECT arm/aarch64/jsimd_neon.S arm/aarch64/jsimd.c)
+endif()
 
 if(CMAKE_POSITION_INDEPENDENT_CODE OR ENABLE_SHARED)
   set_target_properties(simd PROPERTIES POSITION_INDEPENDENT_CODE 1)
