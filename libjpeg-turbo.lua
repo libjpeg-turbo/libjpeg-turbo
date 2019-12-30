@@ -207,6 +207,30 @@ project "jpeg"
     -- configuration { "linux", "Release", "x64" }
 
     -- -------------------------------------------------------------
+    -- configuration { "linux", "Debug", "ARM64" }
+    -- -------------------------------------------------------------
+
+    -- common configuration settings
+
+    dofile (_BUILD_DIR .. "/static_linux_arm64_debug.lua")
+
+    -- project specific configuration settings
+
+    -- configuration { "linux", "Debug", "ARM64" }
+
+    -- -------------------------------------------------------------
+    -- configuration { "linux", "Release", "ARM64" }
+    -- -------------------------------------------------------------
+
+    -- common configuration settings
+
+    dofile (_BUILD_DIR .. "/static_linux_arm64_release.lua")
+
+    -- project specific configuration settings
+
+    -- configuration { "linux", "Release", "ARM64" }
+
+    -- -------------------------------------------------------------
   end
 
   if (os.is("macosx") and not _OS_IS_IOS and not _OS_IS_ANDROID) then
