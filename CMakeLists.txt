@@ -5,7 +5,7 @@ if(CMAKE_EXECUTABLE_SUFFIX)
 endif()
 
 project(libjpeg-turbo C)
-set(VERSION 2.0.2)
+set(VERSION 2.0.4)
 string(REPLACE "." ";" VERSION_TRIPLET ${VERSION})
 list(GET VERSION_TRIPLET 0 VERSION_MAJOR)
 list(GET VERSION_TRIPLET 1 VERSION_MINOR)
@@ -536,7 +536,7 @@ elseif(NOT WITH_12BIT)
 endif()
 if(WITH_SIMD)
   message(STATUS "SIMD extensions: ${CPU_TYPE} (WITH_SIMD = ${WITH_SIMD})")
-  if(MSVC_IDE)
+  if(MSVC_IDE OR XCODE)
     set_source_files_properties(${SIMD_OBJS} PROPERTIES GENERATED 1)
   endif()
 else()
@@ -666,7 +666,7 @@ add_executable(wrjpgcom wrjpgcom.c)
 
 add_subdirectory(md5)
 
-if(MSVC_IDE)
+if(MSVC_IDE OR XCODE)
   set(OBJDIR "\${CTEST_CONFIGURATION_TYPE}/")
 else()
   set(OBJDIR "")
@@ -682,7 +682,7 @@ if(WITH_12BIT)
   set(MD5_JPEG_422_IFAST_OPT 7322e3bd2f127f7de4b40d4480ce60e4)
   set(MD5_PPM_422_IFAST 79807fa552899e66a04708f533e16950)
   set(MD5_PPM_422M_IFAST 07737bfe8a7c1c87aaa393a0098d16b0)
-  set(MD5_JPEG_420_IFAST_Q100_PROG a1da220b5604081863a504297ed59e55)
+  set(MD5_JPEG_420_IFAST_Q100_PROG 008ab68d6ddbba04a8f01deee4e0f9f8)
   set(MD5_PPM_420_Q100_IFAST 1b3730122709f53d007255e8dfd3305e)
   set(MD5_PPM_420M_Q100_IFAST 980a1a3c5bf9510022869d30b7d26566)
   set(MD5_JPEG_GRAY_ISLOW 235c90707b16e2e069f37c888b2636d9)
@@ -732,7 +732,7 @@ else()
   set(MD5_PPM_422M_IFAST 8dbc65323d62cca7c91ba02dd1cfa81d)
   set(MD5_BMP_422M_IFAST_565 3294bd4d9a1f2b3d08ea6020d0db7065)
   set(MD5_BMP_422M_IFAST_565D da98c9c7b6039511be4a79a878a9abc1)
-  set(MD5_JPEG_420_IFAST_Q100_PROG 990cbe0329c882420a2094da7e5adade)
+  set(MD5_JPEG_420_IFAST_Q100_PROG e59bb462016a8d9a748c330a3474bb55)
   set(MD5_PPM_420_Q100_IFAST 5a732542015c278ff43635e473a8a294)
   set(MD5_PPM_420M_Q100_IFAST ff692ee9323a3b424894862557c092f1)
   set(MD5_JPEG_GRAY_ISLOW 72b51f894b8f4a10b3ee3066770aa38d)
@@ -1047,7 +1047,7 @@ foreach(libtype ${TEST_LIBTYPES})
 
   # CC: RGB->YCC  SAMP: fullsize/h2v2  FDCT: ifast  ENT: prog huff
   add_bittest(cjpeg 420-q100-ifast-prog
-    "-sample;2x2;-quality;100;-dct;fast;-prog"
+    "-sample;2x2;-quality;100;-dct;fast;-scans;${TESTIMAGES}/test.scan"
     testout_420_q100_ifast_prog.jpg ${TESTIMAGES}/testorig.ppm
     ${MD5_JPEG_420_IFAST_Q100_PROG})
 
@@ -1290,6 +1290,8 @@ if(WITH_TURBOJPEG)
       COMMAND ${BASH} ${CMAKE_CURRENT_BINARY_DIR}/tjbenchtest -yuv -alloc
       COMMAND echo tjbenchtest -progressive
       COMMAND ${BASH} ${CMAKE_CURRENT_BINARY_DIR}/tjbenchtest -progressive
+      COMMAND echo tjbenchtest -progressive -yuv
+      COMMAND ${BASH} ${CMAKE_CURRENT_BINARY_DIR}/tjbenchtest -progressive -yuv
       COMMAND echo tjexampletest
       COMMAND ${BASH} ${CMAKE_CURRENT_BINARY_DIR}/tjexampletest
       COMMAND echo tjbenchtest.java
@@ -1298,6 +1300,9 @@ if(WITH_TURBOJPEG)
       COMMAND ${BASH} ${CMAKE_CURRENT_BINARY_DIR}/tjbenchtest.java -yuv
       COMMAND echo tjbenchtest.java -progressive
       COMMAND ${BASH} ${CMAKE_CURRENT_BINARY_DIR}/tjbenchtest.java -progressive
+      COMMAND echo tjexampletest.java -progressive -yuv
+      COMMAND ${BASH} ${CMAKE_CURRENT_BINARY_DIR}/tjbenchtest.java
+        -progressive -yuv
       COMMAND echo tjexampletest.java
       COMMAND ${BASH} ${CMAKE_CURRENT_BINARY_DIR}/tjexampletest.java
       DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/tjbenchtest
@@ -1313,6 +1318,10 @@ if(WITH_TURBOJPEG)
       COMMAND ${BASH} ${CMAKE_CURRENT_BINARY_DIR}/tjbenchtest -yuv
       COMMAND echo tjbenchtest -yuv -alloc
       COMMAND ${BASH} ${CMAKE_CURRENT_BINARY_DIR}/tjbenchtest -yuv -alloc
+      COMMAND echo tjbenchtest -progressive
+      COMMAND ${BASH} ${CMAKE_CURRENT_BINARY_DIR}/tjbenchtest -progressive
+      COMMAND echo tjbenchtest -progressive -yuv
+      COMMAND ${BASH} ${CMAKE_CURRENT_BINARY_DIR}/tjbenchtest -progressive -yuv
       COMMAND echo tjexampletest
       COMMAND ${BASH} ${CMAKE_CURRENT_BINARY_DIR}/tjexampletest
       DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/tjbenchtest)
@@ -1342,7 +1351,7 @@ if(WITH_TURBOJPEG)
     install(TARGETS turbojpeg-static ARCHIVE
       DESTINATION ${CMAKE_INSTALL_LIBDIR})
     if(NOT ENABLE_SHARED)
-      if(MSVC_IDE)
+      if(MSVC_IDE OR XCODE)
         set(DIR "${CMAKE_CURRENT_BINARY_DIR}/\${CMAKE_INSTALL_CONFIG_NAME}")
       else()
         set(DIR ${CMAKE_CURRENT_BINARY_DIR})
@@ -1358,7 +1367,7 @@ endif()
 if(ENABLE_STATIC)
   install(TARGETS jpeg-static ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
   if(NOT ENABLE_SHARED)
-    if(MSVC_IDE)
+    if(MSVC_IDE OR XCODE)
       set(DIR "${CMAKE_CURRENT_BINARY_DIR}/\${CMAKE_INSTALL_CONFIG_NAME}")
     else()
       set(DIR ${CMAKE_CURRENT_BINARY_DIR})
