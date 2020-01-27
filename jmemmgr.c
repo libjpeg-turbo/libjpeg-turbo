@@ -95,6 +95,15 @@ round_up_pow2(size_t a, size_t b)
 #endif
 #endif
 
+#ifdef WITH_SIMD
+#if (defined(__ARM_NEON) || defined(__ARM_NEON__)) && (ALIGN_SIZE % 32)
+  /* 32-byte alignment allows us to extract more performance from */
+  /* fancy-upsampling algorithms when using Neon. */
+  #error "Neon optimizations rely on 32-byte alignment. \
+          ALIGN_SIZE is not a multiple of 32 bytes."
+#endif
+#endif
+
 /*
  * We allocate objects from "pools", where each pool is gotten with a single
  * request to jpeg_get_small() or jpeg_get_large().  There is no per-object
