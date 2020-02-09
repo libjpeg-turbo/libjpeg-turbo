@@ -692,10 +692,8 @@ jsimd_can_convsamp_float(void)
   if (sizeof(ISLOW_MULT_TYPE) != 2)
     return 0;
 
-#ifndef __mips_soft_float
   if (simd_support & JSIMD_DSPR2)
     return 1;
-#endif
 
   return 0;
 }
@@ -711,9 +709,7 @@ GLOBAL(void)
 jsimd_convsamp_float(JSAMPARRAY sample_data, JDIMENSION start_col,
                      FAST_FLOAT *workspace)
 {
-#ifndef __mips_soft_float
   jsimd_convsamp_float_dspr2(sample_data, start_col, workspace);
-#endif
 }
 
 GLOBAL(int)
@@ -809,10 +805,8 @@ jsimd_can_quantize_float(void)
   if (sizeof(ISLOW_MULT_TYPE) != 2)
     return 0;
 
-#ifndef __mips_soft_float
   if (simd_support & JSIMD_DSPR2)
     return 1;
-#endif
 
   return 0;
 }
@@ -827,9 +821,7 @@ GLOBAL(void)
 jsimd_quantize_float(JCOEFPTR coef_block, FAST_FLOAT *divisors,
                      FAST_FLOAT *workspace)
 {
-#ifndef __mips_soft_float
   jsimd_quantize_float_dspr2(coef_block, divisors, workspace);
-#endif
 }
 
 GLOBAL(int)
