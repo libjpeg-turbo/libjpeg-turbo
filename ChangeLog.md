@@ -101,6 +101,11 @@ segfault or other user-visible errant behavior, and given that the lossless
 transformer (unlike the decompressor) is not generally exposed to arbitrary
 data exploits, this issue did not likely pose a security risk.
 
+18. Fixed an oversight in the `TJCompressor.compress(int)` method in the
+TurboJPEG Java API that caused an error ("java.lang.IllegalStateException: No
+source image is associated with this instance") when attempting to use that
+method to compress a YUV image.
+
 
 1.5.3
 =====
