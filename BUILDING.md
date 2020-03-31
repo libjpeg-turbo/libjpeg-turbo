@@ -94,6 +94,21 @@ Build Requirements
 
   * If using JDK 11 or later, CMake 3.10.x or later must also be used.
 
+- Building libjpeg-turbo by vcpkg
+
+You can download and install libjpeg-turbo using the [vcpkg](https://github.com/Microsoft/vcpkg) 
+dependency manager:
+
+    git clone https://github.com/Microsoft/vcpkg.git
+    cd vcpkg
+    ./bootstrap-vcpkg.sh
+    ./vcpkg integrate install
+    ./vcpkg install libjpeg-turbo
+
+The libjpeg-turbo port in vcpkg is kept up to date by Microsoft team members 
+and community contributors. If the version is out of date, 
+please [create an issue or pull request](https://github.com/Microsoft/vcpkg) on the vcpkg repository.
+
 
 Out-of-Tree Builds
 ------------------
