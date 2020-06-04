@@ -294,6 +294,8 @@ message(STATUS "libjpeg API shared library version = ${SO_MAJOR_VERSION}.${SO_AG
 set(TURBOJPEG_SO_MAJOR_VERSION 0)
 set(TURBOJPEG_SO_VERSION 0.2.0)
 
+set (JPEG_OUTPUT_BASENAME "jpeg" CACHE STRING "Output jpeg library base name")
+set (TURBOJPEG_OUTPUT_BASENAME "turbojpeg" CACHE STRING "Output turbojpeg library base name")
 
 ###############################################################################
 # COMPILER SETTINGS
@@ -493,7 +495,7 @@ else()
 endif()
 configure_file(jconfigint.h.in jconfigint.h)
 if(UNIX)
-  configure_file(libjpeg.map.in libjpeg.map)
+  configure_file(libjpeg.map.in lib${JPEG_OUTPUT_BASENAME}.map)
 endif()
 
 # Include directories and compiler definitions
@@ -554,9 +556,7 @@ endif()
 if(ENABLE_STATIC)
   add_library(jpeg-static STATIC ${JPEG_SOURCES} $<TARGET_OBJECTS:simd>
     ${SIMD_OBJS})
-  if(NOT MSVC)
-    set_target_properties(jpeg-static PROPERTIES OUTPUT_NAME jpeg)
-  endif()
+  set_target_properties(jpeg-static PROPERTIES OUTPUT_NAME ${JPEG_OUTPUT_BASENAME})
 endif()
 
 if(WITH_TURBOJPEG)
@@ -588,6 +588,7 @@ if(WITH_TURBOJPEG)
     endif()
     set_target_properties(turbojpeg PROPERTIES
       SOVERSION ${TURBOJPEG_SO_MAJOR_VERSION} VERSION ${TURBOJPEG_SO_VERSION})
+    set_target_properties(turbojpeg PROPERTIES OUTPUT_NAME ${TURBOJPEG_OUTPUT_BASENAME})
     if(TJMAPFLAG)
       set_target_properties(turbojpeg PROPERTIES
         LINK_FLAGS "${TJMAPFLAG}${TJMAPFILE}")
@@ -612,9 +613,7 @@ if(WITH_TURBOJPEG)
       rdppm.c wrbmp.c wrppm.c)
     set_property(TARGET turbojpeg-static PROPERTY COMPILE_FLAGS
       "-DBMP_SUPPORTED -DPPM_SUPPORTED")
-    if(NOT MSVC)
-      set_target_properties(turbojpeg-static PROPERTIES OUTPUT_NAME turbojpeg)
-    endif()
+    set_target_properties(turbojpeg-static PROPERTIES OUTPUT_NAME ${TURBOJPEG_OUTPUT_BASENAME})
 
     add_executable(tjunittest-static tjunittest.c tjutil.c md5/md5.c
       md5/md5hl.c)
