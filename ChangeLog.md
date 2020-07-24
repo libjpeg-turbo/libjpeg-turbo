@@ -113,6 +113,12 @@ header and that maximum value was less than 255.  libjpeg-turbo 1.5.0 already
 included a similar fix for binary PPM/PGM files with maximum values greater
 than 255.
 
+20. Fixed segfaults or "Corrupt JPEG data: premature end of data segment"
+errors in `jpeg_skip_scanlines()` that occurred when decompressing 4:2:2 or
+4:2:0 JPEG images using the merged (non-fancy) upsampling algorithms (that is,
+when setting `cinfo.do_fancy_upsampling` to `FALSE`.)  2.0.0[6] was a similar
+fix, but it did not cover all cases.
+
 
 1.5.3
 =====
