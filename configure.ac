@@ -602,6 +602,7 @@ AC_CONFIG_FILES([pkgscripts/makemacpkg.tmpl:release/makemacpkg.in])
 AC_CONFIG_FILES([pkgscripts/uninstall.tmpl:release/uninstall.in])
 AC_CONFIG_FILES([pkgscripts/libjpeg.pc:release/libjpeg.pc.in])
 AC_CONFIG_FILES([pkgscripts/libturbojpeg.pc:release/libturbojpeg.pc.in])
+AC_CONFIG_FILES([cropregressiontest:croptest.in])
 if test "x$with_turbojpeg" != "xno"; then
   AC_CONFIG_FILES([tjbenchtest])
 fi

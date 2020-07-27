@@ -701,6 +701,10 @@ testclean:
 	rm -f tjexampletest*.log
 
 
+croptest:
+	sh ./cropregressiontest
+
+
 tjtest:
 	sh ./tjbenchtest
 	sh ./tjbenchtest -alloc
