@@ -257,7 +257,7 @@ MD5_JPEG_3x2_IFAST_PROG = 1ee5d2c1a77f2da495f993c8c7cceca5
 MD5_PPM_3x2_IFAST = fd283664b3b49127984af0a7f118fccd
 MD5_JPEG_420_ISLOW_ARI = e986fb0a637a8d833d96e8a6d6d84ea1
 MD5_JPEG_444_ISLOW_PROGARI = 0a8f1c8f66e113c3cf635df0a475a617
-MD5_PPM_420M_IFAST_ARI = 72b59a99bcf1de24c5b27d151bde2437
+MD5_PPM_420M_IFAST_ARI = 57251da28a35b46eecb7177d82d10e0e
 MD5_JPEG_420_ISLOW = 9a68f56bc76e466aa7e52f415d0f4a5f
 MD5_PPM_420M_ISLOW_2_1 = 9f9de8c0612f8d06869b960b05abf9c9
 MD5_PPM_420M_ISLOW_15_8 = b6875bc070720b899566cc06459b63b7
@@ -534,7 +534,7 @@ if WITH_ARITH_ENC
 endif
 if WITH_ARITH_DEC
 # CC: RGB->YCC  SAMP: h2v2 merged  IDCT: ifast  ENT: arith
-	./djpeg -fast -ppm -outfile testout_420m_ifast_ari.ppm $(srcdir)/testimages/testimgari.jpg
+	./djpeg -fast -skip 1,20 -ppm -outfile testout_420m_ifast_ari.ppm $(srcdir)/testimages/testimgari.jpg
 	md5/md5cmp $(MD5_PPM_420M_IFAST_ARI) testout_420m_ifast_ari.ppm
 	rm -f testout_420m_ifast_ari.ppm
 	./jpegtran -outfile testout_420_islow.jpg $(srcdir)/testimages/testimgari.jpg
