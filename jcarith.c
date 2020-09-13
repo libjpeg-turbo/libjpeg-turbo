@@ -482,17 +482,15 @@ encode_mcu_AC_first(j_compress_ptr cinfo, JBLOCKROW *MCU_data)
   /* Sections F.1.4.2 & F.1.4.4.2: Encoding of AC coefficients */
 
   /* Establish EOB (end-of-block) index */
-  for (ke = cinfo->Se; ke > 0; ke--)
+  for (ke = cinfo->Se; ke > 0; ke--) {
     /* We must apply the point transform by Al.  For AC coefficients this
      * is an integer division with rounding towards 0.  To do this portably
      * in C, we shift after obtaining the absolute value.
      */
-    if ((v = (*block)[jpeg_natural_order[ke]]) >= 0) {
-      if (v >>= cinfo->Al) break;
-    } else {
-      v = -v;
-      if (v >>= cinfo->Al) break;
-    }
+    v = (*block)[jpeg_natural_order[ke]];
+    if (v < 0) v = -v;
+    if (v >> cinfo->Al) break;
+  }
 
   /* Figure F.5: Encode_AC_Coefficients */
   for (k = cinfo->Ss; k <= ke; k++) {
@@ -616,26 +614,22 @@ encode_mcu_AC_refine(j_compress_ptr cinfo, JBLOCKROW *MCU_data)
   /* Section G.1.3.3: Encoding of AC coefficients */
 
   /* Establish EOB (end-of-block) index */
-  for (ke = cinfo->Se; ke > 0; ke--)
+  for (ke = cinfo->Se; ke > 0; ke--) {
     /* We must apply the point transform by Al.  For AC coefficients this
      * is an integer division with rounding towards 0.  To do this portably
      * in C, we shift after obtaining the absolute value.
      */
-    if ((v = (*block)[jpeg_natural_order[ke]]) >= 0) {
-      if (v >>= cinfo->Al) break;
-    } else {
-      v = -v;
-      if (v >>= cinfo->Al) break;
-    }
+    v = (*block)[jpeg_natural_order[ke]];
+    if (v < 0) v = -v;
+    if (v >> cinfo->Al) break;
+  }
 
   /* Establish EOBx (previous stage end-of-block) index */
-  for (kex = ke; kex > 0; kex--)
-    if ((v = (*block)[jpeg_natural_order[kex]]) >= 0) {
-      if (v >>= cinfo->Ah) break;
-    } else {
-      v = -v;
-      if (v >>= cinfo->Ah) break;
-    }
+  for (kex = ke; kex > 0; kex--) {
+    v = (*block)[jpeg_natural_order[kex]];
+    if (v < 0) v = -v;
+    if (v >> cinfo->Ah) break;
+  }
 
   /* Figure G.10: Encode_AC_Coefficients_SA */
   for (k = cinfo->Ss; k <= ke; k++) {
