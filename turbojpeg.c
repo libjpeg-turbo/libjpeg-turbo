@@ -676,8 +676,10 @@ DLLEXPORT int tjCompress2(tjhandle handle, const unsigned char *srcBuf,
     alloc = 0;  *jpegSize = tjBufSize(width, height, jpegSubsamp);
   }
   jpeg_mem_dest_tj(cinfo, jpegBuf, jpegSize, alloc);
-  if (setCompDefaults(cinfo, pixelFormat, jpegSubsamp, jpegQual, flags) == -1)
+  if (setCompDefaults(cinfo, pixelFormat, jpegSubsamp, jpegQual, flags) == -1) {
+    free(row_pointer);
     return -1;
+  }
 
   jpeg_start_compress(cinfo, TRUE);
   for (i = 0; i < height; i++) {
