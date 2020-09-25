@@ -139,10 +139,8 @@ macro(boolean_number var)
   endif()
 endmacro()
 
-option(ENABLE_SHARED "Build shared libraries" TRUE)
-boolean_number(ENABLE_SHARED)
-option(ENABLE_STATIC "Build static libraries" TRUE)
-boolean_number(ENABLE_STATIC)
+option(BUILD_SHARED_LIBS "Build shared libraries(.dll/.so) instead of static ones(.lib/.a)" TRUE)
+boolean_number(BUILD_SHARED_LIBS)
 option(REQUIRE_SIMD "Generate a fatal error if SIMD extensions are not available for this platform (default is to fall back to a non-SIMD build)" FALSE)
 boolean_number(REQUIRE_SIMD)
 option(WITH_12BIT "Encode/decode JPEG images with 12-bit samples (implies WITH_ARITH_DEC=0 WITH_ARITH_ENC=0 WITH_JAVA=0 WITH_SIMD=0 WITH_TURBOJPEG=0 )" FALSE)
@@ -151,7 +149,7 @@ option(WITH_ARITH_DEC "Include arithmetic decoding support when emulating the li
 boolean_number(WITH_ARITH_DEC)
 option(WITH_ARITH_ENC "Include arithmetic encoding support when emulating the libjpeg v6b API/ABI" TRUE)
 boolean_number(WITH_ARITH_ENC)
-option(WITH_JAVA "Build Java wrapper for the TurboJPEG API library (implies ENABLE_SHARED=1)" FALSE)
+option(WITH_JAVA "Build Java wrapper for the TurboJPEG API library (implies BUILD_SHARED_LIBS=1)" FALSE)
 boolean_number(WITH_JAVA)
 option(WITH_JPEG7 "Emulate libjpeg v7 API/ABI (this makes ${CMAKE_PROJECT_NAME} backward-incompatible with libjpeg v6b)" FALSE)
 boolean_number(WITH_JPEG7)
@@ -173,23 +171,12 @@ macro(report_option var desc)
 endmacro()
 
 if(WITH_JAVA)
-  set(ENABLE_SHARED 1)
+  set(BUILD_SHARED_LIBS 1)
 endif()
 
-# Explicitly setting CMAKE_POSITION_INDEPENDENT_CODE=FALSE disables PIC for all
-# targets, which will cause the shared library builds to fail.  Thus, if shared
-# libraries are enabled and CMAKE_POSITION_INDEPENDENT_CODE is explicitly set
-# to FALSE, we need to unset it, thus restoring the default behavior
-# (automatically using PIC for shared library targets.)
-if(DEFINED CMAKE_POSITION_INDEPENDENT_CODE AND
-  NOT CMAKE_POSITION_INDEPENDENT_CODE AND ENABLE_SHARED)
-  unset(CMAKE_POSITION_INDEPENDENT_CODE CACHE)
-endif()
+report_option(BUILD_SHARED_LIBS "Shared libraries")
 
-report_option(ENABLE_SHARED "Shared libraries")
-report_option(ENABLE_STATIC "Static libraries")
-
-if(ENABLE_SHARED)
+if(BUILD_SHARED_LIBS)
   set(CMAKE_INSTALL_RPATH ${CMAKE_INSTALL_FULL_LIBDIR})
 endif()
 
@@ -303,7 +290,7 @@ if(MSVC)
   option(WITH_CRT_DLL
     "Link all ${CMAKE_PROJECT_NAME} libraries and executables with the C run-time DLL (msvcr*.dll) instead of the static C run-time library (libcmt*.lib.)  The default is to use the C run-time DLL only with the libraries and executables that need it."
     FALSE)
-  if(NOT WITH_CRT_DLL)
+  if((NOT BUILD_SHARED_LIBS) AND (NOT WITH_CRT_DLL))
     # Use the static C library for all build types
     foreach(var CMAKE_C_FLAGS CMAKE_C_FLAGS_DEBUG CMAKE_C_FLAGS_RELEASE
       CMAKE_C_FLAGS_MINSIZEREL CMAKE_C_FLAGS_RELWITHDEBINFO)
@@ -562,32 +549,66 @@ if(WITH_JAVA)
   add_subdirectory(java)
 endif()
 
-if(ENABLE_SHARED)
-  add_subdirectory(sharedlib)
+if(NOT BUILD_SHARED_LIBS)
+  set(STATIC_SUFFIX "-static")
 endif()
 
-if(ENABLE_STATIC)
-  add_library(jpeg-static STATIC ${JPEG_SOURCES} $<TARGET_OBJECTS:simd>
-    ${SIMD_OBJS})
-  if(NOT MSVC)
-    set_target_properties(jpeg-static PROPERTIES OUTPUT_NAME jpeg)
+
+# libjpeg
+if(BUILD_SHARED_LIBS AND WIN32)
+  if(WITH_MEM_SRCDST)
+    set(DEFFILE win/jpeg${SO_MAJOR_VERSION}-memsrcdst.def)
+  else()
+    set(DEFFILE win/jpeg${SO_MAJOR_VERSION}.def)
   endif()
 endif()
 
+add_library(jpeg ${JPEG_SOURCES} ${DEFFILE} $<TARGET_OBJECTS:simd>
+  ${SIMD_OBJS})
+
+if(BUILD_SHARED_LIBS)
+  set_target_properties(jpeg PROPERTIES SOVERSION ${SO_MAJOR_VERSION}
+          VERSION ${SO_MAJOR_VERSION}.${SO_AGE}.${SO_MINOR_VERSION})
+  if(APPLE AND (NOT CMAKE_OSX_DEPLOYMENT_TARGET OR
+          CMAKE_OSX_DEPLOYMENT_TARGET VERSION_GREATER 10.4))
+    if(NOT CMAKE_SHARED_LIBRARY_RUNTIME_C_FLAG)
+      set(CMAKE_SHARED_LIBRARY_RUNTIME_C_FLAG "-Wl,-rpath,")
+    endif()
+    set_target_properties(jpeg PROPERTIES MACOSX_RPATH 1)
+  endif()
+  if(MAPFLAG)
+    set_target_properties(jpeg PROPERTIES
+            LINK_FLAGS "${MAPFLAG}${CMAKE_CURRENT_BINARY_DIR}/libjpeg.map")
+  endif()
+  if(MSVC)
+    set_target_properties(jpeg PROPERTIES
+            RUNTIME_OUTPUT_NAME jpeg${SO_MAJOR_VERSION})
+    # The jsimd_*.c file is built using /MT, so this prevents a linker warning.
+    set_target_properties(jpeg PROPERTIES LINK_FLAGS "/NODEFAULTLIB:LIBCMT /NODEFAULTLIB:LIBCMTD")
+  elseif(MINGW)
+    set_target_properties(jpeg PROPERTIES SUFFIX -${SO_MAJOR_VERSION}.dll)
+  endif()
+endif(BUILD_SHARED_LIBS)
+
+
+# libturbojpeg
 if(WITH_TURBOJPEG)
-  if(ENABLE_SHARED)
-    set(TURBOJPEG_SOURCES ${JPEG_SOURCES} $<TARGET_OBJECTS:simd> ${SIMD_OBJS}
-      turbojpeg.c transupp.c jdatadst-tj.c jdatasrc-tj.c rdbmp.c rdppm.c
-      wrbmp.c wrppm.c)
+  set(TURBOJPEG_SOURCES ${JPEG_SOURCES} $<TARGET_OBJECTS:simd> ${SIMD_OBJS}
+    turbojpeg.c transupp.c jdatadst-tj.c jdatasrc-tj.c rdbmp.c rdppm.c
+    wrbmp.c wrppm.c)
+
+  add_library(turbojpeg ${TURBOJPEG_SOURCES})
+  set_property(TARGET turbojpeg PROPERTY COMPILE_FLAGS
+          "-DBMP_SUPPORTED -DPPM_SUPPORTED")
+
+  if(BUILD_SHARED_LIBS)
     set(TJMAPFILE ${CMAKE_CURRENT_SOURCE_DIR}/turbojpeg-mapfile)
     if(WITH_JAVA)
       set(TURBOJPEG_SOURCES ${TURBOJPEG_SOURCES} turbojpeg-jni.c)
       include_directories(${JAVA_INCLUDE_PATH} ${JAVA_INCLUDE_PATH2})
       set(TJMAPFILE ${CMAKE_CURRENT_SOURCE_DIR}/turbojpeg-mapfile.jni)
     endif()
-    add_library(turbojpeg SHARED ${TURBOJPEG_SOURCES})
-    set_property(TARGET turbojpeg PROPERTY COMPILE_FLAGS
-      "-DBMP_SUPPORTED -DPPM_SUPPORTED")
+
     if(WIN32)
       set_target_properties(turbojpeg PROPERTIES DEFINE_SYMBOL DLLDEFINE)
     endif()
@@ -607,42 +628,25 @@ if(WITH_TURBOJPEG)
       set_target_properties(turbojpeg PROPERTIES
         LINK_FLAGS "${TJMAPFLAG}${TJMAPFILE}")
     endif()
+  endif(BUILD_SHARED_LIBS)
 
-    add_executable(tjunittest tjunittest.c tjutil.c md5/md5.c md5/md5hl.c)
-    target_link_libraries(tjunittest turbojpeg)
+  add_executable(tjunittest${STATIC_SUFFIX} tjunittest.c tjutil.c md5/md5.c md5/md5hl.c)
+  target_link_libraries(tjunittest${STATIC_SUFFIX} turbojpeg)
 
-    add_executable(tjbench tjbench.c tjutil.c)
-    target_link_libraries(tjbench turbojpeg)
-    if(UNIX)
-      target_link_libraries(tjbench m)
-    endif()
-
-    add_executable(tjexample tjexample.c)
-    target_link_libraries(tjexample turbojpeg)
+  add_executable(tjbench${STATIC_SUFFIX} tjbench.c tjutil.c)
+  target_link_libraries(tjbench${STATIC_SUFFIX} turbojpeg)
+  if(UNIX)
+    target_link_libraries(tjbench${STATIC_SUFFIX} m)
   endif()
 
-  if(ENABLE_STATIC)
-    add_library(turbojpeg-static STATIC ${JPEG_SOURCES} $<TARGET_OBJECTS:simd>
-      ${SIMD_OBJS} turbojpeg.c transupp.c jdatadst-tj.c jdatasrc-tj.c rdbmp.c
-      rdppm.c wrbmp.c wrppm.c)
-    set_property(TARGET turbojpeg-static PROPERTY COMPILE_FLAGS
-      "-DBMP_SUPPORTED -DPPM_SUPPORTED")
-    if(NOT MSVC)
-      set_target_properties(turbojpeg-static PROPERTIES OUTPUT_NAME turbojpeg)
-    endif()
-
-    add_executable(tjunittest-static tjunittest.c tjutil.c md5/md5.c
-      md5/md5hl.c)
-    target_link_libraries(tjunittest-static turbojpeg-static)
-
-    add_executable(tjbench-static tjbench.c tjutil.c)
-    target_link_libraries(tjbench-static turbojpeg-static)
-    if(UNIX)
-      target_link_libraries(tjbench-static m)
-    endif()
+  if(BUILD_SHARED_LIBS)
+    add_executable(tjexample${STATIC_SUFFIX} tjexample.c)
+    target_link_libraries(tjexample${STATIC_SUFFIX} turbojpeg)
   endif()
-endif()
+endif(WITH_TURBOJPEG)
 
+
+# cjpeg, djpeg
 if(WIN32)
   set(USE_SETMODE "-DUSE_SETMODE")
 endif()
@@ -654,20 +658,23 @@ else()
   set(DJPEG_BMP_SOURCES wrbmp.c wrtarga.c)
 endif()
 
-if(ENABLE_STATIC)
-  add_executable(cjpeg-static cjpeg.c cdjpeg.c rdgif.c rdppm.c rdswitch.c
-    ${CJPEG_BMP_SOURCES})
-  set_property(TARGET cjpeg-static PROPERTY COMPILE_FLAGS ${COMPILE_FLAGS})
-  target_link_libraries(cjpeg-static jpeg-static)
+add_executable(cjpeg${STATIC_SUFFIX} cjpeg.c cdjpeg.c rdgif.c rdppm.c rdswitch.c
+  ${CJPEG_BMP_SOURCES})
+set_property(TARGET cjpeg${STATIC_SUFFIX} PROPERTY COMPILE_FLAGS ${COMPILE_FLAGS})
+target_link_libraries(cjpeg${STATIC_SUFFIX} jpeg)
 
-  add_executable(djpeg-static djpeg.c cdjpeg.c rdcolmap.c rdswitch.c wrgif.c
-    wrppm.c ${DJPEG_BMP_SOURCES})
-  set_property(TARGET djpeg-static PROPERTY COMPILE_FLAGS ${COMPILE_FLAGS})
-  target_link_libraries(djpeg-static jpeg-static)
+add_executable(djpeg${STATIC_SUFFIX} djpeg.c cdjpeg.c rdcolmap.c rdswitch.c wrgif.c
+  wrppm.c ${DJPEG_BMP_SOURCES})
+set_property(TARGET djpeg${STATIC_SUFFIX} PROPERTY COMPILE_FLAGS ${COMPILE_FLAGS})
+target_link_libraries(djpeg${STATIC_SUFFIX} jpeg)
 
-  add_executable(jpegtran-static jpegtran.c cdjpeg.c rdswitch.c transupp.c)
-  target_link_libraries(jpegtran-static jpeg-static)
-  set_property(TARGET jpegtran-static PROPERTY COMPILE_FLAGS "${USE_SETMODE}")
+add_executable(jpegtran${STATIC_SUFFIX} jpegtran.c cdjpeg.c rdswitch.c transupp.c)
+target_link_libraries(jpegtran${STATIC_SUFFIX} jpeg)
+set_property(TARGET jpegtran${STATIC_SUFFIX} PROPERTY COMPILE_FLAGS "${USE_SETMODE}")
+
+if(BUILD_SHARED_LIBS)
+  add_executable(jcstest jcstest.c)
+  target_link_libraries(jcstest jpeg)
 endif()
 
 add_executable(rdjpgcom rdjpgcom.c)
@@ -828,12 +835,10 @@ if(WITH_JAVA)
       TJUnitTest -bi -yuv -noyuvpad)
 endif()
 
-set(TEST_LIBTYPES "")
-if(ENABLE_SHARED)
-  set(TEST_LIBTYPES ${TEST_LIBTYPES} shared)
-endif()
-if(ENABLE_STATIC)
-  set(TEST_LIBTYPES ${TEST_LIBTYPES} static)
+if(BUILD_SHARED_LIBS)
+  set(TEST_LIBTYPES shared)
+else()
+  set(TEST_LIBTYPES static)
 endif()
 
 set(TESTIMAGES ${CMAKE_CURRENT_SOURCE_DIR}/testimages)
@@ -1370,7 +1375,7 @@ endif()
 set(EXE ${CMAKE_EXECUTABLE_SUFFIX})
 
 if(WITH_TURBOJPEG)
-  if(ENABLE_SHARED)
+  if(BUILD_SHARED_LIBS)
     install(TARGETS turbojpeg tjbench
       ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
       LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -1380,40 +1385,49 @@ if(WITH_TURBOJPEG)
       install(FILES "$<TARGET_PDB_FILE:turbojpeg>"
         DESTINATION ${CMAKE_INSTALL_BINDIR} OPTIONAL)
     endif()
-  endif()
-  if(ENABLE_STATIC)
-    install(TARGETS turbojpeg-static ARCHIVE
+  endif(BUILD_SHARED_LIBS)
+  if(NOT BUILD_SHARED_LIBS)
+    install(TARGETS turbojpeg ARCHIVE
       DESTINATION ${CMAKE_INSTALL_LIBDIR})
-    if(NOT ENABLE_SHARED)
-      if(MSVC_IDE OR XCODE)
-        set(DIR "${CMAKE_CURRENT_BINARY_DIR}/\${CMAKE_INSTALL_CONFIG_NAME}")
-      else()
-        set(DIR ${CMAKE_CURRENT_BINARY_DIR})
-      endif()
-      install(PROGRAMS ${DIR}/tjbench-static${EXE}
-        DESTINATION ${CMAKE_INSTALL_BINDIR} RENAME tjbench${EXE})
-    endif()
-  endif()
-  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/turbojpeg.h
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-endif()
 
-if(ENABLE_STATIC)
-  install(TARGETS jpeg-static ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
-  if(NOT ENABLE_SHARED)
     if(MSVC_IDE OR XCODE)
       set(DIR "${CMAKE_CURRENT_BINARY_DIR}/\${CMAKE_INSTALL_CONFIG_NAME}")
     else()
       set(DIR ${CMAKE_CURRENT_BINARY_DIR})
     endif()
-    install(PROGRAMS ${DIR}/cjpeg-static${EXE}
-      DESTINATION ${CMAKE_INSTALL_BINDIR} RENAME cjpeg${EXE})
-    install(PROGRAMS ${DIR}/djpeg-static${EXE}
-      DESTINATION ${CMAKE_INSTALL_BINDIR} RENAME djpeg${EXE})
-    install(PROGRAMS ${DIR}/jpegtran-static${EXE}
-      DESTINATION ${CMAKE_INSTALL_BINDIR} RENAME jpegtran${EXE})
+    install(PROGRAMS ${DIR}/tjbench-static${EXE}
+      DESTINATION ${CMAKE_INSTALL_BINDIR} RENAME tjbench${EXE})
+  endif(NOT BUILD_SHARED_LIBS)
+  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/turbojpeg.h
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+endif(WITH_TURBOJPEG)
+
+if(BUILD_SHARED_LIBS)
+  install(TARGETS jpeg cjpeg djpeg jpegtran
+          ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+          LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+          RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+  if(NOT CMAKE_VERSION VERSION_LESS "3.1" AND MSVC AND
+          CMAKE_C_LINKER_SUPPORTS_PDB)
+    install(FILES "$<TARGET_PDB_FILE:jpeg>"
+            DESTINATION ${CMAKE_INSTALL_BINDIR} OPTIONAL)
   endif()
-endif()
+endif(BUILD_SHARED_LIBS)
+if(NOT BUILD_SHARED_LIBS)
+  install(TARGETS jpeg ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
+  if(MSVC_IDE OR XCODE)
+    set(DIR "${CMAKE_CURRENT_BINARY_DIR}/\${CMAKE_INSTALL_CONFIG_NAME}")
+  else()
+    set(DIR ${CMAKE_CURRENT_BINARY_DIR})
+  endif()
+  install(PROGRAMS ${DIR}/cjpeg-static${EXE}
+    DESTINATION ${CMAKE_INSTALL_BINDIR} RENAME cjpeg${EXE})
+  install(PROGRAMS ${DIR}/djpeg-static${EXE}
+    DESTINATION ${CMAKE_INSTALL_BINDIR} RENAME djpeg${EXE})
+  install(PROGRAMS ${DIR}/jpegtran-static${EXE}
+    DESTINATION ${CMAKE_INSTALL_BINDIR} RENAME jpegtran${EXE})
+endif(NOT BUILD_SHARED_LIBS)
 
 install(TARGETS rdjpgcom wrjpgcom RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
