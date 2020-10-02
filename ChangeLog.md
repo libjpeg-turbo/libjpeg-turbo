@@ -124,6 +124,10 @@ similar fix, but it did not cover all cases.
 quantization is enabled.  Two-pass color quantization never worked properly
 with `jpeg_skip_scanlines()`, and the issues could not readily be fixed.
 
+21. Fixed unexpected visual artifacts that occurred when using
+`jpeg_crop_scanline()` and interblock smoothing while decompressing only the DC
+scan of a progressive JPEG image.
+
 
 1.5.3
 =====
