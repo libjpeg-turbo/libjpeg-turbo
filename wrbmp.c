@@ -277,8 +277,8 @@ write_bmp_header(j_decompress_ptr cinfo, bmp_dest_ptr dest)
   /* we leave biCompression = 0, for none */
   /* we leave biSizeImage = 0; this is correct for uncompressed data */
   if (cinfo->density_unit == 2) { /* if have density in dots/cm, then */
-    PUT_4B(bmpinfoheader, 24, (long)(cinfo->X_density * 100)); /* XPels/M */
-    PUT_4B(bmpinfoheader, 28, (long)(cinfo->Y_density * 100)); /* XPels/M */
+    PUT_4B(bmpinfoheader, 24, (long)cinfo->X_density * 100); /* XPels/M */
+    PUT_4B(bmpinfoheader, 28, (long)cinfo->Y_density * 100); /* XPels/M */
   }
   PUT_2B(bmpinfoheader, 32, cmap_entries); /* biClrUsed */
   /* we leave biClrImportant = 0 */
