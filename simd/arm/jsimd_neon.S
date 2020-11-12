@@ -31,9 +31,11 @@
 #endif
 
 .text
+#if !defined(__APPLE__)
 .fpu neon
 .arch armv7a
 .object_arch armv4
+#endif
 .arm
 .syntax unified
 
