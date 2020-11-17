@@ -84,7 +84,8 @@ void jsimd_h2v1_downsample_neon(JDIMENSION image_width, int max_v_samp_factor,
   const uint8x16_t expand_mask =
     vld1q_u8(&jsimd_h2_downsample_consts[mask_offset]);
   /* Load bias pattern (alternating every pixel.) */
-  const uint16x8_t bias = { 0, 1, 0, 1, 0, 1, 0, 1 };
+  /* { 0, 1, 0, 1, 0, 1, 0, 1 } */
+  const uint16x8_t bias = vreinterpretq_u16_u32(vdupq_n_u32(0x00010000));
   unsigned i, outrow;
 
   for (outrow = 0; outrow < v_samp_factor; outrow++) {
@@ -137,7 +138,8 @@ void jsimd_h2v2_downsample_neon(JDIMENSION image_width, int max_v_samp_factor,
   const uint8x16_t expand_mask =
     vld1q_u8(&jsimd_h2_downsample_consts[mask_offset]);
   /* Load bias pattern (alternating every pixel.) */
-  const uint16x8_t bias = { 1, 2, 1, 2, 1, 2, 1, 2 };
+  /* { 1, 2, 1, 2, 1, 2, 1, 2 } */
+  const uint16x8_t bias = vreinterpretq_u16_u32(vdupq_n_u32(0x00020001));
   unsigned i, outrow;
 
   for (outrow = 0; outrow < v_samp_factor; outrow++) {

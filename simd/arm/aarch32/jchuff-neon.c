@@ -232,8 +232,9 @@ JOCTET *jsimd_huff_encode_one_block_neon(void *state, JOCTET *buffer,
   uint8x8_t row6_nbits_gt0 = vcgt_u8(row6_nbits, vdup_n_u8(0));
   uint8x8_t row7_nbits_gt0 = vcgt_u8(row7_nbits, vdup_n_u8(0));
 
+  /* { 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01 } */
   const uint8x8_t bitmap_mask =
-    { 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01 };
+    vreinterpret_u8_u64(vmov_n_u64(0x0102040810204080));
 
   row0_nbits_gt0 = vand_u8(row0_nbits_gt0, bitmap_mask);
   row1_nbits_gt0 = vand_u8(row1_nbits_gt0, bitmap_mask);

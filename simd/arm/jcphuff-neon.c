@@ -213,8 +213,9 @@ void jsimd_encode_mcu_AC_first_prepare_neon
   uint8x8_t row6_eq0 = vmovn_u16(vceqq_s16(row6, vdupq_n_s16(0)));
   uint8x8_t row7_eq0 = vmovn_u16(vceqq_s16(row7, vdupq_n_s16(0)));
 
+  /* { 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80 } */
   const uint8x8_t bitmap_mask =
-    { 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80 };
+    vreinterpret_u8_u64(vmov_n_u64(0x8040201008040201));
 
   row0_eq0 = vand_u8(row0_eq0, bitmap_mask);
   row1_eq0 = vand_u8(row1_eq0, bitmap_mask);
@@ -457,8 +458,9 @@ int jsimd_encode_mcu_AC_refine_prepare_neon
   uint8x8_t abs_row6_eq0 = vmovn_u16(vceqq_s16(abs_row6, vdupq_n_s16(0)));
   uint8x8_t abs_row7_eq0 = vmovn_u16(vceqq_s16(abs_row7, vdupq_n_s16(0)));
 
+  /* { 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80 } */
   const uint8x8_t bitmap_mask =
-    { 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80 };
+    vreinterpret_u8_u64(vmov_n_u64(0x8040201008040201));
 
   abs_row0_eq0 = vand_u8(abs_row0_eq0, bitmap_mask);
   abs_row1_eq0 = vand_u8(abs_row1_eq0, bitmap_mask);

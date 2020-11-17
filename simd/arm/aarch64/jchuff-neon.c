@@ -205,8 +205,9 @@ JOCTET *jsimd_huff_encode_one_block_neon(void *state, JOCTET *buffer,
   uint8x8_t abs_row7_gt0 = vmovn_u16(vcgtq_u16(vreinterpretq_u16_s16(abs_row7),
                                                vdupq_n_u16(0)));
 
+  /* { 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01 } */
   const uint8x8_t bitmap_mask =
-    { 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01 };
+    vreinterpret_u8_u64(vmov_n_u64(0x0102040810204080));
 
   abs_row0_gt0 = vand_u8(abs_row0_gt0, bitmap_mask);
   abs_row1_gt0 = vand_u8(abs_row1_gt0, bitmap_mask);
