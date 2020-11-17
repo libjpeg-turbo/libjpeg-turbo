@@ -241,8 +241,12 @@ JOCTET *jsimd_huff_encode_one_block_neon(void *state, JOCTET *buffer,
   /* Encode DC coefficient. */
 
   /* Find nbits required to specify sign and amplitude of coefficient. */
+#if defined(_MSC_VER) && !defined(__clang__)
+  unsigned int lz = BUILTIN_CLZ(vgetq_lane_s16(abs_row0, 0));
+#else
   unsigned int lz;
   __asm__("clz %w0, %w1" : "=r"(lz) : "r"(vgetq_lane_s16(abs_row0, 0)));
+#endif
   unsigned int nbits = 32 - lz;
   /* Emit Huffman-coded symbol and additional diff bits. */
   unsigned int diff = (unsigned int)(vgetq_lane_u16(row0_diff, 0) << lz) >> lz;
@@ -326,7 +330,7 @@ JOCTET *jsimd_huff_encode_one_block_neon(void *state, JOCTET *buffer,
     vst1q_u16(block_diff + 7 * DCTSIZE, row7_diff);
 
     while (bitmap != 0) {
-      r = __builtin_clzl(bitmap);
+      r = BUILTIN_CLZL(bitmap);
       i += r;
       bitmap <<= r;
       nbits = block_nbits[i];
@@ -365,10 +369,10 @@ JOCTET *jsimd_huff_encode_one_block_neon(void *state, JOCTET *buffer,
 
     /* Same as above but must mask diff bits and compute nbits on demand. */
     while (bitmap != 0) {
-      r = __builtin_clzl(bitmap);
+      r = BUILTIN_CLZL(bitmap);
       i += r;
       bitmap <<= r;
-      lz = __builtin_clz(block_abs[i]);
+      lz = BUILTIN_CLZ(block_abs[i]);
       nbits = 32 - lz;
       diff = (unsigned int)(block_diff[i] << lz) >> lz;
       while (r > 15) {

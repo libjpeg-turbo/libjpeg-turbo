@@ -31,6 +31,7 @@
 #include "../../../jsimddct.h"
 #include "../../jsimd.h"
 #include "../jchuff.h"
+#include "neon-compat.h"
 
 #include <limits.h>
 
@@ -278,7 +279,7 @@ JOCTET *jsimd_huff_encode_one_block_neon(void *state, JOCTET *buffer,
   const unsigned int size_0xf0 = actbl->ehufsi[0xf0];
 
   while (bitmap_1_32 != 0) {
-    r = __builtin_clz(bitmap_1_32);
+    r = BUILTIN_CLZ(bitmap_1_32);
     i += r;
     bitmap_1_32 <<= r;
     nbits = block_nbits[i];
@@ -299,7 +300,7 @@ JOCTET *jsimd_huff_encode_one_block_neon(void *state, JOCTET *buffer,
   i = 33;
 
   while (bitmap_33_63 != 0) {
-    unsigned int leading_zeros = __builtin_clz(bitmap_33_63);
+    unsigned int leading_zeros = BUILTIN_CLZ(bitmap_33_63);
     r += leading_zeros;
     i += leading_zeros;
     bitmap_33_63 <<= leading_zeros;

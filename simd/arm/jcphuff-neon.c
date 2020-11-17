@@ -27,6 +27,7 @@
 #include "../../jdct.h"
 #include "../../jsimddct.h"
 #include "../jsimd.h"
+#include "neon-compat.h"
 
 #include <arm_neon.h>
 
@@ -569,7 +570,7 @@ int jsimd_encode_mcu_AC_refine_prepare_neon
     /* EOB position is defined to be 0 if all coefficients != 1. */
     return 0;
   } else {
-    return 63 - __builtin_clzl(bitmap);
+    return 63 - BUILTIN_CLZL(bitmap);
   }
 #else
   /* Move bitmap to two 32-bit scalar registers. */
@@ -580,9 +581,9 @@ int jsimd_encode_mcu_AC_refine_prepare_neon
   if (bitmap0 == 0 && bitmap1 == 0) {
     return 0;
   } else if (bitmap1 != 0) {
-    return 63 - __builtin_clz(bitmap1);
+    return 63 - BUILTIN_CLZ(bitmap1);
   } else {
-    return 31 - __builtin_clz(bitmap0);
+    return 31 - BUILTIN_CLZ(bitmap0);
   }
 #endif
 }
