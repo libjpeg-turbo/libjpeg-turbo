@@ -76,7 +76,8 @@ typedef size_t bit_buf_type;
  * intrinsics implementation of the Arm Neon SIMD extensions, which is why we
  * retain the old Huffman encoder behavior when using the GAS implementation.
  */
-#if defined(WITH_SIMD) && !(defined(__arm__) || defined(__aarch64__))
+#if defined(WITH_SIMD) && !(defined(__arm__) || defined(__aarch64__) || \
+                            defined(_M_ARM) || defined(_M_ARM64))
 typedef unsigned long long simd_bit_buf_type;
 #else
 typedef bit_buf_type simd_bit_buf_type;
