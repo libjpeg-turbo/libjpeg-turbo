@@ -94,6 +94,7 @@ PB_CENTERJSAMP times 16 db  CENTERJSAMPLE
     GLOBAL_FUNCTION(jsimd_idct_ifast_sse2)
 
 EXTN(jsimd_idct_ifast_sse2):
+    _endbr32
     push        ebp
     mov         eax, esp                     ; eax = original ebp
     sub         esp, byte 4

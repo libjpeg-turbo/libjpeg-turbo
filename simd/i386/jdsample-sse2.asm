@@ -59,6 +59,7 @@ PW_EIGHT times 8 dw 8
     GLOBAL_FUNCTION(jsimd_h2v1_fancy_upsample_sse2)
 
 EXTN(jsimd_h2v1_fancy_upsample_sse2):
+    _endbr32
     push        ebp
     mov         ebp, esp
     pushpic     ebx
@@ -216,6 +217,7 @@ EXTN(jsimd_h2v1_fancy_upsample_sse2):
     GLOBAL_FUNCTION(jsimd_h2v2_fancy_upsample_sse2)
 
 EXTN(jsimd_h2v2_fancy_upsample_sse2):
+    _endbr32
     push        ebp
     mov         eax, esp                     ; eax = original ebp
     sub         esp, byte 4
@@ -538,6 +540,7 @@ EXTN(jsimd_h2v2_fancy_upsample_sse2):
     GLOBAL_FUNCTION(jsimd_h2v1_upsample_sse2)
 
 EXTN(jsimd_h2v1_upsample_sse2):
+    _endbr32
     push        ebp
     mov         ebp, esp
 ;   push        ebx                     ; unused
@@ -635,6 +638,7 @@ EXTN(jsimd_h2v1_upsample_sse2):
     GLOBAL_FUNCTION(jsimd_h2v2_upsample_sse2)
 
 EXTN(jsimd_h2v2_upsample_sse2):
+    _endbr32
     push        ebp
     mov         ebp, esp
     push        ebx

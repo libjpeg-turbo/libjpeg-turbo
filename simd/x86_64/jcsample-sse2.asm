@@ -42,6 +42,7 @@
     GLOBAL_FUNCTION(jsimd_h2v1_downsample_sse2)
 
 EXTN(jsimd_h2v1_downsample_sse2):
+    _endbr64
     push        rbp
     mov         rax, rsp
     mov         rbp, rsp
@@ -187,6 +188,7 @@ EXTN(jsimd_h2v1_downsample_sse2):
     GLOBAL_FUNCTION(jsimd_h2v2_downsample_sse2)
 
 EXTN(jsimd_h2v2_downsample_sse2):
+    _endbr64
     push        rbp
     mov         rax, rsp
     mov         rbp, rsp

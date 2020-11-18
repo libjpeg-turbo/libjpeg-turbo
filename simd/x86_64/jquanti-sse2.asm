@@ -36,6 +36,7 @@
     GLOBAL_FUNCTION(jsimd_convsamp_sse2)
 
 EXTN(jsimd_convsamp_sse2):
+    _endbr64
     push        rbp
     mov         rax, rsp
     mov         rbp, rsp
@@ -115,6 +116,7 @@ EXTN(jsimd_convsamp_sse2):
     GLOBAL_FUNCTION(jsimd_quantize_sse2)
 
 EXTN(jsimd_quantize_sse2):
+    _endbr64
     push        rbp
     mov         rax, rsp
     mov         rbp, rsp

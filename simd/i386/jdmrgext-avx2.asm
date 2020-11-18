@@ -43,6 +43,7 @@
     GLOBAL_FUNCTION(jsimd_h2v1_merged_upsample_avx2)
 
 EXTN(jsimd_h2v1_merged_upsample_avx2):
+    _endbr32
     push        ebp
     mov         eax, esp                     ; eax = original ebp
     sub         esp, byte 4
@@ -523,6 +524,7 @@ EXTN(jsimd_h2v1_merged_upsample_avx2):
     GLOBAL_FUNCTION(jsimd_h2v2_merged_upsample_avx2)
 
 EXTN(jsimd_h2v2_merged_upsample_avx2):
+    _endbr32
     push        ebp
     mov         ebp, esp
     push        ebx

@@ -37,6 +37,7 @@
     GLOBAL_FUNCTION(jsimd_convsamp_avx2)
 
 EXTN(jsimd_convsamp_avx2):
+    _endbr32
     push        ebp
     mov         ebp, esp
     push        ebx
@@ -130,6 +131,7 @@ EXTN(jsimd_convsamp_avx2):
     GLOBAL_FUNCTION(jsimd_quantize_avx2)
 
 EXTN(jsimd_quantize_avx2):
+    _endbr32
     push        ebp
     mov         ebp, esp
 ;   push        ebx                     ; unused

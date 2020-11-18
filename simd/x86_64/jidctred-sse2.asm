@@ -115,6 +115,7 @@ PB_CENTERJSAMP  times 16 db  CENTERJSAMPLE
     GLOBAL_FUNCTION(jsimd_idct_4x4_sse2)
 
 EXTN(jsimd_idct_4x4_sse2):
+    _endbr64
     push        rbp
     mov         rax, rsp                     ; rax = original rbp
     sub         rsp, byte 4
@@ -413,6 +414,7 @@ EXTN(jsimd_idct_4x4_sse2):
     GLOBAL_FUNCTION(jsimd_idct_2x2_sse2)
 
 EXTN(jsimd_idct_2x2_sse2):
+    _endbr64
     push        rbp
     mov         rax, rsp
     mov         rbp, rsp

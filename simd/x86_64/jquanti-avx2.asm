@@ -37,6 +37,7 @@
     GLOBAL_FUNCTION(jsimd_convsamp_avx2)
 
 EXTN(jsimd_convsamp_avx2):
+    _endbr64
     push        rbp
     mov         rax, rsp
     mov         rbp, rsp
@@ -115,6 +116,7 @@ EXTN(jsimd_convsamp_avx2):
     GLOBAL_FUNCTION(jsimd_quantize_avx2)
 
 EXTN(jsimd_quantize_avx2):
+    _endbr64
     push        rbp
     mov         rax, rsp
     mov         rbp, rsp

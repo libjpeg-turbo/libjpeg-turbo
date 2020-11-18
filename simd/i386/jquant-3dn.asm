@@ -36,6 +36,7 @@
     GLOBAL_FUNCTION(jsimd_convsamp_float_3dnow)
 
 EXTN(jsimd_convsamp_float_3dnow):
+    _endbr32
     push        ebp
     mov         ebp, esp
     push        ebx
@@ -138,6 +139,7 @@ EXTN(jsimd_convsamp_float_3dnow):
     GLOBAL_FUNCTION(jsimd_quantize_float_3dnow)
 
 EXTN(jsimd_quantize_float_3dnow):
+    _endbr32
     push        ebp
     mov         ebp, esp
 ;   push        ebx                     ; unused
