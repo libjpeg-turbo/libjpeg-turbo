@@ -436,6 +436,7 @@ decompress_smooth_data(j_decompress_ptr cinfo, JSAMPIMAGE output_buf)
   JDIMENSION output_col;
   jpeg_component_info *compptr;
   inverse_DCT_method_ptr inverse_DCT;
+  boolean change_dc;
   JCOEF *workspace;
   int *coef_bits;
   JQUANT_TBL *quanttbl;
@@ -464,7 +465,6 @@ decompress_smooth_data(j_decompress_ptr cinfo, JSAMPIMAGE output_buf)
     if ((*cinfo->inputctl->consume_input) (cinfo) == JPEG_SUSPENDED)
       return JPEG_SUSPENDED;
   }
-
   /* OK, output from the virtual arrays. */
   for (ci = 0, compptr = cinfo->comp_info; ci < cinfo->num_components;
        ci++, compptr++) {
@@ -512,6 +512,12 @@ decompress_smooth_data(j_decompress_ptr cinfo, JSAMPIMAGE output_buf)
         coef->coef_bits_latch + ((ci + cinfo->num_components) * SAVED_COEFS);
     else
       coef_bits = coef->coef_bits_latch + (ci * SAVED_COEFS);
+
+    /* We only do DC-interpolation as long as no AC data is available. */
+    change_dc = !(coef_bits[1]!=-1 || coef_bits[2] !=-1 || coef_bits[3] != -1 ||
+                coef_bits[4]!=-1 || coef_bits[5] !=-1 || coef_bits[6] != -1 ||
+                coef_bits[7]!=-1 || coef_bits[8] !=-1 || coef_bits[9] != -1);
+
     quanttbl = compptr->quant_table;
     Q00 = quanttbl->quantval[0];
     Q01 = quanttbl->quantval[Q01_POS];
@@ -584,18 +590,20 @@ decompress_smooth_data(j_decompress_ptr cinfo, JSAMPIMAGE output_buf)
           DC20 = (int)next_block_row[2][0];
           DC25 = (int)next_next_block_row[2][0];
         }
-        /* Compute coefficient estimates with a Gaussian-like kernel,
+        /* Compute coefficient estimates with some smoothing. Here the
+         * coefficients come from smoothing with Gaussian like kernel,
          * keeping the averages of the DC values.
          * An estimate is applied only if coefficient is still zero,
          * and is not known to be fully accurate.
          */
         /* AC01 */
         if ((Al = coef_bits[1]) != 0 && workspace[1] == 0) {
-          num = Q00 *
+          num = Q00 * (change_dc ?
                 (-DC01 - DC02 + DC04 + DC05 - 3 * DC06 + 13 * DC07 -
                  13 * DC09 + 3 * DC10 - 3 * DC11 + 38 * DC12 - 38 * DC14 +
                  3 * DC15 - 3 * DC16 + 13 * DC17 - 13 * DC19 + 3 * DC20 -
-                 DC21 - DC22 + DC24 + DC25);
+                 DC21 - DC22 + DC24 + DC25) :
+                 (-7*DC11 + 50*DC12 - 50*DC14 + 7*DC15));
           if (num >= 0) {
             pred = (int)(((Q01 << 7) + num) / (Q01 << 8));
             if (Al > 0 && pred >= (1 << Al))
@@ -610,10 +618,12 @@ decompress_smooth_data(j_decompress_ptr cinfo, JSAMPIMAGE output_buf)
         }
         /* AC10 */
         if ((Al = coef_bits[2]) != 0 && workspace[8] == 0) {
-          num = Q00 * (-DC01 - 3 * DC02 - 3 * DC03 - 3 * DC04 - DC05 - DC06 +
-                       13 * DC07 + 38 * DC08 + 13 * DC09 - DC10 + DC16 -
-                       13 * DC17 - 38 * DC18 - 13 * DC19 + DC20 + DC21 +
-                       3 * DC22 + 3 * DC23 + 3 * DC24 + DC25);
+          num = Q00 * (change_dc ?
+                (-DC01 - 3 * DC02 - 3 * DC03 - 3 * DC04 - DC05 - DC06 +
+                  13 * DC07 + 38 * DC08 + 13 * DC09 - DC10 + DC16 -
+                  13 * DC17 - 38 * DC18 - 13 * DC19 + DC20 + DC21 +
+                  3 * DC22 + 3 * DC23 + 3 * DC24 + DC25) :
+                 (-7*DC03 + 50*DC08 - 50*DC18 + 7*DC23));
           if (num >= 0) {
             pred = (int)(((Q10 << 7) + num) / (Q10 << 8));
             if (Al > 0 && pred >= (1 << Al))
@@ -628,9 +638,10 @@ decompress_smooth_data(j_decompress_ptr cinfo, JSAMPIMAGE output_buf)
         }
         /* AC20 */
         if ((Al = coef_bits[3]) != 0 && workspace[16] == 0) {
-          num = Q00 *
+          num = Q00 * (change_dc ?
                 (DC03 + 2 * DC07 + 7 * DC08 + 2 * DC09 - 5 * DC12 - 14 * DC13 -
-                 5 * DC14 + 2 * DC17 + 7 * DC18 + 2 * DC19 + DC23);
+                 5 * DC14 + 2 * DC17 + 7 * DC18 + 2 * DC19 + DC23) :
+                 (-DC03 + 13*DC08 - 24*DC13 + 13*DC18 - DC23));
           if (num >= 0) {
             pred = (int)(((Q20 << 7) + num) / (Q20 << 8));
             if (Al > 0 && pred >= (1 << Al))
@@ -645,8 +656,11 @@ decompress_smooth_data(j_decompress_ptr cinfo, JSAMPIMAGE output_buf)
         }
         /* AC11 */
         if ((Al = coef_bits[4]) != 0 && workspace[9] == 0) {
-          num = Q00 * (-DC01 + DC05 + 9 * DC07 - 9 * DC09 - 9 * DC17 +
-                       9 * DC19 + DC21 - DC25);
+          num = Q00 * (change_dc ?
+                (-DC01 + DC05 + 9 * DC07 - 9 * DC09 - 9 * DC17 +
+                 9 * DC19 + DC21 - DC25) :
+                 (DC10 + DC16 - 10*DC17 + 10*DC19 - DC02 - DC20 + DC22
+                        - DC24 + DC04 - DC06 + 10*DC07 - 10*DC09));
           if (num >= 0) {
             pred = (int)(((Q11 << 7) + num) / (Q11 << 8));
             if (Al > 0 && pred >= (1 << Al))
@@ -661,9 +675,10 @@ decompress_smooth_data(j_decompress_ptr cinfo, JSAMPIMAGE output_buf)
         }
         /* AC02 */
         if ((Al = coef_bits[5]) != 0 && workspace[2] == 0) {
-          num = Q00 *
+          num = Q00 * (change_dc ?
                 (2 * DC07 - 5 * DC08 + 2 * DC09 + DC11 + 7 * DC12 - 14 * DC13 +
-                 7 * DC14 + DC15 + 2 * DC17 - 5 * DC18 + 2 * DC19);
+                 7 * DC14 + DC15 + 2 * DC17 - 5 * DC18 + 2 * DC19) :
+                 (-DC11 + 13*DC12 - 24*DC13 + 13*DC14 - DC15));
           if (num >= 0) {
             pred = (int)(((Q02 << 7) + num) / (Q02 << 8));
             if (Al > 0 && pred >= (1 << Al))
@@ -676,6 +691,7 @@ decompress_smooth_data(j_decompress_ptr cinfo, JSAMPIMAGE output_buf)
           }
           workspace[2] = (JCOEF)pred;
         }
+        if (change_dc) {
         /* AC03 */
         if ((Al = coef_bits[6]) != 0 && workspace[3] == 0) {
           num = Q00 * (DC07 - DC09 + 2 * DC12 - 2 * DC14 + DC17 - DC19);
@@ -739,19 +755,19 @@ decompress_smooth_data(j_decompress_ptr cinfo, JSAMPIMAGE output_buf)
         /* coef_bits[0] is non-negative.  Otherwise this function would not be
          * called.
          */
-        num = Q00 * (-2 * DC01 - 6 * DC02 - 8 * DC03 - 6 * DC04 - 2 * DC05 -
-                     6 * DC06 + 6 * DC07 + 42 * DC08 + 6 * DC09 - 6 * DC10 -
-                     8 * DC11 + 42 * DC12 + 152 * DC13 + 42 * DC14 - 8 * DC15 -
-                     6 * DC16 + 6 * DC17 + 42 * DC18 + 6 * DC19 - 6 * DC20 -
-                     2 * DC21 - 6 * DC22 - 8 * DC23 - 6 * DC24 - 2 * DC25);
-        if (num >= 0) {
-          pred = (int)(((Q00 << 7) + num) / (Q00 << 8));
-        } else {
-          pred = (int)(((Q00 << 7) - num) / (Q00 << 8));
-          pred = -pred;
-        }
-        workspace[0] = (JCOEF)pred;
-
+          num = Q00 * (-2 * DC01 - 6 * DC02 - 8 * DC03 - 6 * DC04 - 2 * DC05 -
+                       6 * DC06 + 6 * DC07 + 42 * DC08 + 6 * DC09 - 6 * DC10 -
+                       8 * DC11 + 42 * DC12 + 152 * DC13 + 42 * DC14 - 8 * DC15 -
+                       6 * DC16 + 6 * DC17 + 42 * DC18 + 6 * DC19 - 6 * DC20 -
+                       2 * DC21 - 6 * DC22 - 8 * DC23 - 6 * DC24 - 2 * DC25);
+          if (num >= 0) {
+            pred = (int)(((Q00 << 7) + num) / (Q00 << 8));
+          } else {
+            pred = (int)(((Q00 << 7) - num) / (Q00 << 8));
+            pred = -pred;
+          }
+            workspace[0] = (JCOEF)pred;
+          }
         /* OK, do the IDCT */
         (*inverse_DCT) (cinfo, compptr, (JCOEFPTR)workspace, output_ptr,
                         output_col);
