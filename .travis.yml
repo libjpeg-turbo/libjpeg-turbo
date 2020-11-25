@@ -138,18 +138,5 @@ deploy:
     upload-dir: $TRAVIS_BRANCH/$TRAVIS_OS_NAME
     on:
       repo: libjpeg-turbo/libjpeg-turbo
-      branch: master
-      condition: -n "$BUILD_OFFICIAL"
-  - provider: s3
-    bucket: libjpeg-turbo-pr
-    access_key_id:
-      secure: bmFEt4H90/oR/LiN9XI+G26Pd6hiyrTw3+Vg3lS4ynwAYk33weApaVM8CyzQTgIhGSPzFStqVm9fTrb3RmrYP/PnNS+/surOeWLkH2DMRxvc0qmetBuNx1+vAN7FUkY8MO/u5uE9WXHAdp4e64pXcLXEbKmh+wgDm72b35WmMxErtHsGbpqy+j47rQkY4BJGi7XQzjjafaamfm4PzitsjkYYsgX8KLI16jyJEIirvyDHCPTn9wKR/jSjelDl+xTlgZGuCqmLCBW8f6JgycIspWjcYfO4WpWvkbnnI2sl3rCMPvOYc4wHe8SwzG0l4tM1PblZZDRcU7vjE15PmNf1Xfq9Vx3RpgBJv+UBNL/Vn0rKdpUCeEcfC12hxrske8DWpV6waBiDivjQJreE+YRXqa5YBhV/EdkoKYCqafnJvRASlOko9evje8F9KXTNsIGTT1HPmU9QM9WoJwLs/Xa3t09EmA2IjhcuAvvUmwCTuBBQVAlDjExiTT3Zhc9IYZDD92JgpAYLgridtzR87ElOxKhTkR4PowdI6UiLYArPjMFTjoz5Rivb9qNpbLaQC8HCYgLWxpWtUTzlW/9rM8izHpF8ySFHjO6E2aA9OJFc0tcbEGwAs2jLGD01OduU+DbBfsIkW0EgfXCPbD3FVgHsn3tkuzgO/bg20SM7uuCEYKQ=
-    secret_access_key:
-      secure: mrkOpEtqd2dEmi/qNJyX9vkME+6xgVBnXaRETKF7jT+flcQCQ0ayQkRkMV7lzGqq44XFg+n6Cpfn6oW0gH9RNdcC8YQvFP+kgzPx6nw6V/M31Vz6ySapJf59HBzVevf0NJkr0/1JoWsp1iq4IoN10WPzsCXZB55Io3Cf7DgpR+yiyBlWOctDfNdjJ97Juw3ENE80MHDf0fVqdUOIknQka1p68yAGkjar9kc2Oe7o94RzzmoqEn8tuFumiBQjIcuVRALsKqz+eIxBNgkL3BF9shVyRjOWLAeBhMPVFxZs5Dgd4ECbvU0i33gfmje3d6qqcw78N2lZaLefoVvWol3pOzVO133ewOSY9/lmpqEiRUU2ohEe8T4aSoS7posBW42itUTO4Y5w+eVOnHsm4sRQaI+/AXWTe7GPel+P8Qbe8Ya10A5gnpoag7o3raRDcHx+/qaZw1Af/u4XiAOYz3be3U90Qc+YMc/kS5i8BH0GXBbSfaWQ00CwRFlZQ3n1xUqmjC2CmjZTki3W/p7mEt0DjhcH9ZIXscK603sCC+mF6pEd9019k5fG/8fr2Y4Ptai9kd3BxZJCX9/jSoMfWOBbgkA5bRgHU0xrAj+p49qD6Ej9Xr8GE3+uebz3sEuhSFRnCKwKoOHOemfgevfO2y/jQXP677WPf3xQX7bVDfTFSHU=
-    acl: public_read
-    local-dir: $HOME/src/ljt.nightly/latest/files
-    upload-dir: $TRAVIS_BRANCH/$TRAVIS_OS_NAME
-    on:
-      repo: libjpeg-turbo/libjpeg-turbo
-      branch: dev
+      branch: 2.0.x
       condition: -n "$BUILD_OFFICIAL"
