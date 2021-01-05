@@ -331,7 +331,7 @@ JOCTET *jsimd_huff_encode_one_block_neon(void *state, JOCTET *buffer,
     vst1q_u16(block_diff + 7 * DCTSIZE, row7_diff);
 
     while (bitmap != 0) {
-      r = BUILTIN_CLZL(bitmap);
+      r = BUILTIN_CLZLL(bitmap);
       i += r;
       bitmap <<= r;
       nbits = block_nbits[i];
@@ -370,7 +370,7 @@ JOCTET *jsimd_huff_encode_one_block_neon(void *state, JOCTET *buffer,
 
     /* Same as above but must mask diff bits and compute nbits on demand. */
     while (bitmap != 0) {
-      r = BUILTIN_CLZL(bitmap);
+      r = BUILTIN_CLZLL(bitmap);
       i += r;
       bitmap <<= r;
       lz = BUILTIN_CLZ(block_abs[i]);

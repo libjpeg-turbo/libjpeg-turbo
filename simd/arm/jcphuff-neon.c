@@ -572,7 +572,7 @@ int jsimd_encode_mcu_AC_refine_prepare_neon
     /* EOB position is defined to be 0 if all coefficients != 1. */
     return 0;
   } else {
-    return 63 - BUILTIN_CLZL(bitmap);
+    return 63 - BUILTIN_CLZLL(bitmap);
   }
 #else
   /* Move bitmap to two 32-bit scalar registers. */
