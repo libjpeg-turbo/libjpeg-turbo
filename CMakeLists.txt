@@ -1493,8 +1493,39 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/jconfig.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
 include(cmakescripts/BuildPackages.cmake)
+include(CMakePackageConfigHelpers)
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmakescripts/cmake_uninstall.cmake.in"
   "cmake_uninstall.cmake" IMMEDIATE @ONLY)
 
 add_custom_target(uninstall COMMAND ${CMAKE_COMMAND} -P cmake_uninstall.cmake)
+
+foreach(T turbojpeg turbojpeg-static jpeg jpeg-static simd)
+    if(TARGET ${T})
+        list(APPEND TARGETS ${T})
+    endif()
+endforeach()
+list(GET TARGETS 0 FIRST_TARGET)
+
+install(TARGETS ${TARGETS}
+  EXPORT LibJpegTurboTargets)
+
+# Makes the project importable from the build directory
+export(EXPORT LibJpegTurboTargets
+  FILE "${CMAKE_CURRENT_BINARY_DIR}/LibJpegTurboTargets.cmake")
+
+configure_package_config_file(cmakescripts/LibJpegTurboConfig.cmake.in
+  "${CMAKE_CURRENT_BINARY_DIR}/LibJpegTurboConfig.cmake"
+  INSTALL_DESTINATION lib/cmake/)
+
+write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/LibJpegTurboConfigVersion.cmake
+  VERSION ${VERSION}
+  COMPATIBILITY AnyNewerVersion)
+install(FILES
+  ${CMAKE_CURRENT_BINARY_DIR}/LibJpegTurboConfig.cmake
+  ${CMAKE_CURRENT_BINARY_DIR}/LibJpegTurboConfigVersion.cmake
+  DESTINATION lib/cmake/)
+install(EXPORT LibJpegTurboTargets
+  FILE LibJpegTurboTargets.cmake
+  NAMESPACE turbojpeg::
+  DESTINATION lib/cmake/)
