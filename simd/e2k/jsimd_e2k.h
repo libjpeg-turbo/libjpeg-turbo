@@ -49,23 +49,23 @@
   rgb_index2 = 0x0e0d0c0a09080605ll;
 
 #define CONV_RGBX_RGB { \
-  union { __m128i v; uint64_t d[2]; } a = { rgb0 }, \
-    b = { rgb1 }, c = { rgb2 }, d = { rgb3 }; \
-  a.d[0] = __builtin_e2k_pshufb(a.d[1], a.d[0], rgb_index0); \
-  a.d[1] = __builtin_e2k_pshufb(b.d[0], a.d[1], rgb_index1); \
-  b.d[0] = __builtin_e2k_pshufb(b.d[1], b.d[0], rgb_index2); \
-  b.d[1] = __builtin_e2k_pshufb(c.d[1], c.d[0], rgb_index0); \
-  c.d[0] = __builtin_e2k_pshufb(d.d[0], c.d[1], rgb_index1); \
-  c.d[1] = __builtin_e2k_pshufb(d.d[1], d.d[0], rgb_index2); \
-  rgb0 = a.v; rgb1 = b.v; rgb2 = c.v; \
+  __v2di a = (__v2di)rgb0, b = (__v2di)rgb1, \
+    c = (__v2di)rgb2, d = (__v2di)rgb3; \
+  a[0] = __builtin_e2k_pshufb(a[1], a[0], rgb_index0); \
+  a[1] = __builtin_e2k_pshufb(b[0], a[1], rgb_index1); \
+  b[0] = __builtin_e2k_pshufb(b[1], b[0], rgb_index2); \
+  b[1] = __builtin_e2k_pshufb(c[1], c[0], rgb_index0); \
+  c[0] = __builtin_e2k_pshufb(d[0], c[1], rgb_index1); \
+  c[1] = __builtin_e2k_pshufb(d[1], d[0], rgb_index2); \
+  rgb0 = (__m128i)a; rgb1 = (__m128i)b; rgb2 = (__m128i)c; \
 }
 
 static inline __m128i pack_high16(__m128i a, __m128i b) {
-  union { __m128i v; uint64_t d[2]; } l = { a }, h = { b }, x;
+  __v2di l = (__v2di)a, h = (__v2di)b, x;
   uint64_t index = 0x0f0e0b0a07060302ll;
-  x.d[0] = __builtin_e2k_pshufb(l.d[1], l.d[0], index);
-  x.d[1] = __builtin_e2k_pshufb(h.d[1], h.d[0], index);
-  return x.v;
+  x[0] = __builtin_e2k_pshufb(l[1], l[0], index);
+  x[1] = __builtin_e2k_pshufb(h[1], h[0], index);
+  return (__m128i)x;
 }
 #else
 #define CONV_RGBX_RGB_INIT __m128i \
@@ -89,15 +89,15 @@ static inline __m128i pack_high16(__m128i a, __m128i b) {
 #endif
 
 static inline __m128i vec_alignr8(__m128i a, __m128i b) {
-  union { __m128i v; uint64_t d[2]; } l = { b }, h = { a }, x;
-  x.d[0] = l.d[1];
-  x.d[1] = h.d[0];
-  return x.v;
+  __v2di l = (__v2di)b, h = (__v2di)a, x;
+  x[0] = l[1];
+  x[1] = h[0];
+  return (__m128i)x;
 }
 
 static inline uint64_t vec_isnonzero(__m128i a) {
-  union { __m128i v; uint64_t d[2]; } x = { a };
-  return x.d[0] | x.d[1];
+  __v2di x = (__v2di)a;
+  return x[0] | x[1];
 }
 
 #define PACK_HIGH16(a, b) pack_high16(a, b)
@@ -123,28 +123,19 @@ static inline uint64_t vec_isnonzero(__m128i a) {
 #define PACK_HIGH16(a, b) \
   _mm_packs_epi32(_mm_srai_epi32(a, 16), _mm_srai_epi32(b, 16))
 
-#define VEC_ISZERO(a) (_mm_movemask_epi8(_mm_cmpeq_epi8(a, _mm_setzero_si128())) == 0xffff)
+#define VEC_ISZERO(a) (_mm_movemask_epi8( \
+    _mm_cmpeq_epi8(a, _mm_setzero_si128())) == 0xffff)
 #endif
 
 #define TRANSPOSE_FLOAT(a, b, c, d, e, f, g, h) \
-  tmp0 = _mm_unpacklo_ps(a, c); \
-  tmp1 = _mm_unpackhi_ps(a, c); \
-  tmp2 = _mm_unpacklo_ps(b, d); \
-  tmp3 = _mm_unpackhi_ps(b, d); \
-  e = _mm_unpacklo_ps(tmp0, tmp2); \
-  f = _mm_unpackhi_ps(tmp0, tmp2); \
-  g = _mm_unpacklo_ps(tmp1, tmp3); \
-  h = _mm_unpackhi_ps(tmp1, tmp3);
-
-#define TRANSPOSE16(a, b) \
-  b##0 = _mm_unpacklo_epi16(a##0, a##4); \
-  b##1 = _mm_unpackhi_epi16(a##0, a##4); \
-  b##2 = _mm_unpacklo_epi16(a##1, a##5); \
-  b##3 = _mm_unpackhi_epi16(a##1, a##5); \
-  b##4 = _mm_unpacklo_epi16(a##2, a##6); \
-  b##5 = _mm_unpackhi_epi16(a##2, a##6); \
-  b##6 = _mm_unpacklo_epi16(a##3, a##7); \
-  b##7 = _mm_unpackhi_epi16(a##3, a##7);
+  tmp0 = _mm_unpacklo_ps(a, b); \
+  tmp1 = _mm_unpackhi_ps(a, b); \
+  tmp2 = _mm_unpacklo_ps(c, d); \
+  tmp3 = _mm_unpackhi_ps(c, d); \
+  e = _mm_castpd_ps(_mm_unpacklo_pd(_mm_castps_pd(tmp0), _mm_castps_pd(tmp2))); \
+  f = _mm_castpd_ps(_mm_unpackhi_pd(_mm_castps_pd(tmp0), _mm_castps_pd(tmp2))); \
+  g = _mm_castpd_ps(_mm_unpacklo_pd(_mm_castps_pd(tmp1), _mm_castps_pd(tmp3))); \
+  h = _mm_castpd_ps(_mm_unpackhi_pd(_mm_castps_pd(tmp1), _mm_castps_pd(tmp3)));
 
 #define TRANSPOSE8(a, b) \
   b##0 = _mm_unpacklo_epi8(a##0, a##2); \
@@ -152,8 +143,26 @@ static inline uint64_t vec_isnonzero(__m128i a) {
   b##2 = _mm_unpacklo_epi8(a##1, a##3); \
   b##3 = _mm_unpackhi_epi8(a##1, a##3);
 
+#define TRANSPOSE16(a, b) \
+  b##0 = _mm_unpacklo_epi16(a##0, a##2); \
+  b##1 = _mm_unpackhi_epi16(a##0, a##2); \
+  b##2 = _mm_unpacklo_epi16(a##1, a##3); \
+  b##3 = _mm_unpackhi_epi16(a##1, a##3); \
+  b##4 = _mm_unpacklo_epi16(a##4, a##6); \
+  b##5 = _mm_unpackhi_epi16(a##4, a##6); \
+  b##6 = _mm_unpacklo_epi16(a##5, a##7); \
+  b##7 = _mm_unpackhi_epi16(a##5, a##7);
+
 #define TRANSPOSE(a, b) \
-  TRANSPOSE16(a, b) TRANSPOSE16(b, a) TRANSPOSE16(a, b)
+  TRANSPOSE16(a, b) TRANSPOSE16(b, a) \
+  b##0 = _mm_unpacklo_epi64(a##0, a##4); \
+  b##1 = _mm_unpackhi_epi64(a##0, a##4); \
+  b##2 = _mm_unpacklo_epi64(a##1, a##5); \
+  b##3 = _mm_unpackhi_epi64(a##1, a##5); \
+  b##4 = _mm_unpacklo_epi64(a##2, a##6); \
+  b##5 = _mm_unpackhi_epi64(a##2, a##6); \
+  b##6 = _mm_unpacklo_epi64(a##3, a##7); \
+  b##7 = _mm_unpackhi_epi64(a##3, a##7);
 
 #define IDCT_SAVE() { \
   __m128i pb_cj = _mm_set1_epi8((int8_t)CENTERJSAMPLE); \
