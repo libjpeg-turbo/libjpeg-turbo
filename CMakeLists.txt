@@ -64,6 +64,9 @@ elseif(CMAKE_SYSTEM_PROCESSOR_LC STREQUAL "aarch64" OR
 elseif(CMAKE_SYSTEM_PROCESSOR_LC MATCHES "ppc*" OR
   CMAKE_SYSTEM_PROCESSOR_LC MATCHES "powerpc*")
   set(CPU_TYPE powerpc)
+elseif(CMAKE_SYSTEM_PROCESSOR_LC STREQUAL "e2k" OR
+  CMAKE_SYSTEM_PROCESSOR_LC STREQUAL "elbrus")
+  set(CPU_TYPE e2k)
 else()
   set(CPU_TYPE ${CMAKE_SYSTEM_PROCESSOR_LC})
 endif()
@@ -548,6 +551,9 @@ endif()
 
 if(WITH_SIMD)
   add_subdirectory(simd)
+  if(HAVE_EML)
+    link_libraries(-leml)
+  endif()
 elseif(NOT WITH_12BIT)
   message(STATUS "SIMD extensions: None (WITH_SIMD = ${WITH_SIMD})")
 endif()
@@ -908,6 +914,8 @@ else()
   if((CPU_TYPE STREQUAL "powerpc" OR CPU_TYPE STREQUAL "arm64") AND
     NOT CMAKE_C_COMPILER_ID STREQUAL "Clang")
     set(DEFAULT_FLOATTEST fp-contract)
+  elseif(WITH_SIMD AND CPU_TYPE STREQUAL "e2k")
+    set(DEFAULT_FLOATTEST sse)
   else()
     set(DEFAULT_FLOATTEST no-fp-contract)
   endif()

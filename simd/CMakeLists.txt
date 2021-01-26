@@ -373,6 +373,53 @@ if(CMAKE_POSITION_INDEPENDENT_CODE OR ENABLE_SHARED)
   set_target_properties(simd PROPERTIES POSITION_INDEPENDENT_CODE 1)
 endif()
 
+###############################################################################
+# Elbrus (Intrinsics)
+###############################################################################
+
+elseif(CPU_TYPE STREQUAL "e2k")
+
+option(WITH_EML "Use Elbrus Math Library" TRUE)
+boolean_number(WITH_EML)
+
+if(WITH_EML)
+  set(CMAKE_REQUIRED_INCLUDES /usr/include/eml)
+  set(CMAKE_REQUIRED_LINK_OPTIONS -leml)
+  check_c_source_compiles("
+    #include <eml.h>
+    int main(void) {
+      eml_8u rgb[12] = { 0 }, y[4], cb[4], cr[4];
+      eml_Video_ColorRGB2YCC444_8U(rgb, y, cb, cr, 4);
+      eml_Video_ColorYCC2RGB444_8U(y, cb, cr, rgb, 4);
+      return 0;
+    }" HAVE_EML)
+  unset(CMAKE_REQUIRED_INCLUDES)
+  unset(CMAKE_REQUIRED_LINK_OPTIONS)
+endif()
+
+set(SIMD_SOURCES e2k/jquanti-e2k.c e2k/jquantf-e2k.c
+  e2k/jccolor-e2k.c e2k/jcgray-e2k.c e2k/jcsample-e2k.c
+  e2k/jdcolor-e2k.c e2k/jdmerge-e2k.c e2k/jdsample-e2k.c
+  e2k/jfdctint-e2k.c e2k/jfdctfst-e2k.c e2k/jfdctflt-e2k.c
+  e2k/jidctint-e2k.c e2k/jidctfst-e2k.c e2k/jidctflt-e2k.c)
+
+set_source_files_properties(${SIMD_SOURCES} PROPERTIES
+  COMPILE_FLAGS -msse4.1)
+
+set(SIMD_SOURCES ${SIMD_SOURCES} e2k/jsimd.c)
+
+if(HAVE_EML)
+  set_source_files_properties(${SIMD_SOURCES} PROPERTIES
+    COMPILE_DEFINITIONS HAVE_EML)
+  set_source_files_properties(${SIMD_SOURCES} PROPERTIES
+    INCLUDE_DIRECTORIES /usr/include/eml)
+endif()
+
+add_library(simd OBJECT ${SIMD_SOURCES})
+
+if(CMAKE_POSITION_INDEPENDENT_CODE OR ENABLE_SHARED)
+  set_target_properties(simd PROPERTIES POSITION_INDEPENDENT_CODE 1)
+endif()
 
 ###############################################################################
 # None
