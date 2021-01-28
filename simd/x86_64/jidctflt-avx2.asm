@@ -288,20 +288,20 @@ EXTN(jsimd_idct_float_avx2):
     vextracti128 xmm3, ymm2, 1
     vextracti128 xmm4, ymm5, 1
 
-    mov         rdx, JSAMPROW [rdi+0*SIZEOF_JSAMPROW]
-    mov         rcx, JSAMPROW [rdi+1*SIZEOF_JSAMPROW]
+    mov         rdxp, JSAMPROW [rdi+0*SIZEOF_JSAMPROW]
+    mov         rcxp, JSAMPROW [rdi+1*SIZEOF_JSAMPROW]
     movq        XMM_MMWORD [rdx+rax*SIZEOF_JSAMPLE], xmm8
     movq        XMM_MMWORD [rcx+rax*SIZEOF_JSAMPLE], xmm2
-    mov         rdx, JSAMPROW [rdi+2*SIZEOF_JSAMPROW]
-    mov         rcx, JSAMPROW [rdi+3*SIZEOF_JSAMPROW]
+    mov         rdxp, JSAMPROW [rdi+2*SIZEOF_JSAMPROW]
+    mov         rcxp, JSAMPROW [rdi+3*SIZEOF_JSAMPROW]
     movq        XMM_MMWORD [rdx+rax*SIZEOF_JSAMPLE], xmm1
     movq        XMM_MMWORD [rcx+rax*SIZEOF_JSAMPLE], xmm5
-    mov         rdx, JSAMPROW [rdi+4*SIZEOF_JSAMPROW]
-    mov         rcx, JSAMPROW [rdi+5*SIZEOF_JSAMPROW]
+    mov         rdxp, JSAMPROW [rdi+4*SIZEOF_JSAMPROW]
+    mov         rcxp, JSAMPROW [rdi+5*SIZEOF_JSAMPROW]
     movq        XMM_MMWORD [rdx+rax*SIZEOF_JSAMPLE], xmm9
     movq        XMM_MMWORD [rcx+rax*SIZEOF_JSAMPLE], xmm3
-    mov         rdx, JSAMPROW [rdi+6*SIZEOF_JSAMPROW]
-    mov         rcx, JSAMPROW [rdi+7*SIZEOF_JSAMPROW]
+    mov         rdxp, JSAMPROW [rdi+6*SIZEOF_JSAMPROW]
+    mov         rcxp, JSAMPROW [rdi+7*SIZEOF_JSAMPROW]
     movq        XMM_MMWORD [rdx+rax*SIZEOF_JSAMPLE], xmm0
     movq        XMM_MMWORD [rcx+rax*SIZEOF_JSAMPLE], xmm4
 
