@@ -1,3 +1,16 @@
+2.0.7
+=====
+
+### Significant changes relative to 2.0.6:
+
+1. Fixed a regression introduced by 2.0 beta1[15] whereby attempting to
+generate a progressive JPEG image on an SSE2-capable CPU using a scan script
+containing one or more scans with lengths divisible by 32 and non-zero
+successive approximation low bit positions would, under certain circumstances,
+result in an error ("Missing Huffman code table entry") and an invalid JPEG
+image.
+
+
 2.0.6
 =====
 
