@@ -4,7 +4,7 @@
  * This file was part of the Independent JPEG Group's software:
  * Copyright (C) 1991-1997, Thomas G. Lane.
  * libjpeg-turbo Modifications:
- * Copyright (C) 2009-2011, 2014-2016, 2018-2019, D. R. Commander.
+ * Copyright (C) 2009-2011, 2014-2016, 2018-2019, 2021, D. R. Commander.
  * Copyright (C) 2015, Matthieu Darbois.
  * For conditions of distribution and use, see the accompanying README.ijg
  * file.
@@ -287,6 +287,7 @@ jpeg_make_c_derived_tbl(j_compress_ptr cinfo, boolean isDC, int tblno,
    * this lets us detect duplicate VAL entries here, and later
    * allows emit_bits to detect any attempt to emit such symbols.
    */
+  MEMZERO(dtbl->ehufco, sizeof(dtbl->ehufco));
   MEMZERO(dtbl->ehufsi, sizeof(dtbl->ehufsi));
 
   /* This is also a convenient place to check for out-of-range
