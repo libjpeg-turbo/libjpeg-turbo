@@ -296,6 +296,7 @@ jsimd_ycc_rgb565_convert(j_decompress_ptr cinfo, JSAMPIMAGE input_buf,
                          JDIMENSION input_row, JSAMPARRAY output_buf,
                          int num_rows)
 {
+  (void)cinfo, input_buf, input_row, output_buf, num_rows;
 }
 
 GLOBAL(int)
@@ -410,6 +411,7 @@ GLOBAL(void)
 jsimd_h2v2_upsample(j_decompress_ptr cinfo, jpeg_component_info *compptr,
                     JSAMPARRAY input_data, JSAMPARRAY *output_data_ptr)
 {
+  (void)compptr;
   if (simd_support & JSIMD_AVX2)
     jsimd_h2v2_upsample_avx2(cinfo->max_v_samp_factor, cinfo->output_width,
                              input_data, output_data_ptr);
@@ -422,6 +424,7 @@ GLOBAL(void)
 jsimd_h2v1_upsample(j_decompress_ptr cinfo, jpeg_component_info *compptr,
                     JSAMPARRAY input_data, JSAMPARRAY *output_data_ptr)
 {
+  (void)compptr;
   if (simd_support & JSIMD_AVX2)
     jsimd_h2v1_upsample_avx2(cinfo->max_v_samp_factor, cinfo->output_width,
                              input_data, output_data_ptr);
@@ -880,6 +883,7 @@ jsimd_idct_2x2(j_decompress_ptr cinfo, jpeg_component_info *compptr,
                JCOEFPTR coef_block, JSAMPARRAY output_buf,
                JDIMENSION output_col)
 {
+  (void)cinfo;
   jsimd_idct_2x2_sse2(compptr->dct_table, coef_block, output_buf, output_col);
 }
 
@@ -888,6 +892,7 @@ jsimd_idct_4x4(j_decompress_ptr cinfo, jpeg_component_info *compptr,
                JCOEFPTR coef_block, JSAMPARRAY output_buf,
                JDIMENSION output_col)
 {
+  (void)cinfo;
   jsimd_idct_4x4_sse2(compptr->dct_table, coef_block, output_buf, output_col);
 }
 
@@ -970,6 +975,7 @@ jsimd_idct_islow(j_decompress_ptr cinfo, jpeg_component_info *compptr,
                  JCOEFPTR coef_block, JSAMPARRAY output_buf,
                  JDIMENSION output_col)
 {
+  (void)cinfo;
   if (simd_support & JSIMD_AVX2)
     jsimd_idct_islow_avx2(compptr->dct_table, coef_block, output_buf,
                           output_col);
@@ -983,6 +989,7 @@ jsimd_idct_ifast(j_decompress_ptr cinfo, jpeg_component_info *compptr,
                  JCOEFPTR coef_block, JSAMPARRAY output_buf,
                  JDIMENSION output_col)
 {
+  (void)cinfo;
   jsimd_idct_ifast_sse2(compptr->dct_table, coef_block, output_buf,
                         output_col);
 }
@@ -992,6 +999,7 @@ jsimd_idct_float(j_decompress_ptr cinfo, jpeg_component_info *compptr,
                  JCOEFPTR coef_block, JSAMPARRAY output_buf,
                  JDIMENSION output_col)
 {
+  (void)cinfo;
   jsimd_idct_float_sse2(compptr->dct_table, coef_block, output_buf,
                         output_col);
 }
