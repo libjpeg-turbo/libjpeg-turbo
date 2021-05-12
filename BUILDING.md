@@ -408,7 +408,7 @@ for these platforms.
 ### Additional build requirements
 
 - For configurations that require [gas-preprocessor.pl]
-  (https://raw.githubusercontent.com/libjpeg-turbo/gas-preprocessor/master/gas-preprocessor.pl),
+  (https://raw.githubusercontent.com/libjpeg-turbo/gas-preprocessor/main/gas-preprocessor.pl),
   it should be installed in your `PATH`.
 
 
