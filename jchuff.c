@@ -8,6 +8,7 @@
  * Copyright (C) 2015, Matthieu Darbois.
  * Copyright (C) 2018, Matthias Räncker.
  * Copyright (C) 2020, Arm Limited.
+ * Copyright (C) 2021, The Qt Company
  * For conditions of distribution and use, see the accompanying README.ijg
  * file.
  *
@@ -46,7 +47,7 @@
 
 #if defined(__arm__) || defined(__aarch64__) || defined(_M_ARM) || \
     defined(_M_ARM64)
-#if !defined(__thumb__) || defined(__thumb2__)
+#if (!defined(__thumb__) || defined(__thumb2__)) && (defined(__GNUC__) || defined(__clang__) || defined(_MSC_VER))
 #define USE_CLZ_INTRINSIC
 #endif
 #endif
