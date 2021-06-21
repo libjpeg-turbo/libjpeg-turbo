@@ -1059,6 +1059,11 @@ EXTERN(void) jsimd_idct_float_sse2
   (void *dct_table, JCOEFPTR coef_block, JSAMPARRAY output_buf,
    JDIMENSION output_col);
 
+extern const int jconst_idct_float_avx2[];
+EXTERN(void) jsimd_idct_float_avx2
+  (void *dct_table, JCOEFPTR coef_block, JSAMPARRAY output_buf,
+   JDIMENSION output_col);
+
 /* Huffman coding */
 extern const int jconst_huff_encode_one_block[];
 EXTERN(JOCTET *) jsimd_huff_encode_one_block_sse2

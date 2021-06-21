@@ -43,8 +43,8 @@ PD_1_414        times 4  dd  1.414213562373095048801689
 PD_1_847        times 4  dd  1.847759065022573512256366
 PD_1_082        times 4  dd  1.082392200292393968799446
 PD_M2_613       times 4  dd -2.613125929752753055713286
-PD_RNDINT_MAGIC times 4  dd  100663296.0  ; (float)(0x00C00000 << 3)
-PB_CENTERJSAMP  times 16 db  CENTERJSAMPLE
+; (float)((0x00C00000 + CENTERJSAMPLE) << 3)
+PD_RNDINT_MAGIC times 4  dd  0x4cc00000 + CENTERJSAMPLE
 
     alignz      32
 
@@ -437,12 +437,8 @@ EXTN(jsimd_idct_float_sse2):
     por         xmm3, xmm7              ; xmm3=(04 05 14 15 24 25 34 35)
     por         xmm1, xmm5              ; xmm1=(02 03 12 13 22 23 32 33)
 
-    movdqa      xmm2, [rel PB_CENTERJSAMP]  ; xmm2=[rel PB_CENTERJSAMP]
-
-    packsswb    xmm6, xmm3        ; xmm6=(00 01 10 11 20 21 30 31 04 05 14 15 24 25 34 35)
-    packsswb    xmm1, xmm0        ; xmm1=(02 03 12 13 22 23 32 33 06 07 16 17 26 27 36 37)
-    paddb       xmm6, xmm2
-    paddb       xmm1, xmm2
+    packuswb    xmm6, xmm3        ; xmm6=(00 01 10 11 20 21 30 31 04 05 14 15 24 25 34 35)
+    packuswb    xmm1, xmm0        ; xmm1=(02 03 12 13 22 23 32 33 06 07 16 17 26 27 36 37)
 
     movdqa      xmm4, xmm6        ; transpose coefficients(phase 2)
     punpcklwd   xmm6, xmm1        ; xmm6=(00 01 02 03 10 11 12 13 20 21 22 23 30 31 32 33)
