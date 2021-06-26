@@ -308,7 +308,7 @@ jpeg_consume_input(j_decompress_ptr cinfo)
     /* Initialize application's data source module */
     (*cinfo->src->init_source) (cinfo);
     cinfo->global_state = DSTATE_INHEADER;
-    /*FALLTHROUGH*/
+    FALLTHROUGH;
   case DSTATE_INHEADER:
     retcode = (*cinfo->inputctl->consume_input) (cinfo);
     if (retcode == JPEG_REACHED_SOS) { /* Found SOS, prepare to decompress */

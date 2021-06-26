@@ -86,3 +86,18 @@
   ((size_t)fread((void *)(buf), (size_t)1, (size_t)(sizeofbuf), (file)))
 #define JFWRITE(file, buf, sizeofbuf) \
   ((size_t)fwrite((const void *)(buf), (size_t)1, (size_t)(sizeofbuf), (file)))
+
+/* Attribute to annotate explicit fallthrough. As noted on
+ * https://gcc.gnu.org/onlinedocs/cpp/_005f_005fhas_005fattribute.html ,
+ * combining the two tests in one conditional would not be portable.
+ */
+
+#if defined __has_attribute
+#if __has_attribute(fallthrough)
+#define FALLTHROUGH __attribute__((fallthrough))
+#else
+#define FALLTHROUGH
+#endif
+#else
+#define FALLTHROUGH
+#endif
