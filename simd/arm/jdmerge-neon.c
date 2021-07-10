@@ -26,6 +26,7 @@
 #include "../../jsimd.h"
 #include "../../jdct.h"
 #include "../../jsimddct.h"
+#include "../../jconfigint.h"
 #include "../jsimd.h"
 #include "align.h"
 
