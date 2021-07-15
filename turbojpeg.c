@@ -50,7 +50,6 @@ extern void jpeg_mem_dest_tj(j_compress_ptr, unsigned char **, unsigned long *,
 extern void jpeg_mem_src_tj(j_decompress_ptr, const unsigned char *,
                             unsigned long);
 
-#define PAD(v, p)  ((v + (p) - 1) & (~((p) - 1)))
 #define IS_POW2(x)  (((x) & (x - 1)) == 0)
 
 

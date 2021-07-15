@@ -149,8 +149,6 @@ typedef phuff_entropy_encoder *phuff_entropy_ptr;
 #define IRIGHT_SHIFT(x, shft)   ((x) >> (shft))
 #endif
 
-#define PAD(v, p)  ((v + (p) - 1) & (~((p) - 1)))
-
 /* Forward declarations */
 METHODDEF(boolean) encode_mcu_DC_first(j_compress_ptr cinfo,
                                        JBLOCKROW *MCU_data);
