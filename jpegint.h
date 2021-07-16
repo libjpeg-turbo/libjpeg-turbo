@@ -303,7 +303,15 @@ struct jpeg_color_quantizer {
 #define RIGHT_SHIFT(x, shft)    ((x) >> (shft))
 #endif
 
+#if !defined(__has_builtin)
+#define __has_builtin(...) 0
+#endif
+#if __has_builtin(__builtin_align_up)
+#define PAD(v, p) __builtin_align_up(v, p)
+#else
 #define PAD(v, p) (((v) + (p) - 1) & (~((p) - 1)))
+#endif
+
 
 /* Compression module initialization routines */
 EXTERN(void) jinit_compress_master(j_compress_ptr cinfo);
