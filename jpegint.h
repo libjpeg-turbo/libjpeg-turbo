@@ -47,6 +47,19 @@ typedef enum {            /* Operating modes for buffer controllers */
 /* JLONG must hold at least signed 32-bit values. */
 typedef long JLONG;
 
+/*
+ * JUINTPTR must be able hold pointer values. Once C99 is required this can
+ * be replaced with uintptr_t from ≤stdint.h>.
+ */
+#ifdef __UINTPTR_TYPE__
+/*
+ * GCC 4.6 and Clang 3.0 provide __UINTPTR_TYPE__ that can be used to avoid
+ * a dependency on C99's stdint.h.
+ */
+typedef __UINTPTR_TYPE__ JUINTPTR;
+#else
+typedef size_t JUINTPTR;
+#endif
 
 /*
  * Left shift macro that handles a negative operand without causing any

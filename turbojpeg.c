@@ -845,7 +845,7 @@ DLLEXPORT int tjEncodeYUVPlanes(tjhandle handle, const unsigned char *srcBuf,
       THROW("tjEncodeYUVPlanes(): Memory allocation failure");
     for (row = 0; row < cinfo->max_v_samp_factor; row++) {
       unsigned char *_tmpbuf_aligned =
-        (unsigned char *)PAD((size_t)_tmpbuf[i], 32);
+        (unsigned char *)PAD((JUINTPTR)_tmpbuf[i], 32);
 
       tmpbuf[i][row] = &_tmpbuf_aligned[
         PAD((compptr->width_in_blocks * cinfo->max_h_samp_factor * DCTSIZE) /
@@ -861,7 +861,7 @@ DLLEXPORT int tjEncodeYUVPlanes(tjhandle handle, const unsigned char *srcBuf,
       THROW("tjEncodeYUVPlanes(): Memory allocation failure");
     for (row = 0; row < compptr->v_samp_factor; row++) {
       unsigned char *_tmpbuf2_aligned =
-        (unsigned char *)PAD((size_t)_tmpbuf2[i], 32);
+        (unsigned char *)PAD((JUINTPTR)_tmpbuf2[i], 32);
 
       tmpbuf2[i][row] =
         &_tmpbuf2_aligned[PAD(compptr->width_in_blocks * DCTSIZE, 32) * row];
@@ -1524,7 +1524,7 @@ DLLEXPORT int tjDecodeYUVPlanes(tjhandle handle,
       THROW("tjDecodeYUVPlanes(): Memory allocation failure");
     for (row = 0; row < compptr->v_samp_factor; row++) {
       unsigned char *_tmpbuf_aligned =
-        (unsigned char *)PAD((size_t)_tmpbuf[i], 32);
+        (unsigned char *)PAD((JUINTPTR)_tmpbuf[i], 32);
 
       tmpbuf[i][row] =
         &_tmpbuf_aligned[PAD(compptr->width_in_blocks * DCTSIZE, 32) * row];
