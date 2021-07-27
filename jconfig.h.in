@@ -32,6 +32,9 @@
 
 #define BITS_IN_JSAMPLE  @BITS_IN_JSAMPLE@      /* use 8 or 12 */
 
+/* Define to 1 to suffix libjpeg symbols by _12 to avoid clashes when linking both libjpeg 8bit and 12bit. */
+#define SUFFIX_LIBJPEG12_SYMBOLS @SUFFIX_LIBJPEG12_SYMBOLS@
+
 /* Define to 1 if you have the <locale.h> header file. */
 #cmakedefine HAVE_LOCALE_H 1
 

@@ -9,6 +9,9 @@
 
 #define BITS_IN_JSAMPLE  @BITS_IN_JSAMPLE@      /* use 8 or 12 */
 
+/* Define to 1 to suffix libjpeg symbols by _12 to avoid clashes when linking both libjpeg 8bit and 12bit. */
+#define SUFFIX_LIBJPEG12_SYMBOLS @SUFFIX_LIBJPEG12_SYMBOLS@
+
 #define HAVE_STDDEF_H
 #define HAVE_STDLIB_H
 #undef NEED_SYS_TYPES_H

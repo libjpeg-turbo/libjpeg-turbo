@@ -22,6 +22,9 @@ metadata.
 5. libjpeg-turbo should now build and run on CHERI-enabled architectures, which
 use capability pointers that are larger than the size of `size_t`.
 
+6. New build option -DSUFFIX_LIBJPEG12_SYMBOLS=1 to be used with -DWITH_12BIT=1
+to suffix symbols with _12, to avoid clashes when linking an application
+against libjpeg 8 bit and libjpeg 12 bit.
 
 2.1.0
 =====
