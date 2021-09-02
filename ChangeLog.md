@@ -25,6 +25,11 @@ one of the TurboJPEG compression or transform functions and an error
 subsequently occurred during compression or transformation, the JPEG buffer
 pointer passed by the application was not updated when the function returned.
 
+5. Fixed an issue whereby the `tjTransform()` function incorrectly computed the
+MCU block size for 4:4:4 JPEG images with non-unary sampling factors and thus
+unduly rejected some cropping regions, even though those regions aligned with
+8x8 MCU block boundaries.
+
 
 2.0.6
 =====
