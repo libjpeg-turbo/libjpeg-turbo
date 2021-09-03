@@ -100,6 +100,9 @@ void jsimd_quantize_neon(JCOEFPTR coef_block, DCTELEM *divisors,
   DCTELEM *shift_ptr = divisors + 3 * DCTSIZE2;
   int i;
 
+#if defined(__clang__) && (defined(__aarch64__) || defined(_M_ARM64))
+#pragma unroll
+#endif
   for (i = 0; i < DCTSIZE; i += DCTSIZE / 2) {
     /* Load DCT coefficients. */
     int16x8_t row0 = vld1q_s16(workspace + (i + 0) * DCTSIZE);
