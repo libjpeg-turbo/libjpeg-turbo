@@ -30,6 +30,11 @@ MCU block size for 4:4:4 JPEG images with non-unary sampling factors and thus
 unduly rejected some cropping regions, even though those regions aligned with
 8x8 MCU block boundaries.
 
+6. libjpeg-turbo now performs run-time detection of AltiVec instructions on
+FreeBSD/PowerPC systems if AltiVec instructions are not enabled at compile
+time.  This allows both AltiVec-equipped and non-AltiVec-equipped CPUs to be
+supported using the same build of libjpeg-turbo.
+
 
 2.0.6
 =====
