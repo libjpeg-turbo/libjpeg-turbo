@@ -197,12 +197,12 @@ Wipe (gray out) a rectangular region of width W and height H from the input
 image, starting at point X,Y.
 .PP
 Attaching an 'f' character ("flatten") to the width number will cause the
-region to be filled with the average of adjacent blocks rather than grayed out.
-If the wipe region and the region outside the wipe region, when adjusted to the
-nearest iMCU boundary, form two horizontally adjacent rectangles, then
-attaching an 'r' character ("reflect") to the width number will cause the wipe
-region to be filled with repeated reflections of the outside region rather than
-grayed out.
+region to be filled with the average (negatives are rounded up) of adjacent
+blocks rather than grayed out. If the wipe region and the region outside the
+wipe region, when adjusted to the nearest iMCU boundary, form two horizontally
+adjacent rectangles, then attaching an 'r' character ("reflect") to the width
+number will cause the wipe region to be filled with repeated reflections of the
+outside region rather than grayed out.
 .PP
 A lossless drop option is also provided, which allows another JPEG image to be
 inserted ("dropped") into the input image data at a given position, replacing
