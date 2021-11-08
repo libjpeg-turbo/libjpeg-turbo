@@ -66,14 +66,14 @@ typedef struct {
     boolean dc_needed[D_MAX_BLOCKS_IN_MCU];
     boolean ac_needed[D_MAX_BLOCKS_IN_MCU];
     /*Fast AC Huffman tables that do a decode and a receive extend*/
-    int fast_ac_tables[NUM_HUFF_TBLS][1 << HUFF_LOOKAHEAD]
+    int fast_ac_tables[NUM_HUFF_TBLS][1 << HUFF_LOOKAHEAD];
 
 } huff_entropy_decoder;
 
 typedef huff_entropy_decoder *huff_entropy_ptr;
 
 
-LOCAL(void) jpeg_make_fast_ac_tables(j_decompress_ptr cinfo, huff_entropy_ptr entropy, int tblno);
+LOCAL(void) jpeg_make_fast_ac_tables(j_decompress_ptr cinfo,int ci, huff_entropy_ptr entropy, int tblno);
 /*
  * Initialize for a Huffman-compressed scan.
  */
@@ -103,7 +103,7 @@ start_pass_huff_decoder(j_decompress_ptr cinfo) {
         jpeg_make_d_derived_tbl(cinfo, TRUE, dctbl, pdtbl);
         pdtbl = (d_derived_tbl **) (entropy->ac_derived_tbls) + actbl;
         jpeg_make_d_derived_tbl(cinfo, FALSE, actbl, pdtbl);
-        jpeg_make_fast_ac_tables(cinfo, entropy, actbl);
+        jpeg_make_fast_ac_tables(cinfo,ci, entropy, actbl);
         /* Initialize DC predictions to 0 */
         entropy->saved.last_dc_val[ci] = 0;
     }
@@ -190,7 +190,7 @@ jpeg_make_d_derived_tbl(j_decompress_ptr cinfo, boolean isDC, int tblno,
     /* We also validate that the counts represent a legal Huffman code tree. */
 
     code = 0;
-    si = huffsize[0];
+    si = (unsigned char) huffsize[0];
     p = 0;
     while (huffsize[p]) {
         while (((int) huffsize[p]) == si) {
@@ -265,7 +265,7 @@ jpeg_make_d_derived_tbl(j_decompress_ptr cinfo, boolean isDC, int tblno,
 /*
  * Generate fast ac tables that do the equivalent of decode and receive extend in one go
  * */
-LOCAL(void) jpeg_make_fast_ac_tables(j_decompress_ptr cinfo, huff_entropy_ptr entropy, int tblno) {
+LOCAL(void) jpeg_make_fast_ac_tables(j_decompress_ptr cinfo,int ci, huff_entropy_ptr entropy, int tblno) {
     /*
      *Basically repeat the major things in jpeg_make_d_derived_tbl because
      * we can't extend that function(it's public), therefore we do what it does to get information
@@ -279,20 +279,23 @@ LOCAL(void) jpeg_make_fast_ac_tables(j_decompress_ptr cinfo, huff_entropy_ptr en
     /* non-spec acceleration table */
     unsigned char fast[1 << HUFF_LOOKAHEAD];
     /*Fast AC table*/
-    int *fast_ac = entropy->fast_ac_tables[tblno];
+    int *fast_ac = entropy->fast_ac_tables[ci];
 
     /* Get current AC tables*/
     htbl = cinfo->ac_huff_tbl_ptrs[tblno];
 
     num_symbols = 0;
+
+    MEMZERO(huff_size, 257);
+    MEMZERO(huff_code, 257 * sizeof(unsigned int));
+
     p = 0;
     /* make table of Huffman code length for each symbol*/
-    for (l = 0; l < 16; l++) {
+    for (l = 0; l <= 16; l++) {
         i = htbl->bits[l];
         while (i != 0) {
 
             huff_size[p++] = (char) l;
-
             i--;
         }
     }
@@ -305,6 +308,7 @@ LOCAL(void) jpeg_make_fast_ac_tables(j_decompress_ptr cinfo, huff_entropy_ptr en
     si = (int) huff_size[0];
 
     p = 0;
+
     while (huff_size[p] != 0) {
         while (huff_size[p] == si) {
             huff_code[p++] = code++;
@@ -314,9 +318,11 @@ LOCAL(void) jpeg_make_fast_ac_tables(j_decompress_ptr cinfo, huff_entropy_ptr en
         si++;
     }
     p = 0;
+
     /*Compute non-spec acceleration table*/
     /*For the non-spec acceleration table; 255 is flag for not accelerated*/
     memset(fast, 255, (1 << HUFF_LOOKAHEAD));
+
 
     for (i = 0; i < num_symbols; i++) {
         /* Get code size */
@@ -324,7 +330,7 @@ LOCAL(void) jpeg_make_fast_ac_tables(j_decompress_ptr cinfo, huff_entropy_ptr en
 
         if (s <= HUFF_LOOKAHEAD) {
             /* Symbol is less than table, create its value */
-            int c = (signed int) huff_code[i] << (HUFF_LOOKAHEAD - s);
+            int c = (signed int) (huff_code[i] << (HUFF_LOOKAHEAD - s));
 
             int m = 1 << (HUFF_LOOKAHEAD - s);
             for (int j = 0; j < m; j++) {
@@ -332,13 +338,15 @@ LOCAL(void) jpeg_make_fast_ac_tables(j_decompress_ptr cinfo, huff_entropy_ptr en
             }
         }
     }
-
     for (i = 0; i < (1 << HUFF_LOOKAHEAD); i++) {
         int fast_v = fast[i];
+
         fast_ac[i] = 0;
+
         if (fast_v < 255) {
             /* symbol */
             int rs = htbl->huffval[fast_v];
+
             /* Run length */
             int run = (rs >> 4) & 15;
             /* Magnitude */
@@ -349,12 +357,13 @@ LOCAL(void) jpeg_make_fast_ac_tables(j_decompress_ptr cinfo, huff_entropy_ptr en
             if (len == 1 && mag_bits == 0) {
                 /* End of block case*/
                 fast_ac[i] = (63 << 4) + 1;
-            } else if (mag_bits != 0 && (len + mag_bits) << HUFF_LOOKAHEAD) {
-                int k = (i << len) & ((1 << HUFF_LOOKAHEAD) - 1) >> (HUFF_LOOKAHEAD - mag_bits);
+            } else if (mag_bits != 0 && ((len + mag_bits) <= HUFF_LOOKAHEAD)) {
+                int k = ((i << len) & ((1 << HUFF_LOOKAHEAD) - 1)) >> (HUFF_LOOKAHEAD - mag_bits);
 
                 int m = 1 << (mag_bits - 1);
 
                 if (k < m) k += (~0 << mag_bits) + 1;
+
 
                 /*If result is small enough, fit into fast ac table*/
                 if (k >= -128 && k <= 127) {
@@ -363,6 +372,8 @@ LOCAL(void) jpeg_make_fast_ac_tables(j_decompress_ptr cinfo, huff_entropy_ptr en
             }
         }
     }
+
+
 }
 
 /*
@@ -703,25 +714,42 @@ decode_mcu_slow(j_decompress_ptr cinfo, JBLOCKROW *MCU_data) {
             /* Section F.2.2.2: decode the AC coefficients */
             /* Since zeroes are skipped, output area must be cleared beforehand */
             for (k = 1; k < DCTSIZE2; k++) {
-                HUFF_DECODE(s, br_state, actbl, return FALSE, label2);
+                if (!jpeg_fill_bit_buffer(&br_state, get_buffer, bits_left, 0))return FALSE;
+                s = PEEK_BITS(HUFF_LOOKAHEAD);
+                int fast_ac = entropy->fast_ac_tables[cinfo->MCU_membership[blkn]][s];
 
-                r = s >> 4;
-                s &= 15;
+                if (fast_ac != 0) {
+                    // run
+                    k += ((fast_ac >> 4) & 63);
 
-                if (s) {
-                    k += r;
-                    CHECK_BIT_BUFFER(br_state, s, return FALSE);
-                    r = GET_BITS(s);
-                    s = HUFF_EXTEND(r, s);
-                    /* Output coefficient in natural (dezigzagged) order.
-                     * Note: the extra entries in jpeg_natural_order[] will save us
-                     * if k >= DCTSIZE2, which could happen if the data is corrupted.
-                     */
-                    (*block)[jpeg_natural_order[k]] = (JCOEF) s;
+                    int pos = k < 63 ? k : 63;
+
+                    /* value */
+                    (*block[jpeg_natural_order[pos]]) = (JCOEF) (fast_ac >> 10);
+
+                    (bits_left -= (fast_ac & 15));
+
                 } else {
-                    if (r != 15)
-                        break;
-                    k += 15;
+                    HUFF_DECODE(s, br_state, actbl, return FALSE, label2);
+
+                    r = s >> 4;
+                    s &= 15;
+
+                    if (s) {
+                        k += r;
+                        CHECK_BIT_BUFFER(br_state, s, return FALSE);
+                        r = GET_BITS(s);
+                        s = HUFF_EXTEND(r, s);
+                        /* Output coefficient in natural (dezigzagged) order.
+                         * Note: the extra entries in jpeg_natural_order[] will save us
+                         * if k >= DCTSIZE2, which could happen if the data is corrupted.
+                         */
+                        (*block)[jpeg_natural_order[k]] = (JCOEF) s;
+                    } else {
+                        if (r != 15)
+                            break;
+                        k += 15;
+                    }
                 }
             }
 
@@ -778,11 +806,9 @@ decode_mcu_fast(j_decompress_ptr cinfo, JBLOCKROW *MCU_data) {
 
     for (blkn = 0; blkn < cinfo->blocks_in_MCU; blkn++) {
         JBLOCKROW block = MCU_data ? MCU_data[blkn] : NULL;
-        for (int i = 0; i < DCTSIZE2; i++) {
-            *block[i] = 0;
-        }
         d_derived_tbl *dctbl = entropy->dc_cur_tbls[blkn];
         d_derived_tbl *actbl = entropy->ac_cur_tbls[blkn];
+
         register int s, k, r, l;
 
         HUFF_DECODE_FAST(s, l, dctbl);
@@ -808,7 +834,7 @@ decode_mcu_fast(j_decompress_ptr cinfo, JBLOCKROW *MCU_data) {
             for (k = 1; k < DCTSIZE2; k++) {
                 FILL_BIT_BUFFER_FAST;
                 s = PEEK_BITS(HUFF_LOOKAHEAD);
-                int fast_ac = entropy->fast_ac_tables[blkn][s];
+                int fast_ac = entropy->fast_ac_tables[cinfo->MCU_membership[blkn]][s];
 
                 if (fast_ac != 0) {
                     // run
@@ -819,7 +845,7 @@ decode_mcu_fast(j_decompress_ptr cinfo, JBLOCKROW *MCU_data) {
                     /* value */
                     (*block[jpeg_natural_order[pos]]) = (JCOEF) (fast_ac >> 10);
 
-                    DROP_BITS(fast_ac & 15);
+                    (bits_left -= (fast_ac & 15));
                 } else {
                     HUFF_DECODE_FAST(s, l, actbl);
                     r = s >> 4;
@@ -835,26 +861,26 @@ decode_mcu_fast(j_decompress_ptr cinfo, JBLOCKROW *MCU_data) {
                         if (r != 15) break;
                         k += 15;
                     }
+
                 }
             }
-
         } else {
 
             for (k = 1; k < DCTSIZE2; k++) {
 
-                    HUFF_DECODE_FAST(s, l, actbl);
-                    r = s >> 4;
-                    s &= 15;
+                HUFF_DECODE_FAST(s, l, actbl);
+                r = s >> 4;
+                s &= 15;
 
-                    if (s) {
-                        k += r;
-                        FILL_BIT_BUFFER_FAST
-                        DROP_BITS(s);
-                    } else {
-                        if (r != 15) break;
-                        k += 15;
-                    }
+                if (s) {
+                    k += r;
+                    FILL_BIT_BUFFER_FAST
+                    DROP_BITS(s);
+                } else {
+                    if (r != 15) break;
+                    k += 15;
                 }
+            }
         }
     }
 
@@ -908,7 +934,7 @@ decode_mcu(j_decompress_ptr cinfo, JBLOCKROW *MCU_data) {
     /* If we've run out of data, just leave the MCU set to zeroes.
      * This way, we return uniform gray for the remainder of the segment.
      */
-    usefast=1;
+
     if (!entropy->pub.insufficient_data) {
 
         if (usefast) {
