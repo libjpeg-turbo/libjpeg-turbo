@@ -259,6 +259,7 @@ GLOBAL(void)
 jpeg_calc_output_dimensions(j_decompress_ptr cinfo)
 /* Do computations that are needed before master selection phase */
 {
+
 #ifdef IDCT_SCALING_SUPPORTED
   int ci;
   jpeg_component_info *compptr;

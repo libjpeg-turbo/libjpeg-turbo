@@ -324,6 +324,7 @@ h1v2_fancy_upsample(j_decompress_ptr cinfo, jpeg_component_info *compptr,
   int inrow, outrow, v;
 
   inrow = outrow = 0;
+
   while (outrow < cinfo->max_v_samp_factor) {
     for (v = 0; v < 2; v++) {
       /* inptr0 points to nearest input row, inptr1 points to next nearest */
