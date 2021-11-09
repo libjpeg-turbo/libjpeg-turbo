@@ -714,7 +714,9 @@ decode_mcu_slow(j_decompress_ptr cinfo, JBLOCKROW *MCU_data) {
             /* Section F.2.2.2: decode the AC coefficients */
             /* Since zeroes are skipped, output area must be cleared beforehand */
             for (k = 1; k < DCTSIZE2; k++) {
-                if (!jpeg_fill_bit_buffer(&br_state, get_buffer, bits_left, 0))return FALSE;
+                if (!jpeg_fill_bit_buffer(&br_state, get_buffer, bits_left,0))return FALSE;
+                get_buffer = br_state.get_buffer;
+                bits_left = br_state.bits_left;
                 s = PEEK_BITS(HUFF_LOOKAHEAD);
                 int fast_ac = entropy->fast_ac_tables[cinfo->MCU_membership[blkn]][s];
 
@@ -723,7 +725,6 @@ decode_mcu_slow(j_decompress_ptr cinfo, JBLOCKROW *MCU_data) {
                     k += ((fast_ac >> 4) & 63);
 
                     int pos = k < 63 ? k : 63;
-
                     /* value */
                     (*block[jpeg_natural_order[pos]]) = (JCOEF) (fast_ac >> 10);
 
@@ -731,7 +732,6 @@ decode_mcu_slow(j_decompress_ptr cinfo, JBLOCKROW *MCU_data) {
 
                 } else {
                     HUFF_DECODE(s, br_state, actbl, return FALSE, label2);
-
                     r = s >> 4;
                     s &= 15;
 
@@ -936,7 +936,6 @@ decode_mcu(j_decompress_ptr cinfo, JBLOCKROW *MCU_data) {
      */
 
     if (!entropy->pub.insufficient_data) {
-
         if (usefast) {
             if (!decode_mcu_fast(cinfo, MCU_data)) goto use_slow;
         } else {
