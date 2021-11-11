@@ -73,7 +73,7 @@ typedef struct {
 typedef huff_entropy_decoder *huff_entropy_ptr;
 
 
-LOCAL(void) jpeg_make_fast_ac_tables(j_decompress_ptr cinfo,int ci, huff_entropy_ptr entropy, int tblno);
+LOCAL(void) jpeg_make_fast_ac_tables(j_decompress_ptr cinfo, int ci, huff_entropy_ptr entropy, int tblno);
 /*
  * Initialize for a Huffman-compressed scan.
  */
@@ -103,7 +103,7 @@ start_pass_huff_decoder(j_decompress_ptr cinfo) {
         jpeg_make_d_derived_tbl(cinfo, TRUE, dctbl, pdtbl);
         pdtbl = (d_derived_tbl **) (entropy->ac_derived_tbls) + actbl;
         jpeg_make_d_derived_tbl(cinfo, FALSE, actbl, pdtbl);
-        jpeg_make_fast_ac_tables(cinfo,ci, entropy, actbl);
+        jpeg_make_fast_ac_tables(cinfo, ci, entropy, actbl);
         /* Initialize DC predictions to 0 */
         entropy->saved.last_dc_val[ci] = 0;
     }
@@ -265,7 +265,7 @@ jpeg_make_d_derived_tbl(j_decompress_ptr cinfo, boolean isDC, int tblno,
 /*
  * Generate fast ac tables that do the equivalent of decode and receive extend in one go
  * */
-LOCAL(void) jpeg_make_fast_ac_tables(j_decompress_ptr cinfo,int ci, huff_entropy_ptr entropy, int tblno) {
+LOCAL(void) jpeg_make_fast_ac_tables(j_decompress_ptr cinfo, int ci, huff_entropy_ptr entropy, int tblno) {
     /*
      *Basically repeat the major things in jpeg_make_d_derived_tbl because
      * we can't extend that function(it's public), therefore we do what it does to get information
@@ -339,6 +339,7 @@ LOCAL(void) jpeg_make_fast_ac_tables(j_decompress_ptr cinfo,int ci, huff_entropy
         }
     }
     for (i = 0; i < (1 << HUFF_LOOKAHEAD); i++) {
+
         int fast_v = fast[i];
 
         fast_ac[i] = 0;
@@ -354,10 +355,11 @@ LOCAL(void) jpeg_make_fast_ac_tables(j_decompress_ptr cinfo,int ci, huff_entropy
 
             /* Bits consumed */
             int len = (int) huff_size[fast_v];
-            if (len == 1 && mag_bits == 0) {
+            if (mag_bits == 0) {
                 /* End of block case*/
-                fast_ac[i] = (63 << 4) + 1;
-            } else if (mag_bits != 0 && ((len + mag_bits) <= HUFF_LOOKAHEAD)) {
+                fast_ac[i] = (63 << 4) + len;
+            }
+            else if ((len + mag_bits) <= HUFF_LOOKAHEAD) {
                 int k = ((i << len) & ((1 << HUFF_LOOKAHEAD) - 1)) >> (HUFF_LOOKAHEAD - mag_bits);
 
                 int m = 1 << (mag_bits - 1);
@@ -372,8 +374,6 @@ LOCAL(void) jpeg_make_fast_ac_tables(j_decompress_ptr cinfo,int ci, huff_entropy
             }
         }
     }
-
-
 }
 
 /*
@@ -666,7 +666,7 @@ LOCAL(boolean)
 decode_mcu_slow(j_decompress_ptr cinfo, JBLOCKROW *MCU_data) {
     huff_entropy_ptr entropy = (huff_entropy_ptr) cinfo->entropy;
     BITREAD_STATE_VARS;
-    int blkn;
+    int blkn,fast_ac,*fast;
     savable_state state;
     /* Outer loop handles each block in the MCU */
 
@@ -713,22 +713,26 @@ decode_mcu_slow(j_decompress_ptr cinfo, JBLOCKROW *MCU_data) {
 
             /* Section F.2.2.2: decode the AC coefficients */
             /* Since zeroes are skipped, output area must be cleared beforehand */
+            fast  = entropy->fast_ac_tables[cinfo->MCU_membership[blkn]];
             for (k = 1; k < DCTSIZE2; k++) {
-                if (!jpeg_fill_bit_buffer(&br_state, get_buffer, bits_left,0))return FALSE;
+                if (!jpeg_fill_bit_buffer(&br_state, get_buffer, bits_left, 0))return FALSE;
                 get_buffer = br_state.get_buffer;
                 bits_left = br_state.bits_left;
-                s = PEEK_BITS(HUFF_LOOKAHEAD);
-                int fast_ac = entropy->fast_ac_tables[cinfo->MCU_membership[blkn]][s];
 
-                if (fast_ac != 0) {
-                    // run
+                s = PEEK_BITS(HUFF_LOOKAHEAD);
+                fast_ac=fast[s];
+
+                if (fast_ac!=0) {
+                    /* run */
                     k += ((fast_ac >> 4) & 63);
 
-                    int pos = k < 63 ? k : 63;
+                    /* k may be greater than 63 due to EOB let's clamp it
+                     * back to 63 */
+                    int pos = k < 64 ? k : 64;
                     /* value */
-                    (*block[jpeg_natural_order[pos]]) = (JCOEF) (fast_ac >> 10);
+                    (*block)[jpeg_natural_order[pos]] = (JCOEF) (fast_ac >> 10);
 
-                    (bits_left -= (fast_ac & 15));
+                    DROP_BITS(fast_ac & 15);
 
                 } else {
                     HUFF_DECODE(s, br_state, actbl, return FALSE, label2);
@@ -774,7 +778,9 @@ decode_mcu_slow(j_decompress_ptr cinfo, JBLOCKROW *MCU_data) {
                 }
             }
         }
+
     }
+    //exit(1);
 
     /* Completed MCU, so update state */
     BITREAD_SAVE_STATE(cinfo, entropy->bitstate);
@@ -795,7 +801,7 @@ decode_mcu_fast(j_decompress_ptr cinfo, JBLOCKROW *MCU_data) {
     huff_entropy_ptr entropy = (huff_entropy_ptr) cinfo->entropy;
     BITREAD_STATE_VARS;
     JOCTET *buffer;
-    int blkn;
+    int blkn,fast_ac, *fast;
     savable_state state;
     /* Outer loop handles each block in the MCU */
 
@@ -828,24 +834,26 @@ decode_mcu_fast(j_decompress_ptr cinfo, JBLOCKROW *MCU_data) {
             if (block)
                 (*block)[0] = (JCOEF) s;
         }
-
+        fast = entropy->fast_ac_tables[cinfo->MCU_membership[blkn]];
         if (entropy->ac_needed[blkn] && block) {
 
             for (k = 1; k < DCTSIZE2; k++) {
                 FILL_BIT_BUFFER_FAST;
                 s = PEEK_BITS(HUFF_LOOKAHEAD);
-                int fast_ac = entropy->fast_ac_tables[cinfo->MCU_membership[blkn]][s];
 
-                if (fast_ac != 0) {
-                    // run
+                fast_ac = fast[s];
+
+                if (fast_ac!=0) {
+                    /* run */
+
                     k += ((fast_ac >> 4) & 63);
 
                     int pos = k < 63 ? k : 63;
-
                     /* value */
-                    (*block[jpeg_natural_order[pos]]) = (JCOEF) (fast_ac >> 10);
+                    (*block)[jpeg_natural_order[pos]] = (JCOEF) (fast_ac >> 10);
 
-                    (bits_left -= (fast_ac & 15));
+                    DROP_BITS(fast_ac & 15);
+
                 } else {
                     HUFF_DECODE_FAST(s, l, actbl);
                     r = s >> 4;
