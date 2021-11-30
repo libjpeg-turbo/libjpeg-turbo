@@ -35,6 +35,10 @@ FreeBSD/PowerPC systems if AltiVec instructions are not enabled at compile
 time.  This allows both AltiVec-equipped and non-AltiVec-equipped CPUs to be
 supported using the same build of libjpeg-turbo.
 
+7. Fixed a regression introduced by 2.0 beta1[7] whereby cjpeg compressed PGM
+input files into full-color JPEG images unless the `-grayscale` option was
+used.
+
 
 2.0.6
 =====
