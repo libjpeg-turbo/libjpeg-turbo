@@ -39,6 +39,9 @@ supported using the same build of libjpeg-turbo.
 input files into full-color JPEG images unless the `-grayscale` option was
 used.
 
+8. cjpeg now automatically compresses GIF and 8-bit BMP input files into
+grayscale JPEG images if the input files contain only shades of gray.
+
 
 2.0.6
 =====
