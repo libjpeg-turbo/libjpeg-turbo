@@ -1284,6 +1284,7 @@ DLLEXPORT int tjDecompress2(tjhandle handle, const unsigned char *jpegBuf,
   JSAMPROW *row_pointer = NULL;
   int i, retval = 0, jpegwidth, jpegheight, scaledw, scaledh;
   struct my_progress_mgr progress;
+  boolean restoreProgress = FALSE;
 
   GET_DINSTANCE(handle);
   this->jerr.stopOnWarning = (flags & TJFLAG_STOPONWARNING) ? TRUE : FALSE;
@@ -1305,6 +1306,7 @@ DLLEXPORT int tjDecompress2(tjhandle handle, const unsigned char *jpegBuf,
     progress.pub.progress_monitor = my_progress_monitor;
     progress.this = this;
     dinfo->progress = &progress.pub;
+    restoreProgress = TRUE;
   } else
     dinfo->progress = NULL;
 
@@ -1356,6 +1358,8 @@ DLLEXPORT int tjDecompress2(tjhandle handle, const unsigned char *jpegBuf,
   jpeg_finish_decompress(dinfo);
 
 bailout:
+  /* Do not allow pointer to local progress escape its scope. */
+  if (restoreProgress) dinfo->progress = NULL;
   if (dinfo->global_state > DSTATE_START) jpeg_abort_decompress(dinfo);
   free(row_pointer);
   if (this->jerr.warning) retval = -1;
@@ -1627,6 +1631,7 @@ DLLEXPORT int tjDecompressToYUVPlanes(tjhandle handle,
   JSAMPROW *outbuf[MAX_COMPONENTS], *tmpbuf[MAX_COMPONENTS];
   int dctsize;
   struct my_progress_mgr progress;
+  boolean restoreProgress = FALSE;
 
   GET_DINSTANCE(handle);
   this->jerr.stopOnWarning = (flags & TJFLAG_STOPONWARNING) ? TRUE : FALSE;
@@ -1653,6 +1658,7 @@ DLLEXPORT int tjDecompressToYUVPlanes(tjhandle handle,
     progress.pub.progress_monitor = my_progress_monitor;
     progress.this = this;
     dinfo->progress = &progress.pub;
+    restoreProgress = TRUE;
   } else
     dinfo->progress = NULL;
 
@@ -1782,6 +1788,8 @@ DLLEXPORT int tjDecompressToYUVPlanes(tjhandle handle,
   jpeg_finish_decompress(dinfo);
 
 bailout:
+  /* Do not allow pointer to local progress escape its scope. */
+  if (restoreProgress) dinfo->progress = NULL;
   if (dinfo->global_state > DSTATE_START) jpeg_abort_decompress(dinfo);
   for (i = 0; i < MAX_COMPONENTS; i++) {
     free(tmpbuf[i]);
@@ -1895,6 +1903,7 @@ DLLEXPORT int tjTransform(tjhandle handle, const unsigned char *jpegBuf,
   jvirt_barray_ptr *srccoefs, *dstcoefs;
   int retval = 0, alloc = 1, i, jpegSubsamp, saveMarkers = 0;
   struct my_progress_mgr progress;
+  boolean restoreProgress = FALSE;
 
   GET_INSTANCE(handle);
   this->jerr.stopOnWarning = (flags & TJFLAG_STOPONWARNING) ? TRUE : FALSE;
@@ -1916,6 +1925,7 @@ DLLEXPORT int tjTransform(tjhandle handle, const unsigned char *jpegBuf,
     progress.pub.progress_monitor = my_progress_monitor;
     progress.this = this;
     dinfo->progress = &progress.pub;
+    restoreProgress = TRUE;
   } else
     dinfo->progress = NULL;
 
@@ -2039,6 +2049,8 @@ DLLEXPORT int tjTransform(tjhandle handle, const unsigned char *jpegBuf,
   jpeg_finish_decompress(dinfo);
 
 bailout:
+  /* Do not allow pointer to local progress escape its scope. */
+  if (restoreProgress) dinfo->progress = NULL;
   if (cinfo->global_state > CSTATE_START) {
     if (alloc) (*cinfo->dest->term_destination) (cinfo);
     jpeg_abort_compress(cinfo);
