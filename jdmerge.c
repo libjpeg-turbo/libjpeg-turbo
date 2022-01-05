@@ -397,8 +397,8 @@ h2v2_merged_upsample(j_decompress_ptr cinfo, JSAMPIMAGE input_buf,
 #define PACK_SHORT_565_BE(r, g, b) \
   (((r) & 0xF8) | ((g) >> 5) | (((g) << 11) & 0xE000) | (((b) << 5) & 0x1F00))
 
-#define PACK_TWO_PIXELS_LE(l, r)    ((r << 16) | l)
-#define PACK_TWO_PIXELS_BE(l, r)    ((l << 16) | r)
+#define PACK_TWO_PIXELS_LE(l, r)    (((r) << 16) | (l))
+#define PACK_TWO_PIXELS_BE(l, r)    (((l) << 16) | (r))
 
 #define WRITE_TWO_PIXELS_LE(addr, pixels) { \
   ((INT16 *)(addr))[0] = (INT16)(pixels); \
