@@ -662,7 +662,7 @@ typedef void *tjhandle;
  * scalingFactor)</tt>.
  */
 #define TJSCALED(dimension, scalingFactor) \
-  ((dimension * scalingFactor.num + scalingFactor.denom - 1) / \
+  (((dimension) * scalingFactor.num + scalingFactor.denom - 1) / \
    scalingFactor.denom)
 
 
