@@ -493,7 +493,7 @@ typedef void* tjhandle;
  * factor.  This macro performs the integer equivalent of <tt>ceil(dimension *
  * scalingFactor)</tt>.
  */
-#define TJSCALED(dimension, scalingFactor) ((dimension * scalingFactor.num \
+#define TJSCALED(dimension, scalingFactor) (((dimension) * scalingFactor.num \
   + scalingFactor.denom - 1) / scalingFactor.denom)
 
 
