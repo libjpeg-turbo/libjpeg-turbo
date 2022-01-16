@@ -2,7 +2,7 @@
  * rdppm.c
  *
  * Copyright (C) 1991-1997, Thomas G. Lane.
- * Modified 2009-2019 by Bill Allombert, Guido Vollbeding.
+ * Modified 2009-2020 by Bill Allombert, Guido Vollbeding.
  * This file is part of the Independent JPEG Group's software.
  * For conditions of distribution and use, see the accompanying README file.
  *
@@ -70,8 +70,9 @@ typedef char U_CHAR;
 typedef struct {
   struct cjpeg_source_struct pub; /* public fields */
 
-  U_CHAR *iobuffer;		/* non-FAR pointer to I/O buffer */
-  JSAMPROW pixrow;		/* FAR pointer to same */
+  /* Usually these two pointers point to the same place: */
+  U_CHAR *iobuffer;		/* fread's I/O buffer */
+  JSAMPROW pixrow;		/* compressor input buffer */
   size_t buffer_width;		/* width of I/O buffer */
   JSAMPLE *rescale;		/* => maxval-remapping array, or NULL */
   unsigned int maxval;
@@ -148,7 +149,7 @@ get_text_gray_row (j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
   unsigned int maxval = source->maxval;
   JDIMENSION col;
 
-  ptr = source->pub.buffer[0];
+  ptr = source->pixrow;
   for (col = cinfo->image_width; col > 0; col--) {
     register unsigned int temp;
     temp = read_pbm_integer(cinfo, infile);
@@ -171,7 +172,7 @@ get_text_rgb_row (j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
   unsigned int maxval = source->maxval;
   JDIMENSION col;
 
-  ptr = source->pub.buffer[0];
+  ptr = source->pixrow;
   for (col = cinfo->image_width; col > 0; col--) {
     register unsigned int temp;
     temp = read_pbm_integer(cinfo, infile);
@@ -204,7 +205,7 @@ get_scaled_gray_row (j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
 
   if (! ReadOK(source->pub.input_file, source->iobuffer, source->buffer_width))
     ERREXIT(cinfo, JERR_INPUT_EOF);
-  ptr = source->pub.buffer[0];
+  ptr = source->pixrow;
   bufferptr = source->iobuffer;
   for (col = cinfo->image_width; col > 0; col--) {
     register unsigned int temp;
@@ -230,7 +231,7 @@ get_scaled_rgb_row (j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
 
   if (! ReadOK(source->pub.input_file, source->iobuffer, source->buffer_width))
     ERREXIT(cinfo, JERR_INPUT_EOF);
-  ptr = source->pub.buffer[0];
+  ptr = source->pixrow;
   bufferptr = source->iobuffer;
   for (col = cinfo->image_width; col > 0; col--) {
     register unsigned int temp;
@@ -279,7 +280,7 @@ get_word_gray_row (j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
 
   if (! ReadOK(source->pub.input_file, source->iobuffer, source->buffer_width))
     ERREXIT(cinfo, JERR_INPUT_EOF);
-  ptr = source->pub.buffer[0];
+  ptr = source->pixrow;
   bufferptr = source->iobuffer;
   for (col = cinfo->image_width; col > 0; col--) {
     register unsigned int temp;
@@ -306,7 +307,7 @@ get_word_rgb_row (j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
 
   if (! ReadOK(source->pub.input_file, source->iobuffer, source->buffer_width))
     ERREXIT(cinfo, JERR_INPUT_EOF);
-  ptr = source->pub.buffer[0];
+  ptr = source->pixrow;
   bufferptr = source->iobuffer;
   for (col = cinfo->image_width; col > 0; col--) {
     register unsigned int temp;
@@ -430,7 +431,7 @@ start_input_ppm (j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
 
   /* Allocate space for I/O buffer: 1 or 3 bytes or words/pixel. */
   if (need_iobuffer) {
-    source->buffer_width = (size_t) w * cinfo->input_components *
+    source->buffer_width = (size_t) w * (size_t) cinfo->input_components *
       ((maxval <= 255) ? SIZEOF(U_CHAR) : (2 * SIZEOF(U_CHAR)));
     source->iobuffer = (U_CHAR *) (*cinfo->mem->alloc_small)
       ((j_common_ptr) cinfo, JPOOL_IMAGE, source->buffer_width);
@@ -439,17 +440,17 @@ start_input_ppm (j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
   /* Create compressor input buffer. */
   if (use_raw_buffer) {
     /* For unscaled raw-input case, we can just map it onto the I/O buffer. */
-    /* Synthesize a JSAMPARRAY pointer structure */
     /* Cast here implies near->far pointer conversion on PCs */
     source->pixrow = (JSAMPROW) source->iobuffer;
-    source->pub.buffer = & source->pixrow;
-    source->pub.buffer_height = 1;
   } else {
     /* Need to translate anyway, so make a separate sample buffer. */
-    source->pub.buffer = (*cinfo->mem->alloc_sarray) ((j_common_ptr) cinfo,
-      JPOOL_IMAGE, (JDIMENSION) w * cinfo->input_components, (JDIMENSION) 1);
-    source->pub.buffer_height = 1;
+    source->pixrow = (JSAMPROW) (*cinfo->mem->alloc_large)
+      ((j_common_ptr) cinfo, JPOOL_IMAGE, (size_t) w *
+       (size_t) cinfo->input_components * SIZEOF(JSAMPLE));
   }
+  /* Synthesize a JSAMPARRAY pointer structure */
+  source->pub.buffer = & source->pixrow;
+  source->pub.buffer_height = 1;
 
   /* Compute the rescaling array if required. */
   if (need_rescale) {

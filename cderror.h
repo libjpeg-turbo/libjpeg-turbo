@@ -2,7 +2,7 @@
  * cderror.h
  *
  * Copyright (C) 1994-1997, Thomas G. Lane.
- * Modified 2009-2017 by Guido Vollbeding.
+ * Modified 2009-2020 by Guido Vollbeding.
  * This file is part of the Independent JPEG Group's software.
  * For conditions of distribution and use, see the accompanying README file.
  *
@@ -60,6 +60,7 @@ JMESSAGE(JERR_GIF_CODESIZE, "Bogus GIF codesize %d")
 JMESSAGE(JERR_GIF_COLORSPACE, "GIF output must be grayscale or RGB")
 JMESSAGE(JERR_GIF_IMAGENOTFOUND, "Too few images in GIF file")
 JMESSAGE(JERR_GIF_NOT, "Not a GIF file")
+JMESSAGE(JERR_GIF_OUTOFRANGE, "Numeric value out of range in GIF file")
 JMESSAGE(JTRC_GIF, "%ux%ux%d GIF image")
 JMESSAGE(JTRC_GIF_BADVERSION,
 	 "Warning: unexpected GIF version number '%c%c%c'")

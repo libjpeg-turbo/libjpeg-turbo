@@ -56,7 +56,7 @@ INCLUDES= jdct.h jerror.h jinclude.h jmemsys.h jmorecfg.h jpegint.h \
 # documentation, test, and support files
 DOCS= README install.txt usage.txt cjpeg.1 djpeg.1 jpegtran.1 rdjpgcom.1 \
         wrjpgcom.1 wizard.txt example.c libjpeg.txt structure.txt \
-        coderules.txt filelist.txt change.log
+        coderules.txt filelist.txt cdaltui.txt change.log
 MKFILES= configure Makefile.in makefile.ansi makefile.unix makefile.b32 \
         makefile.bcc makefile.mc6 makefile.dj makefile.wat makefile.vc \
         makefile.vs makejdsw.vc6 makeadsw.vc6 makejdep.vc6 makejdsp.vc6 \
@@ -66,14 +66,17 @@ MKFILES= configure Makefile.in makefile.ansi makefile.unix makefile.b32 \
         makewmak.vc6 makejsln.v16 makeasln.v16 makejvcx.v16 makejfil.v16 \
         makecvcx.v16 makecfil.v16 makedvcx.v16 makedfil.v16 maketvcx.v16 \
         maketfil.v16 makervcx.v16 makerfil.v16 makewvcx.v16 makewfil.v16 \
-        makeproj.mac makcjpeg.st makdjpeg.st makljpeg.st maktjpeg.st \
-        makefile.manx makefile.sas makefile.mms makefile.vms makvms.opt
+        makejvcx.v17 makecvcx.v17 makedvcx.v17 maketvcx.v17 makervcx.v17 \
+        makewvcx.v17 makeproj.mac makcjpeg.st makdjpeg.st makljpeg.st \
+        maktjpeg.st makefile.manx makefile.sas makefile.mms makefile.vms \
+        makvms.opt
 CONFIGFILES= jconfig.cfg jconfig.bcc jconfig.mc6 jconfig.dj jconfig.wat \
         jconfig.vc jconfig.mac jconfig.st jconfig.manx jconfig.sas \
         jconfig.vms
 CONFIGUREFILES= config.guess config.sub install-sh ltmain.sh depcomp \
         missing ar-lib
-OTHERFILES= jconfig.txt ckconfig.c jmemdosa.asm libjpeg.map libjpeg.pc.in
+OTHERFILES= jconfig.txt ckconfig.c jmemdosa.asm libjpeg.map libjpeg.pc.in \
+        cjpegalt.c djpegalt.c
 TESTFILES= testorig.jpg testimg.ppm testimg.gif testimg.bmp testimg.jpg \
         testprog.jpg testimgp.jpg
 DISTFILES= $(DOCS) $(MKFILES) $(CONFIGFILES) $(SOURCES) $(INCLUDES) \
@@ -209,6 +212,40 @@ setupcopy-v16:
 	copy /y makervcx.v16 rdjpgcom.vcxproj
 	copy /y makerfil.v16 rdjpgcom.vcxproj.filters
 	copy /y makewvcx.v16 wrjpgcom.vcxproj
+	copy /y makewfil.v16 wrjpgcom.vcxproj.filters
+
+setup-v17:
+	ren jconfig.vc jconfig.h
+	ren makejsln.v16 jpeg.sln
+	ren makeasln.v16 apps.sln
+	ren makejvcx.v17 jpeg.vcxproj
+	ren makejfil.v16 jpeg.vcxproj.filters
+	ren makecvcx.v17 cjpeg.vcxproj
+	ren makecfil.v16 cjpeg.vcxproj.filters
+	ren makedvcx.v17 djpeg.vcxproj
+	ren makedfil.v16 djpeg.vcxproj.filters
+	ren maketvcx.v17 jpegtran.vcxproj
+	ren maketfil.v16 jpegtran.vcxproj.filters
+	ren makervcx.v17 rdjpgcom.vcxproj
+	ren makerfil.v16 rdjpgcom.vcxproj.filters
+	ren makewvcx.v17 wrjpgcom.vcxproj
+	ren makewfil.v16 wrjpgcom.vcxproj.filters
+
+setupcopy-v17:
+	copy /y jconfig.vc jconfig.h
+	copy /y makejsln.v16 jpeg.sln
+	copy /y makeasln.v16 apps.sln
+	copy /y makejvcx.v17 jpeg.vcxproj
+	copy /y makejfil.v16 jpeg.vcxproj.filters
+	copy /y makecvcx.v17 cjpeg.vcxproj
+	copy /y makecfil.v16 cjpeg.vcxproj.filters
+	copy /y makedvcx.v17 djpeg.vcxproj
+	copy /y makedfil.v16 djpeg.vcxproj.filters
+	copy /y maketvcx.v17 jpegtran.vcxproj
+	copy /y maketfil.v16 jpegtran.vcxproj.filters
+	copy /y makervcx.v17 rdjpgcom.vcxproj
+	copy /y makerfil.v16 rdjpgcom.vcxproj.filters
+	copy /y makewvcx.v17 wrjpgcom.vcxproj
 	copy /y makewfil.v16 wrjpgcom.vcxproj.filters
 
 test:

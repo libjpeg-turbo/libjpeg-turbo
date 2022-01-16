@@ -1,6 +1,20 @@
 CHANGE LOG for Independent JPEG Group's JPEG software
 
 
+Version 9e  16-Jan-2022
+-----------------------
+
+Include alternate user interface files for cjpeg/djpeg.
+
+jcparam.c: change default chrominance DC quantization factor
+for lossless support.  Note: Requires rebuild of test images.
+
+rdgif.c, cderror.h: add sanity check for GIF image dimensions.
+Thank to Casper Sun for cjpeg potential vulnerability report.
+
+Add ARM and ARM64 platform support in the Visual Studio build.
+
+
 Version 9d  12-Jan-2020
 -----------------------
 

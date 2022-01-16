@@ -2,7 +2,7 @@
  * rdgif.c
  *
  * Copyright (C) 1991-1996, Thomas G. Lane.
- * Modified 2019 by Guido Vollbeding.
+ * Modified 2019-2020 by Guido Vollbeding.
  * This file is part of the Independent JPEG Group's software.
  * For conditions of distribution and use, see the accompanying README file.
  *
@@ -454,6 +454,8 @@ start_input_gif (j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
     /* we ignore top/left position info, also sort flag */
     width = LM_to_uint(hdrbuf, 4);
     height = LM_to_uint(hdrbuf, 6);
+    if (width <= 0 || height <= 0)
+      ERREXIT(cinfo, JERR_GIF_OUTOFRANGE);
     source->is_interlaced = (BitSet(hdrbuf[8], INTERLACE) != 0);
 
     /* Read local colormap if header indicates it is present */

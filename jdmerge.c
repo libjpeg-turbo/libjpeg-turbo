@@ -2,7 +2,7 @@
  * jdmerge.c
  *
  * Copyright (C) 1994-1996, Thomas G. Lane.
- * Modified 2013-2019 by Guido Vollbeding.
+ * Modified 2013-2020 by Guido Vollbeding.
  * This file is part of the Independent JPEG Group's software.
  * For conditions of distribution and use, see the accompanying README file.
  *
@@ -190,7 +190,7 @@ merged_2v_upsample (j_decompress_ptr cinfo,
 
   if (upsample->spare_full) {
     /* If we have a spare row saved from a previous cycle, just return it. */
-    jcopy_sample_rows(& upsample->spare_row, 0, output_buf + *out_row_ctr, 0,
+    jcopy_sample_rows(& upsample->spare_row, output_buf + *out_row_ctr,
 		      1, upsample->out_row_width);
     num_rows = 1;
     upsample->spare_full = FALSE;

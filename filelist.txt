@@ -1,6 +1,6 @@
 IJG JPEG LIBRARY:  FILE LIST
 
-Copyright (C) 1994-2019, Thomas G. Lane, Guido Vollbeding.
+Copyright (C) 1994-2020, Thomas G. Lane, Guido Vollbeding.
 This file is part of the Independent JPEG Group's software.
 For conditions of distribution and use, see the accompanying README file.
 
@@ -140,7 +140,9 @@ transupp.h	Declarations for jpegtran support routines in transupp.c.
 C source code files:
 
 cjpeg.c		Main program for cjpeg.
+cjpegalt.c	Main program for cjpeg with alternate user interface.
 djpeg.c		Main program for djpeg.
+djpegalt.c	Main program for djpeg with alternate user interface.
 jpegtran.c	Main program for jpegtran.
 cdjpeg.c	Utility routines used by all three programs.
 rdcolmap.c	Code to read a colormap file for djpeg's "-map" switch.

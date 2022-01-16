@@ -30,7 +30,7 @@ DISTMANS= cjpeg.1 djpeg.1 jpegtran.1 rdjpgcom.1 wrjpgcom.1
 
 # Other documentation files
 DOCS= README install.txt usage.txt wizard.txt example.c libjpeg.txt \
-        structure.txt coderules.txt filelist.txt change.log
+        structure.txt coderules.txt filelist.txt cdaltui.txt change.log
 
 # Makefiles for various systems
 MKFILES= configure Makefile.in makefile.ansi makefile.unix makefile.b32 \
@@ -42,8 +42,10 @@ MKFILES= configure Makefile.in makefile.ansi makefile.unix makefile.b32 \
         makewmak.vc6 makejsln.v16 makeasln.v16 makejvcx.v16 makejfil.v16 \
         makecvcx.v16 makecfil.v16 makedvcx.v16 makedfil.v16 maketvcx.v16 \
         maketfil.v16 makervcx.v16 makerfil.v16 makewvcx.v16 makewfil.v16 \
-        makeproj.mac makcjpeg.st makdjpeg.st makljpeg.st maktjpeg.st \
-        makefile.manx makefile.sas makefile.mms makefile.vms makvms.opt
+        makejvcx.v17 makecvcx.v17 makedvcx.v17 maketvcx.v17 makervcx.v17 \
+        makewvcx.v17 makeproj.mac makcjpeg.st makdjpeg.st makljpeg.st \
+        maktjpeg.st makefile.manx makefile.sas makefile.mms makefile.vms \
+        makvms.opt
 
 # Configuration files
 CONFIGFILES= jconfig.cfg jconfig.bcc jconfig.mc6 jconfig.dj jconfig.wat \
@@ -55,7 +57,8 @@ CONFIGUREFILES= config.guess config.sub install-sh ltmain.sh depcomp \
         missing ar-lib
 
 # Miscellaneous support files
-OTHERFILES= jconfig.txt ckconfig.c jmemdosa.asm libjpeg.map libjpeg.pc.in
+OTHERFILES= jconfig.txt ckconfig.c jmemdosa.asm libjpeg.map libjpeg.pc.in \
+        cjpegalt.c djpegalt.c
 
 # Test support files
 TESTFILES= testorig.jpg testimg.ppm testimg.gif testimg.bmp testimg.jpg \
