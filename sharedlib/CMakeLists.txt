@@ -17,6 +17,22 @@ if(MSVC)
       string(REGEX REPLACE "/MT" "/MD" ${var} "${${var}}")
     endif()
   endforeach()
+  
+  # Create a resource script to embed version information in the DLL
+  if(JPEG_LIB_VERSION STREQUAL "62")
+    set(LIBJPEG_ABI_VERSION_STRING "6b")
+  else()
+    set(LIBJPEG_ABI_VERSION_STRING ${SO_MAJOR_VERSION})
+  endif()
+  set(DEFAULT_VERSIONINFO_COMPANY ${PKGVENDOR})
+  set(VERSIONINFO_COMPANY ${DEFAULT_VERSIONINFO_COMPANY} CACHE STRING
+  "Company that produced the libjpeg DLL (default: ${DEFAULT_VERSIONINFO_COMPANY})")
+  set(VERSIONINFO_COPYRIGHTS "Copyright (C) 1991-2020, Thomas G. Lane, Guido Vollbeding\nCopyright (C)2009-2022 D. R. Commander. All Rights Reserved.\nCopyright (C)2015 Viktor Szathmáry. All Rights Reserved.")
+  configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/version.rc.in
+    ${CMAKE_CURRENT_BINARY_DIR}/version.rc
+    @ONLY)
+  set(DLL_VERSIONINFO_RESOURCE_SCRIPT ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
 endif()
 
 foreach(src ${JPEG_SOURCES})
@@ -36,7 +52,7 @@ if(WIN32)
   endif()
 endif()
 add_library(jpeg SHARED ${JPEG_SRCS} ${DEFFILE} $<TARGET_OBJECTS:simd>
-  ${SIMD_OBJS})
+  ${SIMD_OBJS} ${DLL_VERSIONINFO_RESOURCE_SCRIPT})
 
 set_target_properties(jpeg PROPERTIES SOVERSION ${SO_MAJOR_VERSION}
   VERSION ${SO_MAJOR_VERSION}.${SO_AGE}.${SO_MINOR_VERSION})
