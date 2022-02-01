@@ -42,6 +42,14 @@ used.
 8. cjpeg now automatically compresses GIF and 8-bit BMP input files into
 grayscale JPEG images if the input files contain only shades of gray.
 
+9. Fixed a segfault that occurred while decompressing a 4:2:0 JPEG image using
+the merged (non-fancy) upsampling algorithms (that is, with
+`cinfo.do_fancy_upsampling` set to `FALSE`) along with `jpeg_crop_scanline()`.
+Specifically, the segfault occurred if the number of bytes remaining in the
+output buffer was less than the number of bytes required to represent one
+uncropped scanline of the output image.  For that reason, the issue could only
+be reproduced using the libjpeg API, not using djpeg.
+
 
 2.0.6
 =====
