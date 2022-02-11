@@ -5,7 +5,7 @@
  * Copyright (C) 1991-1997, Thomas G. Lane.
  * Modified 2009 by Bill Allombert, Guido Vollbeding.
  * libjpeg-turbo Modifications:
- * Copyright (C) 2015-2017, 2020-2021, D. R. Commander.
+ * Copyright (C) 2015-2017, 2020-2022, D. R. Commander.
  * For conditions of distribution and use, see the accompanying README.ijg
  * file.
  *
@@ -188,10 +188,10 @@ get_text_gray_rgb_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
   ptr = source->pub.buffer[0];
   if (maxval == MAXJSAMPLE) {
     if (aindex >= 0)
-      GRAY_RGB_READ_LOOP(read_pbm_integer(cinfo, infile, maxval),
+      GRAY_RGB_READ_LOOP((JSAMPLE)read_pbm_integer(cinfo, infile, maxval),
                          ptr[aindex] = 0xFF;)
     else
-      GRAY_RGB_READ_LOOP(read_pbm_integer(cinfo, infile, maxval), {})
+      GRAY_RGB_READ_LOOP((JSAMPLE)read_pbm_integer(cinfo, infile, maxval), {})
   } else {
     if (aindex >= 0)
       GRAY_RGB_READ_LOOP(rescale[read_pbm_integer(cinfo, infile, maxval)],
@@ -218,7 +218,7 @@ get_text_gray_cmyk_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
   ptr = source->pub.buffer[0];
   if (maxval == MAXJSAMPLE) {
     for (col = cinfo->image_width; col > 0; col--) {
-      JSAMPLE gray = read_pbm_integer(cinfo, infile, maxval);
+      JSAMPLE gray = (JSAMPLE)read_pbm_integer(cinfo, infile, maxval);
       rgb_to_cmyk(gray, gray, gray, ptr, ptr + 1, ptr + 2, ptr + 3);
       ptr += 4;
     }
@@ -262,10 +262,10 @@ get_text_rgb_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
   ptr = source->pub.buffer[0];
   if (maxval == MAXJSAMPLE) {
     if (aindex >= 0)
-      RGB_READ_LOOP(read_pbm_integer(cinfo, infile, maxval),
+      RGB_READ_LOOP((JSAMPLE)read_pbm_integer(cinfo, infile, maxval),
                     ptr[aindex] = 0xFF;)
     else
-      RGB_READ_LOOP(read_pbm_integer(cinfo, infile, maxval), {})
+      RGB_READ_LOOP((JSAMPLE)read_pbm_integer(cinfo, infile, maxval), {})
   } else {
     if (aindex >= 0)
       RGB_READ_LOOP(rescale[read_pbm_integer(cinfo, infile, maxval)],
@@ -292,9 +292,9 @@ get_text_rgb_cmyk_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
   ptr = source->pub.buffer[0];
   if (maxval == MAXJSAMPLE) {
     for (col = cinfo->image_width; col > 0; col--) {
-      JSAMPLE r = read_pbm_integer(cinfo, infile, maxval);
-      JSAMPLE g = read_pbm_integer(cinfo, infile, maxval);
-      JSAMPLE b = read_pbm_integer(cinfo, infile, maxval);
+      JSAMPLE r = (JSAMPLE)read_pbm_integer(cinfo, infile, maxval);
+      JSAMPLE g = (JSAMPLE)read_pbm_integer(cinfo, infile, maxval);
+      JSAMPLE b = (JSAMPLE)read_pbm_integer(cinfo, infile, maxval);
       rgb_to_cmyk(r, g, b, ptr, ptr + 1, ptr + 2, ptr + 3);
       ptr += 4;
     }

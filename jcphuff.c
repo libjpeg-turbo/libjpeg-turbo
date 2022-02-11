@@ -4,7 +4,7 @@
  * This file was part of the Independent JPEG Group's software:
  * Copyright (C) 1995-1997, Thomas G. Lane.
  * libjpeg-turbo Modifications:
- * Copyright (C) 2011, 2015, 2018, 2021, D. R. Commander.
+ * Copyright (C) 2011, 2015, 2018, 2021-2022, D. R. Commander.
  * Copyright (C) 2016, 2018, Matthieu Darbois.
  * For conditions of distribution and use, see the accompanying README.ijg
  * file.
@@ -577,8 +577,8 @@ encode_mcu_DC_first(j_compress_ptr cinfo, JBLOCKROW *MCU_data)
       continue; \
     /* For a negative coef, want temp2 = bitwise complement of abs(coef) */ \
     temp2 ^= temp; \
-    values[k] = temp; \
-    values[k + DCTSIZE2] = temp2; \
+    values[k] = (JCOEF)temp; \
+    values[k + DCTSIZE2] = (JCOEF)temp2; \
     zerobits |= ((size_t)1U) << k; \
   } \
 }
