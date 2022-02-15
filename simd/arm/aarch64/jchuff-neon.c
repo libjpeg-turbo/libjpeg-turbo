@@ -250,7 +250,7 @@ JOCTET *jsimd_huff_encode_one_block_neon(void *state, JOCTET *buffer,
 #endif
   unsigned int nbits = 32 - lz;
   /* Emit Huffman-coded symbol and additional diff bits. */
-  unsigned int diff = (unsigned int)(vgetq_lane_u16(row0_diff, 0) << lz) >> lz;
+  unsigned int diff = ((unsigned int)vgetq_lane_u16(row0_diff, 0) << lz) >> lz;
   PUT_CODE(dctbl->ehufco[nbits], dctbl->ehufsi[nbits], diff)
 
   /* Encode AC coefficients. */
