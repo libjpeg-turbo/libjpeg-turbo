@@ -198,7 +198,7 @@ static int cs2pf[JPEG_NUMCS] = {
 }
 #ifdef _MSC_VER
 #define THROW_UNIX(m) { \
-  enum { strerrorBuf_size = 80 };
+  enum { strerrorBuf_size = 80 }; \
   char strerrorBuf[strerrorBuf_size] = { 0 }; \
   strerror_s(strerrorBuf, strerrorBuf_size, errno); \
   snprintf(errStr, JMSG_LENGTH_MAX, "%s\n%s", m, strerrorBuf); \
