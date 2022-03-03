@@ -105,7 +105,8 @@ LOCAL(void)
 init_simd(void)
 {
 #ifndef NO_GETENV
-  char env[2] = { 0 };
+  static const int env_size = 2;
+  char env[env_size] = { 0 };
 #endif
 #if !defined(__ARM_NEON__) && (defined(__linux__) || defined(ANDROID) || defined(__ANDROID__))
   int bufsize = 1024; /* an initial guess for the line buffer size limit */
@@ -131,11 +132,11 @@ init_simd(void)
 
 #ifndef NO_GETENV
   /* Force different settings through environment variables */
-  if (!GETENV_S(env, 2, "JSIMD_FORCENEON") && !strcmp(env, "1"))
+  if (!GETENV_S(env, env_size, "JSIMD_FORCENEON") && !strcmp(env, "1"))
     simd_support = JSIMD_NEON;
-  if (!GETENV_S(env, 2, "JSIMD_FORCENONE") && !strcmp(env, "1"))
+  if (!GETENV_S(env, env_size, "JSIMD_FORCENONE") && !strcmp(env, "1"))
     simd_support = 0;
-  if (!GETENV_S(env, 2, "JSIMD_NOHUFFENC") && !strcmp(env, "1"))
+  if (!GETENV_S(env, env_size, "JSIMD_NOHUFFENC") && !strcmp(env, "1"))
     simd_huffman = 0;
 #endif
 }

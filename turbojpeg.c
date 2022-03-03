@@ -198,8 +198,9 @@ static int cs2pf[JPEG_NUMCS] = {
 }
 #ifdef _MSC_VER
 #define THROW_UNIX(m) { \
-  char strerrorBuf[80] = { 0 }; \
-  strerror_s(strerrorBuf, 80, errno); \
+  static const int strerrorBuf_size = 80;
+  char strerrorBuf[strerrorBuf_size] = { 0 }; \
+  strerror_s(strerrorBuf, strerrorBuf_size, errno); \
   snprintf(errStr, JMSG_LENGTH_MAX, "%s\n%s", m, strerrorBuf); \
   retval = -1;  goto bailout; \
 }
@@ -280,7 +281,8 @@ static void setCompDefaults(struct jpeg_compress_struct *cinfo,
                             int flags)
 {
 #ifndef NO_GETENV
-  char env[7] = { 0 };
+  static const int env_size = 7;
+  char env[env_size] = { 0 };
 #endif
 
   cinfo->in_color_space = pf2cs[pixelFormat];
@@ -288,11 +290,11 @@ static void setCompDefaults(struct jpeg_compress_struct *cinfo,
   jpeg_set_defaults(cinfo);
 
 #ifndef NO_GETENV
-  if (!GETENV_S(env, 7, "TJ_OPTIMIZE") && !strcmp(env, "1"))
+  if (!GETENV_S(env, env_size, "TJ_OPTIMIZE") && !strcmp(env, "1"))
     cinfo->optimize_coding = TRUE;
-  if (!GETENV_S(env, 7, "TJ_ARITHMETIC") && !strcmp(env, "1"))
+  if (!GETENV_S(env, env_size, "TJ_ARITHMETIC") && !strcmp(env, "1"))
     cinfo->arith_code = TRUE;
-  if (!GETENV_S(env, 7, "TJ_RESTART") && strlen(env) > 0) {
+  if (!GETENV_S(env, env_size, "TJ_RESTART") && strlen(env) > 0) {
     int temp = -1;
     char tempc = 0;
 
@@ -329,7 +331,7 @@ static void setCompDefaults(struct jpeg_compress_struct *cinfo,
   if (flags & TJFLAG_PROGRESSIVE)
     jpeg_simple_progression(cinfo);
 #ifndef NO_GETENV
-  else if (!GETENV_S(env, 7, "TJ_PROGRESSIVE") && !strcmp(env, "1"))
+  else if (!GETENV_S(env, env_size, "TJ_PROGRESSIVE") && !strcmp(env, "1"))
     jpeg_simple_progression(cinfo);
 #endif
 

@@ -44,7 +44,8 @@ LOCAL(void)
 init_simd(void)
 {
 #ifndef NO_GETENV
-  char env[2] = { 0 };
+  static const int env_size = 2;
+  char env[env_size] = { 0 };
 #endif
 
   if (simd_support != ~0U)
@@ -54,13 +55,13 @@ init_simd(void)
 
 #ifndef NO_GETENV
   /* Force different settings through environment variables */
-  if (!GETENV_S(env, 2, "JSIMD_FORCESSE2") && !strcmp(env, "1"))
+  if (!GETENV_S(env, env_size, "JSIMD_FORCESSE2") && !strcmp(env, "1"))
     simd_support &= JSIMD_SSE2;
-  if (!GETENV_S(env, 2, "JSIMD_FORCEAVX2") && !strcmp(env, "1"))
+  if (!GETENV_S(env, env_size, "JSIMD_FORCEAVX2") && !strcmp(env, "1"))
     simd_support &= JSIMD_AVX2;
-  if (!GETENV_S(env, 2, "JSIMD_FORCENONE") && !strcmp(env, "1"))
+  if (!GETENV_S(env, env_size, "JSIMD_FORCENONE") && !strcmp(env, "1"))
     simd_support = 0;
-  if (!GETENV_S(env, 2, "JSIMD_NOHUFFENC") && !strcmp(env, "1"))
+  if (!GETENV_S(env, env_size, "JSIMD_NOHUFFENC") && !strcmp(env, "1"))
     simd_huffman = 0;
 #endif
 }

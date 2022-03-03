@@ -55,7 +55,8 @@ void invalid_parameter_handler(const wchar_t *expression,
 int main(int argc, char **argv)
 {
   int err;
-  char env[3];
+  static const char env_size = 3;
+  char env[env_size];
 
 #ifdef _MSC_VER
   _set_invalid_parameter_handler(invalid_parameter_handler);
@@ -93,7 +94,7 @@ int main(int argc, char **argv)
   env[0] = 1;
   env[1] = 2;
   env[2] = 3;
-  err = GETENV_S(env, 3, NULL);
+  err = GETENV_S(env, env_size, NULL);
   CHECK_ERRNO(err, 0);
   CHECK_VALUE(env[0], 0, "env[0]");
   CHECK_VALUE(env[1], 2, "env[1]");
@@ -103,14 +104,14 @@ int main(int argc, char **argv)
   env[0] = 1;
   env[1] = 2;
   env[2] = 3;
-  err = GETENV_S(env, 3, "TESTENV2");
+  err = GETENV_S(env, env_size, "TESTENV2");
   CHECK_ERRNO(err, 0);
   CHECK_VALUE(env[0], 0, "env[0]");
   CHECK_VALUE(env[1], 2, "env[1]");
   CHECK_VALUE(env[2], 3, "env[2]");
 
   errno = 0;
-  err = GETENV_S(NULL, 3, "TESTENV");
+  err = GETENV_S(NULL, env_size, "TESTENV");
   CHECK_ERRNO(err, EINVAL);
 
   errno = 0;
