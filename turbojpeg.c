@@ -198,7 +198,7 @@ static int cs2pf[JPEG_NUMCS] = {
 }
 #ifdef _MSC_VER
 #define THROW_UNIX(m) { \
-  static const int strerrorBuf_size = 80;
+  enum { strerrorBuf_size = 80 };
   char strerrorBuf[strerrorBuf_size] = { 0 }; \
   strerror_s(strerrorBuf, strerrorBuf_size, errno); \
   snprintf(errStr, JMSG_LENGTH_MAX, "%s\n%s", m, strerrorBuf); \
@@ -281,7 +281,7 @@ static void setCompDefaults(struct jpeg_compress_struct *cinfo,
                             int flags)
 {
 #ifndef NO_GETENV
-  static const int env_size = 7;
+  enum { env_size = 7 };
   char env[env_size] = { 0 };
 #endif
 

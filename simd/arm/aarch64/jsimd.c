@@ -125,7 +125,7 @@ LOCAL(void)
 init_simd(void)
 {
 #ifndef NO_GETENV
-  static const int env_size = 2;
+  enum { env_size = 2 };
   char env[env_size] = { 0 };
 #endif
 #if defined(__linux__) || defined(ANDROID) || defined(__ANDROID__)

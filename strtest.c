@@ -55,7 +55,7 @@ void invalid_parameter_handler(const wchar_t *expression,
 int main(int argc, char **argv)
 {
   int err;
-  static const char env_size = 3;
+  enum { env_size = 3 };
   char env[env_size];
 
 #ifdef _MSC_VER

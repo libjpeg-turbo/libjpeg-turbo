@@ -1156,7 +1156,7 @@ jinit_memory_mgr(j_common_ptr cinfo)
    */
 #ifndef NO_GETENV
   {
-    static const int memenv_size = 30;
+    enum { memenv_size = 30 };
     char memenv[memenv_size] = { 0 };
 
     if (!GETENV_S(memenv, memenv_size, "JPEGMEM") && strlen(memenv) > 0) {
