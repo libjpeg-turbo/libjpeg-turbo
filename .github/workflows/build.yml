@@ -39,17 +39,6 @@ jobs:
           docker run -v $HOME/src/ljt.nightly:/root/src/ljt.nightly -v $HOME/src/buildscripts:/root/src/buildscripts -v $GITHUB_WORKSPACE:/root/src/libjpeg-turbo -v $HOME/.gnupg:/root/.gnupg -v $HOME/rpmkeys:/rpmkeys -t dcommander/buildljt:$BRANCH bash -c "rpm --import /rpmkeys/LJTPR-GPG-KEY && ~/src/buildscripts/buildljt -d /root/src/libjpeg-turbo -v"
           sudo chown -R runner:runner $HOME/src/ljt.nightly
           mv $HOME/src/ljt.nightly/latest/log-${{github.job}}.txt $HOME/src/ljt.nightly/latest/files/
-      - name: Configure AWS
-        if: ${{github.event_name != 'pull_request'}}
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{secrets.AWS_ACCESS_KEY_ID}}
-          aws-secret-access-key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
-          aws-region: ${{secrets.AWS_REGION}}
-      - name: Deploy
-        if: ${{github.event_name != 'pull_request'}}
-        run: |
-          aws s3 sync --acl public-read --delete $HOME/src/ljt.nightly/latest/files/ s3://libjpeg-turbo-pr/${{env.BRANCH}}/${{github.job}}/
   macos:
     runs-on: macos-13
     steps:
@@ -75,17 +64,6 @@ jobs:
         run: |
           $HOME/src/buildscripts/buildljt -d $GITHUB_WORKSPACE -v
           mv $HOME/src/ljt.nightly/latest/log-${{github.job}}.txt $HOME/src/ljt.nightly/latest/files/
-      - name: Configure AWS
-        if: ${{github.event_name != 'pull_request'}}
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{secrets.AWS_ACCESS_KEY_ID}}
-          aws-secret-access-key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
-          aws-region: ${{secrets.AWS_REGION}}
-      - name: Deploy
-        if: ${{github.event_name != 'pull_request'}}
-        run: |
-          aws s3 sync --acl public-read --delete $HOME/src/ljt.nightly/latest/files/ s3://libjpeg-turbo-pr/${{env.BRANCH}}/${{github.job}}/
   linux-asan-ubsan:
     runs-on: ubuntu-latest
     steps:
