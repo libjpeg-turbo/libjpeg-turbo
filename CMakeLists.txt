@@ -348,7 +348,7 @@ if(MSVC)
       endif()
     endforeach()
   endif()
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /W3 /wd4996")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /wd4996")
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang")
