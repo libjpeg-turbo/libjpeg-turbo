@@ -329,7 +329,7 @@ option(NEON_INTRINSICS
 if(NOT NEON_INTRINSICS)
   enable_language(ASM)
 
-  set(CMAKE_ASM_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_ASM_FLAGS}")
+  set(CMAKE_ASM_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_ASM_FLAGS} --target=${CMAKE_ASM_COMPILER_TARGET}")
 
   # Test whether gas-preprocessor.pl would be needed to build the GAS
   # implementation of the Neon SIMD extensions.  If so, then automatically
