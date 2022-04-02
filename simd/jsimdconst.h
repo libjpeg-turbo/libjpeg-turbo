@@ -44,5 +44,6 @@
 #define JSIMD_ALTIVEC    0x40
 #define JSIMD_AVX2       0x80
 #define JSIMD_MMI        0x100
-#define JSIMD_MAX        0x100
+#define JSIMD_RVV        0x200
+#define JSIMD_MAX        0x200
 #define JSIMD_UNDEFINED  ~(JSIMD_MAX * 2U - 1U)
