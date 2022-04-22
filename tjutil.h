@@ -32,8 +32,12 @@
 #define snprintf(str, n, format, ...) \
   _snprintf_s(str, n, _TRUNCATE, format, ##__VA_ARGS__)
 #endif
+#ifndef strcasecmp
 #define strcasecmp  stricmp
+#endif
+#ifndef strncasecmp
 #define strncasecmp  strnicmp
+#endif
 #endif
 
 #ifndef min
