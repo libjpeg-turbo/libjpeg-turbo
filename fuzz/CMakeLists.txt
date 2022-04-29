@@ -26,7 +26,8 @@ set(EFFECTIVE_CXX_FLAGS
 message(STATUS "C++ Compiler flags = ${EFFECTIVE_CXX_FLAGS}")
 
 add_executable(cjpeg_fuzzer${FUZZER_SUFFIX} cjpeg.cc ../cdjpeg.c ../rdbmp.c
-  ../rdgif.c ../rdppm.c ../rdswitch.c ../rdtarga.c)
+  ../rdppm.c ../rdswitch.c ../rdtarga.c)
+string(REGEX REPLACE "-DGIF_SUPPORTED " "" COMPILE_FLAGS ${COMPILE_FLAGS})
 set_property(TARGET cjpeg_fuzzer${FUZZER_SUFFIX} PROPERTY COMPILE_FLAGS
   ${COMPILE_FLAGS})
 target_link_libraries(cjpeg_fuzzer${FUZZER_SUFFIX} ${FUZZ_LIBRARY} jpeg-static)
