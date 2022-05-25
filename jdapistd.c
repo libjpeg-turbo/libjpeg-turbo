@@ -209,11 +209,13 @@ jpeg_crop_scanline(j_decompress_ptr cinfo, JDIMENSION *xoffset,
    */
   *width = *width + input_xoffset - *xoffset;
   cinfo->output_width = *width;
+#ifdef UPSAMPLE_MERGING_SUPPORTED
   if (master->using_merged_upsample && cinfo->max_v_samp_factor == 2) {
     my_merged_upsample_ptr upsample = (my_merged_upsample_ptr)cinfo->upsample;
     upsample->out_row_width =
       cinfo->output_width * cinfo->out_color_components;
   }
+#endif /* UPSAMPLE_MERGING_SUPPORTED */
 
   /* Set the first and last iMCU columns that we must decompress.  These values
    * will be used in single-scan decompressions.
@@ -348,10 +350,12 @@ read_and_discard_scanlines(j_decompress_ptr cinfo, JDIMENSION num_lines)
     cinfo->cquantize->color_quantize = noop_quantize;
   }
 
+#ifdef UPSAMPLE_MERGING_SUPPORTED
   if (master->using_merged_upsample && cinfo->max_v_samp_factor == 2) {
     my_merged_upsample_ptr upsample = (my_merged_upsample_ptr)cinfo->upsample;
     scanlines = &upsample->spare_row;
   }
+#endif /* UPSAMPLE_MERGING_SUPPORTED */
 
   for (n = 0; n < num_lines; n++)
     jpeg_read_scanlines(cinfo, scanlines, 1);
