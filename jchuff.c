@@ -933,11 +933,12 @@ jpeg_gen_optimal_table(j_compress_ptr cinfo, JHUFF_TBL *htbl, long freq[])
 {
 #define MAX_CLEN  32            /* assumed maximum initial code length */
   UINT8 bits[MAX_CLEN + 1];     /* bits[k] = # of symbols with code length k */
+  int bit_pos[MAX_CLEN + 1];    /* # of symbols with smaller code length */
   int codesize[257];            /* codesize[k] = code length of symbol k */
   int others[257];              /* next symbol in current branch of tree */
   int c1, c2;
   int p, i, j;
-  long v;
+  long v, v2;
 
   /* This algorithm is explained in section K.2 of the JPEG standard */
 
@@ -955,25 +956,23 @@ jpeg_gen_optimal_table(j_compress_ptr cinfo, JHUFF_TBL *htbl, long freq[])
   /* Huffman's basic algorithm to assign optimal code lengths to symbols */
 
   for (;;) {
-    /* Find the smallest nonzero frequency, set c1 = its symbol */
+    /* Find the two smallest nonzero frequencies, set c1, c2 = its symbols */
     /* In case of ties, take the larger symbol number */
     c1 = -1;
-    v = 1000000000L;
-    for (i = 0; i <= 256; i++) {
-      if (freq[i] && freq[i] <= v) {
-        v = freq[i];
-        c1 = i;
-      }
-    }
-
-    /* Find the next smallest nonzero frequency, set c2 = its symbol */
-    /* In case of ties, take the larger symbol number */
     c2 = -1;
     v = 1000000000L;
+    v2 = 1000000000L;
     for (i = 0; i <= 256; i++) {
-      if (freq[i] && freq[i] <= v && i != c1) {
-        v = freq[i];
-        c2 = i;
+      if (freq[i] && freq[i] <= v2) {
+        if (freq[i] <= v) {
+          c2 = c1;
+          v2 = v;
+          v = freq[i];
+          c1 = i;
+        } else {
+          v2 = freq[i];
+          c2 = i;
+        }
       }
     }
 
@@ -1014,6 +1013,17 @@ jpeg_gen_optimal_table(j_compress_ptr cinfo, JHUFF_TBL *htbl, long freq[])
     }
   }
 
+  /* Count the number of symbols with a length smaller than i bits so we can
+   * construct the symbol table more efficiently. Note that this includes the
+   * pseudo-symbol 256, but since it is the last symbol it will not affect the
+   * table.
+   */
+  p = 0;
+  for (i = 1; i <= MAX_CLEN; i++) {
+    bit_pos[i] = p;
+    p += bits[i];
+  }
+
   /* JPEG doesn't allow symbols with code lengths over 16 bits, so if the pure
    * Huffman procedure assigned any such lengths, we must adjust the coding.
    * Here is what Rec. ITU-T T.81 | ISO/IEC 10918-1 says about how this next
@@ -1051,13 +1061,10 @@ jpeg_gen_optimal_table(j_compress_ptr cinfo, JHUFF_TBL *htbl, long freq[])
    * changes made above, but Rec. ITU-T T.81 | ISO/IEC 10918-1 seems to think
    * this works.
    */
-  p = 0;
-  for (i = 1; i <= MAX_CLEN; i++) {
-    for (j = 0; j <= 255; j++) {
-      if (codesize[j] == i) {
-        htbl->huffval[p] = (UINT8)j;
-        p++;
-      }
+  for (i = 0; i <= 255; i++) {
+    if (codesize[i]) {
+      htbl->huffval[bit_pos[codesize[i]]] = (UINT8)i;
+      bit_pos[codesize[i]]++;
     }
   }
 
