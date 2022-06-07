@@ -244,6 +244,15 @@ option(WITH_TURBOJPEG "Include the TurboJPEG API library and associated test pro
 boolean_number(WITH_TURBOJPEG)
 option(WITH_FUZZ "Build fuzz targets" FALSE)
 
+option(LIB_JPEGTURBO_ENABLE_TEST_UNIT "Build Test unit" TRUE)
+option(LIB_JPEGTURBO_ENABLE_BENCH "Build Bench" TRUE)
+option(LIB_JPEGTURBO_ENABLE_EXAMPLE "Build Example" TRUE)
+option(LIB_JPEGTURBO_ENABLE_TEST_UNIT "Build test unit" TRUE)
+option(LIB_JPEGTURBO_ENABLE_RDJPGCOM "Build RDJPGCOM" TRUE)
+option(LIB_JPEGTURBO_ENABLE_WDJPGCOM "Build WDJPGCOM" TRUE)
+option(LIB_JPEGTURBO_ENABLE_STRTEST "Build STRTEST" TRUE)
+option(LIB_JPEGTURBO_ENABLE_MD5 "Build MD5" TRUE)
+
 macro(report_option var desc)
   if(${var})
     message(STATUS "${desc} enabled (${var} = ${${var}})")
@@ -689,18 +698,21 @@ if(WITH_TURBOJPEG)
       set_target_properties(turbojpeg PROPERTIES
         LINK_FLAGS "${TJMAPFLAG}${TJMAPFILE}")
     endif()
-
-    add_executable(tjunittest tjunittest.c tjutil.c md5/md5.c md5/md5hl.c)
-    target_link_libraries(tjunittest turbojpeg)
-
-    add_executable(tjbench tjbench.c tjutil.c)
-    target_link_libraries(tjbench turbojpeg)
+    if(LIB_JPEGTURBO_ENABLE_TEST_UNIT)
+      add_executable(tjunittest tjunittest.c tjutil.c md5/md5.c md5/md5hl.c)
+      target_link_libraries(tjunittest turbojpeg)
+    endif()
+    if(LIB_JPEGTURBO_ENABLE_BENCH)
+      add_executable(tjbench tjbench.c tjutil.c)
+      target_link_libraries(tjbench turbojpeg)
+    endif()
     if(UNIX)
       target_link_libraries(tjbench m)
     endif()
-
-    add_executable(tjexample tjexample.c)
-    target_link_libraries(tjexample turbojpeg)
+    if(LIB_JPEGTURBO_ENABLE_EXAMPLE)
+      add_executable(tjexample tjexample.c)
+      target_link_libraries(tjexample turbojpeg)
+    endif()
   endif()
 
   if(ENABLE_STATIC)
@@ -720,15 +732,17 @@ if(WITH_TURBOJPEG)
     if(NOT MSVC)
       set_target_properties(turbojpeg-static PROPERTIES OUTPUT_NAME turbojpeg)
     endif()
-
-    add_executable(tjunittest-static tjunittest.c tjutil.c md5/md5.c
-      md5/md5hl.c)
-    target_link_libraries(tjunittest-static turbojpeg-static)
-
-    add_executable(tjbench-static tjbench.c tjutil.c)
-    target_link_libraries(tjbench-static turbojpeg-static)
-    if(UNIX)
-      target_link_libraries(tjbench-static m)
+    if(LIB_JPEGTURBO_ENABLE_TEST_UNIT)
+      add_executable(tjunittest-static tjunittest.c tjutil.c md5/md5.c
+        md5/md5hl.c)
+      target_link_libraries(tjunittest-static turbojpeg-static)
+    endif()
+    if(LIB_JPEGTURBO_ENABLE_BENCH)
+      add_executable(tjbench-static tjbench.c tjutil.c)
+      target_link_libraries(tjbench-static turbojpeg-static)
+      if(UNIX)
+        target_link_libraries(tjbench-static m)
+      endif()
     endif()
   endif()
 endif()
@@ -778,9 +792,12 @@ if(ENABLE_STATIC)
   target_link_libraries(example-static jpeg-static)
 endif()
 
-add_executable(rdjpgcom rdjpgcom.c)
-
-add_executable(wrjpgcom wrjpgcom.c)
+if(LIB_JPEGTURBO_ENABLE_RDJPGCOM)
+  add_executable(rdjpgcom rdjpgcom.c)
+endif()
+if(LIB_JPEGTURBO_ENABLE_WDJPGCOM)
+  add_executable(wrjpgcom wrjpgcom.c)
+endif()
 
 
 ###############################################################################
@@ -791,9 +808,13 @@ if(WITH_FUZZ)
   add_subdirectory(fuzz)
 endif()
 
-add_executable(strtest strtest.c)
+if(LIB_JPEGTURBO_ENABLE_STRTEST)
+  add_executable(strtest strtest.c)
+endif()
 
-add_subdirectory(md5)
+if(LIB_JPEGTURBO_ENABLE_MD5)
+  add_subdirectory(md5)
+endif()
 
 if(GENERATOR_IS_MULTI_CONFIG)
   set(OBJDIR "\${CTEST_CONFIGURATION_TYPE}/")
@@ -1679,8 +1700,10 @@ if(WITH_TURBOJPEG)
       ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
       LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
       RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-    install(TARGETS tjbench
-      RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+     if(LIB_JPEGTURBO_ENABLE_BENCH)
+        install(TARGETS tjbench
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+    endif()
     if(NOT CMAKE_VERSION VERSION_LESS "3.1" AND MSVC AND
       CMAKE_C_LINKER_SUPPORTS_PDB)
       install(FILES "$<TARGET_PDB_FILE:turbojpeg>"
