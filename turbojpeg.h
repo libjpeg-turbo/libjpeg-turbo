@@ -1,6 +1,7 @@
 /*
  * Copyright (C)2009-2015, 2017, 2020-2021 D. R. Commander.
  *                                         All Rights Reserved.
+ * Copyright (C)2022 L. E. Segovia.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -1127,32 +1128,35 @@ DLLEXPORT int tjEncodeYUVPlanes(tjhandle handle, const unsigned char *srcBuf,
 */
 DLLEXPORT tjhandle tjInitDecompress(void);
 
-
 /**
- * Retrieve information about a JPEG image without decompressing it.
+ * Retrieve information about a JPEG datastream without decompressing it.
+ * If the datastream is an Abbreviated table specification, prime the
+ * decompressor or transformer with the contained tables.
+ * If the datastream is an image, return its properties.
  *
  * @param handle a handle to a TurboJPEG decompressor or transformer instance
  *
- * @param jpegBuf pointer to a buffer containing a JPEG image
+ * @param jpegBuf pointer to a buffer containing a JPEG image or abbreviated
+ * datastream.
  *
  * @param jpegSize size of the JPEG image (in bytes)
  *
  * @param width pointer to an integer variable that will receive the width (in
- * pixels) of the JPEG image
+ * pixels) of the JPEG image, if applicable
  *
  * @param height pointer to an integer variable that will receive the height
- * (in pixels) of the JPEG image
+ * (in pixels) of the JPEG image, if applicable
  *
  * @param jpegSubsamp pointer to an integer variable that will receive the
- * level of chrominance subsampling used when the JPEG image was compressed
- * (see @ref TJSAMP "Chrominance subsampling options".)
+ * level of chrominance subsampling used when the JPEG image was compressed, if
+ * applicable (see @ref TJSAMP "Chrominance subsampling options".)
  *
  * @param jpegColorspace pointer to an integer variable that will receive one
  * of the JPEG colorspace constants, indicating the colorspace of the JPEG
  * image (see @ref TJCS "JPEG colorspaces".)
  *
- * @return 0 if successful, or -1 if an error occurred (see #tjGetErrorStr2()
- * and #tjGetErrorCode().)
+ * @return 0 if successful, 1 if the encoding tables where successfully read,
+ * or -1 if an error occurred (see #tjGetErrorStr2() and #tjGetErrorCode().)
 */
 DLLEXPORT int tjDecompressHeader3(tjhandle handle,
                                   const unsigned char *jpegBuf,

@@ -1,6 +1,7 @@
 /*
  * Copyright (C)2009-2022 D. R. Commander.  All Rights Reserved.
  * Copyright (C)2021 Alex Richardson.  All Rights Reserved.
+ * Copyright (C)2022 L. E. Segovia.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -1202,7 +1203,6 @@ DLLEXPORT tjhandle tjInitDecompress(void)
   return _tjInitDecompress(this);
 }
 
-
 DLLEXPORT int tjDecompressHeader3(tjhandle handle,
                                   const unsigned char *jpegBuf,
                                   unsigned long jpegSize, int *width,
@@ -1225,7 +1225,17 @@ DLLEXPORT int tjDecompressHeader3(tjhandle handle,
   }
 
   jpeg_mem_src_tj(dinfo, jpegBuf, jpegSize);
-  jpeg_read_header(dinfo, TRUE);
+
+  retval = jpeg_read_header(dinfo, FALSE);
+
+  if (retval == JPEG_HEADER_TABLES_ONLY) {
+    // This function must *not* reset the decompressor state.
+    return 1;
+  } else if (retval != JPEG_HEADER_OK) {
+    THROW("tjDecompressHeader3(): JPEG datastream contains no image");
+  } else {
+    retval = 0;
+  }
 
   *width = dinfo->image_width;
   *height = dinfo->image_height;
