@@ -1,3 +1,14 @@
+2.0.8 ESR
+=========
+
+### Significant changes relative to 2.0.7 ESR:
+
+1. libjpeg-turbo now performs run-time detection of AltiVec instructions on
+OS X/PowerPC systems if AltiVec instructions are not enabled at compile time.
+This allows both AltiVec-equipped (PowerPC G4 and G5) and non-AltiVec-equipped
+(PowerPC G3) CPUs to be supported using the same build of libjpeg-turbo.
+
+
 2.0.7 ESR
 =========
 
