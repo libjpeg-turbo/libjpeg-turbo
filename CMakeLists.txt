@@ -16,7 +16,7 @@ string(REPLACE "." ";" VERSION_TRIPLET ${VERSION})
 list(GET VERSION_TRIPLET 0 VERSION_MAJOR)
 list(GET VERSION_TRIPLET 1 VERSION_MINOR)
 list(GET VERSION_TRIPLET 2 VERSION_REVISION)
-function(pad_number NUMBER OUTPUT_LEN)
+function(jpeg_pad_number NUMBER OUTPUT_LEN)
   string(LENGTH "${${NUMBER}}" INPUT_LEN)
   if(INPUT_LEN LESS OUTPUT_LEN)
     math(EXPR ZEROES "${OUTPUT_LEN} - ${INPUT_LEN} - 1")
@@ -27,8 +27,8 @@ function(pad_number NUMBER OUTPUT_LEN)
     set(${NUMBER} ${NUM} PARENT_SCOPE)
   endif()
 endfunction()
-pad_number(VERSION_MINOR 3)
-pad_number(VERSION_REVISION 3)
+jpeg_pad_number(VERSION_MINOR 3)
+jpeg_pad_number(VERSION_REVISION 3)
 set(LIBJPEG_TURBO_VERSION_NUMBER ${VERSION_MAJOR}${VERSION_MINOR}${VERSION_REVISION})
 
 # CMake 3.14 and later sets CMAKE_MACOSX_BUNDLE to TRUE by default when
@@ -151,7 +151,7 @@ endif()
 
 include(cmakescripts/GNUInstallDirs.cmake)
 
-macro(report_directory var)
+macro(jpeg_report_directory var)
   if(CMAKE_INSTALL_${var} STREQUAL CMAKE_INSTALL_FULL_${var})
     message(STATUS "CMAKE_INSTALL_${var} = ${CMAKE_INSTALL_${var}}")
   else()
@@ -165,7 +165,7 @@ if(UNIX)
   list(APPEND DIRLIST "MANDIR")
 endif()
 foreach(dir ${DIRLIST})
-  report_directory(${dir})
+  jpeg_report_directory(${dir})
 endforeach()
 
 
@@ -173,7 +173,7 @@ endforeach()
 # CONFIGURATION OPTIONS
 ###############################################################################
 
-macro(boolean_number var)
+macro(jpeg_boolean_number var)
   if(${var})
     set(${var} 1 ${ARGN})
   else()
@@ -182,36 +182,46 @@ macro(boolean_number var)
 endmacro()
 
 option(ENABLE_SHARED "Build shared libraries" TRUE)
-boolean_number(ENABLE_SHARED)
+jpeg_boolean_number(ENABLE_SHARED)
 option(ENABLE_STATIC "Build static libraries" TRUE)
-boolean_number(ENABLE_STATIC)
+jpeg_boolean_number(ENABLE_STATIC)
 option(REQUIRE_SIMD "Generate a fatal error if SIMD extensions are not available for this platform (default is to fall back to a non-SIMD build)" FALSE)
-boolean_number(REQUIRE_SIMD)
+jpeg_boolean_number(REQUIRE_SIMD)
 option(WITH_12BIT "Encode/decode JPEG images with 12-bit samples (implies WITH_ARITH_DEC=0 WITH_ARITH_ENC=0 WITH_JAVA=0 WITH_SIMD=0 WITH_TURBOJPEG=0 )" FALSE)
-boolean_number(WITH_12BIT)
+jpeg_boolean_number(WITH_12BIT)
 option(WITH_ARITH_DEC "Include arithmetic decoding support when emulating the libjpeg v6b API/ABI" TRUE)
-boolean_number(WITH_ARITH_DEC)
+jpeg_boolean_number(WITH_ARITH_DEC)
 option(WITH_ARITH_ENC "Include arithmetic encoding support when emulating the libjpeg v6b API/ABI" TRUE)
-boolean_number(WITH_ARITH_ENC)
+jpeg_boolean_number(WITH_ARITH_ENC)
 if(CMAKE_C_COMPILER_ABI MATCHES "ELF X32")
   set(WITH_JAVA 0)
 else()
   option(WITH_JAVA "Build Java wrapper for the TurboJPEG API library (implies ENABLE_SHARED=1)" FALSE)
-  boolean_number(WITH_JAVA)
+  jpeg_boolean_number(WITH_JAVA)
 endif()
 option(WITH_JPEG7 "Emulate libjpeg v7 API/ABI (this makes ${CMAKE_PROJECT_NAME} backward-incompatible with libjpeg v6b)" FALSE)
-boolean_number(WITH_JPEG7)
+jpeg_boolean_number(WITH_JPEG7)
 option(WITH_JPEG8 "Emulate libjpeg v8 API/ABI (this makes ${CMAKE_PROJECT_NAME} backward-incompatible with libjpeg v6b)" FALSE)
-boolean_number(WITH_JPEG8)
+jpeg_boolean_number(WITH_JPEG8)
 option(WITH_MEM_SRCDST "Include in-memory source/destination manager functions when emulating the libjpeg v6b or v7 API/ABI" TRUE)
-boolean_number(WITH_MEM_SRCDST)
+jpeg_boolean_number(WITH_MEM_SRCDST)
 option(WITH_SIMD "Include SIMD extensions, if available for this platform" TRUE)
-boolean_number(WITH_SIMD)
+jpeg_boolean_number(WITH_SIMD)
 option(WITH_TURBOJPEG "Include the TurboJPEG API library and associated test programs" TRUE)
-boolean_number(WITH_TURBOJPEG)
+jpeg_boolean_number(WITH_TURBOJPEG)
 option(WITH_FUZZ "Build fuzz targets" FALSE)
 
-macro(report_option var desc)
+get_directory_property(has_parent PARENT_DIRECTORY)
+if(has_parent)
+  set(JPEG_ENABLE_TESTS_DEFAULT FALSE)
+else()
+  set(JPEG_ENABLE_TESTS_DEFAULT TRUE)
+endif()
+
+option(JPEG_ENABLE_TESTS "Build tests" ${JPEG_ENABLE_TESTS_DEFAULT})
+jpeg_boolean_number(JPEG_ENABLE_TESTS)
+
+macro(jpeg_report_option var desc)
   if(${var})
     message(STATUS "${desc} enabled (${var} = ${${var}})")
   else()
@@ -233,8 +243,8 @@ if(DEFINED CMAKE_POSITION_INDEPENDENT_CODE AND
   unset(CMAKE_POSITION_INDEPENDENT_CODE CACHE)
 endif()
 
-report_option(ENABLE_SHARED "Shared libraries")
-report_option(ENABLE_STATIC "Static libraries")
+jpeg_report_option(ENABLE_SHARED "Shared libraries")
+jpeg_report_option(ENABLE_STATIC "Static libraries")
 
 if(ENABLE_SHARED)
   set(CMAKE_INSTALL_RPATH ${CMAKE_INSTALL_FULL_LIBDIR})
@@ -258,25 +268,25 @@ if(WITH_12BIT)
 else()
   set(BITS_IN_JSAMPLE 8)
 endif()
-report_option(WITH_12BIT "12-bit JPEG support")
+jpeg_report_option(WITH_12BIT "12-bit JPEG support")
 
 if(WITH_ARITH_DEC)
   set(D_ARITH_CODING_SUPPORTED 1)
 endif()
 if(NOT WITH_12BIT)
-  report_option(WITH_ARITH_DEC "Arithmetic decoding support")
+  jpeg_report_option(WITH_ARITH_DEC "Arithmetic decoding support")
 endif()
 
 if(WITH_ARITH_ENC)
   set(C_ARITH_CODING_SUPPORTED 1)
 endif()
 if(NOT WITH_12BIT)
-  report_option(WITH_ARITH_ENC "Arithmetic encoding support")
+  jpeg_report_option(WITH_ARITH_ENC "Arithmetic encoding support")
 endif()
 
 if(NOT WITH_12BIT)
-  report_option(WITH_TURBOJPEG "TurboJPEG API library")
-  report_option(WITH_JAVA "TurboJPEG Java wrapper")
+  jpeg_report_option(WITH_TURBOJPEG "TurboJPEG API library")
+  jpeg_report_option(WITH_JAVA "TurboJPEG Java wrapper")
 endif()
 
 if(WITH_MEM_SRCDST)
@@ -284,7 +294,7 @@ if(WITH_MEM_SRCDST)
   set(MEM_SRCDST_FUNCTIONS "global:  jpeg_mem_dest;  jpeg_mem_src;")
 endif()
 if(NOT WITH_JPEG8)
-  report_option(WITH_MEM_SRCDST "In-memory source/destination managers")
+  jpeg_report_option(WITH_MEM_SRCDST "In-memory source/destination managers")
 endif()
 
 set(SO_AGE 2)
@@ -442,7 +452,7 @@ else()
   set(INLINE_OPTIONS "__inline__;inline")
 endif()
 option(FORCE_INLINE "Force function inlining" TRUE)
-boolean_number(FORCE_INLINE)
+jpeg_boolean_number(FORCE_INLINE)
 if(FORCE_INLINE)
   if(MSVC)
     list(INSERT INLINE_OPTIONS 0 "__forceinline")
@@ -572,9 +582,9 @@ if(WITH_SIMD)
     set_source_files_properties(${SIMD_OBJS} PROPERTIES GENERATED 1)
   endif()
 else()
-  add_library(simd OBJECT jsimd_none.c)
+  add_library(jpeg_simd OBJECT jsimd_none.c)
   if(NOT WIN32 AND (CMAKE_POSITION_INDEPENDENT_CODE OR ENABLE_SHARED))
-    set_target_properties(simd PROPERTIES POSITION_INDEPENDENT_CODE 1)
+    set_target_properties(jpeg_simd PROPERTIES POSITION_INDEPENDENT_CODE 1)
   endif()
 endif()
 
@@ -587,7 +597,7 @@ if(ENABLE_SHARED)
 endif()
 
 if(ENABLE_STATIC)
-  add_library(jpeg-static STATIC ${JPEG_SOURCES} $<TARGET_OBJECTS:simd>
+  add_library(jpeg-static STATIC ${JPEG_SOURCES} $<TARGET_OBJECTS:jpeg_simd>
     ${SIMD_OBJS})
   if(NOT MSVC)
     set_target_properties(jpeg-static PROPERTIES OUTPUT_NAME jpeg)
@@ -596,7 +606,7 @@ endif()
 
 if(WITH_TURBOJPEG)
   if(ENABLE_SHARED)
-    set(TURBOJPEG_SOURCES ${JPEG_SOURCES} $<TARGET_OBJECTS:simd> ${SIMD_OBJS}
+    set(TURBOJPEG_SOURCES ${JPEG_SOURCES} $<TARGET_OBJECTS:jpeg_simd> ${SIMD_OBJS}
       turbojpeg.c transupp.c jdatadst-tj.c jdatasrc-tj.c rdbmp.c rdppm.c
       wrbmp.c wrppm.c)
     set(TJMAPFILE ${CMAKE_CURRENT_SOURCE_DIR}/turbojpeg-mapfile)
@@ -634,21 +644,23 @@ if(WITH_TURBOJPEG)
         LINK_FLAGS "${TJMAPFLAG}${TJMAPFILE}")
     endif()
 
-    add_executable(tjunittest tjunittest.c tjutil.c md5/md5.c md5/md5hl.c)
-    target_link_libraries(tjunittest turbojpeg)
+    if(JPEG_ENABLE_TESTS)
+      add_executable(tjunittest tjunittest.c tjutil.c md5/md5.c md5/md5hl.c)
+      target_link_libraries(tjunittest turbojpeg)
 
-    add_executable(tjbench tjbench.c tjutil.c)
-    target_link_libraries(tjbench turbojpeg)
-    if(UNIX)
-      target_link_libraries(tjbench m)
+      add_executable(tjbench tjbench.c tjutil.c)
+      target_link_libraries(tjbench turbojpeg)
+      if(UNIX)
+        target_link_libraries(tjbench m)
+      endif()
+
+      add_executable(tjexample tjexample.c)
+      target_link_libraries(tjexample turbojpeg)
     endif()
-
-    add_executable(tjexample tjexample.c)
-    target_link_libraries(tjexample turbojpeg)
   endif()
 
   if(ENABLE_STATIC)
-    add_library(turbojpeg-static STATIC ${JPEG_SOURCES} $<TARGET_OBJECTS:simd>
+    add_library(turbojpeg-static STATIC ${JPEG_SOURCES} $<TARGET_OBJECTS:jpeg_simd>
       ${SIMD_OBJS} turbojpeg.c transupp.c jdatadst-tj.c jdatasrc-tj.c rdbmp.c
       rdppm.c wrbmp.c wrppm.c)
     set_property(TARGET turbojpeg-static PROPERTY COMPILE_FLAGS
@@ -657,14 +669,16 @@ if(WITH_TURBOJPEG)
       set_target_properties(turbojpeg-static PROPERTIES OUTPUT_NAME turbojpeg)
     endif()
 
-    add_executable(tjunittest-static tjunittest.c tjutil.c md5/md5.c
-      md5/md5hl.c)
-    target_link_libraries(tjunittest-static turbojpeg-static)
+    if(JPEG_ENABLE_TESTS)
+      add_executable(tjunittest-static tjunittest.c tjutil.c md5/md5.c
+        md5/md5hl.c)
+      target_link_libraries(tjunittest-static turbojpeg-static)
 
-    add_executable(tjbench-static tjbench.c tjutil.c)
-    target_link_libraries(tjbench-static turbojpeg-static)
-    if(UNIX)
-      target_link_libraries(tjbench-static m)
+      add_executable(tjbench-static tjbench.c tjutil.c)
+      target_link_libraries(tjbench-static turbojpeg-static)
+      if(UNIX)
+        target_link_libraries(tjbench-static m)
+      endif()
     endif()
   endif()
 endif()
@@ -705,21 +719,23 @@ add_executable(wrjpgcom wrjpgcom.c)
 # TESTS
 ###############################################################################
 
-if(WITH_FUZZ)
+if(WITH_FUZZ AND JPEG_ENABLE_TESTS)
   add_subdirectory(fuzz)
 endif()
 
-add_executable(strtest strtest.c)
+if(JPEG_ENABLE_TESTS)
+  add_executable(jpeg_strtest strtest.c)
 
-add_subdirectory(md5)
+  add_subdirectory(md5)
+  
+  if(MSVC_IDE OR XCODE)
+    set(OBJDIR "\${CTEST_CONFIGURATION_TYPE}/")
+  else()
+    set(OBJDIR "")
+  endif()
 
-if(MSVC_IDE OR XCODE)
-  set(OBJDIR "\${CTEST_CONFIGURATION_TYPE}/")
-else()
-  set(OBJDIR "")
+  enable_testing()
 endif()
-
-enable_testing()
 
 if(WITH_12BIT)
   set(TESTORIG testorig12.jpg)
@@ -839,7 +855,7 @@ else()
   set(MD5_JPEG_CROP b4197f377e621c4e9b1d20471432610d)
 endif()
 
-if(WITH_JAVA)
+if(WITH_JAVA AND JPEG_ENABLE_TESTS)
   add_test(TJUnitTest
     ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
       -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
@@ -867,11 +883,13 @@ if(WITH_JAVA)
 endif()
 
 set(TEST_LIBTYPES "")
-if(ENABLE_SHARED)
-  set(TEST_LIBTYPES ${TEST_LIBTYPES} shared)
-endif()
-if(ENABLE_STATIC)
-  set(TEST_LIBTYPES ${TEST_LIBTYPES} static)
+if(JPEG_ENABLE_TESTS)
+  if(ENABLE_SHARED)
+    set(TEST_LIBTYPES ${TEST_LIBTYPES} shared)
+  endif()
+  if(ENABLE_STATIC)
+    set(TEST_LIBTYPES ${TEST_LIBTYPES} static)
+  endif()
 endif()
 
 set(TESTIMAGES ${CMAKE_CURRENT_SOURCE_DIR}/testimages)
@@ -1046,7 +1064,7 @@ foreach(libtype ${TEST_LIBTYPES})
   # the underlying algorithms as possible (including all of the
   # SIMD-accelerated ones.)
 
-  macro(add_bittest PROG NAME ARGS OUTFILE INFILE MD5SUM)
+  macro(jpeg_add_bittest PROG NAME ARGS OUTFILE INFILE MD5SUM)
     add_test(${PROG}-${libtype}-${NAME}
       ${CMAKE_CROSSCOMPILING_EMULATOR} ${PROG}${suffix} ${ARGS}
         -outfile ${OUTFILE} ${INFILE})
@@ -1062,12 +1080,12 @@ foreach(libtype ${TEST_LIBTYPES})
   endmacro()
 
   # CC: null  SAMP: fullsize  FDCT: islow  ENT: huff
-  add_bittest(cjpeg rgb-islow "-rgb;-dct;int;-icc;${TESTIMAGES}/test1.icc"
+  jpeg_add_bittest(cjpeg rgb-islow "-rgb;-dct;int;-icc;${TESTIMAGES}/test1.icc"
     testout_rgb_islow.jpg ${TESTIMAGES}/testorig.ppm
     ${MD5_JPEG_RGB_ISLOW})
 
   # CC: null  SAMP: fullsize  IDCT: islow  ENT: huff
-  add_bittest(djpeg rgb-islow "-dct;int;-ppm;-icc;testout_rgb_islow.icc"
+  jpeg_add_bittest(djpeg rgb-islow "-dct;int;-ppm;-icc;testout_rgb_islow.icc"
     testout_rgb_islow.ppm testout_rgb_islow.jpg
     ${MD5_PPM_RGB_ISLOW} cjpeg-${libtype}-rgb-islow)
 
@@ -1077,143 +1095,143 @@ foreach(libtype ${TEST_LIBTYPES})
   set_tests_properties(djpeg-${libtype}-rgb-islow-icc-cmp PROPERTIES
     DEPENDS djpeg-${libtype}-rgb-islow)
 
-  add_bittest(jpegtran icc "-copy;all;-icc;${TESTIMAGES}/test2.icc"
+  jpeg_add_bittest(jpegtran icc "-copy;all;-icc;${TESTIMAGES}/test2.icc"
     testout_rgb_islow2.jpg testout_rgb_islow.jpg
     ${MD5_JPEG_RGB_ISLOW2} cjpeg-${libtype}-rgb-islow)
 
   if(NOT WITH_12BIT)
     # CC: RGB->RGB565  SAMP: fullsize  IDCT: islow  ENT: huff
-    add_bittest(djpeg rgb-islow-565 "-dct;int;-rgb565;-dither;none;-bmp"
+    jpeg_add_bittest(djpeg rgb-islow-565 "-dct;int;-rgb565;-dither;none;-bmp"
       testout_rgb_islow_565.bmp testout_rgb_islow.jpg
       ${MD5_BMP_RGB_ISLOW_565} cjpeg-${libtype}-rgb-islow)
 
     # CC: RGB->RGB565 (dithered)  SAMP: fullsize  IDCT: islow  ENT: huff
-    add_bittest(djpeg rgb-islow-565D "-dct;int;-rgb565;-bmp"
+    jpeg_add_bittest(djpeg rgb-islow-565D "-dct;int;-rgb565;-bmp"
       testout_rgb_islow_565D.bmp testout_rgb_islow.jpg
       ${MD5_BMP_RGB_ISLOW_565D} cjpeg-${libtype}-rgb-islow)
   endif()
 
   # CC: RGB->YCC  SAMP: fullsize/h2v1  FDCT: ifast  ENT: 2-pass huff
-  add_bittest(cjpeg 422-ifast-opt "-sample;2x1;-dct;fast;-opt"
+  jpeg_add_bittest(cjpeg 422-ifast-opt "-sample;2x1;-dct;fast;-opt"
     testout_422_ifast_opt.jpg ${TESTIMAGES}/testorig.ppm
     ${MD5_JPEG_422_IFAST_OPT})
 
   # CC: YCC->RGB  SAMP: fullsize/h2v1 fancy  IDCT: ifast  ENT: huff
-  add_bittest(djpeg 422-ifast "-dct;fast"
+  jpeg_add_bittest(djpeg 422-ifast "-dct;fast"
     testout_422_ifast.ppm testout_422_ifast_opt.jpg
     ${MD5_PPM_422_IFAST} cjpeg-${libtype}-422-ifast-opt)
 
   # CC: RGB->YCC  SAMP: fullsize/h1v2  FDCT: islow  ENT: huff
-  add_bittest(cjpeg 440-islow "-sample;1x2;-dct;int"
+  jpeg_add_bittest(cjpeg 440-islow "-sample;1x2;-dct;int"
     testout_440_islow.jpg ${TESTIMAGES}/testorig.ppm
     ${MD5_JPEG_440_ISLOW})
 
   # CC: YCC->RGB  SAMP: fullsize/h1v2 fancy  IDCT: islow  ENT: huff
-  add_bittest(djpeg 440-islow "-dct;int"
+  jpeg_add_bittest(djpeg 440-islow "-dct;int"
     testout_440_islow.ppm testout_440_islow.jpg
     ${MD5_PPM_440_ISLOW} cjpeg-${libtype}-440-islow)
 
   # CC: YCC->RGB  SAMP: h2v1 merged  IDCT: ifast  ENT: huff
-  add_bittest(djpeg 422m-ifast "-dct;fast;-nosmooth"
+  jpeg_add_bittest(djpeg 422m-ifast "-dct;fast;-nosmooth"
     testout_422m_ifast.ppm testout_422_ifast_opt.jpg
     ${MD5_PPM_422M_IFAST} cjpeg-${libtype}-422-ifast-opt)
 
   if(NOT WITH_12BIT)
     # CC: YCC->RGB565  SAMP: h2v1 merged  IDCT: ifast  ENT: huff
-    add_bittest(djpeg 422m-ifast-565
+    jpeg_add_bittest(djpeg 422m-ifast-565
       "-dct;int;-nosmooth;-rgb565;-dither;none;-bmp"
       testout_422m_ifast_565.bmp testout_422_ifast_opt.jpg
       ${MD5_BMP_422M_IFAST_565} cjpeg-${libtype}-422-ifast-opt)
 
     # CC: YCC->RGB565 (dithered)  SAMP: h2v1 merged  IDCT: ifast  ENT: huff
-    add_bittest(djpeg 422m-ifast-565D "-dct;int;-nosmooth;-rgb565;-bmp"
+    jpeg_add_bittest(djpeg 422m-ifast-565D "-dct;int;-nosmooth;-rgb565;-bmp"
       testout_422m_ifast_565D.bmp testout_422_ifast_opt.jpg
       ${MD5_BMP_422M_IFAST_565D} cjpeg-${libtype}-422-ifast-opt)
   endif()
 
   # CC: RGB->YCC  SAMP: fullsize/h2v2  FDCT: ifast  ENT: prog huff
-  add_bittest(cjpeg 420-q100-ifast-prog
+  jpeg_add_bittest(cjpeg 420-q100-ifast-prog
     "-sample;2x2;-quality;100;-dct;fast;-scans;${TESTIMAGES}/test.scan"
     testout_420_q100_ifast_prog.jpg ${TESTIMAGES}/testorig.ppm
     ${MD5_JPEG_420_IFAST_Q100_PROG})
 
   # CC: YCC->RGB  SAMP: fullsize/h2v2 fancy  IDCT: ifast  ENT: prog huff
-  add_bittest(djpeg 420-q100-ifast-prog "-dct;fast"
+  jpeg_add_bittest(djpeg 420-q100-ifast-prog "-dct;fast"
     testout_420_q100_ifast.ppm testout_420_q100_ifast_prog.jpg
     ${MD5_PPM_420_Q100_IFAST} cjpeg-${libtype}-420-q100-ifast-prog)
 
   # CC: YCC->RGB  SAMP: h2v2 merged  IDCT: ifast  ENT: prog huff
-  add_bittest(djpeg 420m-q100-ifast-prog "-dct;fast;-nosmooth"
+  jpeg_add_bittest(djpeg 420m-q100-ifast-prog "-dct;fast;-nosmooth"
     testout_420m_q100_ifast.ppm testout_420_q100_ifast_prog.jpg
     ${MD5_PPM_420M_Q100_IFAST} cjpeg-${libtype}-420-q100-ifast-prog)
 
   # CC: RGB->Gray  SAMP: fullsize  FDCT: islow  ENT: huff
-  add_bittest(cjpeg gray-islow "-gray;-dct;int"
+  jpeg_add_bittest(cjpeg gray-islow "-gray;-dct;int"
     testout_gray_islow.jpg ${TESTIMAGES}/testorig.ppm
     ${MD5_JPEG_GRAY_ISLOW})
 
   # CC: Gray->Gray  SAMP: fullsize  IDCT: islow  ENT: huff
-  add_bittest(djpeg gray-islow "-dct;int"
+  jpeg_add_bittest(djpeg gray-islow "-dct;int"
     testout_gray_islow.ppm testout_gray_islow.jpg
     ${MD5_PPM_GRAY_ISLOW} cjpeg-${libtype}-gray-islow)
 
   # CC: Gray->RGB  SAMP: fullsize  IDCT: islow  ENT: huff
-  add_bittest(djpeg gray-islow-rgb "-dct;int;-rgb"
+  jpeg_add_bittest(djpeg gray-islow-rgb "-dct;int;-rgb"
     testout_gray_islow_rgb.ppm testout_gray_islow.jpg
     ${MD5_PPM_GRAY_ISLOW_RGB} cjpeg-${libtype}-gray-islow)
 
   if(NOT WITH_12BIT)
     # CC: Gray->RGB565  SAMP: fullsize  IDCT: islow  ENT: huff
-    add_bittest(djpeg gray-islow-565 "-dct;int;-rgb565;-dither;none;-bmp"
+    jpeg_add_bittest(djpeg gray-islow-565 "-dct;int;-rgb565;-dither;none;-bmp"
       testout_gray_islow_565.bmp testout_gray_islow.jpg
       ${MD5_BMP_GRAY_ISLOW_565} cjpeg-${libtype}-gray-islow)
 
     # CC: Gray->RGB565 (dithered)  SAMP: fullsize  IDCT: islow  ENT: huff
-    add_bittest(djpeg gray-islow-565D "-dct;int;-rgb565;-bmp"
+    jpeg_add_bittest(djpeg gray-islow-565D "-dct;int;-rgb565;-bmp"
       testout_gray_islow_565D.bmp testout_gray_islow.jpg
       ${MD5_BMP_GRAY_ISLOW_565D} cjpeg-${libtype}-gray-islow)
   endif()
 
   # CC: RGB->YCC  SAMP: fullsize smooth/h2v2 smooth  FDCT: islow
   # ENT: 2-pass huff
-  add_bittest(cjpeg 420s-ifast-opt "-sample;2x2;-smooth;1;-dct;int;-opt"
+  jpeg_add_bittest(cjpeg 420s-ifast-opt "-sample;2x2;-smooth;1;-dct;int;-opt"
     testout_420s_ifast_opt.jpg ${TESTIMAGES}/testorig.ppm
     ${MD5_JPEG_420S_IFAST_OPT})
 
   if(FLOATTEST)
     # CC: RGB->YCC  SAMP: fullsize/int  FDCT: float  ENT: prog huff
-    add_bittest(cjpeg 3x2-float-prog "-sample;3x2;-dct;float;-prog"
+    jpeg_add_bittest(cjpeg 3x2-float-prog "-sample;3x2;-dct;float;-prog"
       testout_3x2_float_prog.jpg ${TESTIMAGES}/testorig.ppm
       ${MD5_JPEG_3x2_FLOAT_PROG_${FLOATTEST_UC}})
 
     # CC: YCC->RGB  SAMP: fullsize/int  IDCT: float  ENT: prog huff
-    add_bittest(djpeg 3x2-float-prog "-dct;float"
+    jpeg_add_bittest(djpeg 3x2-float-prog "-dct;float"
       testout_3x2_float.ppm testout_3x2_float_prog.jpg
       ${MD5_PPM_3x2_FLOAT_${FLOATTEST_UC}} cjpeg-${libtype}-3x2-float-prog)
   endif()
 
     # CC: RGB->YCC  SAMP: fullsize/int  FDCT: ifast  ENT: prog huff
-  add_bittest(cjpeg 3x2-ifast-prog "-sample;3x2;-dct;fast;-prog"
+  jpeg_add_bittest(cjpeg 3x2-ifast-prog "-sample;3x2;-dct;fast;-prog"
     testout_3x2_ifast_prog.jpg ${TESTIMAGES}/testorig.ppm
     ${MD5_JPEG_3x2_IFAST_PROG})
 
   # CC: YCC->RGB  SAMP: fullsize/int  IDCT: ifast  ENT: prog huff
-  add_bittest(djpeg 3x2-ifast-prog "-dct;fast"
+  jpeg_add_bittest(djpeg 3x2-ifast-prog "-dct;fast"
     testout_3x2_ifast.ppm testout_3x2_ifast_prog.jpg
     ${MD5_PPM_3x2_IFAST} cjpeg-${libtype}-3x2-ifast-prog)
 
   if(WITH_ARITH_ENC)
     # CC: YCC->RGB  SAMP: fullsize/h2v2  FDCT: islow  ENT: arith
-    add_bittest(cjpeg 420-islow-ari "-dct;int;-arithmetic"
+    jpeg_add_bittest(cjpeg 420-islow-ari "-dct;int;-arithmetic"
       testout_420_islow_ari.jpg ${TESTIMAGES}/testorig.ppm
       ${MD5_JPEG_420_ISLOW_ARI})
 
-    add_bittest(jpegtran 420-islow-ari "-arithmetic"
+    jpeg_add_bittest(jpegtran 420-islow-ari "-arithmetic"
       testout_420_islow_ari2.jpg ${TESTIMAGES}/testimgint.jpg
       ${MD5_JPEG_420_ISLOW_ARI})
 
     # CC: YCC->RGB  SAMP: fullsize  FDCT: islow  ENT: prog arith
-    add_bittest(cjpeg 444-islow-progari
+    jpeg_add_bittest(cjpeg 444-islow-progari
       "-sample;1x1;-dct;int;-prog;-arithmetic"
       testout_444_islow_progari.jpg ${TESTIMAGES}/testorig.ppm
       ${MD5_JPEG_444_ISLOW_PROGARI})
@@ -1221,11 +1239,11 @@ foreach(libtype ${TEST_LIBTYPES})
 
   if(WITH_ARITH_DEC)
     # CC: RGB->YCC  SAMP: h2v2 merged  IDCT: ifast  ENT: arith
-    add_bittest(djpeg 420m-ifast-ari "-fast;-skip;1,20;-ppm"
+    jpeg_add_bittest(djpeg 420m-ifast-ari "-fast;-skip;1,20;-ppm"
       testout_420m_ifast_ari.ppm ${TESTIMAGES}/testimgari.jpg
       ${MD5_PPM_420M_IFAST_ARI})
 
-    add_bittest(jpegtran 420-islow ""
+    jpeg_add_bittest(jpegtran 420-islow ""
       testout_420_islow.jpg ${TESTIMAGES}/testimgari.jpg
       ${MD5_JPEG_420_ISLOW})
   endif()
@@ -1251,7 +1269,7 @@ foreach(libtype ${TEST_LIBTYPES})
   #         ENT: huff
   foreach(scale 2_1 15_8 13_8 11_8 9_8 7_8 3_4 5_8 1_2 3_8 1_4 1_8)
     string(REGEX REPLACE "_" "/" scalearg ${scale})
-    add_bittest(djpeg 420m-islow-${scale}
+    jpeg_add_bittest(djpeg 420m-islow-${scale}
       "-dct;int;-scale;${scalearg};-nosmooth;-ppm"
       testout_420m_islow_${scale}.ppm ${TESTIMAGES}/${TESTORIG}
       ${MD5_PPM_420M_ISLOW_${scale}})
@@ -1259,28 +1277,28 @@ foreach(libtype ${TEST_LIBTYPES})
 
   if(NOT WITH_12BIT)
     # CC: YCC->RGB (dithered)  SAMP: h2v2 fancy  IDCT: islow  ENT: huff
-    add_bittest(djpeg 420-islow-256 "-dct;int;-colors;256;-bmp"
+    jpeg_add_bittest(djpeg 420-islow-256 "-dct;int;-colors;256;-bmp"
       testout_420_islow_256.bmp ${TESTIMAGES}/${TESTORIG}
       ${MD5_BMP_420_ISLOW_256})
 
     # CC: YCC->RGB565  SAMP: h2v2 fancy  IDCT: islow  ENT: huff
-    add_bittest(djpeg 420-islow-565 "-dct;int;-rgb565;-dither;none;-bmp"
+    jpeg_add_bittest(djpeg 420-islow-565 "-dct;int;-rgb565;-dither;none;-bmp"
       testout_420_islow_565.bmp ${TESTIMAGES}/${TESTORIG}
       ${MD5_BMP_420_ISLOW_565})
 
     # CC: YCC->RGB565 (dithered)  SAMP: h2v2 fancy  IDCT: islow  ENT: huff
-    add_bittest(djpeg 420-islow-565D "-dct;int;-rgb565;-bmp"
+    jpeg_add_bittest(djpeg 420-islow-565D "-dct;int;-rgb565;-bmp"
       testout_420_islow_565D.bmp ${TESTIMAGES}/${TESTORIG}
       ${MD5_BMP_420_ISLOW_565D})
 
     # CC: YCC->RGB565  SAMP: h2v2 merged  IDCT: islow  ENT: huff
-    add_bittest(djpeg 420m-islow-565
+    jpeg_add_bittest(djpeg 420m-islow-565
       "-dct;int;-nosmooth;-rgb565;-dither;none;-bmp"
       testout_420m_islow_565.bmp ${TESTIMAGES}/${TESTORIG}
       ${MD5_BMP_420M_ISLOW_565})
 
     # CC: YCC->RGB565 (dithered)  SAMP: h2v2 merged  IDCT: islow  ENT: huff
-    add_bittest(djpeg 420m-islow-565D "-dct;int;-nosmooth;-rgb565;-bmp"
+    jpeg_add_bittest(djpeg 420m-islow-565D "-dct;int;-nosmooth;-rgb565;-bmp"
       testout_420m_islow_565D.bmp ${TESTIMAGES}/${TESTORIG}
       ${MD5_BMP_420M_ISLOW_565D})
   endif()
@@ -1289,13 +1307,13 @@ foreach(libtype ${TEST_LIBTYPES})
   # possible code paths in jpeg_skip_scanlines().
 
   # Context rows: Yes  Intra-iMCU row: Yes  iMCU row prefetch: No   ENT: huff
-  add_bittest(djpeg 420-islow-skip15_31 "-dct;int;-skip;15,31;-ppm"
+  jpeg_add_bittest(djpeg 420-islow-skip15_31 "-dct;int;-skip;15,31;-ppm"
     testout_420_islow_skip15,31.ppm ${TESTIMAGES}/${TESTORIG}
     ${MD5_PPM_420_ISLOW_SKIP15_31})
 
   # Context rows: Yes  Intra-iMCU row: No   iMCU row prefetch: Yes  ENT: arith
   if(WITH_ARITH_DEC)
-    add_bittest(djpeg 420-islow-ari-skip16_139 "-dct;int;-skip;16,139;-ppm"
+    jpeg_add_bittest(djpeg 420-islow-ari-skip16_139 "-dct;int;-skip;16,139;-ppm"
       testout_420_islow_ari_skip16,139.ppm ${TESTIMAGES}/testimgari.jpg
       ${MD5_PPM_420_ISLOW_ARI_SKIP16_139})
   endif()
@@ -1304,14 +1322,14 @@ foreach(libtype ${TEST_LIBTYPES})
   add_test(cjpeg-${libtype}-420-islow-prog
     ${CMAKE_CROSSCOMPILING_EMULATOR} cjpeg${suffix} -dct int -prog
       -outfile testout_420_islow_prog.jpg ${TESTIMAGES}/testorig.ppm)
-  add_bittest(djpeg 420-islow-prog-crop62x62_71_71
+  jpeg_add_bittest(djpeg 420-islow-prog-crop62x62_71_71
     "-dct;int;-crop;62x62+71+71;-ppm"
     testout_420_islow_prog_crop62x62,71,71.ppm testout_420_islow_prog.jpg
     ${MD5_PPM_420_ISLOW_PROG_CROP62x62_71_71} cjpeg-${libtype}-420-islow-prog)
 
   # Context rows: Yes  Intra-iMCU row: No   iMCU row prefetch: No   ENT: arith
   if(WITH_ARITH_DEC)
-    add_bittest(djpeg 420-islow-ari-crop53x53_4_4
+    jpeg_add_bittest(djpeg 420-islow-ari-crop53x53_4_4
       "-dct;int;-crop;53x53+4+4;-ppm"
       testout_420_islow_ari_crop53x53,4,4.ppm ${TESTIMAGES}/testimgari.jpg
       ${MD5_PPM_420_ISLOW_ARI_CROP53x53_4_4})
@@ -1321,7 +1339,7 @@ foreach(libtype ${TEST_LIBTYPES})
   add_test(cjpeg-${libtype}-444-islow
     ${CMAKE_CROSSCOMPILING_EMULATOR} cjpeg${suffix} -dct int -sample 1x1
       -outfile testout_444_islow.jpg ${TESTIMAGES}/testorig.ppm)
-  add_bittest(djpeg 444-islow-skip1_6 "-dct;int;-skip;1,6;-ppm"
+  jpeg_add_bittest(djpeg 444-islow-skip1_6 "-dct;int;-skip;1,6;-ppm"
     testout_444_islow_skip1,6.ppm testout_444_islow.jpg
     ${MD5_PPM_444_ISLOW_SKIP1_6} cjpeg-${libtype}-444-islow)
 
@@ -1329,7 +1347,7 @@ foreach(libtype ${TEST_LIBTYPES})
   add_test(cjpeg-${libtype}-444-islow-prog
     ${CMAKE_CROSSCOMPILING_EMULATOR} cjpeg${suffix} -dct int -prog -sample 1x1
       -outfile testout_444_islow_prog.jpg ${TESTIMAGES}/testorig.ppm)
-  add_bittest(djpeg 444-islow-prog-crop98x98_13_13
+  jpeg_add_bittest(djpeg 444-islow-prog-crop98x98_13_13
     "-dct;int;-crop;98x98+13+13;-ppm"
     testout_444_islow_prog_crop98x98,13,13.ppm testout_444_islow_prog.jpg
     ${MD5_PPM_444_ISLOW_PROG_CROP98x98_13_13} cjpeg-${libtype}-444-islow-prog)
@@ -1341,28 +1359,30 @@ foreach(libtype ${TEST_LIBTYPES})
         -sample 1x1 -outfile testout_444_islow_ari.jpg
         ${TESTIMAGES}/testorig.ppm)
     if(WITH_ARITH_DEC)
-      add_bittest(djpeg 444-islow-ari-crop37x37_0_0
+      jpeg_add_bittest(djpeg 444-islow-ari-crop37x37_0_0
         "-dct;int;-crop;37x37+0+0;-ppm"
         testout_444_islow_ari_crop37x37,0,0.ppm testout_444_islow_ari.jpg
         ${MD5_PPM_444_ISLOW_ARI_CROP37x37_0_0} cjpeg-${libtype}-444-islow-ari)
     endif()
   endif()
 
-  add_bittest(jpegtran crop "-crop;120x90+20+50;-transpose;-perfect"
+  jpeg_add_bittest(jpegtran crop "-crop;120x90+20+50;-transpose;-perfect"
     testout_crop.jpg ${TESTIMAGES}/${TESTORIG}
     ${MD5_JPEG_CROP})
 
 endforeach()
 
-add_custom_target(testclean COMMAND ${CMAKE_COMMAND} -P
-  ${CMAKE_CURRENT_SOURCE_DIR}/cmakescripts/testclean.cmake)
+if(JPEG_ENABLE_TESTS)
+  add_custom_target(jpeg_testclean COMMAND ${CMAKE_COMMAND} -P
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmakescripts/testclean.cmake)
 
-configure_file(croptest.in croptest @ONLY)
-add_custom_target(croptest
-  COMMAND echo croptest
-  COMMAND ${BASH} ${CMAKE_CURRENT_BINARY_DIR}/croptest)
+  configure_file(croptest.in croptest @ONLY)
+  add_custom_target(jpeg_croptest
+    COMMAND echo croptest
+    COMMAND ${BASH} ${CMAKE_CURRENT_BINARY_DIR}/croptest)
+endif()
 
-if(WITH_TURBOJPEG)
+if(WITH_TURBOJPEG AND JPEG_ENABLE_TESTS)
   configure_file(tjbenchtest.in tjbenchtest @ONLY)
   configure_file(tjexampletest.in tjexampletest @ONLY)
   if(WIN32)
@@ -1434,8 +1454,10 @@ if(WITH_TURBOJPEG)
       ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
       LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
       RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-    install(TARGETS tjbench
-      RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+    if(JPEG_ENABLE_TESTS)
+      install(TARGETS tjbench
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+    endif()
     if(NOT CMAKE_VERSION VERSION_LESS "3.1" AND MSVC AND
       CMAKE_C_LINKER_SUPPORTS_PDB)
       install(FILES "$<TARGET_PDB_FILE:turbojpeg>"
@@ -1446,7 +1468,7 @@ if(WITH_TURBOJPEG)
     install(TARGETS turbojpeg-static EXPORT ${CMAKE_PROJECT_NAME}Targets
       INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
       ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
-    if(NOT ENABLE_SHARED)
+    if(NOT ENABLE_SHARED AND JPEG_ENABLE_TESTS)
       if(MSVC_IDE OR XCODE)
         set(DIR "${CMAKE_CURRENT_BINARY_DIR}/\${CMAKE_INSTALL_CONFIG_NAME}")
       else()
@@ -1524,4 +1546,4 @@ include(cmakescripts/BuildPackages.cmake)
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmakescripts/cmake_uninstall.cmake.in"
   "cmake_uninstall.cmake" IMMEDIATE @ONLY)
 
-add_custom_target(uninstall COMMAND ${CMAKE_COMMAND} -P cmake_uninstall.cmake)
+add_custom_target(jpeg_uninstall COMMAND ${CMAKE_COMMAND} -P cmake_uninstall.cmake)

@@ -55,11 +55,11 @@ if(MSYS)
   set(CMAKE_HOST_SYSTEM_NAME ${CMAKE_HOST_SYSTEM_NAME_BAK})
 endif()
 
-add_custom_target(javadoc COMMAND
+add_custom_target(jpeg_javadoc COMMAND
   javadoc -notimestamp -d ${CMAKE_CURRENT_SOURCE_DIR}/doc -sourcepath ${CMAKE_CURRENT_SOURCE_DIR} org.libjpegturbo.turbojpeg)
 set(JAVACLASSPATH ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_FILES_DIRECTORY}/turbojpeg-java.dir)
 if(Java_VERSION_MAJOR GREATER 9)
-  add_custom_target(javah
+  add_custom_target(jpeg_javah
     COMMAND javac -h ${CMAKE_CURRENT_SOURCE_DIR} -classpath ${JAVACLASSPATH}
       -d ${CMAKE_CURRENT_BINARY_DIR}/__unused
       ${CMAKE_CURRENT_SOURCE_DIR}/org/libjpegturbo/turbojpeg/TJ.java
@@ -67,7 +67,7 @@ if(Java_VERSION_MAJOR GREATER 9)
       ${CMAKE_CURRENT_SOURCE_DIR}/org/libjpegturbo/turbojpeg/TJDecompressor.java
       ${CMAKE_CURRENT_SOURCE_DIR}/org/libjpegturbo/turbojpeg/TJTransformer.java)
 else()
-  add_custom_target(javah
+  add_custom_target(jpeg_javah
     COMMAND javah -d ${CMAKE_CURRENT_SOURCE_DIR} -classpath ${JAVACLASSPATH} org.libjpegturbo.turbojpeg.TJ
     COMMAND javah -d ${CMAKE_CURRENT_SOURCE_DIR} -classpath ${JAVACLASSPATH} org.libjpegturbo.turbojpeg.TJCompressor
     COMMAND javah -d ${CMAKE_CURRENT_SOURCE_DIR} -classpath ${JAVACLASSPATH} org.libjpegturbo.turbojpeg.TJDecompressor
@@ -83,6 +83,6 @@ GNUInstallDirs_get_absolute_install_dir(CMAKE_INSTALL_FULL_JAVADIR
   CMAKE_INSTALL_JAVADIR)
 set(CMAKE_INSTALL_JAVADIR ${CMAKE_INSTALL_JAVADIR} PARENT_SCOPE)
 set(CMAKE_INSTALL_FULL_JAVADIR ${CMAKE_INSTALL_FULL_JAVADIR} PARENT_SCOPE)
-report_directory(JAVADIR)
+jpeg_report_directory(JAVADIR)
 install_jar(turbojpeg-java ${CMAKE_INSTALL_JAVADIR})
 mark_as_advanced(CLEAR CMAKE_INSTALL_JAVADIR)

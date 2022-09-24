@@ -33,7 +33,7 @@ target_link_libraries(cjpeg_fuzzer${FUZZER_SUFFIX} ${FUZZ_LIBRARY} jpeg-static)
 install(TARGETS cjpeg_fuzzer${FUZZER_SUFFIX} RUNTIME DESTINATION
   ${FUZZ_BINDIR})
 
-macro(add_fuzz_target target source_file)
+macro(jpeg_add_fuzz_target target source_file)
   add_executable(${target}_fuzzer${FUZZER_SUFFIX} ${source_file})
   target_link_libraries(${target}_fuzzer${FUZZER_SUFFIX} ${FUZZ_LIBRARY}
     turbojpeg-static)
@@ -41,15 +41,15 @@ macro(add_fuzz_target target source_file)
     ${FUZZ_BINDIR})
 endmacro()
 
-add_fuzz_target(compress compress.cc)
+jpeg_add_fuzz_target(compress compress.cc)
 
-add_fuzz_target(compress_yuv compress_yuv.cc)
+jpeg_add_fuzz_target(compress_yuv compress_yuv.cc)
 
 # NOTE: This target is named libjpeg_turbo_fuzzer instead of decompress_fuzzer
 # in order to preserve the corpora from Google's OSS-Fuzz target for
 # libjpeg-turbo, which this target replaces.
-add_fuzz_target(libjpeg_turbo decompress.cc)
+jpeg_add_fuzz_target(libjpeg_turbo decompress.cc)
 
-add_fuzz_target(decompress_yuv decompress_yuv.cc)
+jpeg_add_fuzz_target(decompress_yuv decompress_yuv.cc)
 
-add_fuzz_target(transform transform.cc)
+jpeg_add_fuzz_target(transform transform.cc)

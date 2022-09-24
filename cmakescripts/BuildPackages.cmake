@@ -37,24 +37,24 @@ message(STATUS "RPM architecture = ${RPMARCH}, DEB architecture = ${DEBARCH}")
 
 # Re-set CMAKE_POSITION_INDEPENDENT_CODE so that the RPM spec file works
 # properly
-boolean_number(CMAKE_POSITION_INDEPENDENT_CODE)
+jpeg_boolean_number(CMAKE_POSITION_INDEPENDENT_CODE)
 
 configure_file(release/makerpm.in pkgscripts/makerpm)
 configure_file(release/rpm.spec.in pkgscripts/rpm.spec @ONLY)
 
-add_custom_target(rpm pkgscripts/makerpm
+add_custom_target(jpeg_rpm pkgscripts/makerpm
   SOURCES pkgscripts/makerpm)
 
 configure_file(release/makesrpm.in pkgscripts/makesrpm)
 
-add_custom_target(srpm pkgscripts/makesrpm
+add_custom_target(jpeg_srpm pkgscripts/makesrpm
   SOURCES pkgscripts/makesrpm
   DEPENDS dist)
 
 configure_file(release/makedpkg.in pkgscripts/makedpkg)
 configure_file(release/deb-control.in pkgscripts/deb-control)
 
-add_custom_target(deb pkgscripts/makedpkg
+add_custom_target(jpeg_deb pkgscripts/makedpkg
   SOURCES pkgscripts/makedpkg)
 
 endif() # Linux
@@ -112,7 +112,7 @@ endif()
 if(WITH_TURBOJPEG)
   set(TURBOJPEG_DEPEND turbojpeg turbojpeg-static tjbench)
 endif()
-add_custom_target(installer
+add_custom_target(jpeg_installer
   makensis -nocd ${INST_DEFS} installer.nsi
   DEPENDS jpeg jpeg-static rdjpgcom wrjpgcom cjpeg djpeg jpegtran
     ${JAVA_DEPEND} ${TURBOJPEG_DEPEND}
@@ -140,7 +140,7 @@ configure_file(release/Distribution.xml.in pkgscripts/Distribution.xml)
 configure_file(release/Welcome.rtf.in pkgscripts/Welcome.rtf)
 configure_file(release/uninstall.in pkgscripts/uninstall)
 
-add_custom_target(dmg pkgscripts/makemacpkg
+add_custom_target(jpeg_dmg pkgscripts/makemacpkg
   SOURCES pkgscripts/makemacpkg)
 
 endif() # APPLE
@@ -150,14 +150,14 @@ endif() # APPLE
 # Generic
 ###############################################################################
 
-add_custom_target(dist
+add_custom_target(jpeg_dist
   COMMAND git archive --prefix=${CMAKE_PROJECT_NAME}-${VERSION}/ HEAD |
     gzip > ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_PROJECT_NAME}-${VERSION}.tar.gz
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
 configure_file(release/maketarball.in pkgscripts/maketarball)
 
-add_custom_target(tarball pkgscripts/maketarball
+add_custom_target(jpeg_tarball pkgscripts/maketarball
   SOURCES pkgscripts/maketarball)
 
 configure_file(release/libjpeg.pc.in pkgscripts/libjpeg.pc @ONLY)

@@ -1,4 +1,4 @@
-macro(simd_fail message)
+macro(jpeg_simd_fail message)
   if(REQUIRE_SIMD)
     message(FATAL_ERROR "${message}.")
   else()
@@ -45,7 +45,7 @@ if(NOT REQUIRE_SIMD)
   include(CheckLanguage)
   check_language(ASM_NASM)
   if(NOT CMAKE_ASM_NASM_COMPILER)
-    simd_fail("SIMD extensions disabled: could not find NASM compiler")
+    jpeg_simd_fail("SIMD extensions disabled: could not find NASM compiler")
     return()
   endif()
 endif()
@@ -74,7 +74,7 @@ endif()
 message(STATUS "CMAKE_ASM_NASM_OBJECT_FORMAT = ${CMAKE_ASM_NASM_OBJECT_FORMAT}")
 
 if(NOT CMAKE_ASM_NASM_OBJECT_FORMAT)
-  simd_fail("SIMD extensions disabled: could not determine NASM object format")
+  jpeg_simd_fail("SIMD extensions disabled: could not determine NASM object format")
   return()
 endif()
 
@@ -152,6 +152,7 @@ elseif(XCODE)
 endif()
 
 file(GLOB INC_FILES nasm/*.inc)
+set_source_files_properties(${SIMD_SOURCES} PROPERTIES LANGUAGE ASM_NASM)
 
 foreach(file ${SIMD_SOURCES})
   set(OBJECT_DEPENDS "")
@@ -196,14 +197,14 @@ endforeach()
 
 if(MSVC_IDE OR XCODE)
   set(SIMD_OBJS ${SIMD_OBJS} PARENT_SCOPE)
-  add_library(simd OBJECT ${CPU_TYPE}/jsimd.c)
-  add_custom_target(simd-objs DEPENDS ${SIMD_OBJS})
-  add_dependencies(simd simd-objs)
+  add_library(jpeg_simd OBJECT ${CPU_TYPE}/jsimd.c)
+  add_custom_target(jpeg_simd-objs DEPENDS ${SIMD_OBJS})
+  add_dependencies(jpeg_simd jpeg_simd-objs)
 else()
-  add_library(simd OBJECT ${SIMD_SOURCES} ${CPU_TYPE}/jsimd.c)
+  add_library(jpeg_simd OBJECT ${SIMD_SOURCES} ${CPU_TYPE}/jsimd.c)
 endif()
 if(NOT WIN32 AND (CMAKE_POSITION_INDEPENDENT_CODE OR ENABLE_SHARED))
-  set_target_properties(simd PROPERTIES POSITION_INDEPENDENT_CODE 1)
+  set_target_properties(jpeg_simd PROPERTIES POSITION_INDEPENDENT_CODE 1)
 endif()
 
 
@@ -251,7 +252,7 @@ if(BITS EQUAL 32)
       return (int)output[0];
     }" HAVE_NEON)
   if(NOT HAVE_NEON)
-    simd_fail("SIMD extensions not available for this architecture")
+    jpeg_simd_fail("SIMD extensions not available for this architecture")
     return()
   endif()
 endif()
@@ -392,10 +393,10 @@ if(NOT NEON_INTRINSICS)
   set(SIMD_SOURCES ${SIMD_SOURCES} arm/aarch${BITS}/jsimd_neon.S)
 endif()
 
-add_library(simd OBJECT ${SIMD_SOURCES} arm/aarch${BITS}/jsimd.c)
+add_library(jpeg_simd OBJECT ${SIMD_SOURCES} arm/aarch${BITS}/jsimd.c)
 
 if(CMAKE_POSITION_INDEPENDENT_CODE OR ENABLE_SHARED)
-  set_target_properties(simd PROPERTIES POSITION_INDEPENDENT_CODE 1)
+  set_target_properties(jpeg_simd PROPERTIES POSITION_INDEPENDENT_CODE 1)
 endif()
 
 
@@ -430,14 +431,14 @@ check_c_source_compiles("
 unset(CMAKE_REQUIRED_FLAGS)
 
 if(NOT HAVE_DSPR2)
-  simd_fail("SIMD extensions not available for this CPU")
+  jpeg_simd_fail("SIMD extensions not available for this CPU")
   return()
 endif()
 
-add_library(simd OBJECT mips/jsimd_dspr2.S mips/jsimd.c)
+add_library(jpeg_simd OBJECT mips/jsimd_dspr2.S mips/jsimd.c)
 
 if(CMAKE_POSITION_INDEPENDENT_CODE OR ENABLE_SHARED)
-  set_target_properties(simd PROPERTIES POSITION_INDEPENDENT_CODE 1)
+  set_target_properties(jpeg_simd PROPERTIES POSITION_INDEPENDENT_CODE 1)
 endif()
 
 ###############################################################################
@@ -465,7 +466,7 @@ check_c_source_compiles("
 unset(CMAKE_REQUIRED_FLAGS)
 
 if(NOT HAVE_MMI)
-  simd_fail("SIMD extensions not available for this CPU")
+  jpeg_simd_fail("SIMD extensions not available for this CPU")
   return()
 endif()
 
@@ -485,10 +486,10 @@ foreach(file ${SIMD_SOURCES})
     " -Wa,-mloongson-mmi,-mloongson-ext")
 endforeach()
 
-add_library(simd OBJECT ${SIMD_SOURCES} mips64/jsimd.c)
+add_library(jpeg_simd OBJECT ${SIMD_SOURCES} mips64/jsimd.c)
 
 if(CMAKE_POSITION_INDEPENDENT_CODE OR ENABLE_SHARED)
-  set_target_properties(simd PROPERTIES POSITION_INDEPENDENT_CODE 1)
+  set_target_properties(jpeg_simd PROPERTIES POSITION_INDEPENDENT_CODE 1)
 endif()
 
 ###############################################################################
@@ -511,7 +512,7 @@ check_c_source_compiles("
 unset(CMAKE_REQUIRED_FLAGS)
 
 if(NOT HAVE_ALTIVEC)
-  simd_fail("SIMD extensions not available for this CPU (PowerPC SPE)")
+  jpeg_simd_fail("SIMD extensions not available for this CPU (PowerPC SPE)")
   return()
 endif()
 
@@ -525,10 +526,10 @@ set(SIMD_SOURCES powerpc/jccolor-altivec.c powerpc/jcgray-altivec.c
 set_source_files_properties(${SIMD_SOURCES} PROPERTIES
   COMPILE_FLAGS -maltivec)
 
-add_library(simd OBJECT ${SIMD_SOURCES} powerpc/jsimd.c)
+add_library(jpeg_simd OBJECT ${SIMD_SOURCES} powerpc/jsimd.c)
 
 if(CMAKE_POSITION_INDEPENDENT_CODE OR ENABLE_SHARED)
-  set_target_properties(simd PROPERTIES POSITION_INDEPENDENT_CODE 1)
+  set_target_properties(jpeg_simd PROPERTIES POSITION_INDEPENDENT_CODE 1)
 endif()
 
 
@@ -538,6 +539,6 @@ endif()
 
 else()
 
-simd_fail("SIMD extensions not available for this CPU (${CMAKE_SYSTEM_PROCESSOR})")
+jpeg_simd_fail("SIMD extensions not available for this CPU (${CMAKE_SYSTEM_PROCESSOR})")
 
 endif() # CPU_TYPE

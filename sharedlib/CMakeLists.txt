@@ -40,7 +40,7 @@ if(MSVC)
     ${CMAKE_BINARY_DIR}/win/jpeg.rc)
   set(JPEG_SRCS ${JPEG_SRCS} ${CMAKE_BINARY_DIR}/win/jpeg.rc)
 endif()
-add_library(jpeg SHARED ${JPEG_SRCS} ${DEFFILE} $<TARGET_OBJECTS:simd>
+add_library(jpeg SHARED ${JPEG_SRCS} ${DEFFILE} $<TARGET_OBJECTS:jpeg_simd>
   ${SIMD_OBJS})
 
 set_target_properties(jpeg PROPERTIES SOVERSION ${SO_MAJOR_VERSION}
