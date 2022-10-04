@@ -2,7 +2,7 @@
  * jsimd_loongson.c
  *
  * Copyright 2009 Pierre Ossman <ossman@cendio.se> for Cendio AB
- * Copyright (C) 2009-2011, 2014, 2016, 2018, D. R. Commander.
+ * Copyright (C) 2009-2011, 2014, 2016, 2018, 2022, D. R. Commander.
  * Copyright (C) 2013-2014, MIPS Technologies, Inc., California.
  * Copyright (C) 2015, 2018, Matthieu Darbois.
  * Copyright (C) 2016-2017, Loongson Technology Corporation Limited, BeiJing.
@@ -23,13 +23,12 @@
 #include "../../jdct.h"
 #include "../../jsimddct.h"
 #include "../jsimd.h"
+#include "jconfigint.h"
 
-static unsigned int simd_support = ~0;
+static THREAD_LOCAL unsigned int simd_support = ~0;
 
 /*
  * Check what SIMD accelerations are supported.
- *
- * FIXME: This code is racy under a multi-threaded environment.
  */
 LOCAL(void)
 init_simd(void)

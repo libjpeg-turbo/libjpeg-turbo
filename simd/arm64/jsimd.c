@@ -3,7 +3,7 @@
  *
  * Copyright 2009 Pierre Ossman <ossman@cendio.se> for Cendio AB
  * Copyright (C) 2011, Nokia Corporation and/or its subsidiary(-ies).
- * Copyright (C) 2009-2011, 2013-2014, 2016, 2018, D. R. Commander.
+ * Copyright (C) 2009-2011, 2013-2014, 2016, 2018, 2022, D. R. Commander.
  * Copyright (C) 2015-2016, 2018, Matthieu Darbois.
  *
  * Based on the x86 SIMD extension for IJG JPEG library,
@@ -22,6 +22,7 @@
 #include "../../jdct.h"
 #include "../../jsimddct.h"
 #include "../jsimd.h"
+#include "jconfigint.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -31,10 +32,10 @@
 #define JSIMD_FASTST3  2
 #define JSIMD_FASTTBL  4
 
-static unsigned int simd_support = ~0;
-static unsigned int simd_huffman = 1;
-static unsigned int simd_features = JSIMD_FASTLD3 | JSIMD_FASTST3 |
-                                    JSIMD_FASTTBL;
+static THREAD_LOCAL unsigned int simd_support = ~0;
+static THREAD_LOCAL unsigned int simd_huffman = 1;
+static THREAD_LOCAL unsigned int simd_features = JSIMD_FASTLD3 |
+                                                 JSIMD_FASTST3 | JSIMD_FASTTBL;
 
 #if defined(__linux__) || defined(ANDROID) || defined(__ANDROID__)
 
@@ -109,8 +110,6 @@ parse_proc_cpuinfo(int bufsize)
 
 /*
  * Check what SIMD accelerations are supported.
- *
- * FIXME: This code is racy under a multi-threaded environment.
  */
 
 /*

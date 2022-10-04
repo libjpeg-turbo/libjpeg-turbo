@@ -2,7 +2,7 @@
  * jsimd_powerpc.c
  *
  * Copyright 2009 Pierre Ossman <ossman@cendio.se> for Cendio AB
- * Copyright (C) 2009-2011, 2014-2016, 2018, D. R. Commander.
+ * Copyright (C) 2009-2011, 2014-2016, 2018, 2022, D. R. Commander.
  * Copyright (C) 2015-2016, 2018, Matthieu Darbois.
  *
  * Based on the x86 SIMD extension for IJG JPEG library,
@@ -26,6 +26,7 @@
 #include "../../jdct.h"
 #include "../../jsimddct.h"
 #include "../jsimd.h"
+#include "jconfigint.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -43,7 +44,7 @@
 #include <sys/auxv.h>
 #endif
 
-static unsigned int simd_support = ~0;
+static THREAD_LOCAL unsigned int simd_support = ~0;
 
 #if !defined(__ALTIVEC__) && (defined(__linux__) || defined(ANDROID) || defined(__ANDROID__))
 
@@ -111,8 +112,6 @@ parse_proc_cpuinfo(int bufsize)
 
 /*
  * Check what SIMD accelerations are supported.
- *
- * FIXME: This code is racy under a multi-threaded environment.
  */
 LOCAL(void)
 init_simd(void)
