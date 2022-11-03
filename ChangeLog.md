@@ -1,3 +1,14 @@
+2.0.9 ESR
+=========
+
+### Significant changes relative to 2.0.8 ESR:
+
+1. Fixed issues in the build system whereby, when using the Ninja Multi-Config
+CMake generator, a static build of libjpeg-turbo (a build in which
+`ENABLE_SHARED` is `0`) could not be installed, a Windows installer could not
+be built, and the Java regression tests failed.
+
+
 2.0.8 ESR
 =========
 

@@ -10,7 +10,7 @@ if(CMAKE_EXECUTABLE_SUFFIX)
 endif()
 
 project(libjpeg-turbo C)
-set(VERSION 2.0.8)
+set(VERSION 2.0.9)
 set(COPYRIGHT_YEAR "1991-2022")
 string(REPLACE "." ";" VERSION_TRIPLET ${VERSION})
 list(GET VERSION_TRIPLET 0 VERSION_MAJOR)
@@ -39,6 +39,15 @@ set(LIBJPEG_TURBO_VERSION_NUMBER ${VERSION_MAJOR}${VERSION_MINOR}${VERSION_REVIS
 # BUNDLE DESTINATION.  Even if CMake did not complain, building executables as
 # application bundles would break our iOS packages.)
 set(CMAKE_MACOSX_BUNDLE FALSE)
+
+get_property(GENERATOR_IS_MULTI_CONFIG GLOBAL PROPERTY
+  GENERATOR_IS_MULTI_CONFIG)
+# If the GENERATOR_IS_MULTI_CONFIG property doesn't exist (CMake < 3.9), then
+# set the GENERATOR_IS_MULTI_CONFIG variable manually if the generator is
+# Visual Studio or Xcode (the only multi-config generators in CMake < 3.9).
+if(NOT GENERATOR_IS_MULTI_CONFIG AND (MSVC_IDE OR XCODE))
+  set(GENERATOR_IS_MULTI_CONFIG TRUE)
+endif()
 
 string(TIMESTAMP DEFAULT_BUILD "%Y%m%d")
 set(BUILD ${DEFAULT_BUILD} CACHE STRING "Build string (default: ${DEFAULT_BUILD})")
@@ -752,7 +761,7 @@ endif()
 
 add_subdirectory(md5)
 
-if(MSVC_IDE OR XCODE)
+if(GENERATOR_IS_MULTI_CONFIG)
   set(OBJDIR "\${CTEST_CONFIGURATION_TYPE}/")
 else()
   set(OBJDIR "")
@@ -1498,7 +1507,7 @@ if(WITH_TURBOJPEG)
     install(TARGETS turbojpeg-static ARCHIVE
       DESTINATION ${CMAKE_INSTALL_LIBDIR})
     if(NOT ENABLE_SHARED)
-      if(MSVC_IDE OR XCODE)
+      if(GENERATOR_IS_MULTI_CONFIG)
         set(DIR "${CMAKE_CURRENT_BINARY_DIR}/\${CMAKE_INSTALL_CONFIG_NAME}")
       else()
         set(DIR ${CMAKE_CURRENT_BINARY_DIR})
@@ -1514,7 +1523,7 @@ endif()
 if(ENABLE_STATIC)
   install(TARGETS jpeg-static ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
   if(NOT ENABLE_SHARED)
-    if(MSVC_IDE OR XCODE)
+    if(GENERATOR_IS_MULTI_CONFIG)
       set(DIR "${CMAKE_CURRENT_BINARY_DIR}/\${CMAKE_INSTALL_CONFIG_NAME}")
     else()
       set(DIR ${CMAKE_CURRENT_BINARY_DIR})
