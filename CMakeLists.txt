@@ -1382,6 +1382,12 @@ foreach(libtype ${TEST_LIBTYPES})
     testout_crop.jpg ${TESTIMAGES}/${TESTORIG}
     ${MD5_JPEG_CROP})
 
+  if (WITH_12BIT)
+    add_bittest(jpegtran optimize_12b "-progressive;-optimise;-copy;none"
+      testout_optimize_12b.jpg ${TESTIMAGES}/test_optimize_12b.jpg
+      eb8d756f6193380946c682a36ce058ef)
+  endif()
+
 endforeach()
 
 add_custom_target(testclean COMMAND ${CMAKE_COMMAND} -P

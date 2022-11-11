@@ -6,6 +6,7 @@
  * Modified 1997-2009 by Guido Vollbeding.
  * libjpeg-turbo Modifications:
  * Copyright (C) 2009, 2011, 2014-2015, 2018, 2020, D. R. Commander.
+ * Copyright (C) 2022, Matthieu Darbois.
  * For conditions of distribution and use, see the accompanying README.ijg
  * file.
  *
@@ -72,9 +73,12 @@ typedef short JSAMPLE;
  * This should be a signed value of at least 16 bits; "short" is usually OK.
  * Again, we allocate large arrays of these, but you can change to int
  * if you have memory to burn and "short" is really slow.
+ * the JABSCOEF type is needed to hold absolute values of those coefficients
+ * because abs(-32768) == -32768 in 2's complement signed representation.
  */
 
 typedef short JCOEF;
+typedef unsigned short JABSCOEF;
 
 
 /* Compressed datastreams are represented as arrays of JOCTET.
