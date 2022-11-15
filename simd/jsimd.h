@@ -2,10 +2,10 @@
  * simd/jsimd.h
  *
  * Copyright 2009 Pierre Ossman <ossman@cendio.se> for Cendio AB
- * Copyright (C) 2011, 2014-2016, 2018, 2020, D. R. Commander.
+ * Copyright (C) 2011, 2014-2016, 2018, 2020, 2022, D. R. Commander.
  * Copyright (C) 2013-2014, MIPS Technologies, Inc., California.
  * Copyright (C) 2014, Linaro Limited.
- * Copyright (C) 2015-2016, 2018, Matthieu Darbois.
+ * Copyright (C) 2015-2016, 2018, 2022, Matthieu Darbois.
  * Copyright (C) 2016-2017, Loongson Technology Corporation Limited, BeiJing.
  *
  * Based on the x86 SIMD extension for IJG JPEG library,
@@ -1076,8 +1076,8 @@ EXTERN(JOCTET *) jsimd_huff_encode_one_block_neon_slowtbl
 /* Progressive Huffman encoding */
 EXTERN(void) jsimd_encode_mcu_AC_first_prepare_sse2
   (const JCOEF *block, const int *jpeg_natural_order_start, int Sl, int Al,
-   JCOEF *values, size_t *zerobits);
+   UJCOEF *values, size_t *zerobits);
 
 EXTERN(int) jsimd_encode_mcu_AC_refine_prepare_sse2
   (const JCOEF *block, const int *jpeg_natural_order_start, int Sl, int Al,
-   JCOEF *absvalues, size_t *bits);
+   UJCOEF *absvalues, size_t *bits);
