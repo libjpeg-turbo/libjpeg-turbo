@@ -30,6 +30,8 @@
 #endif
 #include "jmorecfg.h"           /* seldom changed options */
 
+/* Defined when libjpeg has 12bit support */
+#cmakedefine JPEG_LIB_HAS_12BIT_SUPPORT
 
 #ifdef __cplusplus
 #ifndef DONT_USE_EXTERN_C

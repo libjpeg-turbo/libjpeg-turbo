@@ -544,6 +544,9 @@ if(UNIX AND NOT APPLE)
 endif()
 
 # Generate files
+set(JPEG_LIB_HAS_12BIT_SUPPORT ${WITH_12BIT})
+configure_file(jpeglib.h.in ${CMAKE_CURRENT_SOURCE_DIR}/jpeglib.h)
+
 if(WIN32)
   configure_file(win/jconfig.h.in jconfig.h)
 else()
