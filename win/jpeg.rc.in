@@ -22,7 +22,7 @@ BEGIN
             VALUE "FileDescription", "libjpeg API DLL"
             VALUE "FileVersion", "@SO_MAJOR_VERSION@,@SO_AGE@,@SO_MINOR_VERSION@,0"
             VALUE "ProductVersion", "@VERSION@"
-            VALUE "ProductName", "@CMAKE_PROJECT_NAME@"
+            VALUE "ProductName", "@PROJECT_NAME@"
             VALUE "InternalName", "jpeg@SO_MAJOR_VERSION@"
             VALUE "LegalCopyright", L"Copyright \xA9 @COPYRIGHT_YEAR@ The libjpeg-turbo Project and many others"
             VALUE "OriginalFilename", "jpeg@SO_MAJOR_VERSION@.dll"

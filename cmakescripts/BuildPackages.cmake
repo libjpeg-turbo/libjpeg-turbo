@@ -69,13 +69,13 @@ if(WIN32)
 if(MSVC)
   set(INST_PLATFORM "Visual C++")
   set(INST_ID vc)
-  set(INST_NAME ${CMAKE_PROJECT_NAME}-${VERSION}-${INST_ID})
-  set(INST_REG_NAME ${CMAKE_PROJECT_NAME})
+  set(INST_NAME ${PROJECT_NAME}-${VERSION}-${INST_ID})
+  set(INST_REG_NAME ${PROJECT_NAME})
 elseif(MINGW)
   set(INST_PLATFORM GCC)
   set(INST_ID gcc)
-  set(INST_NAME ${CMAKE_PROJECT_NAME}-${VERSION}-${INST_ID})
-  set(INST_REG_NAME ${CMAKE_PROJECT_NAME}-${INST_ID})
+  set(INST_NAME ${PROJECT_NAME}-${VERSION}-${INST_ID})
+  set(INST_REG_NAME ${PROJECT_NAME}-${INST_ID})
   set(INST_DEFS -DGCC)
 endif()
 
@@ -102,9 +102,9 @@ configure_file(release/installer.nsi.in installer.nsi @ONLY)
 # TODO: It would be nice to eventually switch to CPack and eliminate this mess,
 # but not today.
 configure_file(win/projectTargets.cmake.in
-  win/${CMAKE_PROJECT_NAME}Targets.cmake @ONLY)
+  win/${PROJECT_NAME}Targets.cmake @ONLY)
 configure_file(win/${INST_ID}/projectTargets-release.cmake.in
-  win/${CMAKE_PROJECT_NAME}Targets-release.cmake @ONLY)
+  win/${PROJECT_NAME}Targets-release.cmake @ONLY)
 
 if(WITH_JAVA)
   set(JAVA_DEPEND turbojpeg-java)
@@ -151,8 +151,8 @@ endif() # APPLE
 ###############################################################################
 
 add_custom_target(dist
-  COMMAND git archive --prefix=${CMAKE_PROJECT_NAME}-${VERSION}/ HEAD |
-    gzip > ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_PROJECT_NAME}-${VERSION}.tar.gz
+  COMMAND git archive --prefix=${PROJECT_NAME}-${VERSION}/ HEAD |
+    gzip > ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-${VERSION}.tar.gz
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
 configure_file(release/maketarball.in pkgscripts/maketarball)
@@ -168,9 +168,9 @@ endif()
 
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(
-  pkgscripts/${CMAKE_PROJECT_NAME}ConfigVersion.cmake
+  pkgscripts/${PROJECT_NAME}ConfigVersion.cmake
   VERSION ${VERSION} COMPATIBILITY AnyNewerVersion)
 
 configure_package_config_file(release/Config.cmake.in
-  pkgscripts/${CMAKE_PROJECT_NAME}Config.cmake
-  INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${CMAKE_PROJECT_NAME})
+  pkgscripts/${PROJECT_NAME}Config.cmake
+  INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME})

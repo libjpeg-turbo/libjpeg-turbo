@@ -71,8 +71,8 @@ fi
 if [ -d $LIBDIR/pkgconfig ]; then
 	rmdir $LIBDIR/pkgconfig 2>&1 || EXITSTATUS=-1
 fi
-if [ -d $LIBDIR/cmake/@CMAKE_PROJECT_NAME@ ]; then
-	rmdir $LIBDIR/cmake/@CMAKE_PROJECT_NAME@ || EXITSTATUS=-1
+if [ -d $LIBDIR/cmake/@PROJECT_NAME@ ]; then
+	rmdir $LIBDIR/cmake/@PROJECT_NAME@ || EXITSTATUS=-1
 fi
 if [ -d $LIBDIR/cmake ]; then
 	rmdir $LIBDIR/cmake || EXITSTATUS=-1

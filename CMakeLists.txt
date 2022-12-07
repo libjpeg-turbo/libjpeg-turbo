@@ -121,26 +121,26 @@ message(STATUS "${BITS}-bit build (${CPU_TYPE})")
 
 if(WIN32)
   if(MSVC)
-    set(CMAKE_INSTALL_DEFAULT_PREFIX "c:/${CMAKE_PROJECT_NAME}")
+    set(CMAKE_INSTALL_DEFAULT_PREFIX "c:/${PROJECT_NAME}")
   else()
-    set(CMAKE_INSTALL_DEFAULT_PREFIX "c:/${CMAKE_PROJECT_NAME}-gcc")
+    set(CMAKE_INSTALL_DEFAULT_PREFIX "c:/${PROJECT_NAME}-gcc")
   endif()
   if(BITS EQUAL 64)
     set(CMAKE_INSTALL_DEFAULT_PREFIX "${CMAKE_INSTALL_DEFAULT_PREFIX}64")
   endif()
 else()
   if(NOT CMAKE_INSTALL_DEFAULT_PREFIX)
-    set(CMAKE_INSTALL_DEFAULT_PREFIX /opt/${CMAKE_PROJECT_NAME})
+    set(CMAKE_INSTALL_DEFAULT_PREFIX /opt/${PROJECT_NAME})
   endif()
 endif()
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   set(CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_DEFAULT_PREFIX}" CACHE PATH
-    "Directory into which to install ${CMAKE_PROJECT_NAME} (default: ${CMAKE_INSTALL_DEFAULT_PREFIX})"
+    "Directory into which to install ${PROJECT_NAME} (default: ${CMAKE_INSTALL_DEFAULT_PREFIX})"
     FORCE)
 endif()
 message(STATUS "CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}")
 
-# When the prefix is /opt/${CMAKE_PROJECT_NAME}, we assume that an "official"
+# When the prefix is /opt/${PROJECT_NAME}, we assume that an "official"
 # build is being created, and thus we install things into specific locations.
 
 if(CMAKE_INSTALL_PREFIX STREQUAL "${CMAKE_INSTALL_DEFAULT_PREFIX}")
@@ -208,9 +208,9 @@ else()
   option(WITH_JAVA "Build Java wrapper for the TurboJPEG API library (implies ENABLE_SHARED=1)" FALSE)
   boolean_number(WITH_JAVA)
 endif()
-option(WITH_JPEG7 "Emulate libjpeg v7 API/ABI (this makes ${CMAKE_PROJECT_NAME} backward-incompatible with libjpeg v6b)" FALSE)
+option(WITH_JPEG7 "Emulate libjpeg v7 API/ABI (this makes ${PROJECT_NAME} backward-incompatible with libjpeg v6b)" FALSE)
 boolean_number(WITH_JPEG7)
-option(WITH_JPEG8 "Emulate libjpeg v8 API/ABI (this makes ${CMAKE_PROJECT_NAME} backward-incompatible with libjpeg v6b)" FALSE)
+option(WITH_JPEG8 "Emulate libjpeg v8 API/ABI (this makes ${PROJECT_NAME} backward-incompatible with libjpeg v6b)" FALSE)
 boolean_number(WITH_JPEG8)
 option(WITH_MEM_SRCDST "Include in-memory source/destination manager functions when emulating the libjpeg v6b or v7 API/ABI" TRUE)
 boolean_number(WITH_MEM_SRCDST)
@@ -379,7 +379,7 @@ set(TURBOJPEG_SO_VERSION 0.${TURBOJPEG_SO_AGE}.0)
 
 if(MSVC)
   option(WITH_CRT_DLL
-    "Link all ${CMAKE_PROJECT_NAME} libraries and executables with the C run-time DLL (msvcr*.dll) instead of the static C run-time library (libcmt*.lib.)  The default is to use the C run-time DLL only with the libraries and executables that need it."
+    "Link all ${PROJECT_NAME} libraries and executables with the C run-time DLL (msvcr*.dll) instead of the static C run-time library (libcmt*.lib.)  The default is to use the C run-time DLL only with the libraries and executables that need it."
     FALSE)
   if(NOT WITH_CRT_DLL)
     # Use the static C library for all build types
@@ -1461,7 +1461,7 @@ set(EXE ${CMAKE_EXECUTABLE_SUFFIX})
 
 if(WITH_TURBOJPEG)
   if(ENABLE_SHARED)
-    install(TARGETS turbojpeg EXPORT ${CMAKE_PROJECT_NAME}Targets
+    install(TARGETS turbojpeg EXPORT ${PROJECT_NAME}Targets
       INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
       ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
       LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -1475,7 +1475,7 @@ if(WITH_TURBOJPEG)
     endif()
   endif()
   if(ENABLE_STATIC)
-    install(TARGETS turbojpeg-static EXPORT ${CMAKE_PROJECT_NAME}Targets
+    install(TARGETS turbojpeg-static EXPORT ${PROJECT_NAME}Targets
       INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
       ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
     if(NOT ENABLE_SHARED)
@@ -1493,7 +1493,7 @@ if(WITH_TURBOJPEG)
 endif()
 
 if(ENABLE_STATIC)
-  install(TARGETS jpeg-static EXPORT ${CMAKE_PROJECT_NAME}Targets
+  install(TARGETS jpeg-static EXPORT ${PROJECT_NAME}Targets
     INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
   if(NOT ENABLE_SHARED)
@@ -1539,12 +1539,12 @@ if(WITH_TURBOJPEG)
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
 endif()
 install(FILES
-  ${CMAKE_CURRENT_BINARY_DIR}/pkgscripts/${CMAKE_PROJECT_NAME}Config.cmake
-  ${CMAKE_CURRENT_BINARY_DIR}/pkgscripts/${CMAKE_PROJECT_NAME}ConfigVersion.cmake
-  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${CMAKE_PROJECT_NAME})
-install(EXPORT ${CMAKE_PROJECT_NAME}Targets
-  NAMESPACE ${CMAKE_PROJECT_NAME}::
-  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${CMAKE_PROJECT_NAME})
+  ${CMAKE_CURRENT_BINARY_DIR}/pkgscripts/${PROJECT_NAME}Config.cmake
+  ${CMAKE_CURRENT_BINARY_DIR}/pkgscripts/${PROJECT_NAME}ConfigVersion.cmake
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME})
+install(EXPORT ${PROJECT_NAME}Targets
+  NAMESPACE ${PROJECT_NAME}::
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME})
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/jconfig.h
   ${CMAKE_CURRENT_SOURCE_DIR}/jerror.h ${CMAKE_CURRENT_SOURCE_DIR}/jmorecfg.h

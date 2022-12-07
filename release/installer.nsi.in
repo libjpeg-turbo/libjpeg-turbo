@@ -1,5 +1,5 @@
 !include x64.nsh
-Name "@CMAKE_PROJECT_NAME@ SDK for @INST_PLATFORM@"
+Name "@PROJECT_NAME@ SDK for @INST_PLATFORM@"
 OutFile "@CMAKE_CURRENT_BINARY_DIR@\${BUILDDIR}@INST_NAME@.exe"
 InstallDir "@INST_DIR@"
 
@@ -11,7 +11,7 @@ Page instfiles
 UninstPage uninstConfirm
 UninstPage instfiles
 
-Section "@CMAKE_PROJECT_NAME@ SDK for @INST_PLATFORM@ (required)"
+Section "@PROJECT_NAME@ SDK for @INST_PLATFORM@ (required)"
 !ifdef WIN64
 	${If} ${RunningX64}
 	${DisableX64FSRedirection}
@@ -26,9 +26,9 @@ Section "@CMAKE_PROJECT_NAME@ SDK for @INST_PLATFORM@ (required)"
 	goto notexists
 	exists:
 !ifdef GCC
-	MessageBox MB_OK "An existing version of the @CMAKE_PROJECT_NAME@ SDK for @INST_PLATFORM@ is already installed.  Please uninstall it first."
+	MessageBox MB_OK "An existing version of the @PROJECT_NAME@ SDK for @INST_PLATFORM@ is already installed.  Please uninstall it first."
 !else
-	MessageBox MB_OK "An existing version of the @CMAKE_PROJECT_NAME@ SDK for @INST_PLATFORM@ or the TurboJPEG SDK is already installed.  Please uninstall it first."
+	MessageBox MB_OK "An existing version of the @PROJECT_NAME@ SDK for @INST_PLATFORM@ or the TurboJPEG SDK is already installed.  Please uninstall it first."
 !endif
 	quit
 
@@ -71,11 +71,11 @@ Section "@CMAKE_PROJECT_NAME@ SDK for @INST_PLATFORM@ (required)"
 	SetOutPath $INSTDIR\lib\pkgconfig
 	File "@CMAKE_CURRENT_BINARY_DIR@\pkgscripts\libjpeg.pc"
 	File "@CMAKE_CURRENT_BINARY_DIR@\pkgscripts\libturbojpeg.pc"
-	SetOutPath $INSTDIR\lib\cmake\@CMAKE_PROJECT_NAME@
-	File "@CMAKE_CURRENT_BINARY_DIR@\pkgscripts\@CMAKE_PROJECT_NAME@Config.cmake"
-	File "@CMAKE_CURRENT_BINARY_DIR@\pkgscripts\@CMAKE_PROJECT_NAME@ConfigVersion.cmake"
-	File "@CMAKE_CURRENT_BINARY_DIR@\win\@CMAKE_PROJECT_NAME@Targets.cmake"
-	File "@CMAKE_CURRENT_BINARY_DIR@\win\@CMAKE_PROJECT_NAME@Targets-release.cmake"
+	SetOutPath $INSTDIR\lib\cmake\@PROJECT_NAME@
+	File "@CMAKE_CURRENT_BINARY_DIR@\pkgscripts\@PROJECT_NAME@Config.cmake"
+	File "@CMAKE_CURRENT_BINARY_DIR@\pkgscripts\@PROJECT_NAME@ConfigVersion.cmake"
+	File "@CMAKE_CURRENT_BINARY_DIR@\win\@PROJECT_NAME@Targets.cmake"
+	File "@CMAKE_CURRENT_BINARY_DIR@\win\@PROJECT_NAME@Targets-release.cmake"
 !ifdef JAVA
 	SetOutPath $INSTDIR\classes
 	File "@CMAKE_CURRENT_BINARY_DIR@\java\turbojpeg.jar"
@@ -108,7 +108,7 @@ Section "@CMAKE_PROJECT_NAME@ SDK for @INST_PLATFORM@ (required)"
 
 	WriteRegStr HKLM "SOFTWARE\@INST_REG_NAME@ @VERSION@" "Install_Dir" "$INSTDIR"
 
-	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\@INST_REG_NAME@ @VERSION@" "DisplayName" "@CMAKE_PROJECT_NAME@ SDK v@VERSION@ for @INST_PLATFORM@"
+	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\@INST_REG_NAME@ @VERSION@" "DisplayName" "@PROJECT_NAME@ SDK v@VERSION@ for @INST_PLATFORM@"
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\@INST_REG_NAME@ @VERSION@" "UninstallString" '"$INSTDIR\uninstall_@VERSION@.exe"'
 	WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\@INST_REG_NAME@ @VERSION@" "NoModify" 1
 	WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\@INST_REG_NAME@ @VERSION@" "NoRepair" 1
@@ -146,10 +146,10 @@ Section "Uninstall"
 !endif
 	Delete $INSTDIR\lib\pkgconfig\libjpeg.pc
 	Delete $INSTDIR\lib\pkgconfig\libturbojpeg.pc
-	Delete $INSTDIR\lib\cmake\@CMAKE_PROJECT_NAME@\@CMAKE_PROJECT_NAME@Config.cmake
-	Delete $INSTDIR\lib\cmake\@CMAKE_PROJECT_NAME@\@CMAKE_PROJECT_NAME@ConfigVersion.cmake
-	Delete $INSTDIR\lib\cmake\@CMAKE_PROJECT_NAME@\@CMAKE_PROJECT_NAME@Targets.cmake
-	Delete $INSTDIR\lib\cmake\@CMAKE_PROJECT_NAME@\@CMAKE_PROJECT_NAME@Targets-release.cmake
+	Delete $INSTDIR\lib\cmake\@PROJECT_NAME@\@PROJECT_NAME@Config.cmake
+	Delete $INSTDIR\lib\cmake\@PROJECT_NAME@\@PROJECT_NAME@ConfigVersion.cmake
+	Delete $INSTDIR\lib\cmake\@PROJECT_NAME@\@PROJECT_NAME@Targets.cmake
+	Delete $INSTDIR\lib\cmake\@PROJECT_NAME@\@PROJECT_NAME@Targets-release.cmake
 !ifdef JAVA
 	Delete $INSTDIR\classes\turbojpeg.jar
 !endif
@@ -185,7 +185,7 @@ Section "Uninstall"
 
 	RMDir "$INSTDIR\include"
 	RMDir "$INSTDIR\lib\pkgconfig"
-	RMDir "$INSTDIR\lib\cmake\@CMAKE_PROJECT_NAME@"
+	RMDir "$INSTDIR\lib\cmake\@PROJECT_NAME@"
 	RMDir "$INSTDIR\lib\cmake"
 	RMDir "$INSTDIR\lib"
 	RMDir "$INSTDIR\doc"

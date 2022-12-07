@@ -45,15 +45,15 @@ Version: @VERSION@
 Vendor: @PKGVENDOR@
 URL: @PKGURL@
 Group: System Environment/Libraries
-#-->Source0: http://prdownloads.sourceforge.net/@CMAKE_PROJECT_NAME@/@CMAKE_PROJECT_NAME@-%{version}.tar.gz
+#-->Source0: http://prdownloads.sourceforge.net/@PROJECT_NAME@/@PROJECT_NAME@-%{version}.tar.gz
 Release: @BUILD@
 License: BSD-style
 BuildRoot: %{_blddir}/%{name}-buildroot-%{version}-%{release}
 Requires: /sbin/ldconfig
 %if "%{_bits}" == "64"
-Provides: %{name} = %{version}-%{release}, @CMAKE_PROJECT_NAME@ = %{version}-%{release}, libturbojpeg.so()(64bit)
+Provides: %{name} = %{version}-%{release}, @PROJECT_NAME@ = %{version}-%{release}, libturbojpeg.so()(64bit)
 %else
-Provides: %{name} = %{version}-%{release}, @CMAKE_PROJECT_NAME@ = %{version}-%{release}, libturbojpeg.so
+Provides: %{name} = %{version}-%{release}, @PROJECT_NAME@ = %{version}-%{release}, libturbojpeg.so
 %endif
 
 %description
@@ -80,7 +80,7 @@ of making high-speed JPEG compression/decompression technology available to a
 broader range of users and developers.
 
 #-->%prep
-#-->%setup -q -n @CMAKE_PROJECT_NAME@-%{version}
+#-->%setup -q -n @PROJECT_NAME@-%{version}
 
 #-->%build
 #-->cmake -G"Unix Makefiles" -DCMAKE_BUILD_TYPE=@CMAKE_BUILD_TYPE@ \
@@ -193,8 +193,8 @@ rm -rf $RPM_BUILD_ROOT
 %dir %{_libdir}/pkgconfig
 %{_libdir}/pkgconfig/libjpeg.pc
 %dir %{_libdir}/cmake
-%dir %{_libdir}/cmake/@CMAKE_PROJECT_NAME@
-%{_libdir}/cmake/@CMAKE_PROJECT_NAME@
+%dir %{_libdir}/cmake/@PROJECT_NAME@
+%{_libdir}/cmake/@PROJECT_NAME@
 %if "%{_with_turbojpeg}" == "1"
 	%if "%{_enable_shared}" == "1" || "%{_with_java}" == "1"
 		%{_libdir}/libturbojpeg.so.@TURBOJPEG_SO_VERSION@

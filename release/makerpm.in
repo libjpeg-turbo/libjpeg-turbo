@@ -20,7 +20,7 @@ if [ -f @PKGNAME@-@VERSION@.@RPMARCH@.rpm ]; then
 fi
 
 umask 022
-TMPDIR=`mktemp -d /tmp/@CMAKE_PROJECT_NAME@-build.XXXXXX`
+TMPDIR=`mktemp -d /tmp/@PROJECT_NAME@-build.XXXXXX`
 
 mkdir -p $TMPDIR/RPMS
 ln -fs `pwd` $TMPDIR/BUILD

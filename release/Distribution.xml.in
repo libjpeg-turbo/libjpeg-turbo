@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <installer-gui-script minSpecVersion="1">
-	<title>@CMAKE_PROJECT_NAME@</title>
+	<title>@PROJECT_NAME@</title>
 	<welcome file="Welcome.rtf" />
 	<readme file="ReadMe.txt" />
 	<license file="License.rtf" />

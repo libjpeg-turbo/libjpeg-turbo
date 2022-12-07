@@ -16,7 +16,7 @@ set(CMAKE_IMPORT_FILE_VERSION 1)
 set(_targetsDefined)
 set(_targetsNotDefined)
 set(_expectedTargets)
-foreach(_expectedTarget @CMAKE_PROJECT_NAME@::jpeg @CMAKE_PROJECT_NAME@::turbojpeg @CMAKE_PROJECT_NAME@::turbojpeg-static @CMAKE_PROJECT_NAME@::jpeg-static)
+foreach(_expectedTarget @PROJECT_NAME@::jpeg @PROJECT_NAME@::turbojpeg @PROJECT_NAME@::turbojpeg-static @PROJECT_NAME@::jpeg-static)
   list(APPEND _expectedTargets ${_expectedTarget})
   if(NOT TARGET ${_expectedTarget})
     list(APPEND _targetsNotDefined ${_expectedTarget})
@@ -50,37 +50,37 @@ if(_IMPORT_PREFIX STREQUAL "/")
   set(_IMPORT_PREFIX "")
 endif()
 
-# Create imported target @CMAKE_PROJECT_NAME@::jpeg
-add_library(@CMAKE_PROJECT_NAME@::jpeg SHARED IMPORTED)
+# Create imported target @PROJECT_NAME@::jpeg
+add_library(@PROJECT_NAME@::jpeg SHARED IMPORTED)
 
-set_target_properties(@CMAKE_PROJECT_NAME@::jpeg PROPERTIES
+set_target_properties(@PROJECT_NAME@::jpeg PROPERTIES
   INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include"
 )
 
-# Create imported target @CMAKE_PROJECT_NAME@::turbojpeg
-add_library(@CMAKE_PROJECT_NAME@::turbojpeg SHARED IMPORTED)
+# Create imported target @PROJECT_NAME@::turbojpeg
+add_library(@PROJECT_NAME@::turbojpeg SHARED IMPORTED)
 
-set_target_properties(@CMAKE_PROJECT_NAME@::turbojpeg PROPERTIES
+set_target_properties(@PROJECT_NAME@::turbojpeg PROPERTIES
   INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include"
 )
 
-# Create imported target @CMAKE_PROJECT_NAME@::turbojpeg-static
-add_library(@CMAKE_PROJECT_NAME@::turbojpeg-static STATIC IMPORTED)
+# Create imported target @PROJECT_NAME@::turbojpeg-static
+add_library(@PROJECT_NAME@::turbojpeg-static STATIC IMPORTED)
 
-set_target_properties(@CMAKE_PROJECT_NAME@::turbojpeg-static PROPERTIES
+set_target_properties(@PROJECT_NAME@::turbojpeg-static PROPERTIES
   INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include"
 )
 
-# Create imported target @CMAKE_PROJECT_NAME@::jpeg-static
-add_library(@CMAKE_PROJECT_NAME@::jpeg-static STATIC IMPORTED)
+# Create imported target @PROJECT_NAME@::jpeg-static
+add_library(@PROJECT_NAME@::jpeg-static STATIC IMPORTED)
 
-set_target_properties(@CMAKE_PROJECT_NAME@::jpeg-static PROPERTIES
+set_target_properties(@PROJECT_NAME@::jpeg-static PROPERTIES
   INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/include"
 )
 
 # Load information for each installed configuration.
 get_filename_component(_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
-file(GLOB CONFIG_FILES "${_DIR}/@CMAKE_PROJECT_NAME@Targets-*.cmake")
+file(GLOB CONFIG_FILES "${_DIR}/@PROJECT_NAME@Targets-*.cmake")
 foreach(f ${CONFIG_FILES})
   include(${f})
 endforeach()
