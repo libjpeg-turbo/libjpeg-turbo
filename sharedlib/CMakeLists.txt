@@ -76,30 +76,46 @@ else()
   set(DJPEG_BMP_SOURCES ../wrbmp.c ../wrtarga.c)
 endif()
 
-add_executable(cjpeg ../cjpeg.c ../cdjpeg.c ../rdgif.c ../rdppm.c
-  ../rdswitch.c ${CJPEG_BMP_SOURCES})
-set_property(TARGET cjpeg PROPERTY COMPILE_FLAGS ${COMPILE_FLAGS})
-target_link_libraries(cjpeg jpeg)
+if (JPEG_TURBO_BUILD_CJPEG)
+    add_executable(cjpeg ../cjpeg.c ../cdjpeg.c ../rdgif.c ../rdppm.c
+      ../rdswitch.c ${CJPEG_BMP_SOURCES})
+    set_property(TARGET cjpeg PROPERTY COMPILE_FLAGS ${COMPILE_FLAGS})
+    target_link_libraries(cjpeg jpeg)
 
-add_executable(djpeg ../djpeg.c ../cdjpeg.c ../rdcolmap.c ../rdswitch.c
-  ../wrgif.c ../wrppm.c ${DJPEG_BMP_SOURCES})
-set_property(TARGET djpeg PROPERTY COMPILE_FLAGS ${COMPILE_FLAGS})
-target_link_libraries(djpeg jpeg)
+    install(TARGETS cjpeg
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+endif()
 
-add_executable(jpegtran ../jpegtran.c ../cdjpeg.c ../rdswitch.c ../transupp.c)
-target_link_libraries(jpegtran jpeg)
-set_property(TARGET jpegtran PROPERTY COMPILE_FLAGS "${USE_SETMODE}")
+if (JPEG_TURBO_BUILD_DJPEG)
+    add_executable(djpeg ../djpeg.c ../cdjpeg.c ../rdcolmap.c ../rdswitch.c
+      ../wrgif.c ../wrppm.c ${DJPEG_BMP_SOURCES})
+    set_property(TARGET djpeg PROPERTY COMPILE_FLAGS ${COMPILE_FLAGS})
+    target_link_libraries(djpeg jpeg)
 
-add_executable(jcstest ../jcstest.c)
-target_link_libraries(jcstest jpeg)
+    install(TARGETS djpeg
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+endif()
+
+if (JPEG_TURBO_BUILD_JPEGTRAN)
+    add_executable(jpegtran ../jpegtran.c ../cdjpeg.c ../rdswitch.c ../transupp.c)
+    target_link_libraries(jpegtran jpeg)
+    set_property(TARGET jpegtran PROPERTY COMPILE_FLAGS "${USE_SETMODE}")
+
+    install(TARGETS jpegtran
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+endif()
+
+if (JPEG_TURBO_BUILD_TESTS)
+    add_executable(jcstest ../jcstest.c)
+    target_link_libraries(jcstest jpeg)
+endif()
 
 install(TARGETS jpeg EXPORT ${PROJECT_NAME}Targets
   INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-install(TARGETS cjpeg djpeg jpegtran
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+
 if(NOT CMAKE_VERSION VERSION_LESS "3.1" AND MSVC AND
   CMAKE_C_LINKER_SUPPORTS_PDB)
   install(FILES "$<TARGET_PDB_FILE:jpeg>"

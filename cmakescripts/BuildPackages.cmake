@@ -66,57 +66,57 @@ endif() # Linux
 
 if(WIN32)
 
-if(MSVC)
-  set(INST_PLATFORM "Visual C++")
-  set(INST_ID vc)
-  set(INST_NAME ${PROJECT_NAME}-${VERSION}-${INST_ID})
-  set(INST_REG_NAME ${PROJECT_NAME})
-elseif(MINGW)
-  set(INST_PLATFORM GCC)
-  set(INST_ID gcc)
-  set(INST_NAME ${PROJECT_NAME}-${VERSION}-${INST_ID})
-  set(INST_REG_NAME ${PROJECT_NAME}-${INST_ID})
-  set(INST_DEFS -DGCC)
-endif()
+    if(MSVC)
+      set(INST_PLATFORM "Visual C++")
+      set(INST_ID vc)
+      set(INST_NAME ${PROJECT_NAME}-${VERSION}-${INST_ID})
+      set(INST_REG_NAME ${PROJECT_NAME})
+    elseif(MINGW)
+      set(INST_PLATFORM GCC)
+      set(INST_ID gcc)
+      set(INST_NAME ${PROJECT_NAME}-${VERSION}-${INST_ID})
+      set(INST_REG_NAME ${PROJECT_NAME}-${INST_ID})
+      set(INST_DEFS -DGCC)
+    endif()
 
-if(BITS EQUAL 64)
-  set(INST_PLATFORM "${INST_PLATFORM} 64-bit")
-  set(INST_NAME ${INST_NAME}64)
-  set(INST_REG_NAME ${INST_REG_NAME}64)
-  set(INST_DEFS ${INST_DEFS} -DWIN64)
-endif()
+    if(BITS EQUAL 64)
+      set(INST_PLATFORM "${INST_PLATFORM} 64-bit")
+      set(INST_NAME ${INST_NAME}64)
+      set(INST_REG_NAME ${INST_REG_NAME}64)
+      set(INST_DEFS ${INST_DEFS} -DWIN64)
+    endif()
 
-if(WITH_JAVA)
-  set(INST_DEFS ${INST_DEFS} -DJAVA)
-endif()
+    if(WITH_JAVA)
+      set(INST_DEFS ${INST_DEFS} -DJAVA)
+    endif()
 
-if(GENERATOR_IS_MULTI_CONFIG)
-  set(INST_DEFS ${INST_DEFS} "-DBUILDDIR=${CMAKE_CFG_INTDIR}\\")
-else()
-  set(INST_DEFS ${INST_DEFS} "-DBUILDDIR=")
-endif()
+    if(GENERATOR_IS_MULTI_CONFIG)
+      set(INST_DEFS ${INST_DEFS} "-DBUILDDIR=${CMAKE_CFG_INTDIR}\\")
+    else()
+      set(INST_DEFS ${INST_DEFS} "-DBUILDDIR=")
+    endif()
 
-string(REGEX REPLACE "/" "\\\\" INST_DIR ${CMAKE_INSTALL_PREFIX})
+    string(REGEX REPLACE "/" "\\\\" INST_DIR ${CMAKE_INSTALL_PREFIX})
 
-configure_file(release/installer.nsi.in installer.nsi @ONLY)
-# TODO: It would be nice to eventually switch to CPack and eliminate this mess,
-# but not today.
-configure_file(win/projectTargets.cmake.in
-  win/${PROJECT_NAME}Targets.cmake @ONLY)
-configure_file(win/${INST_ID}/projectTargets-release.cmake.in
-  win/${PROJECT_NAME}Targets-release.cmake @ONLY)
+    configure_file(release/installer.nsi.in installer.nsi @ONLY)
+    # TODO: It would be nice to eventually switch to CPack and eliminate this mess,
+    # but not today.
+    configure_file(win/projectTargets.cmake.in
+      win/${PROJECT_NAME}Targets.cmake @ONLY)
+    configure_file(win/${INST_ID}/projectTargets-release.cmake.in
+      win/${PROJECT_NAME}Targets-release.cmake @ONLY)
 
-if(WITH_JAVA)
-  set(JAVA_DEPEND turbojpeg-java)
-endif()
-if(WITH_TURBOJPEG)
-  set(TURBOJPEG_DEPEND turbojpeg turbojpeg-static tjbench)
-endif()
-add_custom_target(installer
-  makensis -nocd ${INST_DEFS} installer.nsi
-  DEPENDS jpeg jpeg-static rdjpgcom wrjpgcom cjpeg djpeg jpegtran
-    ${JAVA_DEPEND} ${TURBOJPEG_DEPEND}
-  SOURCES installer.nsi)
+    if(WITH_JAVA)
+      set(JAVA_DEPEND turbojpeg-java)
+    endif()
+    if(WITH_TURBOJPEG)
+      set(TURBOJPEG_DEPEND turbojpeg turbojpeg-static tjbench)
+    endif()
+    add_custom_target(installer
+      makensis -nocd ${INST_DEFS} installer.nsi
+      DEPENDS jpeg jpeg-static rdjpgcom wrjpgcom cjpeg djpeg jpegtran
+        ${JAVA_DEPEND} ${TURBOJPEG_DEPEND}
+      SOURCES installer.nsi)
 
 endif() # WIN32
 
