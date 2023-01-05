@@ -24,6 +24,12 @@ libjpeg-turbo (`-DWITH_12BIT=1`), passing samples with values greater than 4095
 or less than 0 to `jpeg_write_scanlines()` caused a buffer overrun or underrun
 in the RGB-to-YCbCr color converter.
 
+4. Fixed an issue in `tjBufSizeYUV2()` whereby it returned a bogus result,
+rather than throwing an error, if the `pad` parameter was not a power of 2.
+Fixed a similar issue in `tjCompressFromYUV()` whereby it generated a corrupt
+JPEG image in certain cases, rather than throwing an error, if the `pad`
+parameter was not a power of 2.
+
 
 2.0.8 ESR
 =========
