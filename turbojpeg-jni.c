@@ -148,9 +148,9 @@ bailout:
 
 /* TurboJPEG 1.4.x: TJ::bufSizeYUV() */
 JNIEXPORT jint JNICALL Java_org_libjpegturbo_turbojpeg_TJ_bufSizeYUV__IIII
-  (JNIEnv *env, jclass cls, jint width, jint pad, jint height, jint subsamp)
+  (JNIEnv *env, jclass cls, jint width, jint align, jint height, jint subsamp)
 {
-  unsigned long retval = tjBufSizeYUV2(width, pad, height, subsamp);
+  unsigned long retval = tjBufSizeYUV2(width, align, height, subsamp);
 
   if (retval == (unsigned long)-1) THROW_ARG(tjGetErrorStr());
   if (retval > (unsigned long)((unsigned int)-1))

@@ -51,11 +51,11 @@ static void usage(char *progName)
 {
   printf("\nUSAGE: %s [options]\n\n", progName);
   printf("Options:\n");
-  printf("-yuv = test YUV encoding/decoding support\n");
-  printf("-noyuvpad = do not pad each line of each Y, U, and V plane to the nearest\n");
-  printf("            4-byte boundary\n");
-  printf("-alloc = test automatic buffer allocation\n");
-  printf("-bmp = tjLoadImage()/tjSaveImage() unit test\n\n");
+  printf("-yuv = test YUV encoding/compression/decompression/decoding\n");
+  printf("-noyuvpad = do not pad each row in each Y, U, and V plane to the nearest\n");
+  printf("            multiple of 4 bytes\n");
+  printf("-alloc = test automatic JPEG buffer allocation\n");
+  printf("-bmp = test packed-pixel image I/O\n");
   exit(1);
 }
 
@@ -91,7 +91,7 @@ const int _4byteFormats[] = {
 const int _onlyGray[] = { TJPF_GRAY };
 const int _onlyRGB[] = { TJPF_RGB };
 
-int doYUV = 0, alloc = 0, pad = 4;
+int doYUV = 0, alloc = 0, yuvAlign = 4;
 
 int exitStatus = 0;
 #define BAILOUT() { exitStatus = -1;  goto bailout; }
@@ -278,7 +278,7 @@ static int checkBufYUV(unsigned char *buf, int w, int h, int subsamp,
   int hsf = tjMCUWidth[subsamp] / 8, vsf = tjMCUHeight[subsamp] / 8;
   int pw = PAD(w, hsf), ph = PAD(h, vsf);
   int cw = pw / hsf, ch = ph / vsf;
-  int ypitch = PAD(pw, pad), uvpitch = PAD(cw, pad);
+  int ypitch = PAD(pw, yuvAlign), uvpitch = PAD(cw, yuvAlign);
   int retval = 1;
   int halfway = 16 * sf.num / sf.denom;
   int blocksize = 8 * sf.num / sf.denom;
@@ -377,7 +377,7 @@ static void compTest(tjhandle handle, unsigned char **dstBuf,
 
   if (!alloc) flags |= TJFLAG_NOREALLOC;
   if (doYUV) {
-    unsigned long yuvSize = tjBufSizeYUV2(w, pad, h, subsamp);
+    unsigned long yuvSize = tjBufSizeYUV2(w, yuvAlign, h, subsamp);
     tjscalingfactor sf = { 1, 1 };
     tjhandle handle2 = tjInitCompress();
 
@@ -388,15 +388,15 @@ static void compTest(tjhandle handle, unsigned char **dstBuf,
     memset(yuvBuf, 0, yuvSize);
 
     printf("%s %s -> YUV %s ... ", pfStr, buStrLong, subNameLong[subsamp]);
-    TRY_TJ(tjEncodeYUV3(handle2, srcBuf, w, 0, h, pf, yuvBuf, pad, subsamp,
-                        flags));
+    TRY_TJ(tjEncodeYUV3(handle2, srcBuf, w, 0, h, pf, yuvBuf, yuvAlign,
+                        subsamp, flags));
     tjDestroy(handle2);
     if (checkBufYUV(yuvBuf, w, h, subsamp, sf)) printf("Passed.\n");
     else printf("FAILED!\n");
 
     printf("YUV %s %s -> JPEG Q%d ... ", subNameLong[subsamp], buStrLong,
            jpegQual);
-    TRY_TJ(tjCompressFromYUV(handle, yuvBuf, w, pad, h, subsamp, dstBuf,
+    TRY_TJ(tjCompressFromYUV(handle, yuvBuf, w, yuvAlign, h, subsamp, dstBuf,
                              dstSize, jpegQual, flags));
   } else {
     printf("%s %s -> %s Q%d ... ", pfStr, buStrLong, subNameLong[subsamp],
@@ -438,7 +438,7 @@ static void _decompTest(tjhandle handle, unsigned char *jpegBuf,
   memset(dstBuf, 0, dstSize);
 
   if (doYUV) {
-    unsigned long yuvSize = tjBufSizeYUV2(scaledWidth, pad, scaledHeight,
+    unsigned long yuvSize = tjBufSizeYUV2(scaledWidth, yuvAlign, scaledHeight,
                                           subsamp);
     tjhandle handle2 = tjInitDecompress();
 
@@ -456,7 +456,7 @@ static void _decompTest(tjhandle handle, unsigned char *jpegBuf,
        tjDecompressToYUV2() generates the largest possible scaled image that
        fits within the desired dimensions, as documented. */
     TRY_TJ(tjDecompressToYUV2(handle, jpegBuf, jpegSize, yuvBuf,
-                              scaledWidth + 1, pad, scaledHeight + 1,
+                              scaledWidth + 1, yuvAlign, scaledHeight + 1,
                               flags));
     if (checkBufYUV(yuvBuf, scaledWidth, scaledHeight, subsamp, sf))
       printf("Passed.\n");
@@ -464,8 +464,8 @@ static void _decompTest(tjhandle handle, unsigned char *jpegBuf,
 
     printf("YUV %s -> %s %s ... ", subNameLong[subsamp], pixFormatStr[pf],
            (flags & TJFLAG_BOTTOMUP) ? "Bottom-Up" : "Top-Down ");
-    TRY_TJ(tjDecodeYUV(handle2, yuvBuf, pad, subsamp, dstBuf, scaledWidth, 0,
-                       scaledHeight, pf, flags));
+    TRY_TJ(tjDecodeYUV(handle2, yuvBuf, yuvAlign, subsamp, dstBuf, scaledWidth,
+                       0, scaledHeight, pf, flags));
     tjDestroy(handle2);
   } else {
     printf("JPEG -> %s %s ", pixFormatStr[pf],
@@ -621,7 +621,7 @@ static void bufSizeTest(void)
         if ((srcBuf = (unsigned char *)malloc(w * h * 4)) == NULL)
           THROW("Memory allocation failure");
         if (!alloc || doYUV) {
-          if (doYUV) dstSize = tjBufSizeYUV2(w, pad, h, subsamp);
+          if (doYUV) dstSize = tjBufSizeYUV2(w, yuvAlign, h, subsamp);
           else dstSize = tjBufSize(w, h, subsamp);
           if ((dstBuf = (unsigned char *)tjAlloc(dstSize)) == NULL)
             THROW("Memory allocation failure");
@@ -633,8 +633,8 @@ static void bufSizeTest(void)
         }
 
         if (doYUV) {
-          TRY_TJ(tjEncodeYUV3(handle, srcBuf, w, 0, h, TJPF_BGRX, dstBuf, pad,
-                              subsamp, 0));
+          TRY_TJ(tjEncodeYUV3(handle, srcBuf, w, 0, h, TJPF_BGRX, dstBuf,
+                              yuvAlign, subsamp, 0));
         } else {
           TRY_TJ(tjCompress2(handle, srcBuf, w, 0, h, TJPF_BGRX, &dstBuf,
                              &dstSize, subsamp, 100,
@@ -648,7 +648,7 @@ static void bufSizeTest(void)
         if ((srcBuf = (unsigned char *)malloc(h * w * 4)) == NULL)
           THROW("Memory allocation failure");
         if (!alloc || doYUV) {
-          if (doYUV) dstSize = tjBufSizeYUV2(h, pad, w, subsamp);
+          if (doYUV) dstSize = tjBufSizeYUV2(h, yuvAlign, w, subsamp);
           else dstSize = tjBufSize(h, w, subsamp);
           if ((dstBuf = (unsigned char *)tjAlloc(dstSize)) == NULL)
             THROW("Memory allocation failure");
@@ -660,8 +660,8 @@ static void bufSizeTest(void)
         }
 
         if (doYUV) {
-          TRY_TJ(tjEncodeYUV3(handle, srcBuf, h, 0, w, TJPF_BGRX, dstBuf, pad,
-                              subsamp, 0));
+          TRY_TJ(tjEncodeYUV3(handle, srcBuf, h, 0, w, TJPF_BGRX, dstBuf,
+                              yuvAlign, subsamp, 0));
         } else {
           TRY_TJ(tjCompress2(handle, srcBuf, h, 0, w, TJPF_BGRX, &dstBuf,
                              &dstSize, subsamp, 100,
@@ -905,7 +905,7 @@ int main(int argc, char *argv[])
   if (argc > 1) {
     for (i = 1; i < argc; i++) {
       if (!strcasecmp(argv[i], "-yuv")) doYUV = 1;
-      else if (!strcasecmp(argv[i], "-noyuvpad")) pad = 1;
+      else if (!strcasecmp(argv[i], "-noyuvpad")) yuvAlign = 1;
       else if (!strcasecmp(argv[i], "-alloc")) alloc = 1;
       else if (!strcasecmp(argv[i], "-bmp")) return bmpTest();
       else usage(argv[0]);
