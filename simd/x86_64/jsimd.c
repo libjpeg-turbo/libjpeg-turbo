@@ -28,8 +28,9 @@
  */
 #define IS_ALIGNED(ptr, order)  (((size_t)ptr & ((1 << order) - 1)) == 0)
 
-#define IS_ALIGNED_SSE(ptr)  (IS_ALIGNED(ptr, 4)) /* 16 byte alignment */
-#define IS_ALIGNED_AVX(ptr)  (IS_ALIGNED(ptr, 5)) /* 32 byte alignment */
+#define IS_ALIGNED_SSE(ptr)     (IS_ALIGNED(ptr, 4)) /* 16 byte alignment */
+#define IS_ALIGNED_AVX(ptr)     (IS_ALIGNED(ptr, 5)) /* 32 byte alignment */
+#define IS_ALIGNED_AVX512(ptr)  (IS_ALIGNED(ptr, 6)) /* 64 byte alignment */
 
 static THREAD_LOCAL unsigned int simd_support = (unsigned int)(~0);
 static THREAD_LOCAL unsigned int simd_huffman = 1;
@@ -55,6 +56,8 @@ init_simd(void)
     simd_support &= JSIMD_SSE2;
   if (!GETENV_S(env, 2, "JSIMD_FORCEAVX2") && !strcmp(env, "1"))
     simd_support &= JSIMD_AVX2;
+  if (!GETENV_S(env, 2, "JSIMD_FORCEAVX512") && !strcmp(env, "1"))
+    simd_support &= JSIMD_AVX512;
   if (!GETENV_S(env, 2, "JSIMD_FORCENONE") && !strcmp(env, "1"))
     simd_support = 0;
   if (!GETENV_S(env, 2, "JSIMD_NOHUFFENC") && !strcmp(env, "1"))

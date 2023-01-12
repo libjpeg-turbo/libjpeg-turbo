@@ -86,9 +86,9 @@ round_up_pow2(size_t a, size_t b)
 #ifndef WITH_SIMD
 #define ALIGN_SIZE  MAX(sizeof(void *), sizeof(double))
 #else
-#define ALIGN_SIZE  32 /* Most of the SIMD instructions we support require
-                          16-byte (128-bit) alignment, but AVX2 requires
-                          32-byte alignment. */
+#define ALIGN_SIZE  64 /* Most of the SIMD instructions we support require
+                          16-byte (128-bit, SSE) or 32-byte (256-bit, AVX) alignment, 
+                          but AVX512 requires 64-byte alignment. */
 #endif
 #endif
 
