@@ -4,9 +4,9 @@ install:
 
       mkdir c:\temp
 
-      if not exist c:\installers\nasm-2.10.01-win32.zip curl -fSL -o c:\installers\nasm-2.10.01-win32.zip http://www.nasm.us/pub/nasm/releasebuilds/2.10.01/win32/nasm-2.10.01-win32.zip
+      if not exist c:\installers\nasm-2.13.03-win32.zip curl -fSL -o c:\installers\nasm-2.13.03-win32.zip http://www.nasm.us/pub/nasm/releasebuilds/2.13.03/win32/nasm-2.13.03-win32.zip
 
-      7z x c:\installers\nasm-2.10.01-win32.zip -oc:\ > c:\installers\nasm.install.log
+      7z x c:\installers\nasm-2.13.03-win32.zip -oc:\ > c:\installers\nasm.install.log
 
       if not exist c:\installers\i686-6.4.0-release-posix-dwarf-rt_v5-rev0.7z curl -fSL -o c:\installers\i686-6.4.0-release-posix-dwarf-rt_v5-rev0.7z "https://sourceforge.net/projects/mingw-w64/files/Toolchains targetting Win32/Personal Builds/mingw-builds/6.4.0/threads-posix/dwarf/i686-6.4.0-release-posix-dwarf-rt_v5-rev0.7z"
 
@@ -20,7 +20,7 @@ install:
 
       7z x c:\installers\x86_64-6.4.0-release-posix-seh-rt_v5-rev0.7z -o"c:\Program Files\mingw-w64\x86_64-6.4.0-posix-seh-rt_v5-rev0" > c:\installers\mingw64.install.log
 
-      set PATH=c:\nasm-2.10.01;c:\Program Files (x86)\NSIS;c:\msys64\usr\bin;%PATH%
+      set PATH=c:\nasm-2.13.03;c:\Program Files (x86)\NSIS;c:\msys64\usr\bin;%PATH%
 
       "c:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\amd64\vcvars64.bat"
 
@@ -37,7 +37,7 @@ install:
       git clone --depth=1 https://github.com/libjpeg-turbo/buildscripts.git -b %APPVEYOR_REPO_BRANCH% c:/buildscripts
 
 cache:
-  - c:\installers\nasm-2.10.01-win32.zip -> appveyor.yml
+  - c:\installers\nasm-2.13.03-win32.zip -> appveyor.yml
   - c:\installers\i686-6.4.0-release-posix-dwarf-rt_v5-rev0.7z -> appveyor.yml
   - c:\installers\x86_64-6.4.0-release-posix-seh-rt_v5-rev0.7z -> appveyor.yml
 
