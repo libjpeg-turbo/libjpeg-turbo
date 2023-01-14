@@ -74,6 +74,23 @@ EXTN(jpeg_simd_cpu_support):
 
     or          rdi, JSIMD_AVX2
 
+    ; Check for AVX512 instruction support
+    mov         rax, 7
+    xor         rcx, rcx
+    cpuid
+    mov         rax, rbx                ; rax = Extended feature flags
+
+    test        rax, 1<<16              ; bit16:AVX512F
+    jz          short .return
+
+    test        rax, 1<<30              ; bit30:AVX512BW
+    jz          short .return
+
+    test        rax, 1<<31              ; bit31:AVX512VL
+    jz          short .return
+
+    or          rdi, JSIMD_AVX512
+
 .return:
     mov         rax, rdi
 
