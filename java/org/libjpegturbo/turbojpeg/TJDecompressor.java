@@ -378,7 +378,7 @@ public class TJDecompressor implements Closeable {
                          int pitch, int desiredHeight, int pixelFormat,
                          int flags) throws TJException {
     if (jpegBuf == null && yuvImage == null)
-      throw new IllegalStateException(NO_ASSOC_ERROR);
+      throw new IllegalStateException("No source image is associated with this instance");
     if (dstBuf == null || x < 0 || y < 0 || pitch < 0 ||
         (yuvImage != null && (desiredWidth < 0 || desiredHeight < 0)) ||
         pixelFormat < 0 || pixelFormat >= TJ.NUMPF || flags < 0)
@@ -697,7 +697,7 @@ public class TJDecompressor implements Closeable {
                          int stride, int desiredHeight, int pixelFormat,
                          int flags) throws TJException {
     if (jpegBuf == null && yuvImage == null)
-      throw new IllegalStateException(NO_ASSOC_ERROR);
+      throw new IllegalStateException("No source image is associated with this instance");
     if (dstBuf == null || x < 0 || y < 0 || stride < 0 ||
         (yuvImage != null && (desiredWidth < 0 || desiredHeight < 0)) ||
         pixelFormat < 0 || pixelFormat >= TJ.NUMPF || flags < 0)
