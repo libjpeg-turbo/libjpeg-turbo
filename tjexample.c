@@ -1,6 +1,6 @@
 /*
- * Copyright (C)2011-2012, 2014-2015, 2017, 2019, 2021 D. R. Commander.
- *                                                     All Rights Reserved.
+ * Copyright (C)2011-2012, 2014-2015, 2017, 2019, 2021, 2023
+ *           D. R. Commander.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -145,14 +145,11 @@ static void usage(char *programName)
   printf("General Options\n");
   printf("---------------\n\n");
 
-  printf("-fastupsample = Use the fastest chrominance upsampling algorithm available in\n");
-  printf("     the underlying codec.\n\n");
+  printf("-fastupsample = Use the fastest chrominance upsampling algorithm available\n\n");
 
-  printf("-fastdct = Use the fastest DCT/IDCT algorithms available in the underlying\n");
-  printf("     codec.\n\n");
+  printf("-fastdct = Use the fastest DCT/IDCT algorithm available\n\n");
 
-  printf("-accuratedct = Use the most accurate DCT/IDCT algorithms available in the\n");
-  printf("     underlying codec.\n\n");
+  printf("-accuratedct = Use the most accurate DCT/IDCT algorithm available\n\n");
 
   exit(1);
 }
