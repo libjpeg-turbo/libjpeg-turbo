@@ -41,6 +41,9 @@ image dimensions.
 (`-DWITH_12BIT=1`) using an alpha-enabled output color space such as
 `JCS_EXT_RGBA`, the alpha channel was set to 255 rather than 4095.
 
+7. Fixed an issue whereby the Java version of TJBench did not accept a range of
+quality values.
+
 
 2.0.8 ESR
 =========
