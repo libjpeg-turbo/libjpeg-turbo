@@ -44,6 +44,10 @@ image dimensions.
 7. Fixed an issue whereby the Java version of TJBench did not accept a range of
 quality values.
 
+8. Fixed an issue whereby, when `-progressive` was passed to TJBench, the JPEG
+input image was not transformed into a progressive JPEG image prior to
+decompression.
+
 
 2.0.8 ESR
 =========
