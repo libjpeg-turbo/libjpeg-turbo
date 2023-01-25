@@ -28,6 +28,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 #include "turbojpeg.h"
 #ifdef WIN32
 #include "tjutil.h"
@@ -139,7 +140,7 @@ JNIEXPORT jint JNICALL Java_org_libjpegturbo_turbojpeg_TJ_bufSize
   unsigned long retval = tjBufSize(width, height, jpegSubsamp);
 
   if (retval == (unsigned long)-1) THROW_ARG(tjGetErrorStr());
-  if (retval > (unsigned long)((unsigned int)-1))
+  if (retval > (unsigned long)INT_MAX)
     THROW_ARG("Image is too large");
 
 bailout:
@@ -153,7 +154,7 @@ JNIEXPORT jint JNICALL Java_org_libjpegturbo_turbojpeg_TJ_bufSizeYUV__IIII
   unsigned long retval = tjBufSizeYUV2(width, align, height, subsamp);
 
   if (retval == (unsigned long)-1) THROW_ARG(tjGetErrorStr());
-  if (retval > (unsigned long)((unsigned int)-1))
+  if (retval > (unsigned long)INT_MAX)
     THROW_ARG("Image is too large");
 
 bailout:
@@ -178,7 +179,7 @@ JNIEXPORT jint JNICALL Java_org_libjpegturbo_turbojpeg_TJ_planeSizeYUV__IIIII
                                         subsamp);
 
   if (retval == (unsigned long)-1) THROW_ARG(tjGetErrorStr());
-  if (retval > (unsigned long)((unsigned int)-1))
+  if (retval > (unsigned long)INT_MAX)
     THROW_ARG("Image is too large");
 
 bailout:
