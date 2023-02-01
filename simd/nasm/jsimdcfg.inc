@@ -91,3 +91,4 @@
 %define JSIMD_SSE 0x04
 %define JSIMD_SSE2 0x08
 %define JSIMD_AVX2 0x80
+%define JSIMD_AVX512 0x200

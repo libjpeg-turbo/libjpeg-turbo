@@ -202,6 +202,10 @@ section .note.GNU-stack noalloc noexec nowrite progbits
 %define SIZEOF_YMMWORD  SIZEOF_YWORD    ; sizeof(YMMWORD)
 %define YMMWORD_BIT     YWORD_BIT       ; sizeof(YMMWORD)*BYTE_BIT
 
+%define ZMMWORD                         ; int256 (AVX512 register)
+%define SIZEOF_ZMMWORD  SIZEOF_ZWORD    ; sizeof(ZMMWORD)
+%define ZMMWORD_BIT     ZWORD_BIT       ; sizeof(ZMMWORD)*BYTE_BIT
+
 ; Similar hacks for when we load a dword or MMWORD into an xmm# register
 %define XMM_DWORD
 %define XMM_MMWORD
@@ -212,6 +216,7 @@ section .note.GNU-stack noalloc noexec nowrite progbits
 %define SIZEOF_QWORD  8                 ; sizeof(qword)
 %define SIZEOF_OWORD  16                ; sizeof(oword)
 %define SIZEOF_YWORD  32                ; sizeof(yword)
+%define SIZEOF_ZWORD  64                ; sizeof(zword)
 
 %define BYTE_BIT      8                 ; CHAR_BIT in C
 %define WORD_BIT      16                ; sizeof(word)*BYTE_BIT

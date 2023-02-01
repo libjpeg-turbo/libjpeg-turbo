@@ -27,6 +27,7 @@
 #define JSIMD_ALTIVEC  0x40
 #define JSIMD_AVX2     0x80
 #define JSIMD_MMI      0x100
+#define JSIMD_AVX512   0x200
 
 /* SIMD Ext: retrieve SIMD/CPU information */
 EXTERN(unsigned int) jpeg_simd_cpu_support(void);
@@ -1017,6 +1018,9 @@ EXTERN(void) jsimd_convsamp_sse2
 EXTERN(void) jsimd_convsamp_avx2
   (JSAMPARRAY sample_data, JDIMENSION start_col, DCTELEM *workspace);
 
+EXTERN(void) jsimd_convsamp_avx512
+  (JSAMPARRAY sample_data, JDIMENSION start_col, DCTELEM *workspace);
+
 EXTERN(void) jsimd_convsamp_neon
   (JSAMPARRAY sample_data, JDIMENSION start_col, DCTELEM *workspace);
 
@@ -1084,6 +1088,9 @@ EXTERN(void) jsimd_quantize_sse2
   (JCOEFPTR coef_block, DCTELEM *divisors, DCTELEM *workspace);
 
 EXTERN(void) jsimd_quantize_avx2
+  (JCOEFPTR coef_block, DCTELEM *divisors, DCTELEM *workspace);
+
+EXTERN(void) jsimd_quantize_avx512
   (JCOEFPTR coef_block, DCTELEM *divisors, DCTELEM *workspace);
 
 EXTERN(void) jsimd_quantize_neon

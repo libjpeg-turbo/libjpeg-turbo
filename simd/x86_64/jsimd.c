@@ -28,8 +28,9 @@
  */
 #define IS_ALIGNED(ptr, order)  (((size_t)ptr & ((1 << order) - 1)) == 0)
 
-#define IS_ALIGNED_SSE(ptr)  (IS_ALIGNED(ptr, 4)) /* 16 byte alignment */
-#define IS_ALIGNED_AVX(ptr)  (IS_ALIGNED(ptr, 5)) /* 32 byte alignment */
+#define IS_ALIGNED_SSE(ptr)     (IS_ALIGNED(ptr, 4)) /* 16 byte alignment */
+#define IS_ALIGNED_AVX(ptr)     (IS_ALIGNED(ptr, 5)) /* 32 byte alignment */
+#define IS_ALIGNED_AVX512(ptr)  (IS_ALIGNED(ptr, 6)) /* 64 byte alignment */
 
 static THREAD_LOCAL unsigned int simd_support = (unsigned int)(~0);
 static THREAD_LOCAL unsigned int simd_huffman = 1;
@@ -55,6 +56,8 @@ init_simd(void)
     simd_support &= JSIMD_SSE2;
   if (!GETENV_S(env, 2, "JSIMD_FORCEAVX2") && !strcmp(env, "1"))
     simd_support &= JSIMD_AVX2;
+  if (!GETENV_S(env, 2, "JSIMD_FORCEAVX512") && !strcmp(env, "1"))
+    simd_support &= JSIMD_AVX512;
   if (!GETENV_S(env, 2, "JSIMD_FORCENONE") && !strcmp(env, "1"))
     simd_support = 0;
   if (!GETENV_S(env, 2, "JSIMD_NOHUFFENC") && !strcmp(env, "1"))
@@ -646,6 +649,8 @@ jsimd_can_convsamp(void)
   if (sizeof(DCTELEM) != 2)
     return 0;
 
+  if (simd_support & JSIMD_AVX512)
+    return 1;
   if (simd_support & JSIMD_AVX2)
     return 1;
   if (simd_support & JSIMD_SSE2)
@@ -679,7 +684,9 @@ GLOBAL(void)
 jsimd_convsamp(JSAMPARRAY sample_data, JDIMENSION start_col,
                DCTELEM *workspace)
 {
-  if (simd_support & JSIMD_AVX2)
+  if (simd_support & JSIMD_AVX512)
+    jsimd_convsamp_avx512(sample_data, start_col, workspace);
+  else if (simd_support & JSIMD_AVX2)
     jsimd_convsamp_avx2(sample_data, start_col, workspace);
   else
     jsimd_convsamp_sse2(sample_data, start_col, workspace);
@@ -779,6 +786,8 @@ jsimd_can_quantize(void)
   if (sizeof(DCTELEM) != 2)
     return 0;
 
+  if (simd_support & JSIMD_AVX512)
+    return 1;
   if (simd_support & JSIMD_AVX2)
     return 1;
   if (simd_support & JSIMD_SSE2)
@@ -809,7 +818,9 @@ jsimd_can_quantize_float(void)
 GLOBAL(void)
 jsimd_quantize(JCOEFPTR coef_block, DCTELEM *divisors, DCTELEM *workspace)
 {
-  if (simd_support & JSIMD_AVX2)
+  if (simd_support & JSIMD_AVX512)
+    jsimd_quantize_avx512(coef_block, divisors, workspace);
+  else if (simd_support & JSIMD_AVX2)
     jsimd_quantize_avx2(coef_block, divisors, workspace);
   else
     jsimd_quantize_sse2(coef_block, divisors, workspace);

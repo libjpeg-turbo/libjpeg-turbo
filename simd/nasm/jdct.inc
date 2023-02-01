@@ -27,5 +27,6 @@
   ((b) + (m) * DCTSIZE * (s) + (n) * SIZEOF_XMMWORD)
 %define YMMBLOCK(m, n, b, s) \
   ((b) + (m) * DCTSIZE * (s) + (n) * SIZEOF_YMMWORD)
-
+%define ZMMBLOCK(m, n, b, s) \
+  ((b) + (m) * DCTSIZE * (s) + (n) * SIZEOF_ZMMWORD)
 ; --------------------------------------------------------------------------
