@@ -624,7 +624,7 @@ if(WITH_TURBOJPEG)
       set(TJMAPFILE ${CMAKE_CURRENT_SOURCE_DIR}/turbojpeg-mapfile.jni)
     endif()
     if(MSVC)
-      configure_file(${CMAKE_SOURCE_DIR}/win/turbojpeg.rc.in
+      configure_file(${CMAKE_CURRENT_SOURCE_DIR}/win/turbojpeg.rc.in
         ${CMAKE_BINARY_DIR}/win/turbojpeg.rc)
       set(TURBOJPEG_SOURCES ${TURBOJPEG_SOURCES}
         ${CMAKE_BINARY_DIR}/win/turbojpeg.rc)
