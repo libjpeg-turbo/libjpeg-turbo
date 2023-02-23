@@ -95,13 +95,13 @@ include(cmakescripts/PackageInfo.cmake)
 # Detect CPU type and whether we're building 64-bit or 32-bit code
 math(EXPR BITS "${CMAKE_SIZEOF_VOID_P} * 8")
 string(TOLOWER ${CMAKE_SYSTEM_PROCESSOR} CMAKE_SYSTEM_PROCESSOR_LC)
-set(COUNT 1)
-foreach(ARCH ${CMAKE_OSX_ARCHITECTURES})
-  if(COUNT GREATER 1)
-    message(FATAL_ERROR "The libjpeg-turbo build system does not support multiple values in CMAKE_OSX_ARCHITECTURES.")
-  endif()
-  math(EXPR COUNT "${COUNT}+1")
-endforeach()
+if(CMAKE_OSX_ARCHITECTURES)
+  foreach(ARCH ${CMAKE_OSX_ARCHITECTURES})
+    math(EXPR COUNT "${COUNT}+1")
+  endforeach()
+else()
+  set(COUNT 1)
+endif()
 if(CMAKE_SYSTEM_PROCESSOR_LC MATCHES "x86_64" OR
   CMAKE_SYSTEM_PROCESSOR_LC MATCHES "amd64" OR
   CMAKE_SYSTEM_PROCESSOR_LC MATCHES "i[0-9]86" OR
