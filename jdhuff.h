@@ -3,8 +3,6 @@
  *
  * This file was part of the Independent JPEG Group's software:
  * Copyright (C) 1991-1997, Thomas G. Lane.
- * Lossless JPEG Modifications:
- * Copyright (C) 1999, Ken Murchison.
  * libjpeg-turbo Modifications:
  * Copyright (C) 2010-2011, 2015-2016, 2021, D. R. Commander.
  * Copyright (C) 2018, Matthias Räncker.
@@ -12,47 +10,66 @@
  * file.
  *
  * This file contains declarations for Huffman entropy decoding routines
- * that are shared between the sequential decoder (jdhuff.c), the progressive
- * decoder (jdphuff.c), and the lossless decoder (jdlhuff.c).  No other modules
- * need to see these.
+ * that are shared between the sequential decoder (jdhuff.c) and the
+ * progressive decoder (jdphuff.c).  No other modules need to see these.
  */
 
+/*
+ * I have made the following modifications in this file to enable faster Huffman decoding. 
+ * 1. Defined a new structure JHUFF_DEC;
+ * 2. Defined and constructed two new decoder structure DC_derived_tbl and AC_derived_tbl, 
+ * to replace the original structure d_derived_tbl.
+ * 3. Re-defined the macor functions HUFF_DECODE() and HUFF_DECODE_FAST();
+ * Cody Wu, 06 / 28 / 2022
+ *
+ */
 #include "jconfigint.h"
 
+#if (defined(__GNUC__) && (__GNUC__ >= 3)) || (defined(__INTEL_COMPILER) && (__INTEL_COMPILER >= 800)) || defined(__clang__)
+#  define expect(expr,value)    (__builtin_expect ((expr),(value)) )
+#else
+#  define expect(expr,value)    (expr)
+#endif
 
-/* Derived data constructed for each Huffman table */
-
-#define HUFF_LOOKAHEAD  8       /* # of bits of lookahead */
+#ifndef likely
+#define likely(expr)     expect((expr) != 0, 1)
+#endif
+#ifndef unlikely
+#define unlikely(expr)   expect((expr) != 0, 0)
+#endif
 
 typedef struct {
-  /* Basic tables: (element [0] of each array is unused) */
-  JLONG maxcode[18];            /* largest code of length k (-1 if none) */
-  /* (maxcode[17] is a sentinel to ensure jpeg_huff_decode terminates) */
-  JLONG valoffset[18];          /* huffval[] offset for codes of length k */
-  /* valoffset[k] = huffval[] index of 1st symbol of code length k, less
-   * the smallest code of length k; so given a code of length k, the
-   * corresponding symbol is huffval[code + valoffset[k]]
-   */
+    unsigned char   next;         /* distance to its next non-zero coefficient; it is set to DCTSIZE2 in case of ending */
+    unsigned char   nBits;        /* number of bits for Huffman code length and following extension bits */
+    unsigned short  extMask;      /* mask for extension bits */
+} JHUFF_DEC;
 
-  /* Link to public Huffman table (needed only in jpeg_huff_decode) */
-  JHUFF_TBL *pub;
+/* Derived data constructed for each Huffman table */
+/* HUFF_LOOKAHEAD must be greater than the minimum length for the decoder to function properly */
+/* In fact, HUFF_LOOKAHEAD must be greater than the average length to function efficiently */
+#define DC_LOOKAHEAD  8          /* # of bits of lookahead */
+#define AC_LOOKAHEAD  10          /* # of bits of lookahead */
 
-  /* Lookahead table: indexed by the next HUFF_LOOKAHEAD bits of
+/* Lookahead table: indexed by the next HUFF_LOOKAHEAD bits of
    * the input data stream.  If the next Huffman code is no more
    * than HUFF_LOOKAHEAD bits long, we can obtain its length and
    * the corresponding symbol directly from this tables.
-   *
-   * The lower 8 bits of each table entry contain the number of
-   * bits in the corresponding Huffman code, or HUFF_LOOKAHEAD + 1
-   * if too long.  The next 8 bits of each entry contain the
-   * symbol.
    */
-  int lookup[1 << HUFF_LOOKAHEAD];
-} d_derived_tbl;
+typedef struct { 
+  unsigned   lookThr, look2Thr;   /* read threshold for the first and second look */
+  JHUFF_DEC  lookup[1<<DC_LOOKAHEAD];      /* look up HUFF_LOOKAHEAD bits  */
+  JHUFF_DEC  look2up[128];        /* 6:512; 7:256; 8:128; 9:64 is pre-calculated to be sufficient */
+} DC_derived_tbl;
+
+typedef struct {
+    unsigned   lookThr, look2Thr;   /* read threshold for the first and second look */
+    JHUFF_DEC  lookup[1 << AC_LOOKAHEAD];      /* look up HUFF_LOOKAHEAD bits  */
+    JHUFF_DEC  look2up[280];        /* 8:472; 9:344; 10:280 is pre-calculated to be sufficient */
+} AC_derived_tbl;
 
 /* Expand a Huffman table definition into the derived format */
 EXTERN(void) jpeg_make_d_derived_tbl(j_decompress_ptr cinfo, boolean isDC,
-                                     int tblno, d_derived_tbl **pdtbl);
+    int tblno, void ** pdtbl);
 
 
 /*
@@ -174,6 +191,18 @@ typedef struct {                /* Bitreading working state within an MCU */
 #define DROP_BITS(nbits) \
   (bits_left -= (nbits))
 
+
+ /* 
+  * Figure F.12: extend sign bit.
+  * On some machines, a shift and add will be faster than a table lookup.
+  */
+#define NEG_1  ((unsigned int)-1)
+#define HUFF_EXTEND(x, mask) \
+((x) + ((((x) - ( mask^ (mask>>1))) >> 31) & (-(int)mask)))
+
+/* Original: ((x) + ((((x) - (1 << ((s) - 1))) >> 31) & (((NEG_1) << (s)) + 1))) */
+
+
 /* Load up the bit buffer to a depth of at least nbits */
 EXTERN(boolean) jpeg_fill_bit_buffer(bitread_working_state *state,
                                      register bit_buf_type get_buffer,
@@ -190,61 +219,33 @@ EXTERN(boolean) jpeg_fill_bit_buffer(bitread_working_state *state,
  * which need not be inline code.
  *
  * Notes about the HUFF_DECODE macro:
- * 1. Near the end of the data segment, we may fail to get enough bits
- *    for a lookahead.  In that case, we do it the hard way.
- * 2. If the lookahead table contains no entry, the next code must be
- *    more than HUFF_LOOKAHEAD bits long.
- * 3. jpeg_huff_decode returns -1 if forced to suspend.
+ * 1. Near the end of the data segment, we may fail to get enough bits.
+ *    In that case, we simply pad enough zero bits.
  */
 
-#define HUFF_DECODE(result, state, htbl, failaction, slowlabel) { \
-  register int nb, look; \
-  if (bits_left < HUFF_LOOKAHEAD) { \
+#define HUFF_DECODE(huffRes, state, LOOKAHEAD, htbl, failAction) { \
+  if (bits_left <= 32) { \
     if (!jpeg_fill_bit_buffer(&state, get_buffer, bits_left, 0)) \
-      { failaction; } \
-    get_buffer = state.get_buffer;  bits_left = state.bits_left; \
-    if (bits_left < HUFF_LOOKAHEAD) { \
-      nb = 1;  goto slowlabel; \
-    } \
-  } \
-  look = PEEK_BITS(HUFF_LOOKAHEAD); \
-  if ((nb = (htbl->lookup[look] >> HUFF_LOOKAHEAD)) <= HUFF_LOOKAHEAD) { \
-    DROP_BITS(nb); \
-    result = htbl->lookup[look] & ((1 << HUFF_LOOKAHEAD) - 1); \
-  } else { \
-slowlabel: \
-    if ((result = \
-         jpeg_huff_decode(&state, get_buffer, bits_left, htbl, nb)) < 0) \
-      { failaction; } \
+      { failAction; } \
     get_buffer = state.get_buffer;  bits_left = state.bits_left; \
   } \
+  s = PEEK_BITS(LOOKAHEAD); \
+  huffRes = htbl->lookup[s];     \
+  if( unlikely( s>= htbl->lookThr) ) { /* .extMask and .next are repurposed as offset and mask respectively */  \
+     s = huffRes.extMask + ( (get_buffer >> (bits_left - huffRes.nBits))  & huffRes.next );  \
+     if ( likely(s< htbl->look2Thr) ) { huffRes = htbl->look2up[s]; } \
+     else { failAction; } \
+  }  \
 }
 
-#define HUFF_DECODE_FAST(s, nb, htbl) \
-  FILL_BIT_BUFFER_FAST; \
-  s = PEEK_BITS(HUFF_LOOKAHEAD); \
-  s = htbl->lookup[s]; \
-  nb = s >> HUFF_LOOKAHEAD; \
-  /* Pre-execute the common case of nb <= HUFF_LOOKAHEAD */ \
-  DROP_BITS(nb); \
-  s = s & ((1 << HUFF_LOOKAHEAD) - 1); \
-  if (nb > HUFF_LOOKAHEAD) { \
-    /* Equivalent of jpeg_huff_decode() */ \
-    /* Don't use GET_BITS() here because we don't want to modify bits_left */ \
-    s = (get_buffer >> bits_left) & ((1 << (nb)) - 1); \
-    while (s > htbl->maxcode[nb]) { \
-      s <<= 1; \
-      s |= GET_BITS(1); \
-      nb++; \
-    } \
-    if (nb > 16) \
-      s = 0; \
-    else \
-      s = htbl->pub->huffval[(int)(s + htbl->valoffset[nb]) & 0xFF]; \
-  }
-
-/* Out-of-line case for Huffman code fetching */
-EXTERN(int) jpeg_huff_decode(bitread_working_state *state,
-                             register bit_buf_type get_buffer,
-                             register int bits_left, d_derived_tbl *htbl,
-                             int min_bits);
+#define HUFF_DECODE_FAST(huffRes, LOOKAHEAD, htbl) { \
+  FILL_BIT_BUFFER_FAST;          \
+  s = PEEK_BITS(LOOKAHEAD); \
+  huffRes = htbl->lookup[s];     \
+  if( unlikely(s>= htbl->lookThr) ) { /* .extMask and .next are repurposed as offset and mask respectively */   \
+     s = huffRes.extMask + ( (get_buffer >> (bits_left - huffRes.nBits))  & huffRes.next );  \
+     if ( likely(s< htbl->look2Thr) ) { huffRes = htbl->look2up[s]; } \
+     else { return FALSE; } \
+  }                         \
+}
+   
