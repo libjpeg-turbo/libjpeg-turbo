@@ -48,6 +48,12 @@ quality values.
 input image was not transformed into a progressive JPEG image prior to
 decompression.
 
+9. Fixed an oversight in 1.4 beta1[8] that caused various segfaults and buffer
+overruns when attempting to decompress various specially-crafted malformed
+12-bit-per-component JPEG images using a 12-bit-per-component build of djpeg
+(`-DWITH_12BIT=1`) with both color quantization and RGB565 color conversion
+enabled.
+
 
 2.0.8 ESR
 =========
