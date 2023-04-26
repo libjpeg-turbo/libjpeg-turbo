@@ -531,6 +531,83 @@ if(CMAKE_POSITION_INDEPENDENT_CODE OR ENABLE_SHARED)
   set_target_properties(simd PROPERTIES POSITION_INDEPENDENT_CODE 1)
 endif()
 
+###############################################################################
+# LoongArch64 (Intrinsics)
+###############################################################################
+
+elseif(CPU_TYPE STREQUAL "loongarch64")
+
+set(CMAKE_REQUIRED_FLAGS -mlsx)
+check_c_source_compiles("
+  #include <lsxintrin.h>
+  int main(void) {
+    __m128i a, b, c;
+    a = __lsx_vadd_w(b, c);
+    return 0;
+  }" HAVE_LSX)
+unset(CMAKE_REQUIRED_FLAGS)
+
+set(CMAKE_REQUIRED_FLAGS -mlasx)
+check_c_source_compiles("
+  #include <lasxintrin.h>
+  int main(void) {
+    __m256i a, b, c;
+    a = __lasx_xvadd_w(b, c);
+    return 0;
+  }" HAVE_LASX)
+unset(CMAKE_REQUIRED_FLAGS)
+
+if(NOT HAVE_LSX)
+  simd_fail("SIMD extensions not available for this CPU (LoongArch64)")
+  return()
+endif()
+
+set(SIMD_SOURCES loongarch64/jccolor-lsx.c loongarch64/jcgray-lsx.c
+  loongarch64/jcsample-lsx.c loongarch64/jdcolor-lsx.c loongarch64/jdmerge-lsx.c
+  loongarch64/jdsample-lsx.c loongarch64/jfdctfst-lsx.c loongarch64/jfdctint-lsx.c
+  loongarch64/jidctfst-lsx.c loongarch64/jidctint-lsx.c loongarch64/jidctred-lsx.c
+  loongarch64/jquanti-lsx.c
+  loongarch64/jccolor-lasx.c loongarch64/jcgray-lasx.c loongarch64/jcsample-lasx.c
+  loongarch64/jdcolor-lasx.c loongarch64/jdmerge-lasx.c loongarch64/jdsample-lasx.c
+  loongarch64/jfdctfst-lasx.c loongarch64/jfdctint-lasx.c loongarch64/jidctfst-lasx.c
+  loongarch64/jidctint-lasx.c loongarch64/jidctred-lasx.c loongarch64/jquanti-lasx.c)
+
+foreach(file ${SIMD_SOURCES})
+  set(OBJECT_DEPENDS "")
+  if(${file} MATCHES jccolor)
+    string(REGEX REPLACE "jccolor" "jccolext" DEPFILE ${file})
+    set(OBJECT_DEPENDS ${OBJECT_DEPENDS}
+      ${CMAKE_CURRENT_SOURCE_DIR}/${DEPFILE})
+  endif()
+  if(${file} MATCHES jcgray)
+    string(REGEX REPLACE "jcgray" "jcgryext" DEPFILE ${file})
+    set(OBJECT_DEPENDS ${OBJECT_DEPENDS}
+      ${CMAKE_CURRENT_SOURCE_DIR}/${DEPFILE})
+  endif()
+  if(${file} MATCHES jdcolor)
+    string(REGEX REPLACE "jdcolor" "jdcolext" DEPFILE ${file})
+    set(OBJECT_DEPENDS ${OBJECT_DEPENDS}
+      ${CMAKE_CURRENT_SOURCE_DIR}/${DEPFILE})
+  endif()
+  if(${file} MATCHES jdmerge)
+    string(REGEX REPLACE "jdmerge" "jdmrgext" DEPFILE ${file})
+    set(OBJECT_DEPENDS ${OBJECT_DEPENDS}
+      ${CMAKE_CURRENT_SOURCE_DIR}/${DEPFILE})
+  endif()
+  set(OBJECT_DEPENDS ${OBJECT_DEPENDS} ${INC_FILES})
+  set_source_files_properties(${file} PROPERTIES OBJECT_DEPENDS
+    "${OBJECT_DEPENDS}")
+endforeach()
+
+set_source_files_properties(${SIMD_SOURCES} PROPERTIES
+  COMPILE_FLAGS -mlasx)
+
+add_library(simd OBJECT ${SIMD_SOURCES} ${CPU_TYPE}/jsimd.c)
+
+if(CMAKE_POSITION_INDEPENDENT_CODE OR ENABLE_SHARED)
+  set_target_properties(simd PROPERTIES POSITION_INDEPENDENT_CODE 1)
+endif()
+
 
 ###############################################################################
 # None
