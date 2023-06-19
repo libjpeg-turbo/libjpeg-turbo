@@ -165,6 +165,179 @@
 #define DEQUANTIZE(coef, quantval)  (((ISLOW_MULT_TYPE)(coef)) * (quantval))
 
 
+#define COLUMN_PASS(label_name) if (inptr[DCTSIZE * 1] == 0 && inptr[DCTSIZE * 2] == 0 && inptr[DCTSIZE * 3] == 0 && inptr[DCTSIZE * 4] == 0 && inptr[DCTSIZE * 5] == 0 && inptr[DCTSIZE * 6] == 0 && inptr[DCTSIZE * 7] == 0) { \
+int dcval = LEFT_SHIFT(DEQUANTIZE(inptr[DCTSIZE * 0], quantptr[DCTSIZE * 0]), PASS1_BITS); /* AC terms all zero */ \
+wsptr[DCTSIZE * 0] = dcval; \
+wsptr[DCTSIZE * 1] = dcval; \
+wsptr[DCTSIZE * 2] = dcval; \
+wsptr[DCTSIZE * 3] = dcval; \
+wsptr[DCTSIZE * 4] = dcval; \
+wsptr[DCTSIZE * 5] = dcval; \
+wsptr[DCTSIZE * 6] = dcval; \
+wsptr[DCTSIZE * 7] = dcval; \
+inptr++; /* advance pointers to next column */ \
+quantptr++; \
+wsptr++; \
+goto label_name; \
+} \
+z2 = DEQUANTIZE(inptr[DCTSIZE * 2], quantptr[DCTSIZE * 2]); \
+z3 = DEQUANTIZE(inptr[DCTSIZE * 6], quantptr[DCTSIZE * 6]); \
+z1 = MULTIPLY(z2 + z3, FIX_0_541196100); \
+tmp2 = z1 + MULTIPLY(z3, -FIX_1_847759065); \
+tmp3 = z1 + MULTIPLY(z2, FIX_0_765366865); \
+z2 = DEQUANTIZE(inptr[DCTSIZE * 0], quantptr[DCTSIZE * 0]); \
+z3 = DEQUANTIZE(inptr[DCTSIZE * 4], quantptr[DCTSIZE * 4]); \
+tmp0 = LEFT_SHIFT(z2 + z3, CONST_BITS); \
+tmp1 = LEFT_SHIFT(z2 - z3, CONST_BITS); \
+tmp10 = tmp0 + tmp3; \
+tmp13 = tmp0 - tmp3; \
+tmp11 = tmp1 + tmp2; \
+tmp12 = tmp1 - tmp2; \
+tmp3 = DEQUANTIZE(inptr[DCTSIZE * 1], quantptr[DCTSIZE * 1]); \
+tmp2 = DEQUANTIZE(inptr[DCTSIZE * 3], quantptr[DCTSIZE * 3]); \
+tmp1 = DEQUANTIZE(inptr[DCTSIZE * 5], quantptr[DCTSIZE * 5]); \
+tmp0 = DEQUANTIZE(inptr[DCTSIZE * 7], quantptr[DCTSIZE * 7]); \
+inptr++; /* advance intptr and quantptr to next column */ \
+quantptr++; \
+z4 = tmp1 + tmp3; \
+z3 = tmp0 + tmp2; \
+z2 = tmp1 + tmp2; \
+z1 = tmp0 + tmp3; \
+z5 = MULTIPLY(z3 + z4, FIX_1_175875602); /* sqrt(2) * c3 */ \
+tmp3 = MULTIPLY(tmp3, FIX_1_501321110); /* sqrt(2) * ( c1+c3-c5-c7) */ \
+tmp2 = MULTIPLY(tmp2, FIX_3_072711026); /* sqrt(2) * ( c1+c3+c5-c7) */ \
+tmp1 = MULTIPLY(tmp1, FIX_2_053119869); /* sqrt(2) * ( c1+c3-c5+c7) */ \
+tmp0 = MULTIPLY(tmp0, FIX_0_298631336); /* sqrt(2) * (-c1+c3+c5-c7) */ \
+z4 = MULTIPLY(z4, -FIX_0_390180644) + z5; /* sqrt(2) * ( c5-c3) */ \
+z3 = MULTIPLY(z3, -FIX_1_961570560) + z5; /* sqrt(2) * (-c3-c5) */ \
+z1 = MULTIPLY(z1, -FIX_0_899976223); /* sqrt(2) * ( c7-c3) */ \
+z2 = MULTIPLY(z2, -FIX_2_562915447); /* sqrt(2) * (-c1-c3) */ \
+tmp3 += z1 + z4; \
+tmp2 += z2 + z3; \
+tmp1 += z2 + z4; \
+tmp0 += z1 + z3; \
+wsptr[DCTSIZE * 0] = (int)DESCALE(tmp10 + tmp3, CONST_BITS - PASS1_BITS); \
+wsptr[DCTSIZE * 1] = (int)DESCALE(tmp11 + tmp2, CONST_BITS - PASS1_BITS); \
+wsptr[DCTSIZE * 2] = (int)DESCALE(tmp12 + tmp1, CONST_BITS - PASS1_BITS); \
+wsptr[DCTSIZE * 3] = (int)DESCALE(tmp13 + tmp0, CONST_BITS - PASS1_BITS); \
+wsptr[DCTSIZE * 4] = (int)DESCALE(tmp13 - tmp0, CONST_BITS - PASS1_BITS); \
+wsptr[DCTSIZE * 5] = (int)DESCALE(tmp12 - tmp1, CONST_BITS - PASS1_BITS); \
+wsptr[DCTSIZE * 6] = (int)DESCALE(tmp11 - tmp2, CONST_BITS - PASS1_BITS); \
+wsptr[DCTSIZE * 7] = (int)DESCALE(tmp10 - tmp3, CONST_BITS - PASS1_BITS); \
+wsptr++; \
+label_name:
+
+#ifndef NO_ZERO_ROW_TEST
+
+#define ROW_PASS(ctr, label_name) outptr = output_buf[ctr] + output_col; \
+if (wsptr[1] == 0 && wsptr[2] == 0 && wsptr[3] == 0 && wsptr[4] == 0 && wsptr[5] == 0 && wsptr[6] == 0 && wsptr[7] == 0) { \
+ /* AC terms all zero */ \
+_JSAMPLE dcval = range_limit[(int)DESCALE((JLONG)wsptr[0], PASS1_BITS + 3) & RANGE_MASK]; \
+outptr[0] = dcval; \
+outptr[1] = dcval; \
+outptr[2] = dcval; \
+outptr[3] = dcval; \
+outptr[4] = dcval; \
+outptr[5] = dcval; \
+outptr[6] = dcval; \
+outptr[7] = dcval; \
+wsptr += DCTSIZE; /* advance pointer to next row */ \
+goto label_name; \
+} \
+/* Even part: reverse the even part of the forward DCT. */ \
+/* The rotator is sqrt(2)*c(-6). */ \
+z2 = (JLONG)wsptr[2]; \
+z3 = (JLONG)wsptr[6]; \
+z1 = MULTIPLY(z2 + z3, FIX_0_541196100); \
+tmp0 = LEFT_SHIFT((JLONG)wsptr[0] + (JLONG)wsptr[4], CONST_BITS); \
+tmp3 = z1 + MULTIPLY(z2, FIX_0_765366865); \
+tmp1 = LEFT_SHIFT((JLONG)wsptr[0] - (JLONG)wsptr[4], CONST_BITS); \
+tmp2 = z1 + MULTIPLY(z3, -FIX_1_847759065); \
+tmp10 = tmp0 + tmp3; \
+tmp13 = tmp0 - tmp3; \
+tmp11 = tmp1 + tmp2; \
+tmp12 = tmp1 - tmp2; \
+tmp3 = (JLONG)wsptr[1]; \
+tmp2 = (JLONG)wsptr[3]; \
+tmp1 = (JLONG)wsptr[5]; \
+tmp0 = (JLONG)wsptr[7]; \
+wsptr += DCTSIZE; /* advance pointer to next row */ \
+z4 = tmp1 + tmp3; \
+z3 = tmp0 + tmp2; \
+z2 = tmp1 + tmp2; \
+z1 = tmp0 + tmp3; \
+z5 = MULTIPLY(z3 + z4, FIX_1_175875602); /* sqrt(2) * c3 */ \
+tmp3 = MULTIPLY(tmp3, FIX_1_501321110); /* sqrt(2) * ( c1+c3-c5-c7) */ \
+tmp2 = MULTIPLY(tmp2, FIX_3_072711026); /* sqrt(2) * ( c1+c3+c5-c7) */ \
+tmp1 = MULTIPLY(tmp1, FIX_2_053119869); /* sqrt(2) * ( c1+c3-c5+c7) */ \
+tmp0 = MULTIPLY(tmp0, FIX_0_298631336); /* sqrt(2) * (-c1+c3+c5-c7) */ \
+z4 = MULTIPLY(z4, -FIX_0_390180644) + z5; /* sqrt(2) * ( c5-c3) */ \
+z3 = MULTIPLY(z3, -FIX_1_961570560) + z5; /* sqrt(2) * (-c3-c5) */ \
+z2 = MULTIPLY(z2, -FIX_2_562915447); /* sqrt(2) * (-c1-c3) */ \
+z1 = MULTIPLY(z1, -FIX_0_899976223); /* sqrt(2) * ( c7-c3) */ \
+tmp3 += z1 + z4; \
+tmp2 += z2 + z3; \
+tmp1 += z2 + z4; \
+tmp0 += z1 + z3; \
+/* Final output stage: inputs are tmp10..tmp13, tmp0..tmp3 */ \
+outptr[0] = range_limit[(int)DESCALE(tmp10 + tmp3, CONST_BITS + PASS1_BITS + 3) & RANGE_MASK]; \
+outptr[1] = range_limit[(int)DESCALE(tmp11 + tmp2, CONST_BITS + PASS1_BITS + 3) & RANGE_MASK]; \
+outptr[2] = range_limit[(int)DESCALE(tmp12 + tmp1, CONST_BITS + PASS1_BITS + 3) & RANGE_MASK]; \
+outptr[3] = range_limit[(int)DESCALE(tmp13 + tmp0, CONST_BITS + PASS1_BITS + 3) & RANGE_MASK]; \
+outptr[4] = range_limit[(int)DESCALE(tmp13 - tmp0, CONST_BITS + PASS1_BITS + 3) & RANGE_MASK]; \
+outptr[5] = range_limit[(int)DESCALE(tmp12 - tmp1, CONST_BITS + PASS1_BITS + 3) & RANGE_MASK]; \
+outptr[6] = range_limit[(int)DESCALE(tmp11 - tmp2, CONST_BITS + PASS1_BITS + 3) & RANGE_MASK]; \
+outptr[7] = range_limit[(int)DESCALE(tmp10 - tmp3, CONST_BITS + PASS1_BITS + 3) & RANGE_MASK]; \
+label_name:
+#else 
+#define ROW_PASS(ctr, label_name) outptr = output_buf[ctr] + output_col; \
+z2 = (JLONG)wsptr[2]; \
+z3 = (JLONG)wsptr[6]; \
+z1 = MULTIPLY(z2 + z3, FIX_0_541196100); \
+tmp2 = z1 + MULTIPLY(z3, -FIX_1_847759065); \
+tmp3 = z1 + MULTIPLY(z2, FIX_0_765366865); \
+tmp0 = LEFT_SHIFT((JLONG)wsptr[0] + (JLONG)wsptr[4], CONST_BITS); \
+tmp1 = LEFT_SHIFT((JLONG)wsptr[0] - (JLONG)wsptr[4], CONST_BITS); \
+tmp10 = tmp0 + tmp3; \
+tmp13 = tmp0 - tmp3; \
+tmp11 = tmp1 + tmp2; \
+tmp12 = tmp1 - tmp2; \
+tmp0 = (JLONG)wsptr[7]; \
+tmp1 = (JLONG)wsptr[5]; \
+tmp2 = (JLONG)wsptr[3]; \
+tmp3 = (JLONG)wsptr[1]; \
+z1 = tmp0 + tmp3; \
+z2 = tmp1 + tmp2; \
+z3 = tmp0 + tmp2; \
+z4 = tmp1 + tmp3; \
+z5 = MULTIPLY(z3 + z4, FIX_1_175875602); /* sqrt(2) * c3 */ \
+tmp0 = MULTIPLY(tmp0, FIX_0_298631336); /* sqrt(2) * (-c1+c3+c5-c7) */ \
+tmp1 = MULTIPLY(tmp1, FIX_2_053119869); /* sqrt(2) * ( c1+c3-c5+c7) */ \
+tmp2 = MULTIPLY(tmp2, FIX_3_072711026); /* sqrt(2) * ( c1+c3+c5-c7) */ \
+tmp3 = MULTIPLY(tmp3, FIX_1_501321110); /* sqrt(2) * ( c1+c3-c5-c7) */ \
+z1 = MULTIPLY(z1, -FIX_0_899976223); /* sqrt(2) * ( c7-c3) */ \
+z2 = MULTIPLY(z2, -FIX_2_562915447); /* sqrt(2) * (-c1-c3) */ \
+z3 = MULTIPLY(z3, -FIX_1_961570560); /* sqrt(2) * (-c3-c5) */ \
+z4 = MULTIPLY(z4, -FIX_0_390180644); /* sqrt(2) * ( c5-c3) */ \
+z3 += z5; \
+z4 += z5; \
+tmp0 += z1 + z3; \
+tmp1 += z2 + z4; \
+tmp2 += z2 + z3; \
+tmp3 += z1 + z4; \
+/* Final output stage: inputs are tmp10..tmp13, tmp0..tmp3 */ \
+outptr[0] = range_limit[(int)DESCALE(tmp10 + tmp3, CONST_BITS + PASS1_BITS + 3) & RANGE_MASK]; \
+outptr[7] = range_limit[(int)DESCALE(tmp10 - tmp3, CONST_BITS + PASS1_BITS + 3) & RANGE_MASK]; \
+outptr[1] = range_limit[(int)DESCALE(tmp11 + tmp2, CONST_BITS + PASS1_BITS + 3) & RANGE_MASK]; \
+outptr[6] = range_limit[(int)DESCALE(tmp11 - tmp2, CONST_BITS + PASS1_BITS + 3) & RANGE_MASK]; \
+outptr[2] = range_limit[(int)DESCALE(tmp12 + tmp1, CONST_BITS + PASS1_BITS + 3) & RANGE_MASK]; \
+outptr[5] = range_limit[(int)DESCALE(tmp12 - tmp1, CONST_BITS + PASS1_BITS + 3) & RANGE_MASK]; \
+outptr[3] = range_limit[(int)DESCALE(tmp13 + tmp0, CONST_BITS + PASS1_BITS + 3) & RANGE_MASK]; \
+outptr[4] = range_limit[(int)DESCALE(tmp13 - tmp0, CONST_BITS + PASS1_BITS + 3) & RANGE_MASK]; \
+wsptr += DCTSIZE; /* advance pointer to next row */ \
+label_name:
+#endif
+
 /*
  * Perform dequantization and inverse DCT on one block of coefficients.
  */
@@ -182,7 +355,6 @@ _jpeg_idct_islow(j_decompress_ptr cinfo, jpeg_component_info *compptr,
   int *wsptr;
   _JSAMPROW outptr;
   _JSAMPLE *range_limit = IDCT_range_limit(cinfo);
-  int ctr;
   int workspace[DCTSIZE2];      /* buffers data between passes */
   SHIFT_TEMPS
 
@@ -193,223 +365,30 @@ _jpeg_idct_islow(j_decompress_ptr cinfo, jpeg_component_info *compptr,
   inptr = coef_block;
   quantptr = (ISLOW_MULT_TYPE *)compptr->dct_table;
   wsptr = workspace;
-  for (ctr = DCTSIZE; ctr > 0; ctr--) {
-    /* Due to quantization, we will usually find that many of the input
-     * coefficients are zero, especially the AC terms.  We can exploit this
-     * by short-circuiting the IDCT calculation for any column in which all
-     * the AC terms are zero.  In that case each output is equal to the
-     * DC coefficient (with scale factor as needed).
-     * With typical images and quantization tables, half or more of the
-     * column DCT calculations can be simplified this way.
-     */
 
-    if (inptr[DCTSIZE * 1] == 0 && inptr[DCTSIZE * 2] == 0 &&
-        inptr[DCTSIZE * 3] == 0 && inptr[DCTSIZE * 4] == 0 &&
-        inptr[DCTSIZE * 5] == 0 && inptr[DCTSIZE * 6] == 0 &&
-        inptr[DCTSIZE * 7] == 0) {
-      /* AC terms all zero */
-      int dcval = LEFT_SHIFT(DEQUANTIZE(inptr[DCTSIZE * 0],
-                             quantptr[DCTSIZE * 0]), PASS1_BITS);
-
-      wsptr[DCTSIZE * 0] = dcval;
-      wsptr[DCTSIZE * 1] = dcval;
-      wsptr[DCTSIZE * 2] = dcval;
-      wsptr[DCTSIZE * 3] = dcval;
-      wsptr[DCTSIZE * 4] = dcval;
-      wsptr[DCTSIZE * 5] = dcval;
-      wsptr[DCTSIZE * 6] = dcval;
-      wsptr[DCTSIZE * 7] = dcval;
-
-      inptr++;                  /* advance pointers to next column */
-      quantptr++;
-      wsptr++;
-      continue;
-    }
-
-    /* Even part: reverse the even part of the forward DCT. */
-    /* The rotator is sqrt(2)*c(-6). */
-
-    z2 = DEQUANTIZE(inptr[DCTSIZE * 2], quantptr[DCTSIZE * 2]);
-    z3 = DEQUANTIZE(inptr[DCTSIZE * 6], quantptr[DCTSIZE * 6]);
-
-    z1 = MULTIPLY(z2 + z3, FIX_0_541196100);
-    tmp2 = z1 + MULTIPLY(z3, -FIX_1_847759065);
-    tmp3 = z1 + MULTIPLY(z2, FIX_0_765366865);
-
-    z2 = DEQUANTIZE(inptr[DCTSIZE * 0], quantptr[DCTSIZE * 0]);
-    z3 = DEQUANTIZE(inptr[DCTSIZE * 4], quantptr[DCTSIZE * 4]);
-
-    tmp0 = LEFT_SHIFT(z2 + z3, CONST_BITS);
-    tmp1 = LEFT_SHIFT(z2 - z3, CONST_BITS);
-
-    tmp10 = tmp0 + tmp3;
-    tmp13 = tmp0 - tmp3;
-    tmp11 = tmp1 + tmp2;
-    tmp12 = tmp1 - tmp2;
-
-    /* Odd part per figure 8; the matrix is unitary and hence its
-     * transpose is its inverse.  i0..i3 are y7,y5,y3,y1 respectively.
-     */
-
-    tmp0 = DEQUANTIZE(inptr[DCTSIZE * 7], quantptr[DCTSIZE * 7]);
-    tmp1 = DEQUANTIZE(inptr[DCTSIZE * 5], quantptr[DCTSIZE * 5]);
-    tmp2 = DEQUANTIZE(inptr[DCTSIZE * 3], quantptr[DCTSIZE * 3]);
-    tmp3 = DEQUANTIZE(inptr[DCTSIZE * 1], quantptr[DCTSIZE * 1]);
-
-    z1 = tmp0 + tmp3;
-    z2 = tmp1 + tmp2;
-    z3 = tmp0 + tmp2;
-    z4 = tmp1 + tmp3;
-    z5 = MULTIPLY(z3 + z4, FIX_1_175875602); /* sqrt(2) * c3 */
-
-    tmp0 = MULTIPLY(tmp0, FIX_0_298631336); /* sqrt(2) * (-c1+c3+c5-c7) */
-    tmp1 = MULTIPLY(tmp1, FIX_2_053119869); /* sqrt(2) * ( c1+c3-c5+c7) */
-    tmp2 = MULTIPLY(tmp2, FIX_3_072711026); /* sqrt(2) * ( c1+c3+c5-c7) */
-    tmp3 = MULTIPLY(tmp3, FIX_1_501321110); /* sqrt(2) * ( c1+c3-c5-c7) */
-    z1 = MULTIPLY(z1, -FIX_0_899976223); /* sqrt(2) * ( c7-c3) */
-    z2 = MULTIPLY(z2, -FIX_2_562915447); /* sqrt(2) * (-c1-c3) */
-    z3 = MULTIPLY(z3, -FIX_1_961570560); /* sqrt(2) * (-c3-c5) */
-    z4 = MULTIPLY(z4, -FIX_0_390180644); /* sqrt(2) * ( c5-c3) */
-
-    z3 += z5;
-    z4 += z5;
-
-    tmp0 += z1 + z3;
-    tmp1 += z2 + z4;
-    tmp2 += z2 + z3;
-    tmp3 += z1 + z4;
-
-    /* Final output stage: inputs are tmp10..tmp13, tmp0..tmp3 */
-
-    wsptr[DCTSIZE * 0] = (int)DESCALE(tmp10 + tmp3, CONST_BITS - PASS1_BITS);
-    wsptr[DCTSIZE * 7] = (int)DESCALE(tmp10 - tmp3, CONST_BITS - PASS1_BITS);
-    wsptr[DCTSIZE * 1] = (int)DESCALE(tmp11 + tmp2, CONST_BITS - PASS1_BITS);
-    wsptr[DCTSIZE * 6] = (int)DESCALE(tmp11 - tmp2, CONST_BITS - PASS1_BITS);
-    wsptr[DCTSIZE * 2] = (int)DESCALE(tmp12 + tmp1, CONST_BITS - PASS1_BITS);
-    wsptr[DCTSIZE * 5] = (int)DESCALE(tmp12 - tmp1, CONST_BITS - PASS1_BITS);
-    wsptr[DCTSIZE * 3] = (int)DESCALE(tmp13 + tmp0, CONST_BITS - PASS1_BITS);
-    wsptr[DCTSIZE * 4] = (int)DESCALE(tmp13 - tmp0, CONST_BITS - PASS1_BITS);
-
-    inptr++;                    /* advance pointers to next column */
-    quantptr++;
-    wsptr++;
-  }
+  COLUMN_PASS(column_pass_0);
+  COLUMN_PASS(column_pass_1);
+  COLUMN_PASS(column_pass_2);
+  COLUMN_PASS(column_pass_3);
+  COLUMN_PASS(column_pass_4);
+  COLUMN_PASS(column_pass_5);
+  COLUMN_PASS(column_pass_6);
+  COLUMN_PASS(column_pass_7);
 
   /* Pass 2: process rows from work array, store into output array. */
   /* Note that we must descale the results by a factor of 8 == 2**3, */
   /* and also undo the PASS1_BITS scaling. */
 
   wsptr = workspace;
-  for (ctr = 0; ctr < DCTSIZE; ctr++) {
-    outptr = output_buf[ctr] + output_col;
-    /* Rows of zeroes can be exploited in the same way as we did with columns.
-     * However, the column calculation has created many nonzero AC terms, so
-     * the simplification applies less often (typically 5% to 10% of the time).
-     * On machines with very fast multiplication, it's possible that the
-     * test takes more time than it's worth.  In that case this section
-     * may be commented out.
-     */
 
-#ifndef NO_ZERO_ROW_TEST
-    if (wsptr[1] == 0 && wsptr[2] == 0 && wsptr[3] == 0 && wsptr[4] == 0 &&
-        wsptr[5] == 0 && wsptr[6] == 0 && wsptr[7] == 0) {
-      /* AC terms all zero */
-      _JSAMPLE dcval = range_limit[(int)DESCALE((JLONG)wsptr[0],
-                                                PASS1_BITS + 3) & RANGE_MASK];
-
-      outptr[0] = dcval;
-      outptr[1] = dcval;
-      outptr[2] = dcval;
-      outptr[3] = dcval;
-      outptr[4] = dcval;
-      outptr[5] = dcval;
-      outptr[6] = dcval;
-      outptr[7] = dcval;
-
-      wsptr += DCTSIZE;         /* advance pointer to next row */
-      continue;
-    }
-#endif
-
-    /* Even part: reverse the even part of the forward DCT. */
-    /* The rotator is sqrt(2)*c(-6). */
-
-    z2 = (JLONG)wsptr[2];
-    z3 = (JLONG)wsptr[6];
-
-    z1 = MULTIPLY(z2 + z3, FIX_0_541196100);
-    tmp2 = z1 + MULTIPLY(z3, -FIX_1_847759065);
-    tmp3 = z1 + MULTIPLY(z2, FIX_0_765366865);
-
-    tmp0 = LEFT_SHIFT((JLONG)wsptr[0] + (JLONG)wsptr[4], CONST_BITS);
-    tmp1 = LEFT_SHIFT((JLONG)wsptr[0] - (JLONG)wsptr[4], CONST_BITS);
-
-    tmp10 = tmp0 + tmp3;
-    tmp13 = tmp0 - tmp3;
-    tmp11 = tmp1 + tmp2;
-    tmp12 = tmp1 - tmp2;
-
-    /* Odd part per figure 8; the matrix is unitary and hence its
-     * transpose is its inverse.  i0..i3 are y7,y5,y3,y1 respectively.
-     */
-
-    tmp0 = (JLONG)wsptr[7];
-    tmp1 = (JLONG)wsptr[5];
-    tmp2 = (JLONG)wsptr[3];
-    tmp3 = (JLONG)wsptr[1];
-
-    z1 = tmp0 + tmp3;
-    z2 = tmp1 + tmp2;
-    z3 = tmp0 + tmp2;
-    z4 = tmp1 + tmp3;
-    z5 = MULTIPLY(z3 + z4, FIX_1_175875602); /* sqrt(2) * c3 */
-
-    tmp0 = MULTIPLY(tmp0, FIX_0_298631336); /* sqrt(2) * (-c1+c3+c5-c7) */
-    tmp1 = MULTIPLY(tmp1, FIX_2_053119869); /* sqrt(2) * ( c1+c3-c5+c7) */
-    tmp2 = MULTIPLY(tmp2, FIX_3_072711026); /* sqrt(2) * ( c1+c3+c5-c7) */
-    tmp3 = MULTIPLY(tmp3, FIX_1_501321110); /* sqrt(2) * ( c1+c3-c5-c7) */
-    z1 = MULTIPLY(z1, -FIX_0_899976223); /* sqrt(2) * ( c7-c3) */
-    z2 = MULTIPLY(z2, -FIX_2_562915447); /* sqrt(2) * (-c1-c3) */
-    z3 = MULTIPLY(z3, -FIX_1_961570560); /* sqrt(2) * (-c3-c5) */
-    z4 = MULTIPLY(z4, -FIX_0_390180644); /* sqrt(2) * ( c5-c3) */
-
-    z3 += z5;
-    z4 += z5;
-
-    tmp0 += z1 + z3;
-    tmp1 += z2 + z4;
-    tmp2 += z2 + z3;
-    tmp3 += z1 + z4;
-
-    /* Final output stage: inputs are tmp10..tmp13, tmp0..tmp3 */
-
-    outptr[0] = range_limit[(int)DESCALE(tmp10 + tmp3,
-                                         CONST_BITS + PASS1_BITS + 3) &
-                            RANGE_MASK];
-    outptr[7] = range_limit[(int)DESCALE(tmp10 - tmp3,
-                                         CONST_BITS + PASS1_BITS + 3) &
-                            RANGE_MASK];
-    outptr[1] = range_limit[(int)DESCALE(tmp11 + tmp2,
-                                         CONST_BITS + PASS1_BITS + 3) &
-                            RANGE_MASK];
-    outptr[6] = range_limit[(int)DESCALE(tmp11 - tmp2,
-                                         CONST_BITS + PASS1_BITS + 3) &
-                            RANGE_MASK];
-    outptr[2] = range_limit[(int)DESCALE(tmp12 + tmp1,
-                                         CONST_BITS + PASS1_BITS + 3) &
-                            RANGE_MASK];
-    outptr[5] = range_limit[(int)DESCALE(tmp12 - tmp1,
-                                         CONST_BITS + PASS1_BITS + 3) &
-                            RANGE_MASK];
-    outptr[3] = range_limit[(int)DESCALE(tmp13 + tmp0,
-                                         CONST_BITS + PASS1_BITS + 3) &
-                            RANGE_MASK];
-    outptr[4] = range_limit[(int)DESCALE(tmp13 - tmp0,
-                                         CONST_BITS + PASS1_BITS + 3) &
-                            RANGE_MASK];
-
-    wsptr += DCTSIZE;           /* advance pointer to next row */
-  }
+  ROW_PASS(0, row_pass_0);
+  ROW_PASS(1, row_pass_1);
+  ROW_PASS(2, row_pass_2);
+  ROW_PASS(3, row_pass_3);
+  ROW_PASS(4, row_pass_4);
+  ROW_PASS(5, row_pass_5);
+  ROW_PASS(6, row_pass_6);
+  ROW_PASS(7, row_pass_7);
 }
 
 #ifdef IDCT_SCALING_SUPPORTED
