@@ -990,11 +990,11 @@ typedef struct tjtransform {
    * @param planeRegion #tjregion structure containing the width and height of
    * the component plane to which `coeffs` belongs
    *
-   * @param componentID ID number of the component plane to which `coeffs`
+   * @param componentIndex ID number of the component plane to which `coeffs`
    * belongs.  (Y, Cb, and Cr have, respectively, ID's of 0, 1, and 2 in
    * typical JPEG images.)
    *
-   * @param transformID ID number of the transformed image to which `coeffs`
+   * @param transformIndex ID number of the transformed image to which `coeffs`
    * belongs.  This is the same as the index of the transform in the
    * `transforms` array that was passed to #tj3Transform().
    *
