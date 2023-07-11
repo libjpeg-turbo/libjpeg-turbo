@@ -4,6 +4,7 @@
 ; Copyright (C) 2009-2011, 2014-2016, 2019, 2021, D. R. Commander.
 ; Copyright (C) 2015, Matthieu Darbois.
 ; Copyright (C) 2018, Matthias Räncker.
+; Copyright (C) 2023, Aliaksiej Kandracienka.
 ;
 ; Based on the x86 SIMD extension for IJG JPEG library
 ; Copyright (C) 1999-2006, MIYASAKA Masaru.
@@ -211,7 +212,7 @@ times 1 << 15 db 16
 ; rdx - block --> free_bits
 ; rsi - nbits_base
 ; rdi - t
-; rbp - code
+; r15 - code
 ; r8  - dctbl --> code_temp
 ; r9  - actbl
 ; r10 - state
@@ -235,8 +236,8 @@ times 1 << 15 db 16
 %define nbits_base   rsi
 %define t            rdi
 %define td           edi
-%define codeq        rbp
-%define code         ebp
+%define codeq        r15
+%define code         r15d
 %define dctbl        r8
 %define actbl        r9
 %define state        r10
@@ -259,6 +260,8 @@ times 1 << 15 db 16
     GLOBAL_FUNCTION(jsimd_huff_encode_one_block_sse2)
 
 EXTN(jsimd_huff_encode_one_block_sse2):
+    push        rbp
+    mov         rbp, rsp
 
 %ifdef WIN64
 
@@ -274,22 +277,20 @@ EXTN(jsimd_huff_encode_one_block_sse2):
     mov         block, r8
     movups      xmm3, XMMWORD [block + 0 * SIZEOF_WORD]   ;D: w3 = xx 01 02 03 04 05 06 07
     push        rbx
-    push        rbp
     movdqa      xmm0, xmm3                                ;A: w0 = xx 01 02 03 04 05 06 07
     push        rsi
     push        rdi
     push        r12
+    push        r15
     movups      xmm1, XMMWORD [block + 8 * SIZEOF_WORD]   ;B: w1 = 08 09 10 11 12 13 14 15
     mov         state, rcx
     movsx       code, word [block]                        ;Z:     code = block[0];
     pxor        xmm4, xmm4                                ;A: w4[i] = 0;
     sub         code, r9d                                 ;Z:     code -= last_dc_val;
-    mov         dctbl, POINTER [rsp+6*8+4*8]
-    mov         actbl, POINTER [rsp+6*8+5*8]
+    mov         dctbl, POINTER [rsp+6*8+4*8+8]
+    mov         actbl, POINTER [rsp+6*8+5*8+8]
     punpckldq   xmm0, xmm1                                ;A: w0 = xx 01 08 09 02 03 10 11
     lea         nbits_base, [rel jpeg_nbits_table]
-    add         rsp, -DCTSIZE2 * SIZEOF_WORD
-    mov         t, rsp
 
 %else
 
@@ -303,9 +304,9 @@ EXTN(jsimd_huff_encode_one_block_sse2):
                                                           ;X: X = code stream
     movups      xmm3, XMMWORD [block + 0 * SIZEOF_WORD]   ;D: w3 = xx 01 02 03 04 05 06 07
     push        rbx
-    push        rbp
     movdqa      xmm0, xmm3                                ;A: w0 = xx 01 02 03 04 05 06 07
     push        r12
+    push        r15
     mov         state, rdi
     mov         buffer, rsi
     movups      xmm1, XMMWORD [block + 8 * SIZEOF_WORD]   ;B: w1 = 08 09 10 11 12 13 14 15
@@ -314,9 +315,12 @@ EXTN(jsimd_huff_encode_one_block_sse2):
     pxor        xmm4, xmm4                                ;A: w4[i] = 0;
     sub         codeq, rcx                                ;Z:     code -= last_dc_val;
     punpckldq   xmm0, xmm1                                ;A: w0 = xx 01 08 09 02 03 10 11
-    lea         t, [rsp - DCTSIZE2 * SIZEOF_WORD]         ;   use red zone for t_
 
 %endif
+
+    ; allocate stack for t and realign stack
+    add         rsp, -DCTSIZE2 * SIZEOF_WORD - 8
+    mov         t, rsp
 
     pshuflw     xmm0, xmm0, 11001001b                     ;A: w0 = 01 08 xx 09 02 03 10 11
     pinsrw      xmm0, word [block + 16 * SIZEOF_WORD], 2  ;A: w0 = 01 08 16 09 02 03 10 11
@@ -534,12 +538,8 @@ EXTN(jsimd_huff_encode_one_block_sse2):
     test        index, index
     jnz         .BLOOP                                    ;   } while (index != 0);
 .ELOOP:                                                   ; }  /* index != 0 */
-    sub         td, esp                                   ; t -= (WIN64: &t_[0], UNIX: &t_[64]);
-%ifdef WIN64
+    sub         td, esp                                   ; t -= &t_[0];
     cmp         td, (DCTSIZE2 - 2) * SIZEOF_WORD          ; if (t != 62)
-%else
-    cmp         td, -2 * SIZEOF_WORD                      ; if (t != -2)
-%endif
     je          .EFN                                      ; {
     movzx       nbits, byte [actbl + c_derived_tbl.ehufsi + 0]
                                                           ;   nbits = actbl->ehufsi[0];
@@ -556,18 +556,19 @@ EXTN(jsimd_huff_encode_one_block_sse2):
                                                           ; state->cur.put_buffer.simd = put_buffer;
     mov         byte [state + working_state.cur.free_bits], free_bitsb
                                                           ; state->cur.free_bits = free_bits;
+    sub         rsp, -DCTSIZE2 * SIZEOF_WORD - 8
 %ifdef WIN64
-    sub         rsp, -DCTSIZE2 * SIZEOF_WORD
+    pop         r15
     pop         r12
     pop         rdi
     pop         rsi
-    pop         rbp
     pop         rbx
 %else
+    pop         r15
     pop         r12
-    pop         rbp
     pop         rbx
 %endif
+    pop         rbp
     ret
 
 ; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

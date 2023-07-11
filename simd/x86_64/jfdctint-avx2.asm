@@ -3,6 +3,7 @@
 ;
 ; Copyright 2009 Pierre Ossman <ossman@cendio.se> for Cendio AB
 ; Copyright (C) 2009, 2016, 2018, 2020, D. R. Commander.
+; Copyright (C) 2023, Aliaksiej Kandracienka.
 ;
 ; Based on the x86 SIMD extension for IJG JPEG library
 ; Copyright (C) 1999-2006, MIYASAKA Masaru.
@@ -261,7 +262,6 @@ PW_1_NEG1                  times 8  dw  1
 
 EXTN(jsimd_fdct_islow_avx2):
     push        rbp
-    mov         rax, rsp
     mov         rbp, rsp
     collect_args 1
 

@@ -5,6 +5,7 @@
 ; Copyright (C) 2009, 2016, 2018, D. R. Commander.
 ; Copyright (C) 2016, Matthieu Darbois.
 ; Copyright (C) 2018, Matthias Räncker.
+; Copyright (C) 2023, Aliaksiej Kandracienka.
 ;
 ; Based on the x86 SIMD extension for IJG JPEG library
 ; Copyright (C) 1999-2006, MIYASAKA Masaru.
@@ -39,7 +40,6 @@
 
 EXTN(jsimd_convsamp_avx2):
     push        rbp
-    mov         rax, rsp
     mov         rbp, rsp
     collect_args 3
 
@@ -117,7 +117,6 @@ EXTN(jsimd_convsamp_avx2):
 
 EXTN(jsimd_quantize_avx2):
     push        rbp
-    mov         rax, rsp
     mov         rbp, rsp
     collect_args 3
 

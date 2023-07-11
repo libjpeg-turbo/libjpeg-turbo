@@ -4,6 +4,7 @@
 ; Copyright 2009 Pierre Ossman <ossman@cendio.se> for Cendio AB
 ; Copyright (C) 2009, 2016, D. R. Commander.
 ; Copyright (C) 2018, Matthias Räncker.
+; Copyright (C) 2023, Aliaksiej Kandracienka.
 ;
 ; Based on the x86 SIMD extension for IJG JPEG library
 ; Copyright (C) 1999-2006, MIYASAKA Masaru.
@@ -44,7 +45,6 @@
 
 EXTN(jsimd_h2v1_downsample_sse2):
     push        rbp
-    mov         rax, rsp
     mov         rbp, rsp
     collect_args 6
 
@@ -189,7 +189,6 @@ EXTN(jsimd_h2v1_downsample_sse2):
 
 EXTN(jsimd_h2v2_downsample_sse2):
     push        rbp
-    mov         rax, rsp
     mov         rbp, rsp
     collect_args 6
 
