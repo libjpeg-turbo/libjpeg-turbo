@@ -473,6 +473,8 @@ flush_bits(working_state *state)
 
   put_buffer = state->cur.put_buffer;
   put_bits = state->cur.put_bits;
+  if (put_bits > SIZEOF_SIZE_T * 8)
+    ERREXIT(state->cinfo, JERR_BAD_DCT_COEF);
   LOAD_BUFFER()
 
   /* fill any partial byte with ones */
