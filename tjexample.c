@@ -46,6 +46,8 @@
 #ifdef _WIN32
 #define strcasecmp  stricmp
 #define strncasecmp  strnicmp
+#define strnicmp _strnicmp
+#define stricmp _stricmp
 #endif
 
 #define THROW(action, message) { \
@@ -269,7 +271,7 @@ int main(int argc, char **argv)
     if (size == 0)
       THROW("determining input file size", "Input file contains no data");
     jpegSize = size;
-    if ((jpegBuf = tj3Alloc(jpegSize)) == NULL)
+    if ((jpegBuf = (unsigned char*)tj3Alloc(jpegSize)) == NULL)
       THROW_UNIX("allocating JPEG buffer");
     if (fread(jpegBuf, jpegSize, 1, jpegFile) < 1)
       THROW_UNIX("reading input file");
