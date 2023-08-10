@@ -898,6 +898,10 @@ if(CPU_TYPE STREQUAL "x86_64" OR CPU_TYPE STREQUAL "i386")
 # appropriate value could be no-fp-contract, fp-contract, 387, or msvc,
 # depending on the compiler and compiler options.  We leave it to the user to
 # set FLOATTEST8 manually.
+else()
+  if((CPU_TYPE STREQUAL "powerpc" OR CPU_TYPE STREQUAL "arm64" OR CPU_TYPE STREQUAL "loongarch64") AND
+     NOT CMAKE_C_COMPILER_ID STREQUAL "Clang" AND NOT MSVC)
+     set(DEFAULT_FLOATTEST fp-contract)
 endif()
 
 # This causes FLOATTEST8 to reset to the default value if WITH_SIMD has
