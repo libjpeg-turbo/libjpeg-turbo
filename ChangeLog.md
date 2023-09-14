@@ -415,7 +415,7 @@ transform a specially-crafted malformed JPEG image.
 
 1. Fixed a regression introduced by 2.1 beta1[6(b)] whereby attempting to
 decompress certain progressive JPEG images with one or more component planes of
-width 8 or less caused a buffer overrun.
+width 8 or less caused a buffer overrun (CVE-2021-29390).
 
 2. Fixed a regression introduced by 2.1 beta1[6(b)] whereby attempting to
 decompress a specially-crafted malformed progressive JPEG image caused the
