@@ -973,18 +973,22 @@ if(CPU_TYPE STREQUAL "x86_64" OR CPU_TYPE STREQUAL "i386")
     set(DEFAULT_FLOATTEST sse)
   elseif(CPU_TYPE STREQUAL "x86_64")
     set(DEFAULT_FLOATTEST no-fp-contract)
-  # else we can't really set an intelligent default for i386.  The appropriate
-  # value could be no-fp-contract, fp-contract, 387, or msvc, depending on the
-  # compiler and compiler options.  We leave it to the user to set FLOATTEST
-  # manually.
   endif()
-else()
-  if((CPU_TYPE STREQUAL "powerpc" OR CPU_TYPE STREQUAL "arm64") AND
-    NOT CMAKE_C_COMPILER_ID STREQUAL "Clang" AND NOT MSVC)
+elseif(CPU_TYPE STREQUAL "powerpc" OR CPU_TYPE STREQUAL "arm64")
+  if(CMAKE_C_COMPILER_ID STREQUAL "Clang")
+    if(CMAKE_C_COMPILER_VERSION VERSION_EQUAL 14.0.0 OR
+      CMAKE_C_COMPILER_VERSION VERSION_GREATER 14.0.0)
+      set(DEFAULT_FLOATTEST fp-contract)
+    else()
+      set(DEFAULT_FLOATTEST no-fp-contract)
+    endif()
+  elseif(CMAKE_COMPILER_IS_GNUCC)
     set(DEFAULT_FLOATTEST fp-contract)
-  else()
-    set(DEFAULT_FLOATTEST no-fp-contract)
   endif()
+# else we can't really set an intelligent default for FLOATTEST.  The
+# appropriate value could be no-fp-contract, fp-contract, 387, or msvc,
+# depending on the compiler and compiler options.  We leave it to the user to
+# set FLOATTEST manually.
 endif()
 
 # This causes FLOATTEST to reset to the default value if WITH_SIMD has
