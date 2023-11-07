@@ -83,6 +83,13 @@ default on x86 and Arm CPUs) to read from uninitialized memory when attempting
 to transform a specially-crafted malformed arithmetic-coded JPEG source image
 into a baseline Huffman-coded JPEG destination image.
 
+13. Fixed a signed integer overflow in the `tjCompressFromYUV()`,
+`tjDecodeYUV()`, `tjDecompressToYUV2()`, and `tjEncodeYUV3()` functions,
+detected by the Clang and GCC undefined behavior sanitizers, that could be
+triggered by setting the `align` parameter to an unreasonably large value.
+This issue did not pose a security threat, but removing the warning made it
+easier to detect actual security issues, should they arise in the future.
+
 
 2.0.8 ESR
 =========
