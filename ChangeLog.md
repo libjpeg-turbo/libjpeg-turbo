@@ -43,6 +43,13 @@ mathematical (but not necessarily perceptible) edge block errors when
 decompressing progressive JPEG images exactly two MCU blocks in width or that
 use vertical chrominance subsampling.
 
+6. Fixed a signed integer overflow in the `tjCompressFromYUV()`,
+`tjDecodeYUV()`, `tjDecompressToYUV2()`, and `tjEncodeYUV3()` functions,
+detected by the Clang and GCC undefined behavior sanitizers, that could be
+triggered by setting the `align` parameter to an unreasonably large value.
+This issue did not pose a security threat, but removing the warning made it
+easier to detect actual security issues, should they arise in the future.
+
 
 2.1.5.1
 =======

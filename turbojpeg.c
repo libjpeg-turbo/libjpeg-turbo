@@ -979,6 +979,11 @@ DLLEXPORT int tjEncodeYUV3(tjhandle handle, const unsigned char *srcBuf,
     int ph1 = tjPlaneHeight(1, height, subsamp);
 
     strides[1] = strides[2] = PAD(pw1, align);
+    if ((unsigned long long)strides[0] * (unsigned long long)ph0 >
+        (unsigned long long)INT_MAX ||
+        (unsigned long long)strides[1] * (unsigned long long)ph1 >
+        (unsigned long long)INT_MAX)
+      THROW("Image or row alignment is too large");
     dstPlanes[1] = dstPlanes[0] + strides[0] * ph0;
     dstPlanes[2] = dstPlanes[1] + strides[1] * ph1;
   }
@@ -1179,6 +1184,11 @@ DLLEXPORT int tjCompressFromYUV(tjhandle handle, const unsigned char *srcBuf,
     int ph1 = tjPlaneHeight(1, height, subsamp);
 
     strides[1] = strides[2] = PAD(pw1, align);
+    if ((unsigned long long)strides[0] * (unsigned long long)ph0 >
+        (unsigned long long)INT_MAX ||
+        (unsigned long long)strides[1] * (unsigned long long)ph1 >
+        (unsigned long long)INT_MAX)
+      THROW("Image or row alignment is too large");
     srcPlanes[1] = srcPlanes[0] + strides[0] * ph0;
     srcPlanes[2] = srcPlanes[1] + strides[1] * ph1;
   }
@@ -1657,6 +1667,11 @@ DLLEXPORT int tjDecodeYUV(tjhandle handle, const unsigned char *srcBuf,
     int ph1 = tjPlaneHeight(1, height, subsamp);
 
     strides[1] = strides[2] = PAD(pw1, align);
+    if ((unsigned long long)strides[0] * (unsigned long long)ph0 >
+        (unsigned long long)INT_MAX ||
+        (unsigned long long)strides[1] * (unsigned long long)ph1 >
+        (unsigned long long)INT_MAX)
+      THROW("Image or row alignment is too large");
     srcPlanes[1] = srcPlanes[0] + strides[0] * ph0;
     srcPlanes[2] = srcPlanes[1] + strides[1] * ph1;
   }
@@ -1902,6 +1917,11 @@ DLLEXPORT int tjDecompressToYUV2(tjhandle handle, const unsigned char *jpegBuf,
     int ph1 = tjPlaneHeight(1, height, jpegSubsamp);
 
     strides[1] = strides[2] = PAD(pw1, align);
+    if ((unsigned long long)strides[0] * (unsigned long long)ph0 >
+        (unsigned long long)INT_MAX ||
+        (unsigned long long)strides[1] * (unsigned long long)ph1 >
+        (unsigned long long)INT_MAX)
+      THROW("Image or row alignment is too large");
     dstPlanes[1] = dstPlanes[0] + strides[0] * ph0;
     dstPlanes[2] = dstPlanes[1] + strides[1] * ph1;
   }
