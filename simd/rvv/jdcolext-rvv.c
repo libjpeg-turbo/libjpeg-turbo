@@ -39,17 +39,17 @@ void jsimd_ycc_rgb_convert_rvv(JDIMENSION out_width, JSAMPIMAGE input_buf,
 #endif
     size_t pitch = out_width * RGB_PIXELSIZE, num_cols, 
            cols, i, vl;
-    vl = vsetvl_e16m4(pitch);
+    vl = __riscv_vsetvl_e16m4(pitch);
     ptrdiff_t bstride;
 
     /* Constants. */
 #if RGB_PIXELSIZE == 4
 #if BITS_IN_JSAMPLE == 8
     uint8_t alpha[1] = { 0xFF };
-    vuint8m2_t alpha_v = vlse8_v_u8m2(alpha, 0, vl);
+    vuint8m2_t alpha_v = __riscv_vlse8_v_u8m2(alpha, 0, vl);
 #else           /* BITS_IN_JSAMPLE == 12 */
     uint16_t alpha[1] = { 0xFF };
-    vuint16m4_t alpha_v = vlse16_v_u16m4(alpha, 0, vl);
+    vuint16m4_t alpha_v = __riscv_vlse16_v_u16m4(alpha, 0, vl);
 #endif
 #endif
 
@@ -66,23 +66,23 @@ void jsimd_ycc_rgb_convert_rvv(JDIMENSION out_width, JSAMPIMAGE input_buf,
         while (num_cols > 0)
         {
             /* Set vl for each iteration. */
-            vl = vsetvl_e16m4(num_cols / RGB_PIXELSIZE);
+            vl = __riscv_vsetvl_e16m4(num_cols / RGB_PIXELSIZE);
             cols = vl * RGB_PIXELSIZE;
             bstride = RGB_PIXELSIZE * sizeof(JSAMPLE);
 
             /* Load R, G, B channels as vectors from inptr. */
 #if BITS_IN_JSAMPLE == 8
             /* Extending to vuint16m4_t type for following multiply calculation. */
-            src = vle8_v_u8m2(inptr0, vl);
-            y = vwaddu_vx_u16m4(src, 0, vl);                /* Widening to vuint16m4_t type */
-            src = vle8_v_u8m2(inptr1, vl);
-            cb = vwaddu_vx_u16m4(src, 0, vl);               /* Widening to vuint16m4_t type */
-            src = vle8_v_u8m2(inptr2, vl);
-            cr = vwaddu_vx_u16m4(src, 0, vl);               /* Widening to vuint16m4_t type */
+            src = __riscv_vle8_v_u8m2(inptr0, vl);
+            y = __riscv_vwaddu_vx_u16m4(src, 0, vl);                /* Widening to vuint16m4_t type */
+            src = __riscv_vle8_v_u8m2(inptr1, vl);
+            cb = __riscv_vwaddu_vx_u16m4(src, 0, vl);               /* Widening to vuint16m4_t type */
+            src = __riscv_vle8_v_u8m2(inptr2, vl);
+            cr = __riscv_vwaddu_vx_u16m4(src, 0, vl);               /* Widening to vuint16m4_t type */
 #else   /* BITS_IN_JSAMPLE == 12 */
-            y = vle16_v_u16m4(inptr0, vl);
-            cb = vle16_v_u16m4(inptr1, vl);
-            cr = vle16_v_u16m4(inptr2, vl);
+            y = __riscv_vle16_v_u16m4(inptr0, vl);
+            cb = __riscv_vle16_v_u16m4(inptr1, vl);
+            cr = __riscv_vle16_v_u16m4(inptr2, vl);
 #endif
 
             /* (Original)
@@ -95,78 +95,78 @@ void jsimd_ycc_rgb_convert_rvv(JDIMENSION out_width, JSAMPIMAGE input_buf,
              * G = Y - 0.34414 * (Cb - CENTERJSAMPLE) + 0.28586 * (Cr - CENTERJSAMPLE) - (Cr - CENTERSAMPLE)
              * B = Y + (Cb - CENTERJSAMPLE) + (Cb - CENTERJSAMPLE) - 0.22800 * (Cb - CENTERJSAMPLE)
              */
-            sy = vreinterpret_v_u16m4_i16m4(y);
-            scb = vreinterpret_v_u16m4_i16m4(cb);
-            scr = vreinterpret_v_u16m4_i16m4(cr);
+            sy = __riscv_vreinterpret_v_u16m4_i16m4(y);
+            scb = __riscv_vreinterpret_v_u16m4_i16m4(cb);
+            scr = __riscv_vreinterpret_v_u16m4_i16m4(cr);
 
-            scb = vsub_vx_i16m4(scb, CENTERJSAMPLE, vl);      /* Cb - CENTERJSAMPLE */
-            scr = vsub_vx_i16m4(scr, CENTERJSAMPLE, vl);      /* Cr - CENTERJSAMPLE */
+            scb = __riscv_vsub_vx_i16m4(scb, CENTERJSAMPLE, vl);      /* Cb - CENTERJSAMPLE */
+            scr = __riscv_vsub_vx_i16m4(scr, CENTERJSAMPLE, vl);      /* Cr - CENTERJSAMPLE */
 
             /* Calculate R values */
-            r = vadd_vv_i16m4(sy, scr, vl);
-            tmp0 = vwmul_vx_i32m8(scr, F_0_402, vl);
-            tmp0 = vadd_vx_i32m8(tmp0, ONE_HALF, vl);               /* Proper rounding. */
-            tmp = vnsra_wx_i16m4(tmp0, SCALEBITS, vl);
-            r = vadd_vv_i16m4(r, tmp, vl);
+            r = __riscv_vadd_vv_i16m4(sy, scr, vl);
+            tmp0 = __riscv_vwmul_vx_i32m8(scr, F_0_402, vl);
+            tmp0 = __riscv_vadd_vx_i32m8(tmp0, ONE_HALF, vl);               /* Proper rounding. */
+            tmp = __riscv_vnsra_wx_i16m4(tmp0, SCALEBITS, vl);
+            r = __riscv_vadd_vv_i16m4(r, tmp, vl);
             /* Range limit */
-            mask = vmslt_vx_i16m4_b4(r, 0, vl);
-            r = vmerge_vxm_i16m4(mask, r, 0, vl);
-            mask = vmsgt_vx_i16m4_b4(r, MAXJSAMPLE, vl);
-            r = vmerge_vxm_i16m4(mask, r, MAXJSAMPLE, vl);
+            mask = __riscv_vmslt_vx_i16m4_b4(r, 0, vl);
+            r = __riscv_vmerge_vxm_i16m4(r, 0, mask, vl);
+            mask = __riscv_vmsgt_vx_i16m4_b4(r, MAXJSAMPLE, vl);
+            r = __riscv_vmerge_vxm_i16m4(r, MAXJSAMPLE, mask, vl);
             /* TODO: Figure out whether big-endian or little-endian would be different. */
 #if BITS_IN_JSAMPLE == 8
-            dest = vnsra_wx_i8m2(r, 0, vl);     /* Narrowing from 16-bit to 8-bit. */
-            vsse8_v_i8m2(outptr + RGB_RED, bstride, dest, vl);
+            dest = __riscv_vnsra_wx_i8m2(r, 0, vl);     /* Narrowing from 16-bit to 8-bit. */
+            __riscv_vsse8_v_i8m2(outptr + RGB_RED, bstride, dest, vl);
 #else   /* BITS_IN_JSAMPLE == 12 */
-            vsse16_v_i16m4(outptr + RGB_RED, bstride, r, vl);
+            __riscv_vsse16_v_i16m4(outptr + RGB_RED, bstride, r, vl);
 #endif
 
             /* Calculate G values */
-            tmp0 = vwmul_vx_i32m8(scb, -F_0_344, vl);
-            tmp0 = vwmacc_vx_i32m8(tmp0, F_0_285, scr, vl);
-            tmp0 = vadd_vx_i32m8(tmp0, ONE_HALF, vl);           /* Proper rounding. */
-            r = vnsra_wx_i16m4(tmp0, SCALEBITS, vl);
-            r = vadd_vv_i16m4(r, sy, vl);
-            r = vsub_vv_i16m4(r, scr, vl);
+            tmp0 = __riscv_vwmul_vx_i32m8(scb, -F_0_344, vl);
+            tmp0 = __riscv_vwmacc_vx_i32m8(tmp0, F_0_285, scr, vl);
+            tmp0 = __riscv_vadd_vx_i32m8(tmp0, ONE_HALF, vl);           /* Proper rounding. */
+            r = __riscv_vnsra_wx_i16m4(tmp0, SCALEBITS, vl);
+            r = __riscv_vadd_vv_i16m4(r, sy, vl);
+            r = __riscv_vsub_vv_i16m4(r, scr, vl);
             /* Range limit */
-            mask = vmslt_vx_i16m4_b4(r, 0, vl);
-            r = vmerge_vxm_i16m4(mask, r, 0, vl);
-            mask = vmsgt_vx_i16m4_b4(r, MAXJSAMPLE, vl);
-            r = vmerge_vxm_i16m4(mask, r, MAXJSAMPLE, vl);
+            mask = __riscv_vmslt_vx_i16m4_b4(r, 0, vl);
+            r = __riscv_vmerge_vxm_i16m4(r, 0, mask, vl);
+            mask = __riscv_vmsgt_vx_i16m4_b4(r, MAXJSAMPLE, vl);
+            r = __riscv_vmerge_vxm_i16m4(r, MAXJSAMPLE, mask, vl);
             /* TODO: Figure out whether big-endian or little-endian would be different. */
 #if BITS_IN_JSAMPLE == 8
-            dest = vnsra_wx_i8m2(r, 0, vl);     /* Narrowing from 16-bit to 8-bit. */
-            vsse8_v_i8m2(outptr + RGB_GREEN, bstride, dest, vl);
+            dest = __riscv_vnsra_wx_i8m2(r, 0, vl);     /* Narrowing from 16-bit to 8-bit. */
+            __riscv_vsse8_v_i8m2(outptr + RGB_GREEN, bstride, dest, vl);
 #else   /* BITS_IN_JSAMPLE == 12 */
-            vsse16_v_i16m4(outptr + RGB_GREEN, bstride, r, vl);
+            __riscv_vsse16_v_i16m4(outptr + RGB_GREEN, bstride, r, vl);
 #endif
 
             /* Calculate B values */
-            r = vadd_vv_i16m4(sy, scb, vl);
-            r = vadd_vv_i16m4(r, scb, vl);
-            tmp0 = vwmul_vx_i32m8(scb, -F_0_228, vl);
-            tmp0 = vadd_vx_i32m8(tmp0, ONE_HALF, vl);               /* Proper rounding. */
-            tmp = vnsra_wx_i16m4(tmp0, SCALEBITS, vl);
-            r = vadd_vv_i16m4(r, tmp, vl);
+            r = __riscv_vadd_vv_i16m4(sy, scb, vl);
+            r = __riscv_vadd_vv_i16m4(r, scb, vl);
+            tmp0 = __riscv_vwmul_vx_i32m8(scb, -F_0_228, vl);
+            tmp0 = __riscv_vadd_vx_i32m8(tmp0, ONE_HALF, vl);               /* Proper rounding. */
+            tmp = __riscv_vnsra_wx_i16m4(tmp0, SCALEBITS, vl);
+            r = __riscv_vadd_vv_i16m4(r, tmp, vl);
             /* Range limit */
-            mask = vmslt_vx_i16m4_b4(r, 0, vl);
-            r = vmerge_vxm_i16m4(mask, r, 0, vl);
-            mask = vmsgt_vx_i16m4_b4(r, MAXJSAMPLE, vl);
-            r = vmerge_vxm_i16m4(mask, r, MAXJSAMPLE, vl);
+            mask = __riscv_vmslt_vx_i16m4_b4(r, 0, vl);
+            r = __riscv_vmerge_vxm_i16m4(r, 0, mask, vl);
+            mask = __riscv_vmsgt_vx_i16m4_b4(r, MAXJSAMPLE, vl);
+            r = __riscv_vmerge_vxm_i16m4(r, MAXJSAMPLE, mask, vl);
             /* TODO: Figure out whether big-endian or little-endian would be different. */
 #if BITS_IN_JSAMPLE == 8
-            dest = vnsra_wx_i8m2(r, 0, vl);     /* Narrowing from 16-bit to 8-bit. */
-            vsse8_v_i8m2(outptr + RGB_BLUE, bstride, dest, vl);
+            dest = __riscv_vnsra_wx_i8m2(r, 0, vl);     /* Narrowing from 16-bit to 8-bit. */
+            __riscv_vsse8_v_i8m2(outptr + RGB_BLUE, bstride, dest, vl);
 #else   /* BITS_IN_JSAMPLE == 12 */
-            vsse16_v_i16m4(outptr + RGB_BLUE, bstride, r, vl);
+            __riscv_vsse16_v_i16m4(outptr + RGB_BLUE, bstride, r, vl);
 #endif
 
             /* Store alpha channel values. */
 #if RGB_PIXELSIZE == 4
 #if BITS_IN_JSAMPLE == 8
-            vsse8_v_u8m2(outptr + RGB_ALPHA, bstride, alpha_v, vl);
+            __riscv_vsse8_v_u8m2(outptr + RGB_ALPHA, bstride, alpha_v, vl);
 #else           /* BITS_IN_JSAMPLE == 12 */
-            vsse16_v_u16m4(outptr + RGB_ALPHA, bstride, alpha_v, vl);
+            __riscv_vsse16_v_u16m4(outptr + RGB_ALPHA, bstride, alpha_v, vl);
 #endif
 #endif
 

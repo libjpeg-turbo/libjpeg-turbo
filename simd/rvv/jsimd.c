@@ -1,9 +1,35 @@
+/*
+ * Risc-V vector extension optimizations for libjpeg-turbo
+ *
+ * Copyright (C) 2014, D. R. Commander.  All Rights Reserved.
+ * Copyright (C) 2025, Samsung. All Rights Reserved.
+ *
+ * Authors:  Filip Wasil     <f.wasil@samsung.com>
+ *
+ * This software is provided 'as-is', without any express or implied
+ * warranty.  In no event will the authors be held liable for any damages
+ * arising from the use of this software.
+ *
+ * Permission is granted to anyone to use this software for any purpose,
+ * including commercial applications, and to alter it and redistribute it
+ * freely, subject to the following restrictions:
+ *
+ * 1. The origin of this software must not be misrepresented; you must not
+ *    claim that you wrote the original software. If you use this software
+ *    in a product, an acknowledgment in the product documentation would be
+ *    appreciated but is not required.
+ * 2. Altered source versions must be plainly marked as such, and must not be
+ *    misrepresented as being the original software.
+ * 3. This notice may not be removed or altered from any source distribution.
+ */
+
+
 #define JPEG_INTERNALS
-#include "../../jinclude.h"
-#include "../../jpeglib.h"
-#include "../../jsimd.h"
-#include "../../jdct.h"
-#include "../../jsimddct.h"
+#include "jinclude.h"
+#include "jpeglib.h"
+#include "jsimd.h"
+#include "jdct.h"
+#include "jsimddct.h"
 #include "../jsimd.h"
 
 #include <stdio.h>
@@ -13,67 +39,42 @@
 static unsigned int simd_support = ~0;
 
 #if defined(__linux__)
+#include <asm/hwcap.h>
+#include <asm/hwprobe.h>
+#include <sys/auxv.h>
+#include <sys/syscall.h>
+#include <unistd.h>
 
-#define SOMEWHAT_SANE_PROC_CPUINFO_SIZE_LIMIT  (1024 * 1024)
-/* TODO: Check rvv intrinsic support by examine /proc/cpuinfo */
+#ifndef __NR_riscv_hwprobe
+#define __NR_riscv_hwprobe 258
+#endif
 
-// LOCAL(int)
-// check_feature(char *buffer, char *feature)
-// {
-//   char *p;
+// This manual declaration is safe because:
+// It matches the standard Linux ABI (long return, varargs)
+// It's essentially documenting what the system already provides
+// The actual implementation will be linked from glibc
+#ifndef SYS_syscall
+long syscall(long number, ...);
+#endif
 
-//   if (*feature == 0)
-//     return 0;
-//   if (strncmp(buffer, "ASEs implemented", 16) != 0)
-//     return 0;
-//   buffer += 16;
-//   while (isspace(*buffer))
-//     buffer++;
+int
+has_compliant_vsetvli (void);
 
-//   /* Check if 'feature' is present in the buffer as a separate word */
-//   while ((p = strstr(buffer, feature))) {
-//     if (p > buffer && !isspace(*(p - 1))) {
-//       buffer++;
-//       continue;
-//     }
-//     p += strlen(feature);
-//     if (*p != 0 && !isspace(*p)) {
-//       buffer++;
-//       continue;
-//     }
-//     return 1;
-//   }
-//   return 0;
-// }
+static int
+is_rvv_1_0_available ()
+{
+  struct riscv_hwprobe pair = {RISCV_HWPROBE_KEY_IMA_EXT_0, 0};
 
-// LOCAL(int)
-// parse_proc_cpuinfo(int bufsize)
-// {
-//   char *buffer = (char *)malloc(bufsize);
-//   FILE *fd;
-
-//   simd_support = 0;
-
-//   if (!buffer)
-//     return 0;
-
-//   fd = fopen("/proc/cpuinfo", "r");
-//   if (fd) {
-//     while (fgets(buffer, bufsize, fd)) {
-//       if (!strchr(buffer, '\n') && !feof(fd)) {
-//         /* "impossible" happened - insufficient size of the buffer! */
-//         fclose(fd);
-//         free(buffer);
-//         return 0;
-//       }
-//       if (check_feature(buffer, "loongson-rvv"))
-//         simd_support |= JSIMD_RVV;
-//     }
-//     fclose(fd);
-//   }
-//   free(buffer);
-//   return 1;
-// }
+  if (syscall (__NR_riscv_hwprobe, &pair, 1, 0, 0, 0) < 0)
+  {
+    // At this point we already checked AT_HWCAP and we know we have
+    // some version of RVV to our dispose. If this version of kernel
+    // is failing on syscall __NR_riscv_hwprobe, we will check the RVV
+    // version by looking at the vsetvli behaviour.
+    return has_compliant_vsetvli ();
+  }
+  return (pair.value & RISCV_HWPROBE_IMA_V);
+}
 
 #endif
 
@@ -89,27 +90,15 @@ init_simd(void)
 #ifndef NO_GETENV
   char *env = NULL;
 #endif
-#if defined(__linux__)
-  int bufsize = 1024; /* an initial guess for the line buffer size limit */
-#endif
 
   if (simd_support != ~0U)
     return;
 
   simd_support = 0;
-  simd_support |= JSIMD_RVV;
-
-// #if defined(__linux__)
-//   while (!parse_proc_cpuinfo(bufsize)) {
-//     bufsize *= 2;
-//     if (bufsize > SOMEWHAT_SANE_PROC_CPUINFO_SIZE_LIMIT)
-//       break;
-//   }
-// #elif defined(__mips_loongson_vector_rev)
-//   /* Only enable rvv by default on non-Linux platforms when the compiler flags
-//    * support it. */
-//   simd_support |= JSIMD_RVV;
-// #endif
+#if defined(__linux__) && __riscv_v >= 1000000 && __riscv_v < 2000000
+  simd_support = (getauxval (AT_HWCAP) & COMPAT_HWCAP_ISA_V
+    && is_rvv_1_0_available ()) ? JSIMD_RVV : 0;
+#endif
 
 #ifndef NO_GETENV
   /* Force different settings through environment variables */

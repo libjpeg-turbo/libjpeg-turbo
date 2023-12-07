@@ -51,19 +51,17 @@ void jsimd_h2v1_downsample_rvv(JDIMENSION image_width,
                                JSAMPARRAY input_data,
                                JSAMPARRAY output_data)
 {
-  // printf("img_width: %d\nmax_v_samp_factor: %d\nv_samp_factor: %d\nwidth_in_blocks: %d\n", 
-  //                                   image_width, max_v_samp_factor, v_samp_factor, width_in_blocks);
   int outrow, outcol, i, zr_one = 0;
   JDIMENSION output_cols = width_in_blocks * DCTSIZE;
   JSAMPROW inptr, outptr;
 
   vuint8m2_t this, adjct, out;
+
   /* '_w' suffix denotes widened type. */
   vuint16m4_t this_w, adjct_w, bias_w, out_w;
 
-  /* TODO: If there exists a better way to generate bias sequence. */
   /* Bias */
-  size_t vl = vsetvl_e16m4(output_cols * 2);
+  size_t vl = __riscv_vsetvl_e16m4(output_cols * 2);
   uint16_t *bias = NULL;
   if (NULL == (bias = (uint16_t *)malloc(vl * sizeof(uint16_t))))
   {
@@ -88,24 +86,24 @@ void jsimd_h2v1_downsample_rvv(JDIMENSION image_width,
     for (outcol = output_cols; outcol > 0;
          outcol -= vl, inptr += vl * 2, outptr += vl)
     {
-      vl = vsetvl_e16m4(outcol * 2);
+      vl = __riscv_vsetvl_e16m4(outcol);
 
       /* Load samples and the adjacent ones. */
-      this = vlse8_v_u8m2(inptr, 2 * sizeof(JSAMPLE), vl);
-      adjct = vlse8_v_u8m2(inptr + 1, 2 * sizeof(JSAMPLE), vl);
+      this = __riscv_vlse8_v_u8m2(inptr, 2 * sizeof(JSAMPLE), vl);
+      adjct = __riscv_vlse8_v_u8m2(inptr + 1, 2 * sizeof(JSAMPLE), vl);
 
       /* Widen to vuint16m4_t type. */
-      this_w = vwaddu_vx_u16m4(this, 0, vl);
-      adjct_w = vwaddu_vx_u16m4(adjct, 0, vl);
-      bias_w = vle16_v_u16m4(bias, vl);
+      this_w = __riscv_vwaddu_vx_u16m4(this, 0, vl);
+      adjct_w = __riscv_vwaddu_vx_u16m4(adjct, 0, vl);
+      bias_w = __riscv_vle16_v_u16m4(bias, vl);
 
       /* Add adjacent pixel values and add bias. */
-      out_w = vadd_vv_u16m4(this_w, adjct_w, vl);
-      out_w = vadd_vv_u16m4(out_w, bias_w, vl);
+      out_w = __riscv_vadd_vv_u16m4(this_w, adjct_w, vl);
+      out_w = __riscv_vadd_vv_u16m4(out_w, bias_w, vl);
 
       /* Divide total by 2, narrow to 8-bit, and store. */
-      out = vnsrl_wx_u8m2(out_w, 1, vl);
-      vse8_v_u8m2(outptr, out, vl);
+      out = __riscv_vnsrl_wx_u8m2(out_w, 1, vl);
+      __riscv_vse8_v_u8m2(outptr, out, vl);
     }
   }
 
@@ -126,9 +124,8 @@ void jsimd_h2v2_downsample_rvv(JDIMENSION image_width, int max_v_samp_factor,
   /* '_w' suffix denotes widened type. */
   vuint16m4_t this_w, adjct_w, bias_w, out_w;
 
-  /* TODO: If there exists a better way to generate bias sequence. */
   /* Bias */
-  size_t vl = vsetvl_e16m4(output_cols * 2);
+  size_t vl = __riscv_vsetvl_e16m4(output_cols * 2);
   uint16_t *bias = NULL;
   if (NULL == (bias = (uint16_t *)malloc(vl * sizeof(uint16_t))))
   {
@@ -154,34 +151,34 @@ void jsimd_h2v2_downsample_rvv(JDIMENSION image_width, int max_v_samp_factor,
     for (outcol = output_cols; outcol > 0;
          outcol -= vl, inptr0 += vl * 2, inptr1 += vl * 2, outptr += vl)
     {
-      vl = vsetvl_e16m4(outcol * 2);
+      vl = __riscv_vsetvl_e16m4(outcol);
 
       /* Load samples and the adjacent ones of two rows. */
-      this0 = vlse8_v_u8m2(inptr0, 2 * sizeof(JSAMPLE), vl);
-      adjct0 = vlse8_v_u8m2(inptr0 + 1, 2 * sizeof(JSAMPLE), vl);
-      this1 = vlse8_v_u8m2(inptr1, 2 * sizeof(JSAMPLE), vl);
-      adjct1 = vlse8_v_u8m2(inptr1 + 1, 2 * sizeof(JSAMPLE), vl);
+      this0 = __riscv_vlse8_v_u8m2(inptr0, 2 * sizeof(JSAMPLE), vl);
+      adjct0 = __riscv_vlse8_v_u8m2(inptr0 + 1, 2 * sizeof(JSAMPLE), vl);
+      this1 = __riscv_vlse8_v_u8m2(inptr1, 2 * sizeof(JSAMPLE), vl);
+      adjct1 = __riscv_vlse8_v_u8m2(inptr1 + 1, 2 * sizeof(JSAMPLE), vl);
 
       /* Widen samples in row 0 and bias to vuint16m4_t type. */
-      this_w = vwaddu_vx_u16m4(this0, 0, vl);
-      adjct_w = vwaddu_vx_u16m4(adjct0, 0, vl);
-      bias_w = vle16_v_u16m4(bias, vl);
+      this_w = __riscv_vwaddu_vx_u16m4(this0, 0, vl);
+      adjct_w = __riscv_vwaddu_vx_u16m4(adjct0, 0, vl);
+      bias_w = __riscv_vle16_v_u16m4(bias, vl);
 
       /* Add adjacent pixel values in row 0 and add bias. */
-      out_w = vadd_vv_u16m4(this_w, adjct_w, vl);
-      out_w = vadd_vv_u16m4(out_w, bias_w, vl);
+      out_w = __riscv_vadd_vv_u16m4(this_w, adjct_w, vl);
+      out_w = __riscv_vadd_vv_u16m4(out_w, bias_w, vl);
 
       /* Widen samples of in row 1 to vuint16m4_t type. */
-      this_w = vwaddu_vx_u16m4(this1, 0, vl);
-      adjct_w = vwaddu_vx_u16m4(adjct1, 0, vl);
+      this_w = __riscv_vwaddu_vx_u16m4(this1, 0, vl);
+      adjct_w = __riscv_vwaddu_vx_u16m4(adjct1, 0, vl);
 
       /* Add adjacent pixel values in row 1 and add accumulate. */
-      out_w = vadd_vv_u16m4(out_w, this_w, vl);
-      out_w = vadd_vv_u16m4(out_w, adjct_w, vl);
+      out_w = __riscv_vadd_vv_u16m4(out_w, this_w, vl);
+      out_w = __riscv_vadd_vv_u16m4(out_w, adjct_w, vl);
 
       /* Divide total by 4, narrow to 8-bit, and store. */
-      out = vnsrl_wx_u8m2(out_w, 2, vl);
-      vse8_v_u8m2(outptr, out, vl);
+      out = __riscv_vnsrl_wx_u8m2(out_w, 2, vl);
+      __riscv_vse8_v_u8m2(outptr, out, vl);
     }
   }
 

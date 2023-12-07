@@ -486,20 +486,29 @@ endif()
 
 elseif(CPU_TYPE STREQUAL "riscv64")
 
-set(CMAKE_REQUIRED_FLAGS "-march=rv64gcv")
-
 check_c_source_compiles("
   #include <riscv_vector.h>
-  int main()
-  {
-    const float src[] = { 0.0f, 0.0f, 0.0f, 0.0f };
-    uint64_t ptr[2] = {0x0908060504020100, 0xFFFFFFFF0E0D0C0A};
-    vuint8m1_t a = __riscv_vreinterpret_v_u64m1_u8m1(__riscv_vle64_v_u64m1(ptr, 2));
-    vfloat32m1_t val = __riscv_vle32_v_f32m1((const float*)(src), 4);
-    return (int)__riscv_vfmv_f_s_f32m1_f32(val);
+  #include <asm/hwcap.h>
+  #include <asm/hwprobe.h>
+  #include <sys/auxv.h>
+  #include <sys/syscall.h>
+  #include <unistd.h>
+  #ifndef __NR_riscv_hwprobe
+  #define __NR_riscv_hwprobe 258
+  #endif
+  #ifndef SYS_syscall
+  long syscall(long number, ...);
+  #endif
+  #ifndef COMPAT_HWCAP_ISA_V /* added in linux-6.5 */
+  #error \"COMPAT_HWCAP_ISA_V is not available\"
+  #endif
+  int main() {
+    struct riscv_hwprobe pair = {RISCV_HWPROBE_KEY_IMA_EXT_0, 0};
+    long result = syscall (__NR_riscv_hwprobe, &pair, 1, 0, 0, 0);
+    vfloat32m1_t tmp1; /* added in gcc-13 */
+    vfloat32m1x4_t tmp2; /* added in gcc-14 */
+    return 0;
   }" HAVE_RVV)
-
-unset(CMAKE_REQUIRED_FLAGS)
 
 if(NOT HAVE_RVV)
   simd_fail("SIMD extensions not available for this CPU (riscv64)")
@@ -513,10 +522,13 @@ set(SIMD_SOURCES rvv/jccolor-rvv.c rvv/jcgray-rvv.c
   rvv/jidctfst-rvv.c rvv/jidctint-rvv.c
   rvv/jquanti-rvv.c)
 
+enable_language(ASM)
+
 set_source_files_properties(${SIMD_SOURCES} PROPERTIES
   COMPILE_FLAGS -march=rv64gcv)
 
-add_library(simd OBJECT ${SIMD_SOURCES} rvv/jsimd.c)
+add_library(simd OBJECT ${SIMD_SOURCES} rvv/jsimd.c rvv/jsimd.S)
+
 
 if(CMAKE_POSITION_INDEPENDENT_CODE OR ENABLE_SHARED)
   set_target_properties(simd PROPERTIES POSITION_INDEPENDENT_CODE 1)

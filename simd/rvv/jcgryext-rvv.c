@@ -47,23 +47,23 @@ void jsimd_rgb_gray_convert_rvv(JDIMENSION img_width, JSAMPARRAY input_buf,
         while (num_cols > 0)
         {
             /* Set vl for each iteration. */
-            size_t vl = vsetvl_e16m4(num_cols / RGB_PIXELSIZE);
+            size_t vl = __riscv_vsetvl_e16m4(num_cols / RGB_PIXELSIZE);
             size_t cols = vl * RGB_PIXELSIZE;
             ptrdiff_t bstride = RGB_PIXELSIZE * sizeof(JSAMPLE);
 
             /* Load R, G, B channels as vectors from inptr. */
 #if BITS_IN_JSAMPLE == 8
             /* Extending to vuint16m4_t type for following multiply calculation. */
-            src = vlse8_v_u8m2(inptr + RGB_RED, bstride, vl);
-            r = vwaddu_vx_u16m4(src, 0, vl); /* Widening to vuint16m4_t type */
-            src = vlse8_v_u8m2(inptr + RGB_GREEN, bstride, vl);
-            g = vwaddu_vx_u16m4(src, 0, vl); /* Widening to vuint16m4_t type */
-            src = vlse8_v_u8m2(inptr + RGB_BLUE, bstride, vl);
-            b = vwaddu_vx_u16m4(src, 0, vl); /* Widening to vuint16m4_t type */
+            src = __riscv_vlse8_v_u8m2(inptr + RGB_RED, bstride, vl);
+            r = __riscv_vwaddu_vx_u16m4(src, 0, vl); /* Widening to vuint16m4_t type */
+            src = __riscv_vlse8_v_u8m2(inptr + RGB_GREEN, bstride, vl);
+            g = __riscv_vwaddu_vx_u16m4(src, 0, vl); /* Widening to vuint16m4_t type */
+            src = __riscv_vlse8_v_u8m2(inptr + RGB_BLUE, bstride, vl);
+            b = __riscv_vwaddu_vx_u16m4(src, 0, vl); /* Widening to vuint16m4_t type */
 #else   /* BITS_IN_JSAMPLE == 12 */
-            r = vlse16_v_u16m4(inptr + RGB_RED, bstride, vl);
-            g = vlse16_v_u16m4(inptr + RGB_GREEN, bstride, vl);
-            b = vlse16_v_u16m4(inptr + RGB_BLUE, bstride, vl);
+            r = __riscv_vlse16_v_u16m4(inptr + RGB_RED, bstride, vl);
+            g = __riscv_vlse16_v_u16m4(inptr + RGB_GREEN, bstride, vl);
+            b = __riscv_vlse16_v_u16m4(inptr + RGB_BLUE, bstride, vl);
             
 #endif
 
@@ -71,18 +71,18 @@ void jsimd_rgb_gray_convert_rvv(JDIMENSION img_width, JSAMPARRAY input_buf,
             * Y  =  0.29900 * R + 0.58700 * G + 0.11400 * B
             */
             /* Calculate Y values */
-            tmp = vwmulu_vx_u32m8(r, F_0_299, vl);
-            tmp = vwmaccu_vx_u32m8(tmp, F_0_587, g, vl);
-            tmp = vwmaccu_vx_u32m8(tmp, F_0_114, b, vl);
+            tmp = __riscv_vwmulu_vx_u32m8(r, F_0_299, vl);
+            tmp = __riscv_vwmaccu_vx_u32m8(tmp, F_0_587, g, vl);
+            tmp = __riscv_vwmaccu_vx_u32m8(tmp, F_0_114, b, vl);
             /* Proper rounding. */
-            tmp = vadd_vx_u32m8(tmp, ONE_HALF - 1, vl);
-            y = vnsrl_wx_u16m4(tmp, SCALEBITS, vl);
+            tmp = __riscv_vadd_vx_u32m8(tmp, ONE_HALF - 1, vl);
+            y = __riscv_vnsrl_wx_u16m4(tmp, SCALEBITS, vl);
             /* TODO: Figure out whether big-endian or little-endian would be different. */
 #if BITS_IN_JSAMPLE == 8
-            dest = vnsrl_wx_u8m2(y, 0, vl); /* Narrowing from 16-bit to 8-bit. */
-            vse8_v_u8m2(outptr, dest, vl);
+            dest = __riscv_vnsrl_wx_u8m2(y, 0, vl); /* Narrowing from 16-bit to 8-bit. */
+            __riscv_vse8_v_u8m2(outptr, dest, vl);
 #else   /* BITS_IN_JSAMPLE == 12 */
-            vse16_v_u16m4(outptr, y, vl);
+            __riscv_vse16_v_u16m4(outptr, y, vl);
 #endif
 
             /* Move the pointer to the right place. */
