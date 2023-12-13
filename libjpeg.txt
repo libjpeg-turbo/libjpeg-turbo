@@ -1028,8 +1028,23 @@ jpeg_enable_lossless (j_compress_ptr cinfo, int predictor_selection_value,
         is necessary in order to create a fully lossless JPEG image.  (A
         non-zero point transform value right-shifts the input samples by the
         specified number of bits, which is effectively a form of lossy color
-        quantization.)  Note that the following features will be unavailable
-        when compressing or decompressing lossless JPEG images:
+        quantization).
+        Lossless JPEG isn't the same thing as regular DCT-based (lossy) JPEG.
+        Lossless JPEG uses mathematically lossless algorithms that are entirely
+        different from the algorithms that lossy JPEG uses. Lossless JPEG is
+        much slower than lossy JPEG (lossless JPEG is not SIMD-accelerated in
+        libjpeg-turbo at all) and will not achieve anywhere near the same
+        compression as lossy JPEG. Generally speaking, lossy JPEG with Quality
+        90-92 and no subsampling is perceptually lossless for the vast majority
+        of people with the vast majority of images under the vast majority of
+        viewing conditions.
+        Predictor Selection Value (PSV) basically just implements variations of
+        the lossless algorithm. Some of those variations produce better
+        compression for specific types of images, but you'd have to use trial
+        and error to figure out which variation is best for a particular image.
+        Most applications just use a PSV of 1.
+        Note that the following features will be unavailable when compressing
+        or decompressing lossless JPEG images:
           * Partial image decompression
           * Quality/quantization table selection
           * DCT/IDCT algorithm selection
