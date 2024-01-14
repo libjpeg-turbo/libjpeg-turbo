@@ -169,7 +169,7 @@ Switches for advanced users:
 			Larger values produce higher compression,
 			smaller values produce higher quality
 			(exact DCT stage possible with 1 or 2; with the
-			default quality of 75 and default Luminance qtable
+			default quality of 75 and default quantization tables
 			the DCT+Quantization stage is lossless for N=1).
 			CAUTION: An implementation of the JPEG SmartScale
 			extension is required for this feature.  SmartScale

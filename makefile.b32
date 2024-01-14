@@ -1,28 +1,52 @@
 # Makefile for Independent JPEG Group's software
 
-# This makefile is suitable for Borland C on MS-DOS.
-# It works with Borland C++ 32-bit for DOS, revision 5.0 or later.
+# This makefile is suitable for Embarcadero C++ for Win32 (classic Borland).
+# Tested with version 7.50-7.60 (1993-2017),
+# Embarcadero MAKE Version 5.43 (1987-2019),
+# Embarcadero C++Builder 10.4-11 Version 27.0-28.0 (2021-2023).
 # Thanks to Tom Wright and Ge' Weijers (original DOS) and
-# Joe Slater for adding 32-bit additions (needed for Borland
-# revision 5.5).
+# Joe Slater for 32-bit modifications (needed for Borland revision 5.5).
 
-# Read installation instructions before saying "make" !!
+# Read installation instructions in install.txt before saying "make",
+# or use either
+#         make -fmakefile.b32 setup
+# or
+#         make -fmakefile.b32 setupcopy
+# before saying
+#         make -fmakefile.b32
+# Test:
+#         make -fmakefile.b32 test
+# Clean:
+#         make -fmakefile.b32 clean
+#
+# For use with C++Builder, multi Config/Platform support:
+# Setup either
+#         make -fmakefile.b32 setup-cb
+# or
+#         make -fmakefile.b32 setupcopy-cb
+# Test:
+#         make -fmakefile.b32 test-32
+#         make -fmakefile.b32 test-64
 
 # The name of your C compiler:
 CC= bcc32
 
 # You may need to adjust these cc options:
-CFLAGS= -O2 -w-par -w-stu -w-ccc -w-rch -w-aus
-# -w-par suppresses warnings about unused function parameters
-# -w-stu suppresses warnings about incomplete structures
-# -w-ccc suppresses warnings about compile-time-constant conditions
-# -w-rch suppresses warnings about unreachable code
+CFLAGS= -O2 -w -w-aus -w-ccc -w-par -w-rch -w-sig
+# -O1     Generate smallest possible code
+# -O2     Generate fastest possible code
+# -w      Display all warnings
+# -waus   8004 '%s' is assigned a value that is never used
+# -wccc   8008 Condition is always %s
+# -wpar   8057 Parameter '%s' is never used
+# -wrch   8066 Unreachable code
+# -wsig   8071 Conversion may lose significant digits
 # Generally, we recommend defining any configuration symbols in jconfig.h,
 # NOT via -D switches here.
 
 # Link-time cc options:
 LDFLAGS=
-# -lc case-significant link
+# -lc     case-significant link
 
 # Put here the object file name for the correct system-dependent memory
 # manager file.
@@ -56,8 +80,9 @@ INCLUDES= jdct.h jerror.h jinclude.h jmemsys.h jmorecfg.h jpegint.h \
 DOCS= README install.txt usage.txt cjpeg.1 djpeg.1 jpegtran.1 rdjpgcom.1 \
         wrjpgcom.1 wizard.txt example.c libjpeg.txt structure.txt \
         coderules.txt filelist.txt cdaltui.txt change.log
-MKFILES= configure Makefile.in makefile.ansi makefile.unix makefile.b32 \
-        makefile.bcc makefile.mc6 makefile.dj makefile.wat makefile.vc \
+MKFILES= configure Makefile.in makefile.ansi makefile.unix makefile.xc \
+        makefile.bcc makefile.b32 makefile.c32 makefile.d32 makefile.x32 \
+        makefile.b64 makefile.mc6 makefile.dj makefile.wat makefile.vc \
         makefile.vs makejdsw.vc6 makeadsw.vc6 makejdep.vc6 makejdsp.vc6 \
         makejmak.vc6 makecdep.vc6 makecdsp.vc6 makecmak.vc6 makeddep.vc6 \
         makeddsp.vc6 makedmak.vc6 maketdep.vc6 maketdsp.vc6 maketmak.vc6 \
@@ -65,13 +90,13 @@ MKFILES= configure Makefile.in makefile.ansi makefile.unix makefile.b32 \
         makewmak.vc6 makejsln.v16 makeasln.v16 makejvcx.v16 makejfil.v16 \
         makecvcx.v16 makecfil.v16 makedvcx.v16 makedfil.v16 maketvcx.v16 \
         maketfil.v16 makervcx.v16 makerfil.v16 makewvcx.v16 makewfil.v16 \
-        makejvcx.v17 makecvcx.v17 makedvcx.v17 maketvcx.v17 makervcx.v17 \
-        makewvcx.v17 makeproj.mac makcjpeg.st makdjpeg.st makljpeg.st \
-        maktjpeg.st makefile.manx makefile.sas makefile.mms makefile.vms \
-        makvms.opt
-CONFIGFILES= jconfig.cfg jconfig.bcc jconfig.mc6 jconfig.dj jconfig.wat \
-        jconfig.vc jconfig.mac jconfig.st jconfig.manx jconfig.sas \
-        jconfig.vms
+        makajpeg.bcb makcjpeg.bcb makdjpeg.bcb makljpeg.bcb makrjpeg.bcb \
+        maktjpeg.bcb makwjpeg.bcb makcjpeg.st makdjpeg.st makljpeg.st \
+        maktjpeg.st makeproj.mac makefile.manx makefile.sas makefile.mms \
+        makefile.vms makvms.opt
+CONFIGFILES= jconfig.cfg jconfig.xc jconfig.bcc jconfig.mc6 jconfig.dj \
+        jconfig.wat jconfig.vc jconfig.mac jconfig.st jconfig.manx \
+        jconfig.sas jconfig.vms
 CONFIGUREFILES= config.guess config.sub install-sh ltmain.sh depcomp \
         missing ar-lib
 OTHERFILES= jconfig.txt ckconfig.c jmemdosa.asm libjpeg.map libjpeg.pc.in \
@@ -106,7 +131,7 @@ TROBJECTS= jpegtran.obj rdswitch.obj cdjpeg.obj transupp.obj
 all: libjpeg.lib cjpeg.exe djpeg.exe jpegtran.exe rdjpgcom.exe wrjpgcom.exe
 
 libjpeg.lib: $(LIBOBJECTS)
-        - del libjpeg.lib
+        if exist libjpeg.lib del libjpeg.lib
         tlib libjpeg.lib /E /C @&&|
 +jcapimin.obj +jcapistd.obj +jcarith.obj +jctrans.obj +jcparam.obj &
 +jdatadst.obj +jcinit.obj +jcmaster.obj +jcmarker.obj +jcmainct.obj &
@@ -121,13 +146,13 @@ $(SYSDEPMEMLIB)
 |
 
 cjpeg.exe: $(COBJECTS) libjpeg.lib
-        $(CC) $(LDFLAGS) -ecjpeg.exe $(COBJECTS) libjpeg.lib
+        $(CC) $(LDFLAGS) -o cjpeg.exe $(COBJECTS) libjpeg.lib
 
 djpeg.exe: $(DOBJECTS) libjpeg.lib
-        $(CC) $(LDFLAGS) -edjpeg.exe $(DOBJECTS) libjpeg.lib
+        $(CC) $(LDFLAGS) -o djpeg.exe $(DOBJECTS) libjpeg.lib
 
 jpegtran.exe: $(TROBJECTS) libjpeg.lib
-        $(CC) $(LDFLAGS) -ejpegtran.exe $(TROBJECTS) libjpeg.lib
+        $(CC) $(LDFLAGS) -o jpegtran.exe $(TROBJECTS) libjpeg.lib
 
 rdjpgcom.exe: rdjpgcom.c
         $(CC) $(CFLAGS) rdjpgcom.c
@@ -141,22 +166,67 @@ wrjpgcom.exe: wrjpgcom.c
         $(CC) $(CFLAGS) -c{ $<}
 
 jconfig.h: jconfig.txt
-        echo You must prepare a system-dependent jconfig.h file.
-        echo Please read the installation directions in install.txt.
+        @echo.
+        @echo. " " " " " " " " " " " " " " " " " " " " " " " " " " " " " " " "
+        @echo. "                                                             "
+        @echo. "   You must prepare a system-dependent jconfig.h file.       "
+        @echo. "   Please read the installation directions in install.txt,   "
+        @echo. "   or use either                                             "
+        @echo. "           make -fmakefile.b32 setup                         "
+        @echo. "   or                                                        "
+        @echo. "           make -fmakefile.b32 setupcopy                     "
+        @echo. "   before saying                                             "
+        @echo. "           make -fmakefile.b32                               "
+        @echo. "                                                             "
+        @echo. " " " " " " " " " " " " " " " " " " " " " " " " " " " " " " " "
+        @echo.
         exit 1
 
 clean:
-        - del *.obj
-        - del libjpeg.lib
-        - del cjpeg.exe
-        - del djpeg.exe
-        - del jpegtran.exe
-        - del rdjpgcom.exe
-        - del wrjpgcom.exe
-        - del testout*.*
+        del $(LIBOBJECTS) $(COBJECTS) $(DOBJECTS) $(TROBJECTS)
+        if exist rdjpgcom.obj del rdjpgcom.obj
+        if exist wrjpgcom.obj del wrjpgcom.obj
+        del libjpeg.lib
+        del cjpeg.exe
+        del djpeg.exe
+        del jpegtran.exe
+        del rdjpgcom.exe
+        del wrjpgcom.exe
+        if exist cjpeg.tds del cjpeg.tds
+        if exist djpeg.tds del djpeg.tds
+        if exist jpegtran.tds del jpegtran.tds
+        if exist rdjpgcom.tds del rdjpgcom.tds
+        if exist wrjpgcom.tds del wrjpgcom.tds
+        if exist testout* del testout*
+
+setup:
+        if not exist jconfig.h ren jconfig.vc jconfig.h
+
+setupcopy:
+        copy /y jconfig.vc jconfig.h
+
+setup-cb:
+        if not exist jconfig.h ren jconfig.vc jconfig.h
+        ren makajpeg.bcb apps.groupproj
+        ren makljpeg.bcb jpeg.cbproj
+        ren makcjpeg.bcb cjpeg.cbproj
+        ren makdjpeg.bcb djpeg.cbproj
+        ren maktjpeg.bcb jpegtran.cbproj
+        ren makrjpeg.bcb rdjpgcom.cbproj
+        ren makwjpeg.bcb wrjpgcom.cbproj
+
+setupcopy-cb:
+        copy /y jconfig.vc jconfig.h
+        copy /y makajpeg.bcb apps.groupproj
+        copy /y makljpeg.bcb jpeg.cbproj
+        copy /y makcjpeg.bcb cjpeg.cbproj
+        copy /y makdjpeg.bcb djpeg.cbproj
+        copy /y maktjpeg.bcb jpegtran.cbproj
+        copy /y makrjpeg.bcb rdjpgcom.cbproj
+        copy /y makwjpeg.bcb wrjpgcom.cbproj
 
 test: cjpeg.exe djpeg.exe jpegtran.exe
-        - del testout*.*
+        if exist testout* del testout*
         djpeg -dct int -ppm -outfile testout.ppm testorig.jpg
         djpeg -dct int -gif -outfile testout.gif testorig.jpg
         djpeg -dct int -bmp -colors 256 -outfile testout.bmp testorig.jpg
@@ -172,6 +242,44 @@ test: cjpeg.exe djpeg.exe jpegtran.exe
         comp testimg.ppm testoutp.ppm < n.tmp
         comp testimgp.jpg testoutp.jpg < n.tmp
         comp testorig.jpg testoutt.jpg < n.tmp
+        del n.tmp
+
+test-32:
+        if exist .\Release\testout* del .\Release\testout*
+        .\Release\Win32\djpeg -dct int -ppm -outfile .\Release\testout.ppm testorig.jpg
+        .\Release\Win32\djpeg -dct int -gif -outfile .\Release\testout.gif testorig.jpg
+        .\Release\Win32\djpeg -dct int -bmp -colors 256 -outfile .\Release\testout.bmp testorig.jpg
+        .\Release\Win32\cjpeg -dct int -outfile .\Release\testout.jpg testimg.ppm
+        .\Release\Win32\djpeg -dct int -ppm -outfile .\Release\testoutp.ppm testprog.jpg
+        .\Release\Win32\cjpeg -dct int -progressive -opt -outfile .\Release\testoutp.jpg testimg.ppm
+        .\Release\Win32\jpegtran -outfile .\Release\testoutt.jpg testprog.jpg
+        echo n > n.tmp
+        comp testimg.ppm .\Release\testout.ppm < n.tmp
+        comp testimg.gif .\Release\testout.gif < n.tmp
+        comp testimg.bmp .\Release\testout.bmp < n.tmp
+        comp testimg.jpg .\Release\testout.jpg < n.tmp
+        comp testimg.ppm .\Release\testoutp.ppm < n.tmp
+        comp testimgp.jpg .\Release\testoutp.jpg < n.tmp
+        comp testorig.jpg .\Release\testoutt.jpg < n.tmp
+        del n.tmp
+
+test-64:
+        if exist .\Release\testout* del .\Release\testout*
+        .\Release\Win64\djpeg -dct int -ppm -outfile .\Release\testout.ppm testorig.jpg
+        .\Release\Win64\djpeg -dct int -gif -outfile .\Release\testout.gif testorig.jpg
+        .\Release\Win64\djpeg -dct int -bmp -colors 256 -outfile .\Release\testout.bmp testorig.jpg
+        .\Release\Win64\cjpeg -dct int -outfile .\Release\testout.jpg testimg.ppm
+        .\Release\Win64\djpeg -dct int -ppm -outfile .\Release\testoutp.ppm testprog.jpg
+        .\Release\Win64\cjpeg -dct int -progressive -opt -outfile .\Release\testoutp.jpg testimg.ppm
+        .\Release\Win64\jpegtran -outfile .\Release\testoutt.jpg testprog.jpg
+        echo n > n.tmp
+        comp testimg.ppm .\Release\testout.ppm < n.tmp
+        comp testimg.gif .\Release\testout.gif < n.tmp
+        comp testimg.bmp .\Release\testout.bmp < n.tmp
+        comp testimg.jpg .\Release\testout.jpg < n.tmp
+        comp testimg.ppm .\Release\testoutp.ppm < n.tmp
+        comp testimgp.jpg .\Release\testoutp.jpg < n.tmp
+        comp testorig.jpg .\Release\testoutt.jpg < n.tmp
         del n.tmp
 
 
@@ -244,5 +352,3 @@ rdbmp.obj: rdbmp.c cdjpeg.h jinclude.h jconfig.h jpeglib.h jmorecfg.h jerror.h c
 wrbmp.obj: wrbmp.c cdjpeg.h jinclude.h jconfig.h jpeglib.h jmorecfg.h jerror.h cderror.h
 rdrle.obj: rdrle.c cdjpeg.h jinclude.h jconfig.h jpeglib.h jmorecfg.h jerror.h cderror.h
 wrrle.obj: wrrle.c cdjpeg.h jinclude.h jconfig.h jpeglib.h jmorecfg.h jerror.h cderror.h
-jmemdosa.obj: jmemdosa.asm
-        tasm /mx jmemdosa.asm

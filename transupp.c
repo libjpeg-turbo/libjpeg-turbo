@@ -1,7 +1,7 @@
 /*
  * transupp.c
  *
- * Copyright (C) 1997-2019, Thomas G. Lane, Guido Vollbeding.
+ * Copyright (C) 1997-2023, Thomas G. Lane, Guido Vollbeding.
  * This file is part of the Independent JPEG Group's software.
  * For conditions of distribution and use, see the accompanying README file.
  *
@@ -195,12 +195,11 @@ requant_comp (j_decompress_ptr cinfo, jpeg_component_info *compptr,
 	      jvirt_barray_ptr coef_array, JQUANT_TBL *qtblptr1)
 {
   JDIMENSION blk_x, blk_y;
-  int offset_y, k;
+  int offset_y, k, temp, qval;
   JQUANT_TBL *qtblptr;
   JBLOCKARRAY buffer;
   JBLOCKROW block;
   JCOEFPTR ptr;
-  JCOEF temp, qval;
 
   qtblptr = compptr->quant_table;
   for (blk_y = 0; blk_y < compptr->height_in_blocks;
@@ -213,27 +212,27 @@ requant_comp (j_decompress_ptr cinfo, jpeg_component_info *compptr,
       for (blk_x = 0; blk_x < compptr->width_in_blocks; blk_x++) {
 	ptr = block[blk_x];
 	for (k = 0; k < DCTSIZE2; k++) {
-	  temp = qtblptr->quantval[k];
 	  qval = qtblptr1->quantval[k];
-	  if (temp != qval) {
-	    temp *= ptr[k];
-	    /* The following quantization code is a copy from jcdctmgr.c */
+	  if (qval == 0) continue;
+	  temp = qtblptr->quantval[k];
+	  if (temp == qval) continue;
+	  temp *= ptr[k];
+	  /* The following quantization code is a copy from jcdctmgr.c */
 #ifdef FAST_DIVIDE
 #define DIVIDE_BY(a,b)	a /= b
 #else
 #define DIVIDE_BY(a,b)	if (a >= b) a /= b; else a = 0
 #endif
-	    if (temp < 0) {
-	      temp = -temp;
-	      temp += qval>>1;	/* for rounding */
-	      DIVIDE_BY(temp, qval);
-	      temp = -temp;
-	    } else {
-	      temp += qval>>1;	/* for rounding */
-	      DIVIDE_BY(temp, qval);
-	    }
-	    ptr[k] = temp;
+	  if (temp < 0) {
+	    temp = -temp;
+	    temp += qval>>1;	/* for rounding */
+	    DIVIDE_BY(temp, qval);
+	    temp = -temp;
+	  } else {
+	    temp += qval>>1;	/* for rounding */
+	    DIVIDE_BY(temp, qval);
 	  }
+	  ptr[k] = (JCOEF) temp;
 	}
       }
     }
@@ -248,11 +247,11 @@ largest_common_denominator(JCOEF a, JCOEF b)
 {
   JCOEF c;
 
-  do {
+  while (b) {
     c = a % b;
     a = b;
     b = c;
-  } while (c);
+  }
 
   return a;
 }

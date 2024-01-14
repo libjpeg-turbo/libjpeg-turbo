@@ -1,6 +1,6 @@
 USING THE IJG JPEG LIBRARY
 
-Copyright (C) 1994-2019, Thomas G. Lane, Guido Vollbeding.
+Copyright (C) 1994-2023, Thomas G. Lane, Guido Vollbeding.
 This file is part of the Independent JPEG Group's software.
 For conditions of distribution and use, see the accompanying README file.
 
@@ -285,8 +285,9 @@ that's why the error handler must be initialized first.
 
 As previously mentioned, the JPEG library delivers compressed data to a
 "data destination" module.  The library includes one data destination
-module which knows how to write to a stdio stream.  You can use your own
-destination module if you want to do something else, as discussed later.
+module which knows how to write to memory or to a file (or any stdio stream).
+You can use your own destination module if you want to do something else,
+as discussed later.
 
 If you use the standard destination module, you must open the target stdio
 stream beforehand.  Typical code for this step looks like:
@@ -532,8 +533,8 @@ both compression and decompression objects.)
 
 As previously mentioned, the JPEG library reads compressed data from a "data
 source" module.  The library includes one data source module which knows how
-to read from a stdio stream.  You can use your own source module if you want
-to do something else, as discussed later.
+to read from memory or from a file (or any stdio stream).  You can use your
+own source module if you want to do something else, as discussed later.
 
 If you use the standard source module, you must open the source stdio stream
 beforehand.  Typical code for this step looks like:
@@ -886,7 +887,7 @@ int block_size
 	Larger values produce higher compression,
 	smaller values produce higher quality.
 	An exact DCT stage is possible with 1 or 2.
-	With the default quality of 75 and default Luminance qtable
+	With the default quality of 75 and default quantization tables
 	the DCT+Quantization stage is lossless for value 1.
 	Note that values other than 8 require a SmartScale capable decoder,
 	introduced with IJG JPEG 8.  Setting the block_size parameter for

@@ -47,8 +47,9 @@ INCLUDES= jdct.h jerror.h jinclude.h jmemsys.h jmorecfg.h jpegint.h \
 DOCS= README install.txt usage.txt cjpeg.1 djpeg.1 jpegtran.1 rdjpgcom.1 \
         wrjpgcom.1 wizard.txt example.c libjpeg.txt structure.txt \
         coderules.txt filelist.txt cdaltui.txt change.log
-MKFILES= configure Makefile.in makefile.ansi makefile.unix makefile.b32 \
-        makefile.bcc makefile.mc6 makefile.dj makefile.wat makefile.vc \
+MKFILES= configure Makefile.in makefile.ansi makefile.unix makefile.xc \
+        makefile.bcc makefile.b32 makefile.c32 makefile.d32 makefile.x32 \
+        makefile.b64 makefile.mc6 makefile.dj makefile.wat makefile.vc \
         makefile.vs makejdsw.vc6 makeadsw.vc6 makejdep.vc6 makejdsp.vc6 \
         makejmak.vc6 makecdep.vc6 makecdsp.vc6 makecmak.vc6 makeddep.vc6 \
         makeddsp.vc6 makedmak.vc6 maketdep.vc6 maketdsp.vc6 maketmak.vc6 \
@@ -56,13 +57,13 @@ MKFILES= configure Makefile.in makefile.ansi makefile.unix makefile.b32 \
         makewmak.vc6 makejsln.v16 makeasln.v16 makejvcx.v16 makejfil.v16 \
         makecvcx.v16 makecfil.v16 makedvcx.v16 makedfil.v16 maketvcx.v16 \
         maketfil.v16 makervcx.v16 makerfil.v16 makewvcx.v16 makewfil.v16 \
-        makejvcx.v17 makecvcx.v17 makedvcx.v17 maketvcx.v17 makervcx.v17 \
-        makewvcx.v17 makeproj.mac makcjpeg.st makdjpeg.st makljpeg.st \
-        maktjpeg.st makefile.manx makefile.sas makefile.mms makefile.vms \
-        makvms.opt
-CONFIGFILES= jconfig.cfg jconfig.bcc jconfig.mc6 jconfig.dj jconfig.wat \
-        jconfig.vc jconfig.mac jconfig.st jconfig.manx jconfig.sas \
-        jconfig.vms
+        makajpeg.bcb makcjpeg.bcb makdjpeg.bcb makljpeg.bcb makrjpeg.bcb \
+        maktjpeg.bcb makwjpeg.bcb makcjpeg.st makdjpeg.st makljpeg.st \
+        maktjpeg.st makeproj.mac makefile.manx makefile.sas makefile.mms \
+        makefile.vms makvms.opt
+CONFIGFILES= jconfig.cfg jconfig.xc jconfig.bcc jconfig.mc6 jconfig.dj \
+        jconfig.wat jconfig.vc jconfig.mac jconfig.st jconfig.manx \
+        jconfig.sas jconfig.vms
 CONFIGUREFILES= config.guess config.sub install-sh ltmain.sh depcomp \
         missing ar-lib
 OTHERFILES= jconfig.txt ckconfig.c jmemdosa.asm libjpeg.map libjpeg.pc.in \

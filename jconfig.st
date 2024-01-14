@@ -1,5 +1,6 @@
-/* jconfig.st --- jconfig.h for Atari ST/STE/TT using Pure C or Turbo C. */
-/* see jconfig.txt for explanations */
+/* jconfig.st --- jconfig.h for Atari ST/Mega/STE/TT/Falcon
+ * using Pure C or Turbo C.  See jconfig.txt for explanations.
+ */
 
 #define HAVE_PROTOTYPES
 #define HAVE_UNSIGNED_CHAR
@@ -19,7 +20,7 @@
 
 #undef RIGHT_SHIFT_IS_UNSIGNED
 
-#define ALIGN_TYPE  long	/* apparently double is a weird size? */
+#define ALIGN_TYPE long		/* apparently double is a weird size? */
 
 #endif /* JPEG_INTERNALS */
 

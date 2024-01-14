@@ -1,10 +1,10 @@
 ; Project file for Independent JPEG Group's software
 ;
-; This project file is for Atari ST/STE/TT systems using Pure C or Turbo C.
-; Thanks to Frank Moehle, B. Setzepfandt, and Guido Vollbeding.
+; This project file is for Atari ST/Mega/STE/TT/Falcon systems using Pure C
+; or Turbo C.  Thanks to Frank Moehle, B. Setzepfandt, and Guido Vollbeding.
 ;
 ; To use this file, rename it to djpeg.prj.
-; If you are using Turbo C, change filenames beginning with "pc..." to "tc..."
+; If you are using Turbo C, change filenames beginning with "pc..." to "tc...".
 ; Read installation instructions before trying to make the program!
 ;
 ;

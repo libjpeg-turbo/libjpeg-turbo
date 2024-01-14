@@ -1,35 +1,52 @@
 # Makefile for Independent JPEG Group's software
 
-# This makefile is for Microsoft Visual C++ on Windows 9x or NT.
-# It builds the IJG library as a statically linkable library (.LIB),
-# and builds the sample applications as console-mode apps.
-# Thanks to Xingong Chang, Raymond Everly and others.
+# This makefile is suitable for Embarcadero C++ for Win32 (Clang-based).
+# Tested with version 7.30 (2012-2017, C++Builder 10.2 ‘Tokyo’),
+# Embarcadero MAKE Version 5.41 (1987-2014).
+# Thanks to Tom Wright and Ge' Weijers (original DOS) and
+# Joe Slater for 32-bit modifications (needed for Borland revision 5.5).
 
-# Read installation instructions before saying "nmake" !!
-# To build an optimized library without debug info, say "nmake nodebug=1".
+# Read installation instructions in install.txt before saying "make",
+# or use either
+#         make -fmakefile.c32 setup
+# or
+#         make -fmakefile.c32 setupcopy
+# before saying
+#         make -fmakefile.c32
+# Test:
+#         make -fmakefile.c32 test
+# Clean:
+#         make -fmakefile.c32 clean
+#
+# For use with C++Builder, multi Config/Platform support:
+# Setup either
+#         make -fmakefile.c32 setup-cb
+# or
+#         make -fmakefile.c32 setupcopy-cb
+# Test:
+#         make -fmakefile.c32 test-32
+#         make -fmakefile.c32 test-64
 
-# Pull in standard variable definitions
-#!include <win32.mak>
+# The name of your C compiler:
+CC= bcc32c
 
-# You may want to adjust these compiler options:
-CFLAGS= $(cflags) $(cdebug) $(cvars) -I.
+# You may need to adjust these cc options:
+CFLAGS= -O2 -w
+# -O1     Generate smallest possible code
+# -O2     Generate fastest possible code
+# -w      Display all warnings
 # Generally, we recommend defining any configuration symbols in jconfig.h,
 # NOT via -D switches here.
 
-# Link-time options:
-LDFLAGS= $(ldebug) $(conlflags)
-
-# To link any special libraries, add the necessary commands here.
-LDLIBS= $(conlibs)
+# Link-time cc options:
+LDFLAGS=
+# -lc     case-significant link
 
 # Put here the object file name for the correct system-dependent memory
-# manager file.  For NT we suggest jmemnobs.obj, which expects the OS to
-# provide adequate virtual memory.
+# manager file.
+# SYSDEPMEMLIB must list the same files with "+" signs for the librarian.
 SYSDEPMEM= jmemnobs.obj
-
-# miscellaneous OS-dependent stuff
-# file deletion command
-RM= del
+SYSDEPMEMLIB= +jmemnobs.obj
 
 # End of configurable options.
 
@@ -104,184 +121,160 @@ DOBJECTS= djpeg.obj wrppm.obj wrgif.obj wrtarga.obj wrrle.obj wrbmp.obj \
         rdcolmap.obj cdjpeg.obj
 TROBJECTS= jpegtran.obj rdswitch.obj cdjpeg.obj transupp.obj
 
-# Template command for compiling .c to .obj
-.c.obj:
-	$(cc) $(CFLAGS) $*.c
-
 
 all: libjpeg.lib cjpeg.exe djpeg.exe jpegtran.exe rdjpgcom.exe wrjpgcom.exe
 
 libjpeg.lib: $(LIBOBJECTS)
-	$(RM) libjpeg.lib
-	lib -out:libjpeg.lib  $(LIBOBJECTS)
+        if exist libjpeg.lib del libjpeg.lib
+        tlib libjpeg.lib /E /C @&&|
++jcapimin.obj +jcapistd.obj +jcarith.obj +jctrans.obj +jcparam.obj &
++jdatadst.obj +jcinit.obj +jcmaster.obj +jcmarker.obj +jcmainct.obj &
++jcprepct.obj +jccoefct.obj +jccolor.obj +jcsample.obj +jchuff.obj &
++jcdctmgr.obj +jfdctfst.obj +jfdctflt.obj +jfdctint.obj +jdapimin.obj &
++jdapistd.obj +jdarith.obj +jdtrans.obj +jdatasrc.obj +jdmaster.obj &
++jdinput.obj +jdmarker.obj +jdhuff.obj +jdmainct.obj +jdcoefct.obj &
++jdpostct.obj +jddctmgr.obj +jidctfst.obj +jidctflt.obj +jidctint.obj &
++jdsample.obj +jdcolor.obj +jquant1.obj +jquant2.obj +jdmerge.obj &
++jaricom.obj +jcomapi.obj +jutils.obj +jerror.obj +jmemmgr.obj &
+$(SYSDEPMEMLIB)
+|
 
 cjpeg.exe: $(COBJECTS) libjpeg.lib
-	$(link) $(LDFLAGS) -out:cjpeg.exe $(COBJECTS) libjpeg.lib $(LDLIBS)
+        $(CC) $(LDFLAGS) -o cjpeg.exe $(COBJECTS) libjpeg.lib
 
 djpeg.exe: $(DOBJECTS) libjpeg.lib
-	$(link) $(LDFLAGS) -out:djpeg.exe $(DOBJECTS) libjpeg.lib $(LDLIBS)
+        $(CC) $(LDFLAGS) -o djpeg.exe $(DOBJECTS) libjpeg.lib
 
 jpegtran.exe: $(TROBJECTS) libjpeg.lib
-	$(link) $(LDFLAGS) -out:jpegtran.exe $(TROBJECTS) libjpeg.lib $(LDLIBS)
+        $(CC) $(LDFLAGS) -o jpegtran.exe $(TROBJECTS) libjpeg.lib
 
-rdjpgcom.exe: rdjpgcom.obj
-	$(link) $(LDFLAGS) -out:rdjpgcom.exe rdjpgcom.obj $(LDLIBS)
+rdjpgcom.exe: rdjpgcom.c
+        $(CC) $(CFLAGS) rdjpgcom.c
 
-wrjpgcom.exe: wrjpgcom.obj
-	$(link) $(LDFLAGS) -out:wrjpgcom.exe wrjpgcom.obj $(LDLIBS)
+wrjpgcom.exe: wrjpgcom.c
+        $(CC) $(CFLAGS) wrjpgcom.c
 
+# This "{}" syntax allows Borland Make to "batch" source files.
+# In this way, each run of the compiler can build many modules.
+.c.obj:
+        $(CC) $(CFLAGS) -c{ $<}
+
+jconfig.h: jconfig.txt
+        @echo.
+        @echo. " " " " " " " " " " " " " " " " " " " " " " " " " " " " " " " "
+        @echo. "                                                             "
+        @echo. "   You must prepare a system-dependent jconfig.h file.       "
+        @echo. "   Please read the installation directions in install.txt,   "
+        @echo. "   or use either                                             "
+        @echo. "           make -fmakefile.c32 setup                         "
+        @echo. "   or                                                        "
+        @echo. "           make -fmakefile.c32 setupcopy                     "
+        @echo. "   before saying                                             "
+        @echo. "           make -fmakefile.c32                               "
+        @echo. "                                                             "
+        @echo. " " " " " " " " " " " " " " " " " " " " " " " " " " " " " " " "
+        @echo.
+        exit 1
 
 clean:
-	$(RM) *.obj *.exe libjpeg.lib
-	$(RM) testout*
+        del $(LIBOBJECTS) $(COBJECTS) $(DOBJECTS) $(TROBJECTS)
+        if exist rdjpgcom.obj del rdjpgcom.obj
+        if exist wrjpgcom.obj del wrjpgcom.obj
+        del libjpeg.lib
+        del cjpeg.exe
+        del djpeg.exe
+        del jpegtran.exe
+        del rdjpgcom.exe
+        del wrjpgcom.exe
+        if exist cjpeg.tds del cjpeg.tds
+        if exist djpeg.tds del djpeg.tds
+        if exist jpegtran.tds del jpegtran.tds
+        if exist rdjpgcom.tds del rdjpgcom.tds
+        if exist wrjpgcom.tds del wrjpgcom.tds
+        if exist testout* del testout*
 
-setup-vc6:
-	if not exist jconfig.h ren jconfig.vc jconfig.h
-	ren makejdsw.vc6 jpeg.dsw
-	ren makeadsw.vc6 apps.dsw
-	ren makejmak.vc6 jpeg.mak
-	ren makejdep.vc6 jpeg.dep
-	ren makejdsp.vc6 jpeg.dsp
-	ren makecmak.vc6 cjpeg.mak
-	ren makecdep.vc6 cjpeg.dep
-	ren makecdsp.vc6 cjpeg.dsp
-	ren makedmak.vc6 djpeg.mak
-	ren makeddep.vc6 djpeg.dep
-	ren makeddsp.vc6 djpeg.dsp
-	ren maketmak.vc6 jpegtran.mak
-	ren maketdep.vc6 jpegtran.dep
-	ren maketdsp.vc6 jpegtran.dsp
-	ren makermak.vc6 rdjpgcom.mak
-	ren makerdep.vc6 rdjpgcom.dep
-	ren makerdsp.vc6 rdjpgcom.dsp
-	ren makewmak.vc6 wrjpgcom.mak
-	ren makewdep.vc6 wrjpgcom.dep
-	ren makewdsp.vc6 wrjpgcom.dsp
+setup:
+        if not exist jconfig.h ren jconfig.vc jconfig.h
 
-setupcopy-vc6:
-	copy /y jconfig.vc jconfig.h
-	copy /y makejdsw.vc6 jpeg.dsw
-	copy /y makeadsw.vc6 apps.dsw
-	copy /y makejmak.vc6 jpeg.mak
-	copy /y makejdep.vc6 jpeg.dep
-	copy /y makejdsp.vc6 jpeg.dsp
-	copy /y makecmak.vc6 cjpeg.mak
-	copy /y makecdep.vc6 cjpeg.dep
-	copy /y makecdsp.vc6 cjpeg.dsp
-	copy /y makedmak.vc6 djpeg.mak
-	copy /y makeddep.vc6 djpeg.dep
-	copy /y makeddsp.vc6 djpeg.dsp
-	copy /y maketmak.vc6 jpegtran.mak
-	copy /y maketdep.vc6 jpegtran.dep
-	copy /y maketdsp.vc6 jpegtran.dsp
-	copy /y makermak.vc6 rdjpgcom.mak
-	copy /y makerdep.vc6 rdjpgcom.dep
-	copy /y makerdsp.vc6 rdjpgcom.dsp
-	copy /y makewmak.vc6 wrjpgcom.mak
-	copy /y makewdep.vc6 wrjpgcom.dep
-	copy /y makewdsp.vc6 wrjpgcom.dsp
+setupcopy:
+        copy /y jconfig.vc jconfig.h
 
-setup-v16:
-	if not exist jconfig.h ren jconfig.vc jconfig.h
-	ren makejsln.v16 jpeg.sln
-	ren makeasln.v16 apps.sln
-	ren makejvcx.v16 jpeg.vcxproj
-	ren makejfil.v16 jpeg.vcxproj.filters
-	ren makecvcx.v16 cjpeg.vcxproj
-	ren makecfil.v16 cjpeg.vcxproj.filters
-	ren makedvcx.v16 djpeg.vcxproj
-	ren makedfil.v16 djpeg.vcxproj.filters
-	ren maketvcx.v16 jpegtran.vcxproj
-	ren maketfil.v16 jpegtran.vcxproj.filters
-	ren makervcx.v16 rdjpgcom.vcxproj
-	ren makerfil.v16 rdjpgcom.vcxproj.filters
-	ren makewvcx.v16 wrjpgcom.vcxproj
-	ren makewfil.v16 wrjpgcom.vcxproj.filters
+setup-cb:
+        if not exist jconfig.h ren jconfig.vc jconfig.h
+        ren makajpeg.bcb apps.groupproj
+        ren makljpeg.bcb jpeg.cbproj
+        ren makcjpeg.bcb cjpeg.cbproj
+        ren makdjpeg.bcb djpeg.cbproj
+        ren maktjpeg.bcb jpegtran.cbproj
+        ren makrjpeg.bcb rdjpgcom.cbproj
+        ren makwjpeg.bcb wrjpgcom.cbproj
 
-setupcopy-v16:
-	copy /y jconfig.vc jconfig.h
-	copy /y makejsln.v16 jpeg.sln
-	copy /y makeasln.v16 apps.sln
-	copy /y makejvcx.v16 jpeg.vcxproj
-	copy /y makejfil.v16 jpeg.vcxproj.filters
-	copy /y makecvcx.v16 cjpeg.vcxproj
-	copy /y makecfil.v16 cjpeg.vcxproj.filters
-	copy /y makedvcx.v16 djpeg.vcxproj
-	copy /y makedfil.v16 djpeg.vcxproj.filters
-	copy /y maketvcx.v16 jpegtran.vcxproj
-	copy /y maketfil.v16 jpegtran.vcxproj.filters
-	copy /y makervcx.v16 rdjpgcom.vcxproj
-	copy /y makerfil.v16 rdjpgcom.vcxproj.filters
-	copy /y makewvcx.v16 wrjpgcom.vcxproj
-	copy /y makewfil.v16 wrjpgcom.vcxproj.filters
+setupcopy-cb:
+        copy /y jconfig.vc jconfig.h
+        copy /y makajpeg.bcb apps.groupproj
+        copy /y makljpeg.bcb jpeg.cbproj
+        copy /y makcjpeg.bcb cjpeg.cbproj
+        copy /y makdjpeg.bcb djpeg.cbproj
+        copy /y maktjpeg.bcb jpegtran.cbproj
+        copy /y makrjpeg.bcb rdjpgcom.cbproj
+        copy /y makwjpeg.bcb wrjpgcom.cbproj
 
-test:
-	IF EXIST testout* $(RM) testout*
-	.\djpeg -dct int -ppm -outfile testout.ppm testorig.jpg
-	.\djpeg -dct int -gif -outfile testout.gif testorig.jpg
-	.\djpeg -dct int -bmp -colors 256 -outfile testout.bmp testorig.jpg
-	.\cjpeg -dct int -outfile testout.jpg testimg.ppm
-	.\djpeg -dct int -ppm -outfile testoutp.ppm testprog.jpg
-	.\cjpeg -dct int -progressive -opt -outfile testoutp.jpg testimg.ppm
-	.\jpegtran -outfile testoutt.jpg testprog.jpg
-	fc /b testimg.ppm testout.ppm
-	fc /b testimg.gif testout.gif
-	fc /b testimg.bmp testout.bmp
-	fc /b testimg.jpg testout.jpg
-	fc /b testimg.ppm testoutp.ppm
-	fc /b testimgp.jpg testoutp.jpg
-	fc /b testorig.jpg testoutt.jpg
-
-test-build:
-	IF EXIST .\Release\testout* $(RM) .\Release\testout*
-	.\Release\djpeg -dct int -ppm -outfile .\Release\testout.ppm testorig.jpg
-	.\Release\djpeg -dct int -gif -outfile .\Release\testout.gif testorig.jpg
-	.\Release\djpeg -dct int -bmp -colors 256 -outfile .\Release\testout.bmp testorig.jpg
-	.\Release\cjpeg -dct int -outfile .\Release\testout.jpg testimg.ppm
-	.\Release\djpeg -dct int -ppm -outfile .\Release\testoutp.ppm testprog.jpg
-	.\Release\cjpeg -dct int -progressive -opt -outfile .\Release\testoutp.jpg testimg.ppm
-	.\Release\jpegtran -outfile .\Release\testoutt.jpg testprog.jpg
-	fc /b testimg.ppm .\Release\testout.ppm
-	fc /b testimg.gif .\Release\testout.gif
-	fc /b testimg.bmp .\Release\testout.bmp
-	fc /b testimg.jpg .\Release\testout.jpg
-	fc /b testimg.ppm .\Release\testoutp.ppm
-	fc /b testimgp.jpg .\Release\testoutp.jpg
-	fc /b testorig.jpg .\Release\testoutt.jpg
+test: cjpeg.exe djpeg.exe jpegtran.exe
+        if exist testout* del testout*
+        djpeg -dct int -ppm -outfile testout.ppm testorig.jpg
+        djpeg -dct int -gif -outfile testout.gif testorig.jpg
+        djpeg -dct int -bmp -colors 256 -outfile testout.bmp testorig.jpg
+        cjpeg -dct int -outfile testout.jpg testimg.ppm
+        djpeg -dct int -ppm -outfile testoutp.ppm testprog.jpg
+        cjpeg -dct int -progressive -opt -outfile testoutp.jpg testimg.ppm
+        jpegtran -outfile testoutt.jpg testprog.jpg
+        echo n > n.tmp
+        comp testimg.ppm testout.ppm < n.tmp
+        comp testimg.gif testout.gif < n.tmp
+        comp testimg.bmp testout.bmp < n.tmp
+        comp testimg.jpg testout.jpg < n.tmp
+        comp testimg.ppm testoutp.ppm < n.tmp
+        comp testimgp.jpg testoutp.jpg < n.tmp
+        comp testorig.jpg testoutt.jpg < n.tmp
+        del n.tmp
 
 test-32:
-	IF EXIST .\Release\testout* $(RM) .\Release\testout*
-	.\Release\Win32\djpeg -dct int -ppm -outfile .\Release\testout.ppm testorig.jpg
-	.\Release\Win32\djpeg -dct int -gif -outfile .\Release\testout.gif testorig.jpg
-	.\Release\Win32\djpeg -dct int -bmp -colors 256 -outfile .\Release\testout.bmp testorig.jpg
-	.\Release\Win32\cjpeg -dct int -outfile .\Release\testout.jpg testimg.ppm
-	.\Release\Win32\djpeg -dct int -ppm -outfile .\Release\testoutp.ppm testprog.jpg
-	.\Release\Win32\cjpeg -dct int -progressive -opt -outfile .\Release\testoutp.jpg testimg.ppm
-	.\Release\Win32\jpegtran -outfile .\Release\testoutt.jpg testprog.jpg
-	fc /b testimg.ppm .\Release\testout.ppm
-	fc /b testimg.gif .\Release\testout.gif
-	fc /b testimg.bmp .\Release\testout.bmp
-	fc /b testimg.jpg .\Release\testout.jpg
-	fc /b testimg.ppm .\Release\testoutp.ppm
-	fc /b testimgp.jpg .\Release\testoutp.jpg
-	fc /b testorig.jpg .\Release\testoutt.jpg
+        if exist .\Release\testout* del .\Release\testout*
+        .\Release\Win32\djpeg -dct int -ppm -outfile .\Release\testout.ppm testorig.jpg
+        .\Release\Win32\djpeg -dct int -gif -outfile .\Release\testout.gif testorig.jpg
+        .\Release\Win32\djpeg -dct int -bmp -colors 256 -outfile .\Release\testout.bmp testorig.jpg
+        .\Release\Win32\cjpeg -dct int -outfile .\Release\testout.jpg testimg.ppm
+        .\Release\Win32\djpeg -dct int -ppm -outfile .\Release\testoutp.ppm testprog.jpg
+        .\Release\Win32\cjpeg -dct int -progressive -opt -outfile .\Release\testoutp.jpg testimg.ppm
+        .\Release\Win32\jpegtran -outfile .\Release\testoutt.jpg testprog.jpg
+        echo n > n.tmp
+        comp testimg.ppm .\Release\testout.ppm < n.tmp
+        comp testimg.gif .\Release\testout.gif < n.tmp
+        comp testimg.bmp .\Release\testout.bmp < n.tmp
+        comp testimg.jpg .\Release\testout.jpg < n.tmp
+        comp testimg.ppm .\Release\testoutp.ppm < n.tmp
+        comp testimgp.jpg .\Release\testoutp.jpg < n.tmp
+        comp testorig.jpg .\Release\testoutt.jpg < n.tmp
+        del n.tmp
 
 test-64:
-	IF EXIST .\Release\testout* $(RM) .\Release\testout*
-	.\Release\x64\djpeg -dct int -ppm -outfile .\Release\testout.ppm testorig.jpg
-	.\Release\x64\djpeg -dct int -gif -outfile .\Release\testout.gif testorig.jpg
-	.\Release\x64\djpeg -dct int -bmp -colors 256 -outfile .\Release\testout.bmp testorig.jpg
-	.\Release\x64\cjpeg -dct int -outfile .\Release\testout.jpg testimg.ppm
-	.\Release\x64\djpeg -dct int -ppm -outfile .\Release\testoutp.ppm testprog.jpg
-	.\Release\x64\cjpeg -dct int -progressive -opt -outfile .\Release\testoutp.jpg testimg.ppm
-	.\Release\x64\jpegtran -outfile .\Release\testoutt.jpg testprog.jpg
-	fc /b testimg.ppm .\Release\testout.ppm
-	fc /b testimg.gif .\Release\testout.gif
-	fc /b testimg.bmp .\Release\testout.bmp
-	fc /b testimg.jpg .\Release\testout.jpg
-	fc /b testimg.ppm .\Release\testoutp.ppm
-	fc /b testimgp.jpg .\Release\testoutp.jpg
-	fc /b testorig.jpg .\Release\testoutt.jpg
+        if exist .\Release\testout* del .\Release\testout*
+        .\Release\Win64\djpeg -dct int -ppm -outfile .\Release\testout.ppm testorig.jpg
+        .\Release\Win64\djpeg -dct int -gif -outfile .\Release\testout.gif testorig.jpg
+        .\Release\Win64\djpeg -dct int -bmp -colors 256 -outfile .\Release\testout.bmp testorig.jpg
+        .\Release\Win64\cjpeg -dct int -outfile .\Release\testout.jpg testimg.ppm
+        .\Release\Win64\djpeg -dct int -ppm -outfile .\Release\testoutp.ppm testprog.jpg
+        .\Release\Win64\cjpeg -dct int -progressive -opt -outfile .\Release\testoutp.jpg testimg.ppm
+        .\Release\Win64\jpegtran -outfile .\Release\testoutt.jpg testprog.jpg
+        echo n > n.tmp
+        comp testimg.ppm .\Release\testout.ppm < n.tmp
+        comp testimg.gif .\Release\testout.gif < n.tmp
+        comp testimg.bmp .\Release\testout.bmp < n.tmp
+        comp testimg.jpg .\Release\testout.jpg < n.tmp
+        comp testimg.ppm .\Release\testoutp.ppm < n.tmp
+        comp testimgp.jpg .\Release\testoutp.jpg < n.tmp
+        comp testorig.jpg .\Release\testoutt.jpg < n.tmp
+        del n.tmp
 
 
 jaricom.obj: jaricom.c jinclude.h jconfig.h jpeglib.h jmorecfg.h jpegint.h jerror.h

@@ -1,0 +1,84 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{5883A706-1F3E-4AB2-AB7E-E8F14DBE6151}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="cjpeg.cbproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="djpeg.cbproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="jpegtran.cbproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="rdjpgcom.cbproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="wrjpgcom.cbproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="cjpeg">
+        <MSBuild Projects="cjpeg.cbproj"/>
+    </Target>
+    <Target Name="cjpeg:Clean">
+        <MSBuild Projects="cjpeg.cbproj" Targets="Clean"/>
+    </Target>
+    <Target Name="cjpeg:Make">
+        <MSBuild Projects="cjpeg.cbproj" Targets="Make"/>
+    </Target>
+    <Target Name="djpeg">
+        <MSBuild Projects="djpeg.cbproj"/>
+    </Target>
+    <Target Name="djpeg:Clean">
+        <MSBuild Projects="djpeg.cbproj" Targets="Clean"/>
+    </Target>
+    <Target Name="djpeg:Make">
+        <MSBuild Projects="djpeg.cbproj" Targets="Make"/>
+    </Target>
+    <Target Name="jpegtran">
+        <MSBuild Projects="jpegtran.cbproj"/>
+    </Target>
+    <Target Name="jpegtran:Clean">
+        <MSBuild Projects="jpegtran.cbproj" Targets="Clean"/>
+    </Target>
+    <Target Name="jpegtran:Make">
+        <MSBuild Projects="jpegtran.cbproj" Targets="Make"/>
+    </Target>
+    <Target Name="rdjpgcom">
+        <MSBuild Projects="rdjpgcom.cbproj"/>
+    </Target>
+    <Target Name="rdjpgcom:Clean">
+        <MSBuild Projects="rdjpgcom.cbproj" Targets="Clean"/>
+    </Target>
+    <Target Name="rdjpgcom:Make">
+        <MSBuild Projects="rdjpgcom.cbproj" Targets="Make"/>
+    </Target>
+    <Target Name="wrjpgcom">
+        <MSBuild Projects="wrjpgcom.cbproj"/>
+    </Target>
+    <Target Name="wrjpgcom:Clean">
+        <MSBuild Projects="wrjpgcom.cbproj" Targets="Clean"/>
+    </Target>
+    <Target Name="wrjpgcom:Make">
+        <MSBuild Projects="wrjpgcom.cbproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="cjpeg;djpeg;jpegtran;rdjpgcom;wrjpgcom"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="cjpeg:Clean;djpeg:Clean;jpegtran:Clean;rdjpgcom:Clean;wrjpgcom:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="cjpeg:Make;djpeg:Make;jpegtran:Make;rdjpgcom:Make;wrjpgcom:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>

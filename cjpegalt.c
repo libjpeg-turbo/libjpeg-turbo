@@ -2,7 +2,7 @@
  * alternate cjpeg.c
  *
  * Copyright (C) 1991-1998, Thomas G. Lane.
- * Modified 2009-2020 by Guido Vollbeding.
+ * Modified 2009-2023 by Guido Vollbeding.
  * This file is part of the Independent JPEG Group's software.
  * For conditions of distribution and use, see the accompanying README file.
  *
@@ -72,7 +72,7 @@ unused_dos_memory (void)
 
 #endif /* MSDOS */
 
-#ifdef ATARI			/* For Atari ST/STE/TT, Pure C or Turbo C */
+#ifdef ATARI	/* For Atari ST/Mega/STE/TT/Falcon, Pure C or Turbo C */
 
 #include <ext.h>
 

@@ -1,6 +1,17 @@
 CHANGE LOG for Independent JPEG Group's JPEG software
 
 
+Version 9f  14-Jan-2024
+-----------------------
+
+Add build system for C++Builder/RAD Studio.
+
+Add build system for Xcode (beside configure).
+
+Add ARM64EC (Emulation Compatible) platform support in the
+Visual Studio build.
+
+
 Version 9e  16-Jan-2022
 -----------------------
 

@@ -2,7 +2,7 @@
  * jccoefct.c
  *
  * Copyright (C) 1994-1997, Thomas G. Lane.
- * Modified 2003-2020 by Guido Vollbeding.
+ * Modified 2003-2022 by Guido Vollbeding.
  * This file is part of the Independent JPEG Group's software.
  * For conditions of distribution and use, see the accompanying README file.
  *
@@ -41,9 +41,9 @@ typedef struct {
   int MCU_rows_per_iMCU_row;	/* number of such rows needed */
 
   /* For single-pass compression, it's sufficient to buffer just one MCU
-   * (although this may prove a bit slow in practice).  We append a
-   * workspace of C_MAX_BLOCKS_IN_MCU coefficient blocks, and reuse it
-   * for each MCU constructed and sent.
+   * (although this may prove a bit slow in practice).
+   * We append a workspace of C_MAX_BLOCKS_IN_MCU coefficient blocks,
+   * and reuse it for each MCU constructed and sent.
    * In multi-pass modes, this array points to the current MCU's blocks
    * within the virtual arrays.
    */

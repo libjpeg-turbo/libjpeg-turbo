@@ -2,7 +2,7 @@
  * jdcolor.c
  *
  * Copyright (C) 1991-1997, Thomas G. Lane.
- * Modified 2011-2020 by Guido Vollbeding.
+ * Modified 2011-2023 by Guido Vollbeding.
  * This file is part of the Independent JPEG Group's software.
  * For conditions of distribution and use, see the accompanying README file.
  *
@@ -32,7 +32,9 @@ typedef struct {
   INT32 * Cb_g_tab;		/* => table for Cb to G conversion */
 
   /* Private state for RGB->Y conversion */
-  INT32 * rgb_y_tab;		/* => table for RGB to Y conversion */
+  INT32 * R_y_tab;		/* => table for R to Y conversion */
+  INT32 * G_y_tab;		/* => table for G to Y conversion */
+  INT32 * B_y_tab;		/* => table for B to Y conversion */
 } my_color_deconverter;
 
 typedef my_color_deconverter * my_cconvert_ptr;
@@ -87,28 +89,16 @@ typedef my_color_deconverter * my_cconvert_ptr;
  * by precalculating the constants times Cb and Cr for all possible values.
  * For 8-bit JSAMPLEs this is very reasonable (only 256 entries per table);
  * for 9-bit to 12-bit samples it is still acceptable.  It's not very
- * reasonable for 16-bit samples, but if you want lossless storage you
- * shouldn't be changing colorspace anyway.
- * The Cr=>R and Cb=>B values can be rounded to integers in advance; the
- * values for the G calculation are left scaled up, since we must add them
- * together before rounding.
+ * reasonable for 16-bit samples, but if you want lossless storage
+ * you shouldn't be changing colorspace anyway.
+ * The Cr=>R and Cb=>B values can be rounded to integers in advance;
+ * the values for the G calculation are left scaled up,
+ * since we must add them together before rounding.
  */
 
 #define SCALEBITS	16	/* speediest right-shift on some machines */
 #define ONE_HALF	((INT32) 1 << (SCALEBITS-1))
 #define FIX(x)		((INT32) ((x) * (1L<<SCALEBITS) + 0.5))
-
-/* We allocate one big table for RGB->Y conversion and divide it up into
- * three parts, instead of doing three alloc_small requests.  This lets us
- * use a single table base address, which can be held in a register in the
- * inner loops on many machines (more than can hold all three addresses,
- * anyway).
- */
-
-#define R_Y_OFF		0			/* offset to R => Y section */
-#define G_Y_OFF		(1*(MAXJSAMPLE+1))	/* offset to G => Y section */
-#define B_Y_OFF		(2*(MAXJSAMPLE+1))	/* etc. */
-#define TABLE_SIZE	(3*(MAXJSAMPLE+1))
 
 
 /*
@@ -249,17 +239,19 @@ LOCAL(void)
 build_rgb_y_table (j_decompress_ptr cinfo)
 {
   my_cconvert_ptr cconvert = (my_cconvert_ptr) cinfo->cconvert;
-  INT32 * rgb_y_tab;
   INT32 i;
 
-  /* Allocate and fill in the conversion tables. */
-  cconvert->rgb_y_tab = rgb_y_tab = (INT32 *) (*cinfo->mem->alloc_small)
-    ((j_common_ptr) cinfo, JPOOL_IMAGE, TABLE_SIZE * SIZEOF(INT32));
+  cconvert->R_y_tab = (INT32 *) (*cinfo->mem->alloc_small)
+    ((j_common_ptr) cinfo, JPOOL_IMAGE, (MAXJSAMPLE+1) * SIZEOF(INT32));
+  cconvert->G_y_tab = (INT32 *) (*cinfo->mem->alloc_small)
+    ((j_common_ptr) cinfo, JPOOL_IMAGE, (MAXJSAMPLE+1) * SIZEOF(INT32));
+  cconvert->B_y_tab = (INT32 *) (*cinfo->mem->alloc_small)
+    ((j_common_ptr) cinfo, JPOOL_IMAGE, (MAXJSAMPLE+1) * SIZEOF(INT32));
 
   for (i = 0; i <= MAXJSAMPLE; i++) {
-    rgb_y_tab[i+R_Y_OFF] = FIX(0.299) * i;
-    rgb_y_tab[i+G_Y_OFF] = FIX(0.587) * i;
-    rgb_y_tab[i+B_Y_OFF] = FIX(0.114) * i + ONE_HALF;
+    cconvert->R_y_tab[i] = FIX(0.299) * i;
+    cconvert->G_y_tab[i] = FIX(0.587) * i;
+    cconvert->B_y_tab[i] = FIX(0.114) * i + ONE_HALF;
   }
 }
 
@@ -274,8 +266,10 @@ rgb_gray_convert (j_decompress_ptr cinfo,
 		  JSAMPARRAY output_buf, int num_rows)
 {
   my_cconvert_ptr cconvert = (my_cconvert_ptr) cinfo->cconvert;
-  register int r, g, b;
-  register INT32 * ctab = cconvert->rgb_y_tab;
+  register INT32 y;
+  register INT32 * Rytab = cconvert->R_y_tab;
+  register INT32 * Gytab = cconvert->G_y_tab;
+  register INT32 * Bytab = cconvert->B_y_tab;
   register JSAMPROW outptr;
   register JSAMPROW inptr0, inptr1, inptr2;
   register JDIMENSION col;
@@ -288,13 +282,10 @@ rgb_gray_convert (j_decompress_ptr cinfo,
     input_row++;
     outptr = *output_buf++;
     for (col = 0; col < num_cols; col++) {
-      r = GETJSAMPLE(inptr0[col]);
-      g = GETJSAMPLE(inptr1[col]);
-      b = GETJSAMPLE(inptr2[col]);
-      /* Y */
-      outptr[col] = (JSAMPLE)
-		((ctab[r+R_Y_OFF] + ctab[g+G_Y_OFF] + ctab[b+B_Y_OFF])
-		 >> SCALEBITS);
+      y  = Rytab[GETJSAMPLE(inptr0[col])];
+      y += Gytab[GETJSAMPLE(inptr1[col])];
+      y += Bytab[GETJSAMPLE(inptr2[col])];
+      outptr[col] = (JSAMPLE) (y >> SCALEBITS);
     }
   }
 }
@@ -354,7 +345,10 @@ rgb1_gray_convert (j_decompress_ptr cinfo,
 {
   my_cconvert_ptr cconvert = (my_cconvert_ptr) cinfo->cconvert;
   register int r, g, b;
-  register INT32 * ctab = cconvert->rgb_y_tab;
+  register INT32 y;
+  register INT32 * Rytab = cconvert->R_y_tab;
+  register INT32 * Gytab = cconvert->G_y_tab;
+  register INT32 * Bytab = cconvert->B_y_tab;
   register JSAMPROW outptr;
   register JSAMPROW inptr0, inptr1, inptr2;
   register JDIMENSION col;
@@ -373,12 +367,10 @@ rgb1_gray_convert (j_decompress_ptr cinfo,
       /* Assume that MAXJSAMPLE+1 is a power of 2, so that the MOD
        * (modulo) operator is equivalent to the bitmask operator AND.
        */
-      r = (r + g - CENTERJSAMPLE) & MAXJSAMPLE;
-      b = (b + g - CENTERJSAMPLE) & MAXJSAMPLE;
-      /* Y */
-      outptr[col] = (JSAMPLE)
-		((ctab[r+R_Y_OFF] + ctab[g+G_Y_OFF] + ctab[b+B_Y_OFF])
-		 >> SCALEBITS);
+      y  = Rytab[(r + g - CENTERJSAMPLE) & MAXJSAMPLE];
+      y += Gytab[g];
+      y += Bytab[(b + g - CENTERJSAMPLE) & MAXJSAMPLE];
+      outptr[col] = (JSAMPLE) (y >> SCALEBITS);
     }
   }
 }
@@ -565,8 +557,10 @@ cmyk_yk_convert (j_decompress_ptr cinfo,
 		 JSAMPARRAY output_buf, int num_rows)
 {
   my_cconvert_ptr cconvert = (my_cconvert_ptr) cinfo->cconvert;
-  register int r, g, b;
-  register INT32 * ctab = cconvert->rgb_y_tab;
+  register INT32 y;
+  register INT32 * Rytab = cconvert->R_y_tab;
+  register INT32 * Gytab = cconvert->G_y_tab;
+  register INT32 * Bytab = cconvert->B_y_tab;
   register JSAMPROW outptr;
   register JSAMPROW inptr0, inptr1, inptr2, inptr3;
   register JDIMENSION col;
@@ -580,13 +574,10 @@ cmyk_yk_convert (j_decompress_ptr cinfo,
     input_row++;
     outptr = *output_buf++;
     for (col = 0; col < num_cols; col++) {
-      r = MAXJSAMPLE - GETJSAMPLE(inptr0[col]);
-      g = MAXJSAMPLE - GETJSAMPLE(inptr1[col]);
-      b = MAXJSAMPLE - GETJSAMPLE(inptr2[col]);
-      /* Y */
-      outptr[0] = (JSAMPLE)
-		((ctab[r+R_Y_OFF] + ctab[g+G_Y_OFF] + ctab[b+B_Y_OFF])
-		 >> SCALEBITS);
+      y  = Rytab[MAXJSAMPLE - GETJSAMPLE(inptr0[col])];
+      y += Gytab[MAXJSAMPLE - GETJSAMPLE(inptr1[col])];
+      y += Bytab[MAXJSAMPLE - GETJSAMPLE(inptr2[col])];
+      outptr[0] = (JSAMPLE) (y >> SCALEBITS);
       /* K passes through unchanged */
       outptr[1] = inptr3[col];	/* don't need GETJSAMPLE here */
       outptr += 2;

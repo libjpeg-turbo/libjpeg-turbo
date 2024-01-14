@@ -1,19 +1,30 @@
 # Makefile for Independent JPEG Group's software
 
-# This makefile is suitable for Unix-like systems with non-ANSI compilers.
-# If you have an ANSI compiler, makefile.ansi is a better starting point.
+# This makefile is suitable for Xcode Apple Clang on Apple Darwin/macOS.
+# Tested with Xcode 15.2 (2024),
+# Apple clang version 15.0.0 (clang-1500.1.0.2.5),
+# Target: arm64-apple-darwin23.2.0,
+# GNU Make 3.81 (2006).
 
-# Read installation instructions before saying "make" !!
+# Read installation instructions in install.txt before saying "make",
+# or use either
+#         make -f makefile.xc setup
+# or
+#         make -f makefile.xc setupcopy
+# before saying
+#         make -f makefile.xc
+# Test:
+#         make -f makefile.xc test
+# Clean:
+#         make -f makefile.xc clean
 
 # The name of your C compiler:
 CC= cc
 
 # You may need to adjust these cc options:
-CFLAGS= -O
+CFLAGS= -O2 -Wall
 # Generally, we recommend defining any configuration symbols in jconfig.h,
 # NOT via -D switches here.
-# However, any special defines for ansi2knr.c may be included here:
-ANSI2KNRFLAGS= 
 
 # Link-time cc options:
 LDFLAGS= 
@@ -33,6 +44,8 @@ LN= $(CC)
 RM= rm -f
 # file rename command
 MV= mv
+# file copy command
+CP= cp
 # library (.a) file creation command
 AR= ar rc
 # second step in .a creation (use "touch" if not needed)
@@ -111,30 +124,20 @@ DOBJECTS= djpeg.o wrppm.o wrgif.o wrtarga.o wrrle.o wrbmp.o rdcolmap.o \
 TROBJECTS= jpegtran.o rdswitch.o cdjpeg.o transupp.o
 
 
-all: ansi2knr libjpeg.a cjpeg djpeg jpegtran rdjpgcom wrjpgcom
+all: libjpeg.a cjpeg djpeg jpegtran rdjpgcom wrjpgcom
 
-# This rule causes ansi2knr to be invoked.
-.c.o:
-	./ansi2knr $*.c T$*.c
-	$(CC) $(CFLAGS) -c T$*.c
-	$(RM) T$*.c $*.o
-	$(MV) T$*.o $*.o
-
-ansi2knr: ansi2knr.c
-	$(CC) $(CFLAGS) $(ANSI2KNRFLAGS) -o ansi2knr ansi2knr.c
-
-libjpeg.a: ansi2knr $(LIBOBJECTS)
+libjpeg.a: $(LIBOBJECTS)
 	$(RM) libjpeg.a
 	$(AR) libjpeg.a  $(LIBOBJECTS)
 	$(AR2) libjpeg.a
 
-cjpeg: ansi2knr $(COBJECTS) libjpeg.a
+cjpeg: $(COBJECTS) libjpeg.a
 	$(LN) $(LDFLAGS) -o cjpeg $(COBJECTS) libjpeg.a $(LDLIBS)
 
-djpeg: ansi2knr $(DOBJECTS) libjpeg.a
+djpeg: $(DOBJECTS) libjpeg.a
 	$(LN) $(LDFLAGS) -o djpeg $(DOBJECTS) libjpeg.a $(LDLIBS)
 
-jpegtran: ansi2knr $(TROBJECTS) libjpeg.a
+jpegtran: $(TROBJECTS) libjpeg.a
 	$(LN) $(LDFLAGS) -o jpegtran $(TROBJECTS) libjpeg.a $(LDLIBS)
 
 rdjpgcom: rdjpgcom.o
@@ -144,13 +147,31 @@ wrjpgcom: wrjpgcom.o
 	$(LN) $(LDFLAGS) -o wrjpgcom wrjpgcom.o $(LDLIBS)
 
 jconfig.h: jconfig.txt
-	echo You must prepare a system-dependent jconfig.h file.
-	echo Please read the installation directions in install.txt.
+	@echo
+	@echo "+ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + +"
+	@echo "+                                                             +"
+	@echo "+   You must prepare a system-dependent jconfig.h file.       +"
+	@echo "+   Please read the installation directions in install.txt,   +"
+	@echo "+   or use either                                             +"
+	@echo "+           make -f makefile.xc setup                         +"
+	@echo "+   or                                                        +"
+	@echo "+           make -f makefile.xc setupcopy                     +"
+	@echo "+   before saying                                             +"
+	@echo "+           make -f makefile.xc                               +"
+	@echo "+                                                             +"
+	@echo "+ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + +"
+	@echo
 	exit 1
 
 clean:
 	$(RM) *.o cjpeg djpeg jpegtran libjpeg.a rdjpgcom wrjpgcom
-	$(RM) ansi2knr core testout*
+	$(RM) core testout*
+
+setup:
+	test -f jconfig.h || $(MV) jconfig.xc jconfig.h
+
+setupcopy:
+	$(CP) jconfig.xc jconfig.h
 
 test: cjpeg djpeg jpegtran
 	$(RM) testout*

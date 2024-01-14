@@ -1,6 +1,6 @@
 # Makefile for Independent JPEG Group's software
 
-# This makefile is for Microsoft Visual C++ on Windows NT (and 95?).
+# This makefile is for Microsoft Visual C++ on Windows 9x or NT.
 # It builds the IJG library as a statically linkable library (.LIB),
 # and builds the sample applications as console-mode apps.
 # Thanks to Xingong Chang, Raymond Everly and others.
@@ -57,8 +57,9 @@ INCLUDES= jdct.h jerror.h jinclude.h jmemsys.h jmorecfg.h jpegint.h \
 DOCS= README install.txt usage.txt cjpeg.1 djpeg.1 jpegtran.1 rdjpgcom.1 \
         wrjpgcom.1 wizard.txt example.c libjpeg.txt structure.txt \
         coderules.txt filelist.txt cdaltui.txt change.log
-MKFILES= configure Makefile.in makefile.ansi makefile.unix makefile.b32 \
-        makefile.bcc makefile.mc6 makefile.dj makefile.wat makefile.vc \
+MKFILES= configure Makefile.in makefile.ansi makefile.unix makefile.xc \
+        makefile.bcc makefile.b32 makefile.c32 makefile.d32 makefile.x32 \
+        makefile.b64 makefile.mc6 makefile.dj makefile.wat makefile.vc \
         makefile.vs makejdsw.vc6 makeadsw.vc6 makejdep.vc6 makejdsp.vc6 \
         makejmak.vc6 makecdep.vc6 makecdsp.vc6 makecmak.vc6 makeddep.vc6 \
         makeddsp.vc6 makedmak.vc6 maketdep.vc6 maketdsp.vc6 maketmak.vc6 \
@@ -66,13 +67,13 @@ MKFILES= configure Makefile.in makefile.ansi makefile.unix makefile.b32 \
         makewmak.vc6 makejsln.v16 makeasln.v16 makejvcx.v16 makejfil.v16 \
         makecvcx.v16 makecfil.v16 makedvcx.v16 makedfil.v16 maketvcx.v16 \
         maketfil.v16 makervcx.v16 makerfil.v16 makewvcx.v16 makewfil.v16 \
-        makejvcx.v17 makecvcx.v17 makedvcx.v17 maketvcx.v17 makervcx.v17 \
-        makewvcx.v17 makeproj.mac makcjpeg.st makdjpeg.st makljpeg.st \
-        maktjpeg.st makefile.manx makefile.sas makefile.mms makefile.vms \
-        makvms.opt
-CONFIGFILES= jconfig.cfg jconfig.bcc jconfig.mc6 jconfig.dj jconfig.wat \
-        jconfig.vc jconfig.mac jconfig.st jconfig.manx jconfig.sas \
-        jconfig.vms
+        makajpeg.bcb makcjpeg.bcb makdjpeg.bcb makljpeg.bcb makrjpeg.bcb \
+        maktjpeg.bcb makwjpeg.bcb makcjpeg.st makdjpeg.st makljpeg.st \
+        maktjpeg.st makeproj.mac makefile.manx makefile.sas makefile.mms \
+        makefile.vms makvms.opt
+CONFIGFILES= jconfig.cfg jconfig.xc jconfig.bcc jconfig.mc6 jconfig.dj \
+        jconfig.wat jconfig.vc jconfig.mac jconfig.st jconfig.manx \
+        jconfig.sas jconfig.vms
 CONFIGUREFILES= config.guess config.sub install-sh ltmain.sh depcomp \
         missing ar-lib
 OTHERFILES= jconfig.txt ckconfig.c jmemdosa.asm libjpeg.map libjpeg.pc.in \
@@ -135,7 +136,7 @@ clean:
 	$(RM) testout*
 
 setup-vc6:
-	ren jconfig.vc jconfig.h
+	if not exist jconfig.h ren jconfig.vc jconfig.h
 	ren makejdsw.vc6 jpeg.dsw
 	ren makeadsw.vc6 apps.dsw
 	ren makejmak.vc6 jpeg.mak
@@ -181,7 +182,7 @@ setupcopy-vc6:
 	copy /y makewdsp.vc6 wrjpgcom.dsp
 
 setup-v16:
-	ren jconfig.vc jconfig.h
+	if not exist jconfig.h ren jconfig.vc jconfig.h
 	ren makejsln.v16 jpeg.sln
 	ren makeasln.v16 apps.sln
 	ren makejvcx.v16 jpeg.vcxproj
@@ -212,40 +213,6 @@ setupcopy-v16:
 	copy /y makervcx.v16 rdjpgcom.vcxproj
 	copy /y makerfil.v16 rdjpgcom.vcxproj.filters
 	copy /y makewvcx.v16 wrjpgcom.vcxproj
-	copy /y makewfil.v16 wrjpgcom.vcxproj.filters
-
-setup-v17:
-	ren jconfig.vc jconfig.h
-	ren makejsln.v16 jpeg.sln
-	ren makeasln.v16 apps.sln
-	ren makejvcx.v17 jpeg.vcxproj
-	ren makejfil.v16 jpeg.vcxproj.filters
-	ren makecvcx.v17 cjpeg.vcxproj
-	ren makecfil.v16 cjpeg.vcxproj.filters
-	ren makedvcx.v17 djpeg.vcxproj
-	ren makedfil.v16 djpeg.vcxproj.filters
-	ren maketvcx.v17 jpegtran.vcxproj
-	ren maketfil.v16 jpegtran.vcxproj.filters
-	ren makervcx.v17 rdjpgcom.vcxproj
-	ren makerfil.v16 rdjpgcom.vcxproj.filters
-	ren makewvcx.v17 wrjpgcom.vcxproj
-	ren makewfil.v16 wrjpgcom.vcxproj.filters
-
-setupcopy-v17:
-	copy /y jconfig.vc jconfig.h
-	copy /y makejsln.v16 jpeg.sln
-	copy /y makeasln.v16 apps.sln
-	copy /y makejvcx.v17 jpeg.vcxproj
-	copy /y makejfil.v16 jpeg.vcxproj.filters
-	copy /y makecvcx.v17 cjpeg.vcxproj
-	copy /y makecfil.v16 cjpeg.vcxproj.filters
-	copy /y makedvcx.v17 djpeg.vcxproj
-	copy /y makedfil.v16 djpeg.vcxproj.filters
-	copy /y maketvcx.v17 jpegtran.vcxproj
-	copy /y maketfil.v16 jpegtran.vcxproj.filters
-	copy /y makervcx.v17 rdjpgcom.vcxproj
-	copy /y makerfil.v16 rdjpgcom.vcxproj.filters
-	copy /y makewvcx.v17 wrjpgcom.vcxproj
 	copy /y makewfil.v16 wrjpgcom.vcxproj.filters
 
 test:

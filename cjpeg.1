@@ -1,4 +1,4 @@
-.TH CJPEG 1 "28 April 2019"
+.TH CJPEG 1 "10 February 2023"
 .SH NAME
 cjpeg \- compress an image file to a JPEG file
 .SH SYNOPSIS
@@ -157,12 +157,12 @@ quality selection, since the default value used by library is 2x2!
 .PP
 The
 .B \-progressive
-switch creates a "progressive JPEG" file.  In this type of JPEG file, the data
-is stored in multiple scans of increasing quality.  If the file is being
+switch creates a "progressive JPEG" file.  In this type of JPEG file, the
+data is stored in multiple scans of increasing quality.  If the file is being
 transmitted over a slow communications link, the decoder can use the first
 scan to display a low-quality image very quickly, and can then improve the
-display with each subsequent scan.  The final image is exactly equivalent to a
-standard JPEG file of the same quality setting, and the total file size is
+display with each subsequent scan.  The final image is exactly equivalent to
+a standard JPEG file of the same quality setting, and the total file size is
 about the same --- often a little smaller.
 .PP
 Switches for advanced users:
@@ -179,7 +179,7 @@ Default is 8 (baseline format).
 Larger values produce higher compression,
 smaller values produce higher quality
 (exact DCT stage possible with 1 or 2; with the default quality of 75 and
-default Luminance qtable the DCT+Quantization stage is lossless for N=1).
+default quantization tables the DCT+Quantization stage is lossless for N=1).
 .B Caution:
 An implementation of the JPEG SmartScale extension is required for this
 feature.  SmartScale enabled JPEG is not yet widely implemented, so many
