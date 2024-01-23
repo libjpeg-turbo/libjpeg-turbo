@@ -2,7 +2,7 @@
  * jsimd_mips64.c
  *
  * Copyright 2009 Pierre Ossman <ossman@cendio.se> for Cendio AB
- * Copyright (C) 2009-2011, 2014, 2016, 2018, 2022, D. R. Commander.
+ * Copyright (C) 2009-2011, 2014, 2016, 2018, 2022, 2024, D. R. Commander.
  * Copyright (C) 2013-2014, MIPS Technologies, Inc., California.
  * Copyright (C) 2015, 2018, 2022, Matthieu Darbois.
  * Copyright (C) 2016-2018, Loongson Technology Corporation Limited, BeiJing.
@@ -17,11 +17,11 @@
  */
 
 #define JPEG_INTERNALS
-#include "../../jinclude.h"
-#include "../../jpeglib.h"
-#include "../../jsimd.h"
-#include "../../jdct.h"
-#include "../../jsimddct.h"
+#include "../../src/jinclude.h"
+#include "../../src/jpeglib.h"
+#include "../../src/jsimd.h"
+#include "../../src/jdct.h"
+#include "../../src/jsimddct.h"
 #include "../jsimd.h"
 
 #include <ctype.h>

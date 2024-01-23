@@ -10,7 +10,7 @@ if(CMAKE_EXECUTABLE_SUFFIX)
 endif()
 
 project(libjpeg-turbo C)
-set(VERSION 3.0.2)
+set(VERSION 3.0.80)
 set(COPYRIGHT_YEAR "1991-2024")
 string(REPLACE "." ";" VERSION_TRIPLET ${VERSION})
 list(GET VERSION_TRIPLET 0 VERSION_MAJOR)
@@ -553,13 +553,14 @@ if(UNIX AND NOT APPLE)
 endif()
 
 # Generate files
-configure_file(jversion.h.in jversion.h)
+configure_file(src/jversion.h.in jversion.h)
 if(UNIX)
   configure_file(libjpeg.map.in libjpeg.map)
 endif()
 
 # Include directories and compiler definitions
-include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${CMAKE_CURRENT_BINARY_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 
 ###############################################################################
@@ -571,28 +572,31 @@ if(CMAKE_EXECUTABLE_SUFFIX_TMP)
 endif()
 message(STATUS "CMAKE_EXECUTABLE_SUFFIX = ${CMAKE_EXECUTABLE_SUFFIX}")
 
-set(JPEG16_SOURCES jcapistd.c jccolor.c jcdiffct.c jclossls.c jcmainct.c
-  jcprepct.c jcsample.c jdapistd.c jdcolor.c jddiffct.c jdlossls.c jdmainct.c
-  jdpostct.c jdsample.c jutils.c)
-set(JPEG12_SOURCES ${JPEG16_SOURCES} jccoefct.c jcdctmgr.c jdcoefct.c
-  jddctmgr.c jdmerge.c jfdctfst.c jfdctint.c jidctflt.c jidctfst.c jidctint.c
-  jidctred.c jquant1.c jquant2.c)
-set(JPEG_SOURCES ${JPEG12_SOURCES} jcapimin.c jchuff.c jcicc.c jcinit.c
-  jclhuff.c jcmarker.c jcmaster.c jcomapi.c jcparam.c jcphuff.c jctrans.c
-  jdapimin.c jdatadst.c jdatasrc.c jdhuff.c jdicc.c jdinput.c jdlhuff.c
-  jdmarker.c jdmaster.c jdphuff.c jdtrans.c jerror.c jfdctflt.c jmemmgr.c
-  jmemnobs.c jpeg_nbits.c)
+set(JPEG16_SOURCES src/jcapistd.c src/jccolor.c src/jcdiffct.c src/jclossls.c
+  src/jcmainct.c src/jcprepct.c src/jcsample.c src/jdapistd.c src/jdcolor.c
+  src/jddiffct.c src/jdlossls.c src/jdmainct.c src/jdpostct.c src/jdsample.c
+  src/jutils.c)
+set(JPEG12_SOURCES ${JPEG16_SOURCES} src/jccoefct.c src/jcdctmgr.c
+  src/jdcoefct.c src/jddctmgr.c src/jdmerge.c src/jfdctfst.c src/jfdctint.c
+  src/jidctflt.c src/jidctfst.c src/jidctint.c src/jidctred.c src/jquant1.c
+  src/jquant2.c)
+set(JPEG_SOURCES ${JPEG12_SOURCES} src/jcapimin.c src/jchuff.c src/jcicc.c
+  src/jcinit.c src/jclhuff.c src/jcmarker.c src/jcmaster.c src/jcomapi.c
+  src/jcparam.c src/jcphuff.c src/jctrans.c src/jdapimin.c src/jdatadst.c
+  src/jdatasrc.c src/jdhuff.c src/jdicc.c src/jdinput.c src/jdlhuff.c
+  src/jdmarker.c src/jdmaster.c src/jdphuff.c src/jdtrans.c src/jerror.c
+  src/jfdctflt.c src/jmemmgr.c src/jmemnobs.c src/jpeg_nbits.c)
 
 if(WITH_ARITH_ENC OR WITH_ARITH_DEC)
-  set(JPEG_SOURCES ${JPEG_SOURCES} jaricom.c)
+  set(JPEG_SOURCES ${JPEG_SOURCES} src/jaricom.c)
 endif()
 
 if(WITH_ARITH_ENC)
-  set(JPEG_SOURCES ${JPEG_SOURCES} jcarith.c)
+  set(JPEG_SOURCES ${JPEG_SOURCES} src/jcarith.c)
 endif()
 
 if(WITH_ARITH_DEC)
-  set(JPEG_SOURCES ${JPEG_SOURCES} jdarith.c)
+  set(JPEG_SOURCES ${JPEG_SOURCES} src/jdarith.c)
 endif()
 
 if(WITH_SIMD)
@@ -606,8 +610,8 @@ endif()
 
 # We have to generate these here, because if the build system tries and fails
 # to enable the SIMD extensions, the value of WITH_SIMD will have changed.
-configure_file(jconfig.h.in jconfig.h)
-configure_file(jconfigint.h.in jconfigint.h)
+configure_file(src/jconfig.h.in jconfig.h)
+configure_file(src/jconfigint.h.in jconfigint.h)
 
 if(WITH_SIMD)
   message(STATUS "SIMD extensions: ${CPU_TYPE} (WITH_SIMD = ${WITH_SIMD})")
@@ -653,11 +657,12 @@ endif()
 if(WITH_TURBOJPEG)
   if(ENABLE_SHARED)
     set(TURBOJPEG_SOURCES ${JPEG_SOURCES} ${SIMD_TARGET_OBJECTS} ${SIMD_OBJS}
-      turbojpeg.c transupp.c jdatadst-tj.c jdatasrc-tj.c rdbmp.c rdppm.c
-      wrbmp.c wrppm.c $<TARGET_OBJECTS:jpeg12> $<TARGET_OBJECTS:jpeg16>)
+      src/turbojpeg.c src/transupp.c src/jdatadst-tj.c src/jdatasrc-tj.c
+      src/rdbmp.c src/rdppm.c src/wrbmp.c src/wrppm.c $<TARGET_OBJECTS:jpeg12>
+      $<TARGET_OBJECTS:jpeg16>)
     set(TJMAPFILE ${CMAKE_CURRENT_SOURCE_DIR}/turbojpeg-mapfile)
     if(WITH_JAVA)
-      set(TURBOJPEG_SOURCES ${TURBOJPEG_SOURCES} turbojpeg-jni.c)
+      set(TURBOJPEG_SOURCES ${TURBOJPEG_SOURCES} java/turbojpeg-jni.c)
       include_directories(${JAVA_INCLUDE_PATH} ${JAVA_INCLUDE_PATH2})
       set(TJMAPFILE ${CMAKE_CURRENT_SOURCE_DIR}/turbojpeg-mapfile.jni)
     endif()
@@ -667,11 +672,11 @@ if(WITH_TURBOJPEG)
       set(TURBOJPEG_SOURCES ${TURBOJPEG_SOURCES}
         ${CMAKE_BINARY_DIR}/win/turbojpeg.rc)
     endif()
-    add_library(turbojpeg12 OBJECT rdppm.c wrppm.c)
+    add_library(turbojpeg12 OBJECT src/rdppm.c src/wrppm.c)
     set_property(TARGET turbojpeg12 PROPERTY COMPILE_FLAGS
       "-DBITS_IN_JSAMPLE=12 -DPPM_SUPPORTED")
     set_target_properties(turbojpeg12 PROPERTIES POSITION_INDEPENDENT_CODE 1)
-    add_library(turbojpeg16 OBJECT rdppm.c wrppm.c)
+    add_library(turbojpeg16 OBJECT src/rdppm.c src/wrppm.c)
     set_property(TARGET turbojpeg16 PROPERTY COMPILE_FLAGS
       "-DBITS_IN_JSAMPLE=16 -DPPM_SUPPORTED")
     set_target_properties(turbojpeg16 PROPERTIES POSITION_INDEPENDENT_CODE 1)
@@ -699,33 +704,35 @@ if(WITH_TURBOJPEG)
         LINK_FLAGS "${TJMAPFLAG}${TJMAPFILE}")
     endif()
 
-    add_executable(tjunittest tjunittest.c tjutil.c md5/md5.c md5/md5hl.c)
+    add_executable(tjunittest src/tjunittest.c src/tjutil.c src/md5/md5.c
+      src/md5/md5hl.c)
     target_link_libraries(tjunittest turbojpeg)
 
-    add_executable(tjbench tjbench.c tjutil.c)
+    add_executable(tjbench src/tjbench.c src/tjutil.c)
     target_link_libraries(tjbench turbojpeg)
     if(UNIX)
       target_link_libraries(tjbench m)
     endif()
 
-    add_executable(tjexample tjexample.c)
+    add_executable(tjexample src/tjexample.c)
     target_link_libraries(tjexample turbojpeg)
 
-    add_custom_target(tjdoc COMMAND doxygen -s doxygen.config
-      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+    add_custom_target(tjdoc COMMAND doxygen -s ../doc/doxygen.config
+      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src)
   endif()
 
   if(ENABLE_STATIC)
-    add_library(turbojpeg12-static OBJECT rdppm.c wrppm.c)
+    add_library(turbojpeg12-static OBJECT src/rdppm.c src/wrppm.c)
     set_property(TARGET turbojpeg12-static PROPERTY COMPILE_FLAGS
       "-DBITS_IN_JSAMPLE=12 -DPPM_SUPPORTED")
-    add_library(turbojpeg16-static OBJECT rdppm.c wrppm.c)
+    add_library(turbojpeg16-static OBJECT src/rdppm.c src/wrppm.c)
     set_property(TARGET turbojpeg16-static PROPERTY COMPILE_FLAGS
       "-DBITS_IN_JSAMPLE=16 -DPPM_SUPPORTED")
     add_library(turbojpeg-static STATIC ${JPEG_SOURCES} ${SIMD_TARGET_OBJECTS}
-      ${SIMD_OBJS} turbojpeg.c transupp.c jdatadst-tj.c jdatasrc-tj.c rdbmp.c
-      rdppm.c wrbmp.c wrppm.c $<TARGET_OBJECTS:jpeg12-static>
-      $<TARGET_OBJECTS:jpeg16-static> $<TARGET_OBJECTS:turbojpeg12-static>
+      ${SIMD_OBJS} src/turbojpeg.c src/transupp.c src/jdatadst-tj.c
+      src/jdatasrc-tj.c src/rdbmp.c src/rdppm.c src/wrbmp.c src/wrppm.c
+      $<TARGET_OBJECTS:jpeg12-static> $<TARGET_OBJECTS:jpeg16-static>
+      $<TARGET_OBJECTS:turbojpeg12-static>
       $<TARGET_OBJECTS:turbojpeg16-static>)
     set_property(TARGET turbojpeg-static PROPERTY COMPILE_FLAGS
       "-DBMP_SUPPORTED -DPPM_SUPPORTED")
@@ -733,11 +740,11 @@ if(WITH_TURBOJPEG)
       set_target_properties(turbojpeg-static PROPERTIES OUTPUT_NAME turbojpeg)
     endif()
 
-    add_executable(tjunittest-static tjunittest.c tjutil.c md5/md5.c
-      md5/md5hl.c)
+    add_executable(tjunittest-static src/tjunittest.c src/tjutil.c
+      src/md5/md5.c src/md5/md5hl.c)
     target_link_libraries(tjunittest-static turbojpeg-static)
 
-    add_executable(tjbench-static tjbench.c tjutil.c)
+    add_executable(tjbench-static src/tjbench.c src/tjutil.c)
     target_link_libraries(tjbench-static turbojpeg-static)
     if(UNIX)
       target_link_libraries(tjbench-static m)
@@ -754,14 +761,14 @@ set(CDJPEG_COMPILE_FLAGS
 if(ENABLE_STATIC)
   # Compile a separate version of these source files with 12-bit and 16-bit
   # data precision.
-  add_library(cjpeg12-static OBJECT rdgif.c rdppm.c)
+  add_library(cjpeg12-static OBJECT src/rdgif.c src/rdppm.c)
   set_property(TARGET cjpeg12-static PROPERTY COMPILE_FLAGS
     "-DBITS_IN_JSAMPLE=12 -DGIF_SUPPORTED -DPPM_SUPPORTED")
-  add_library(cjpeg16-static OBJECT rdgif.c rdppm.c)
+  add_library(cjpeg16-static OBJECT src/rdgif.c src/rdppm.c)
   set_property(TARGET cjpeg16-static PROPERTY COMPILE_FLAGS
     "-DBITS_IN_JSAMPLE=16 -DGIF_SUPPORTED -DPPM_SUPPORTED")
-  add_executable(cjpeg-static cjpeg.c cdjpeg.c rdbmp.c rdgif.c rdppm.c
-    rdswitch.c rdtarga.c $<TARGET_OBJECTS:cjpeg12-static>
+  add_executable(cjpeg-static src/cjpeg.c src/cdjpeg.c src/rdbmp.c src/rdgif.c
+    src/rdppm.c src/rdswitch.c src/rdtarga.c $<TARGET_OBJECTS:cjpeg12-static>
     $<TARGET_OBJECTS:cjpeg16-static>)
   set_property(TARGET cjpeg-static PROPERTY COMPILE_FLAGS
     ${CDJPEG_COMPILE_FLAGS})
@@ -769,30 +776,31 @@ if(ENABLE_STATIC)
 
   # Compile a separate version of these source files with 12-bit and 16-bit
   # data precision.
-  add_library(djpeg12-static OBJECT rdcolmap.c wrgif.c wrppm.c)
+  add_library(djpeg12-static OBJECT src/rdcolmap.c src/wrgif.c src/wrppm.c)
   set_property(TARGET djpeg12-static PROPERTY COMPILE_FLAGS
     "-DBITS_IN_JSAMPLE=12 -DGIF_SUPPORTED -DPPM_SUPPORTED")
-  add_library(djpeg16-static OBJECT wrppm.c)
+  add_library(djpeg16-static OBJECT src/wrppm.c)
   set_property(TARGET djpeg16-static PROPERTY COMPILE_FLAGS
     "-DBITS_IN_JSAMPLE=16 -DPPM_SUPPORTED")
-  add_executable(djpeg-static djpeg.c cdjpeg.c rdcolmap.c rdswitch.c wrbmp.c
-    wrgif.c wrppm.c wrtarga.c $<TARGET_OBJECTS:djpeg12-static>
-    $<TARGET_OBJECTS:djpeg16-static>)
+  add_executable(djpeg-static src/djpeg.c src/cdjpeg.c src/rdcolmap.c
+    src/rdswitch.c src/wrbmp.c src/wrgif.c src/wrppm.c src/wrtarga.c
+    $<TARGET_OBJECTS:djpeg12-static> $<TARGET_OBJECTS:djpeg16-static>)
   set_property(TARGET djpeg-static PROPERTY COMPILE_FLAGS
     ${CDJPEG_COMPILE_FLAGS})
   target_link_libraries(djpeg-static jpeg-static)
 
-  add_executable(jpegtran-static jpegtran.c cdjpeg.c rdswitch.c transupp.c)
+  add_executable(jpegtran-static src/jpegtran.c src/cdjpeg.c src/rdswitch.c
+    src/transupp.c)
   target_link_libraries(jpegtran-static jpeg-static)
   set_property(TARGET jpegtran-static PROPERTY COMPILE_FLAGS "${USE_SETMODE}")
 
-  add_executable(example-static example.c)
+  add_executable(example-static src/example.c)
   target_link_libraries(example-static jpeg-static)
 endif()
 
-add_executable(rdjpgcom rdjpgcom.c)
+add_executable(rdjpgcom src/rdjpgcom.c)
 
-add_executable(wrjpgcom wrjpgcom.c)
+add_executable(wrjpgcom src/wrjpgcom.c)
 
 
 ###############################################################################
@@ -803,9 +811,9 @@ if(WITH_FUZZ)
   add_subdirectory(fuzz)
 endif()
 
-add_executable(strtest strtest.c)
+add_executable(strtest src/strtest.c)
 
-add_subdirectory(md5)
+add_subdirectory(src/md5)
 
 if(GENERATOR_IS_MULTI_CONFIG)
   set(OBJDIR "\${CTEST_CONFIGURATION_TYPE}/")
@@ -871,7 +879,7 @@ if(ENABLE_STATIC)
 endif()
 
 set(TESTIMAGES ${CMAKE_CURRENT_SOURCE_DIR}/testimages)
-set(MD5CMP ${CMAKE_CURRENT_BINARY_DIR}/md5/md5cmp)
+set(MD5CMP ${CMAKE_CURRENT_BINARY_DIR}/src/md5/md5cmp)
 if(CMAKE_CROSSCOMPILING)
   file(RELATIVE_PATH TESTIMAGES ${CMAKE_CURRENT_BINARY_DIR} ${TESTIMAGES})
   file(RELATIVE_PATH MD5CMP ${CMAKE_CURRENT_BINARY_DIR} ${MD5CMP})
@@ -1743,7 +1751,7 @@ if(WITH_TURBOJPEG)
         DESTINATION ${CMAKE_INSTALL_BINDIR} RENAME tjbench${EXE})
     endif()
   endif()
-  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/turbojpeg.h
+  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/turbojpeg.h
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 endif()
 
@@ -1769,11 +1777,13 @@ endif()
 install(TARGETS rdjpgcom wrjpgcom RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/README.ijg
-  ${CMAKE_CURRENT_SOURCE_DIR}/README.md ${CMAKE_CURRENT_SOURCE_DIR}/example.c
-  ${CMAKE_CURRENT_SOURCE_DIR}/tjexample.c
-  ${CMAKE_CURRENT_SOURCE_DIR}/libjpeg.txt
-  ${CMAKE_CURRENT_SOURCE_DIR}/structure.txt
-  ${CMAKE_CURRENT_SOURCE_DIR}/usage.txt ${CMAKE_CURRENT_SOURCE_DIR}/wizard.txt
+  ${CMAKE_CURRENT_SOURCE_DIR}/README.md
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/example.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/tjexample.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/doc/libjpeg.txt
+  ${CMAKE_CURRENT_SOURCE_DIR}/doc/structure.txt
+  ${CMAKE_CURRENT_SOURCE_DIR}/doc/usage.txt
+  ${CMAKE_CURRENT_SOURCE_DIR}/doc/wizard.txt
   ${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.md DESTINATION ${CMAKE_INSTALL_DOCDIR})
 if(WITH_JAVA)
   install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/java/TJExample.java
@@ -1781,10 +1791,11 @@ if(WITH_JAVA)
 endif()
 
 if(UNIX OR MINGW)
-  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/cjpeg.1
-    ${CMAKE_CURRENT_SOURCE_DIR}/djpeg.1 ${CMAKE_CURRENT_SOURCE_DIR}/jpegtran.1
-    ${CMAKE_CURRENT_SOURCE_DIR}/rdjpgcom.1
-    ${CMAKE_CURRENT_SOURCE_DIR}/wrjpgcom.1
+  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/doc/cjpeg.1
+    ${CMAKE_CURRENT_SOURCE_DIR}/doc/djpeg.1
+    ${CMAKE_CURRENT_SOURCE_DIR}/doc/jpegtran.1
+    ${CMAKE_CURRENT_SOURCE_DIR}/doc/rdjpgcom.1
+    ${CMAKE_CURRENT_SOURCE_DIR}/doc/wrjpgcom.1
     DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
 endif()
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pkgscripts/libjpeg.pc
@@ -1802,8 +1813,9 @@ install(EXPORT ${CMAKE_PROJECT_NAME}Targets
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${CMAKE_PROJECT_NAME})
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/jconfig.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/jerror.h ${CMAKE_CURRENT_SOURCE_DIR}/jmorecfg.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/jpeglib.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/jerror.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/jmorecfg.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/jpeglib.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
 include(cmakescripts/BuildPackages.cmake)

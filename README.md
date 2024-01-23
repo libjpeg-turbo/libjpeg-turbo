@@ -69,7 +69,7 @@ JPEG images:
   generating planar YUV images and performing multiple simultaneous lossless
   transforms on an image.  The Java interface for libjpeg-turbo is written on
   top of the TurboJPEG API.  The TurboJPEG API is recommended for first-time
-  users of libjpeg-turbo.  Refer to [tjexample.c](tjexample.c) and
+  users of libjpeg-turbo.  Refer to [tjexample.c](src/tjexample.c) and
   [TJExample.java](java/TJExample.java) for examples of its usage and to
   <http://libjpeg-turbo.org/Documentation/Documentation> for API documentation.
 
@@ -79,8 +79,9 @@ JPEG images:
   more powerful.  The libjpeg API implementation in libjpeg-turbo is both
   API/ABI-compatible and mathematically compatible with libjpeg v6b.  It can
   also optionally be configured to be API/ABI-compatible with libjpeg v7 and v8
-  (see below.)  Refer to [cjpeg.c](cjpeg.c) and [djpeg.c](djpeg.c) for examples
-  of its usage and to [libjpeg.txt](libjpeg.txt) for API documentation.
+  (see below.)  Refer to [cjpeg.c](src/cjpeg.c) and [djpeg.c](src/djpeg.c) for
+  examples of its usage and to [libjpeg.txt](doc/libjpeg.txt) for API
+  documentation.
 
 There is no significant performance advantage to either API when both are used
 to perform similar operations.
@@ -132,9 +133,9 @@ extensions at compile time with:
 
     #ifdef JCS_ALPHA_EXTENSIONS
 
-[jcstest.c](jcstest.c), located in the libjpeg-turbo source tree, demonstrates
-how to check for the existence of the colorspace extensions at compile time and
-run time.
+[jcstest.c](src/jcstest.c), located in the libjpeg-turbo source tree,
+demonstrates how to check for the existence of the colorspace extensions at
+compile time and run time.
 
 libjpeg v7 and v8 API/ABI Emulation
 -----------------------------------

@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2011-2023 D. R. Commander.  All Rights Reserved.
+ * Copyright (C)2011-2024 D. R. Commander.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,10 +30,10 @@
 #include "turbojpeg.h"
 #include "jinclude.h"
 #include <jni.h>
-#include "java/org_libjpegturbo_turbojpeg_TJCompressor.h"
-#include "java/org_libjpegturbo_turbojpeg_TJDecompressor.h"
-#include "java/org_libjpegturbo_turbojpeg_TJTransformer.h"
-#include "java/org_libjpegturbo_turbojpeg_TJ.h"
+#include "org_libjpegturbo_turbojpeg_TJCompressor.h"
+#include "org_libjpegturbo_turbojpeg_TJDecompressor.h"
+#include "org_libjpegturbo_turbojpeg_TJTransformer.h"
+#include "org_libjpegturbo_turbojpeg_TJ.h"
 
 #define BAILIF0(f) { \
   if (!(f) || (*env)->ExceptionCheck(env)) { \

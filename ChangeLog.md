@@ -1,3 +1,15 @@
+3.1 pre-beta
+============
+
+### Significant changes relative to 3.0.2:
+
+1. The libjpeg-turbo source tree has been reorganized to make it easier to find
+the README files, license information, and build instructions.  The
+documentation for the libjpeg API library and associated programs has been
+moved into the **doc/** subdirectory, and all C source code and headers have
+been moved into a new **src/** subdirectory.
+
+
 3.0.2
 =====
 
@@ -221,8 +233,8 @@ information.
 `TJPARAM_LOSSLESSPT`/`TJ.PARAM_LOSSLESSPT`), and a cjpeg/TJBench option
 (`-lossless`) can be used to create a lossless JPEG image.  (Decompression of
 lossless JPEG images is handled automatically.)  Refer to
-[libjpeg.txt](libjpeg.txt), [usage.txt](usage.txt), and the TurboJPEG API
-documentation for more details.
+[libjpeg.txt](doc/libjpeg.txt), [usage.txt](doc/usage.txt), and the TurboJPEG
+API documentation for more details.
 
 6. Added support for 12-bit-per-component (lossy and lossless) and
 16-bit-per-component (lossless) JPEG images to the libjpeg and TurboJPEG APIs:
@@ -249,8 +261,8 @@ to create a 12-bit-per-component or 16-bit-per-component JPEG image.
 (Decompression and transformation of 12-bit-per-component and
 16-bit-per-component JPEG images is handled automatically.)
 
-    Refer to [libjpeg.txt](libjpeg.txt), [usage.txt](usage.txt), and the
-TurboJPEG API documentation for more details.
+    Refer to [libjpeg.txt](doc/libjpeg.txt), [usage.txt](doc/usage.txt), and
+the TurboJPEG API documentation for more details.
 
 
 2.1.5.1
@@ -1312,7 +1324,7 @@ use of AltiVec instructions.
 
 2. Added two new libjpeg API functions (`jpeg_skip_scanlines()` and
 `jpeg_crop_scanline()`) that can be used to partially decode a JPEG image.  See
-[libjpeg.txt](libjpeg.txt) for more details.
+[libjpeg.txt](doc/libjpeg.txt) for more details.
 
 3. The TJCompressor and TJDecompressor classes in the TurboJPEG Java API now
 implement the Closeable interface, so those classes can be used with a
