@@ -555,7 +555,7 @@ endif()
 # Generate files
 configure_file(src/jversion.h.in jversion.h)
 if(UNIX)
-  configure_file(libjpeg.map.in libjpeg.map)
+  configure_file(src/libjpeg.map.in libjpeg.map)
 endif()
 
 # Include directories and compiler definitions
@@ -660,11 +660,11 @@ if(WITH_TURBOJPEG)
       src/turbojpeg.c src/transupp.c src/jdatadst-tj.c src/jdatasrc-tj.c
       src/rdbmp.c src/rdppm.c src/wrbmp.c src/wrppm.c $<TARGET_OBJECTS:jpeg12>
       $<TARGET_OBJECTS:jpeg16>)
-    set(TJMAPFILE ${CMAKE_CURRENT_SOURCE_DIR}/turbojpeg-mapfile)
+    set(TJMAPFILE ${CMAKE_CURRENT_SOURCE_DIR}/src/turbojpeg-mapfile)
     if(WITH_JAVA)
       set(TURBOJPEG_SOURCES ${TURBOJPEG_SOURCES} java/turbojpeg-jni.c)
       include_directories(${JAVA_INCLUDE_PATH} ${JAVA_INCLUDE_PATH2})
-      set(TJMAPFILE ${CMAKE_CURRENT_SOURCE_DIR}/turbojpeg-mapfile.jni)
+      set(TJMAPFILE ${CMAKE_CURRENT_SOURCE_DIR}/src/turbojpeg-mapfile.jni)
     endif()
     if(MSVC)
       configure_file(${CMAKE_SOURCE_DIR}/win/turbojpeg.rc.in
