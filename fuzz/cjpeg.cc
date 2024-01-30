@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2021 D. R. Commander.  All Rights Reserved.
+ * Copyright (C)2021, 2024 D. R. Commander.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -32,7 +32,7 @@
 #define main  cjpeg_main
 #define CJPEG_FUZZER
 extern "C" {
-#include "../cjpeg.c"
+#include "../src/cjpeg.c"
 }
 #undef main
 #undef CJPEG_FUZZER

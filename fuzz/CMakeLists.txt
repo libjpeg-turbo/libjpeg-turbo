@@ -25,8 +25,9 @@ set(EFFECTIVE_CXX_FLAGS
   "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE_UC}}")
 message(STATUS "C++ Compiler flags = ${EFFECTIVE_CXX_FLAGS}")
 
-add_executable(cjpeg_fuzzer${FUZZER_SUFFIX} cjpeg.cc ../cdjpeg.c ../rdbmp.c
-  ../rdgif.c ../rdppm.c ../rdswitch.c ../rdtarga.c)
+add_executable(cjpeg_fuzzer${FUZZER_SUFFIX} cjpeg.cc ../src/cdjpeg.c
+  ../src/rdbmp.c ../src/rdgif.c ../src/rdppm.c ../src/rdswitch.c
+  ../src/rdtarga.c)
 set_property(TARGET cjpeg_fuzzer${FUZZER_SUFFIX} PROPERTY COMPILE_FLAGS
   ${COMPILE_FLAGS})
 target_link_libraries(cjpeg_fuzzer${FUZZER_SUFFIX} ${FUZZ_LIBRARY} jpeg-static)
