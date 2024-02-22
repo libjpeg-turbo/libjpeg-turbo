@@ -88,7 +88,7 @@ set_property(TARGET cjpeg12 PROPERTY COMPILE_FLAGS
 add_library(cjpeg16 OBJECT ../rdgif.c ../rdppm.c)
 set_property(TARGET cjpeg16 PROPERTY COMPILE_FLAGS
   "-DBITS_IN_JSAMPLE=16 -DGIF_SUPPORTED -DPPM_SUPPORTED")
-add_executable(cjpeg ../cjpeg.c ../cdjpeg.c ../rdbmp.c ../rdgif.c ../rdppm.c
+add_executable_or_lib_if_codesign(cjpeg ../cjpeg.c ../cdjpeg.c ../rdbmp.c ../rdgif.c ../rdppm.c
   ../rdswitch.c ../rdtarga.c $<TARGET_OBJECTS:cjpeg12>
   $<TARGET_OBJECTS:cjpeg16>)
 set_property(TARGET cjpeg PROPERTY COMPILE_FLAGS ${CDJPEG_COMPILE_FLAGS})
@@ -102,20 +102,20 @@ set_property(TARGET djpeg12 PROPERTY COMPILE_FLAGS
 add_library(djpeg16 OBJECT ../wrppm.c)
 set_property(TARGET djpeg16 PROPERTY COMPILE_FLAGS
   "-DBITS_IN_JSAMPLE=16 -DPPM_SUPPORTED")
-add_executable(djpeg ../djpeg.c ../cdjpeg.c ../rdcolmap.c ../rdswitch.c
+add_executable_or_lib_if_codesign(djpeg ../djpeg.c ../cdjpeg.c ../rdcolmap.c ../rdswitch.c
   ../wrbmp.c ../wrgif.c ../wrppm.c ../wrtarga.c $<TARGET_OBJECTS:djpeg12>
   $<TARGET_OBJECTS:djpeg16>)
 set_property(TARGET djpeg PROPERTY COMPILE_FLAGS ${CDJPEG_COMPILE_FLAGS})
 target_link_libraries(djpeg jpeg)
 
-add_executable(jpegtran ../jpegtran.c ../cdjpeg.c ../rdswitch.c ../transupp.c)
+add_executable_or_lib_if_codesign(jpegtran ../jpegtran.c ../cdjpeg.c ../rdswitch.c ../transupp.c)
 target_link_libraries(jpegtran jpeg)
 set_property(TARGET jpegtran PROPERTY COMPILE_FLAGS "${USE_SETMODE}")
 
-add_executable(example ../example.c)
+add_executable_or_lib_if_codesign(example ../example.c)
 target_link_libraries(example jpeg)
 
-add_executable(jcstest ../jcstest.c)
+add_executable_or_lib_if_codesign(jcstest ../jcstest.c)
 target_link_libraries(jcstest jpeg)
 
 install(TARGETS jpeg EXPORT ${CMAKE_PROJECT_NAME}Targets

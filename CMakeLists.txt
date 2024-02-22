@@ -432,6 +432,23 @@ if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang")
   endforeach()
 endif()
 
+#If we are building for iOS, attempt to avoid code signing
+#This is a useful default for building in complex build chains
+if(CMAKE_SYSTEM_NAME STREQUAL "iOS" AND NOT ENABLE_CODESIGNED_EXECUTABLES)
+  set(DISABLE_CODESIGNED_EXECUTABLES TRUE)
+endif()
+
+macro(add_executable_or_lib_if_codesign)
+  if(DISABLE_CODESIGNED_EXECUTABLES)
+    set(args "${ARGV}")
+    set(arg0 "${ARGV0}")
+    list(REMOVE_AT args 0)
+    add_library(${arg0} STATIC ${args})
+  else()
+    add_executable(${ARGV})
+  endif()
+endmacro()
+
 if(CMAKE_SYSTEM_NAME STREQUAL "SunOS")
   if(CMAKE_C_COMPILER_ID MATCHES "SunPro")
     # Use the maximum optimization level for release builds
@@ -726,16 +743,16 @@ if(WITH_TURBOJPEG)
         LINK_FLAGS "${TJMAPFLAG}${TJMAPFILE}")
     endif()
 
-    add_executable(tjunittest tjunittest.c tjutil.c md5/md5.c md5/md5hl.c)
+    add_executable_or_lib_if_codesign(tjunittest tjunittest.c tjutil.c md5/md5.c md5/md5hl.c)
     target_link_libraries(tjunittest turbojpeg)
 
-    add_executable(tjbench tjbench.c tjutil.c)
+    add_executable_or_lib_if_codesign(tjbench tjbench.c tjutil.c)
     target_link_libraries(tjbench turbojpeg)
     if(UNIX)
       target_link_libraries(tjbench m)
     endif()
 
-    add_executable(tjexample tjexample.c)
+    add_executable_or_lib_if_codesign(tjexample tjexample.c)
     target_link_libraries(tjexample turbojpeg)
 
     add_custom_target(tjdoc COMMAND doxygen -s doxygen.config
@@ -760,11 +777,11 @@ if(WITH_TURBOJPEG)
       set_target_properties(turbojpeg-static PROPERTIES OUTPUT_NAME turbojpeg)
     endif()
 
-    add_executable(tjunittest-static tjunittest.c tjutil.c md5/md5.c
+    add_executable_or_lib_if_codesign(tjunittest-static tjunittest.c tjutil.c md5/md5.c
       md5/md5hl.c)
     target_link_libraries(tjunittest-static turbojpeg-static)
 
-    add_executable(tjbench-static tjbench.c tjutil.c)
+    add_executable_or_lib_if_codesign(tjbench-static tjbench.c tjutil.c)
     target_link_libraries(tjbench-static turbojpeg-static)
     if(UNIX)
       target_link_libraries(tjbench-static m)
@@ -787,7 +804,7 @@ if(ENABLE_STATIC)
   add_library(cjpeg16-static OBJECT rdgif.c rdppm.c)
   set_property(TARGET cjpeg16-static PROPERTY COMPILE_FLAGS
     "-DBITS_IN_JSAMPLE=16 -DGIF_SUPPORTED -DPPM_SUPPORTED")
-  add_executable(cjpeg-static cjpeg.c cdjpeg.c rdbmp.c rdgif.c rdppm.c
+  add_executable_or_lib_if_codesign(cjpeg-static cjpeg.c cdjpeg.c rdbmp.c rdgif.c rdppm.c
     rdswitch.c rdtarga.c $<TARGET_OBJECTS:cjpeg12-static>
     $<TARGET_OBJECTS:cjpeg16-static>)
   set_property(TARGET cjpeg-static PROPERTY COMPILE_FLAGS
@@ -802,24 +819,24 @@ if(ENABLE_STATIC)
   add_library(djpeg16-static OBJECT wrppm.c)
   set_property(TARGET djpeg16-static PROPERTY COMPILE_FLAGS
     "-DBITS_IN_JSAMPLE=16 -DPPM_SUPPORTED")
-  add_executable(djpeg-static djpeg.c cdjpeg.c rdcolmap.c rdswitch.c wrbmp.c
+  add_executable_or_lib_if_codesign(djpeg-static djpeg.c cdjpeg.c rdcolmap.c rdswitch.c wrbmp.c
     wrgif.c wrppm.c wrtarga.c $<TARGET_OBJECTS:djpeg12-static>
     $<TARGET_OBJECTS:djpeg16-static>)
   set_property(TARGET djpeg-static PROPERTY COMPILE_FLAGS
     ${CDJPEG_COMPILE_FLAGS})
   target_link_libraries(djpeg-static jpeg-static)
 
-  add_executable(jpegtran-static jpegtran.c cdjpeg.c rdswitch.c transupp.c)
+  add_executable_or_lib_if_codesign(jpegtran-static jpegtran.c cdjpeg.c rdswitch.c transupp.c)
   target_link_libraries(jpegtran-static jpeg-static)
   set_property(TARGET jpegtran-static PROPERTY COMPILE_FLAGS "${USE_SETMODE}")
 
-  add_executable(example-static example.c)
+  add_executable_or_lib_if_codesign(example-static example.c)
   target_link_libraries(example-static jpeg-static)
 endif()
 
-add_executable(rdjpgcom rdjpgcom.c)
+add_executable_or_lib_if_codesign(rdjpgcom rdjpgcom.c)
 
-add_executable(wrjpgcom wrjpgcom.c)
+add_executable_or_lib_if_codesign(wrjpgcom wrjpgcom.c)
 
 
 ###############################################################################
@@ -830,7 +847,7 @@ if(WITH_FUZZ)
   add_subdirectory(fuzz)
 endif()
 
-add_executable(strtest strtest.c)
+add_executable_or_lib_if_codesign(strtest strtest.c)
 
 add_subdirectory(md5)
 
