@@ -2,7 +2,7 @@
 ; jdmrgext.asm - merged upsampling/color conversion (64-bit AVX2)
 ;
 ; Copyright 2009, 2012 Pierre Ossman <ossman@cendio.se> for Cendio AB
-; Copyright (C) 2009, 2012, 2016, D. R. Commander.
+; Copyright (C) 2009, 2012, 2016, 2024, D. R. Commander.
 ; Copyright (C) 2015, Intel Corporation.
 ; Copyright (C) 2018, Matthias Räncker.
 ; Copyright (C) 2023, Aliaksiej Kandracienka.
@@ -42,6 +42,7 @@
     GLOBAL_FUNCTION(jsimd_h2v1_merged_upsample_avx2)
 
 EXTN(jsimd_h2v1_merged_upsample_avx2):
+    ENDBR64
     push        rbp
     mov         rbp, rsp
     push        r15
@@ -49,7 +50,7 @@ EXTN(jsimd_h2v1_merged_upsample_avx2):
     ; Allocate stack space for wk array.  r15 is used to access it.
     mov         r15, rsp
     sub         rsp, SIZEOF_YMMWORD * WK_NUM
-    collect_args 4
+    COLLECT_ARGS 4
     push        rbx
 
     mov         ecx, r10d               ; col
@@ -480,7 +481,7 @@ EXTN(jsimd_h2v1_merged_upsample_avx2):
 .return:
     pop         rbx
     vzeroupper
-    uncollect_args 4
+    UNCOLLECT_ARGS 4
     lea         rsp, [rbp-8]
     pop         r15
     pop         rbp
@@ -506,9 +507,10 @@ EXTN(jsimd_h2v1_merged_upsample_avx2):
     GLOBAL_FUNCTION(jsimd_h2v2_merged_upsample_avx2)
 
 EXTN(jsimd_h2v2_merged_upsample_avx2):
+    ENDBR64
     push        rbp
     mov         rbp, rsp
-    collect_args 4
+    COLLECT_ARGS 4
     push        rbx
 
     mov         eax, r10d
@@ -587,7 +589,7 @@ EXTN(jsimd_h2v2_merged_upsample_avx2):
     add         rsp, SIZEOF_JSAMPARRAY*4
 
     pop         rbx
-    uncollect_args 4
+    UNCOLLECT_ARGS 4
     pop         rbp
     ret
 
