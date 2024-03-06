@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2009-2014, 2017-2019, 2022-2023 D. R. Commander.
+ * Copyright (C)2009-2014, 2017-2019, 2022-2024 D. R. Commander.
  *                                              All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -77,28 +77,28 @@ static void usage(char *progName)
   BAILOUT() \
 }
 
-const char *subNameLong[TJ_NUMSAMP] = {
+static const char *subNameLong[TJ_NUMSAMP] = {
   "4:4:4", "4:2:2", "4:2:0", "GRAY", "4:4:0", "4:1:1"
 };
-const char *subName[TJ_NUMSAMP] = {
+static const char *subName[TJ_NUMSAMP] = {
   "444", "422", "420", "GRAY", "440", "411"
 };
 
-const char *pixFormatStr[TJ_NUMPF] = {
+static const char *pixFormatStr[TJ_NUMPF] = {
   "RGB", "BGR", "RGBX", "BGRX", "XBGR", "XRGB", "Grayscale",
   "RGBA", "BGRA", "ABGR", "ARGB", "CMYK"
 };
 
-const int _3byteFormats[] = { TJPF_RGB, TJPF_BGR };
-const int _4byteFormats[] = {
+static const int _3byteFormats[] = { TJPF_RGB, TJPF_BGR };
+static const int _4byteFormats[] = {
   TJPF_RGBX, TJPF_BGRX, TJPF_XBGR, TJPF_XRGB, TJPF_CMYK
 };
-const int _onlyGray[] = { TJPF_GRAY };
-const int _onlyRGB[] = { TJPF_RGB };
+static const int _onlyGray[] = { TJPF_GRAY };
+static const int _onlyRGB[] = { TJPF_RGB };
 
-int doYUV = 0, alloc = 0, yuvAlign = 4;
+static int doYUV = 0, alloc = 0, yuvAlign = 4;
 
-int exitStatus = 0;
+static int exitStatus = 0;
 #define BAILOUT() { exitStatus = -1;  goto bailout; }
 
 
