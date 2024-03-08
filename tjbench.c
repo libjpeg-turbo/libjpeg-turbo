@@ -37,6 +37,9 @@
 #include <math.h>
 #include <errno.h>
 #include <limits.h>
+#if !defined(_MSC_VER) || _MSC_VER > 1600
+#include <stdint.h>
+#endif
 #include <cdjpeg.h>
 #include "./tjutil.h"
 #include "./turbojpeg.h"
@@ -169,9 +172,11 @@ static int decomp(unsigned char *srcBuf, unsigned char **jpegBuf,
     THROW_TJ("executing tjInitDecompress()");
 
   if (dstBuf == NULL) {
+#if ULLONG_MAX > SIZE_MAX
     if ((unsigned long long)pitch * (unsigned long long)scaledh >
         (unsigned long long)((size_t)-1))
       THROW("allocating destination buffer", "Image is too large");
+#endif
     if ((dstBuf = (unsigned char *)malloc((size_t)pitch * scaledh)) == NULL)
       THROW_UNIX("allocating destination buffer");
     dstBufAlloc = 1;
@@ -334,9 +339,11 @@ static int fullTest(unsigned char *srcBuf, int w, int h, int subsamp,
   int ntilesw = 1, ntilesh = 1, pitch = w * ps;
   const char *pfStr = pixFormatStr[pf];
 
+#if ULLONG_MAX > SIZE_MAX
   if ((unsigned long long)pitch * (unsigned long long)h >
       (unsigned long long)((size_t)-1))
     THROW("allocating temporary image buffer", "Image is too large");
+#endif
   if ((tmpBuf = (unsigned char *)malloc((size_t)pitch * h)) == NULL)
     THROW_UNIX("allocating temporary image buffer");
 

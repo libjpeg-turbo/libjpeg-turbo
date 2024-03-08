@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2009-2023 D. R. Commander.  All Rights Reserved.
+ * Copyright (C)2009-2024 D. R. Commander.  All Rights Reserved.
  * Copyright (C)2021 Alex Richardson.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,9 @@
 
 #include <ctype.h>
 #include <limits.h>
+#if !defined(_MSC_VER) || _MSC_VER > 1600
+#include <stdint.h>
+#endif
 #include <jinclude.h>
 #define JPEG_INTERNALS
 #include <jpeglib.h>
@@ -554,8 +557,10 @@ DLLEXPORT unsigned long tjBufSize(int width, int height, int jpegSubsamp)
   mcuh = tjMCUHeight[jpegSubsamp];
   chromasf = jpegSubsamp == TJSAMP_GRAY ? 0 : 4 * 64 / (mcuw * mcuh);
   retval = PAD(width, mcuw) * PAD(height, mcuh) * (2ULL + chromasf) + 2048ULL;
+#if ULLONG_MAX > ULONG_MAX
   if (retval > (unsigned long long)((unsigned long)-1))
     THROWG("tjBufSize(): Image is too large");
+#endif
 
 bailout:
   return (unsigned long)retval;
@@ -573,8 +578,10 @@ DLLEXPORT unsigned long TJBUFSIZE(int width, int height)
      larger than the uncompressed input (we wouldn't mention it if it hadn't
      happened before.) */
   retval = PAD(width, 16) * PAD(height, 16) * 6ULL + 2048ULL;
+#if ULLONG_MAX > ULONG_MAX
   if (retval > (unsigned long long)((unsigned long)-1))
     THROWG("TJBUFSIZE(): Image is too large");
+#endif
 
 bailout:
   return (unsigned long)retval;
@@ -600,8 +607,10 @@ DLLEXPORT unsigned long tjBufSizeYUV2(int width, int align, int height,
     if (pw < 0 || ph < 0) return -1;
     else retval += (unsigned long long)stride * ph;
   }
+#if ULLONG_MAX > ULONG_MAX
   if (retval > (unsigned long long)((unsigned long)-1))
     THROWG("tjBufSizeYUV2(): Image is too large");
+#endif
 
 bailout:
   return (unsigned long)retval;
@@ -690,8 +699,10 @@ DLLEXPORT unsigned long tjPlaneSizeYUV(int componentID, int width, int stride,
   else stride = abs(stride);
 
   retval = (unsigned long long)stride * (ph - 1) + pw;
+#if ULLONG_MAX > ULONG_MAX
   if (retval > (unsigned long long)((unsigned long)-1))
     THROWG("tjPlaneSizeYUV(): Image is too large");
+#endif
 
 bailout:
   return (unsigned long)retval;
@@ -2211,8 +2222,11 @@ DLLEXPORT unsigned char *tjLoadImage(const char *filename, int *width,
   *pixelFormat = cs2pf[cinfo->in_color_space];
 
   pitch = PAD((*width) * tjPixelSize[*pixelFormat], align);
-  if ((unsigned long long)pitch * (unsigned long long)(*height) >
+  if (
+#if ULLONG_MAX > SIZE_MAX
+      (unsigned long long)pitch * (unsigned long long)(*height) >
       (unsigned long long)((size_t)-1) ||
+#endif
       (dstBuf = (unsigned char *)malloc(pitch * (*height))) == NULL)
     THROWG("tjLoadImage(): Memory allocation failure");
 
