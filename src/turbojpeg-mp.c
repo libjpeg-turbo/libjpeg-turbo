@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2009-2023 D. R. Commander.  All Rights Reserved.
+ * Copyright (C)2009-2024 D. R. Commander.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -180,7 +180,8 @@ DLLEXPORT int GET_NAME(tj3Decompress, BITS_IN_JSAMPLE)
   }
   setDecompParameters(this);
   if (this->maxPixels &&
-      (unsigned long long)this->jpegWidth * this->jpegHeight > this->maxPixels)
+      (unsigned long long)this->jpegWidth * this->jpegHeight >
+      (unsigned long long)this->maxPixels)
     THROW("Image is too large");
   this->dinfo.out_color_space = pf2cs[pixelFormat];
 #if BITS_IN_JSAMPLE != 16
@@ -366,8 +367,11 @@ DLLEXPORT _JSAMPLE *GET_NAME(tj3LoadImage, BITS_IN_JSAMPLE)
   *pixelFormat = cs2pf[cinfo->in_color_space];
 
   pitch = PAD((*width) * tjPixelSize[*pixelFormat], align);
-  if ((unsigned long long)pitch * (unsigned long long)(*height) >
+  if (
+#if ULLONG_MAX > SIZE_MAX
+      (unsigned long long)pitch * (unsigned long long)(*height) >
       (unsigned long long)((size_t)-1) ||
+#endif
       (dstBuf = (_JSAMPLE *)malloc(pitch * (*height) *
                                    sizeof(_JSAMPLE))) == NULL)
     THROW("Memory allocation failure");
