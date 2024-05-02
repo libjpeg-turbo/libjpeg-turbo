@@ -50,6 +50,11 @@ triggered by setting the `align` parameter to an unreasonably large value.
 This issue did not pose a security threat, but removing the warning made it
 easier to detect actual security issues, should they arise in the future.
 
+7. Fixed a segfault that occurred when attempting to use the jpegtran `-drop`
+option with a specially-crafted malformed input image or drop image
+(specifically an image in which all of the scans contain fewer components than
+the number of components specified in the Start Of Frame segment.)
+
 
 2.1.5.1
 =======
