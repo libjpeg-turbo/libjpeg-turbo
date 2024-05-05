@@ -235,9 +235,15 @@ jpeg_std_error(struct jpeg_error_mgr *err)
   err->format_message = format_message;
   err->reset_error_mgr = reset_error_mgr;
 
+  err->msg_code = 0;            /* may be useful as a flag for "no error" */
+
+  err->msg_parm.i[0] = err->msg_parm.i[1] =
+  err->msg_parm.i[2] = err->msg_parm.i[3] =
+  err->msg_parm.i[4] = err->msg_parm.i[5] =
+  err->msg_parm.i[6] = err->msg_parm.i[7] = 0;  /* initialize before use */
+
   err->trace_level = 0;         /* default = no tracing */
   err->num_warnings = 0;        /* no warnings emitted yet */
-  err->msg_code = 0;            /* may be useful as a flag for "no error" */
 
   /* Initialize message table pointers */
   err->jpeg_message_table = jpeg_std_message_table;
