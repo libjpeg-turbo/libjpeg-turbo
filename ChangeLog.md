@@ -1,13 +1,26 @@
 3.1 pre-beta
 ============
 
-### Significant changes relative to 3.0.2:
+### Significant changes relative to 3.0.4:
 
 1. The libjpeg-turbo source tree has been reorganized to make it easier to find
 the README files, license information, and build instructions.  The
 documentation for the libjpeg API library and associated programs has been
 moved into the **doc/** subdirectory, and all C source code and headers have
 been moved into a new **src/** subdirectory.
+
+
+3.0.4
+=====
+
+### Significant changes relative to 3.0.3:
+
+1. Fixed an issue whereby the CPU usage of the default marker processor in the
+decompressor grew exponentially with the number of markers.  This caused an
+unreasonable slow-down in `jpeg_read_header()` if an application called
+`jpeg_save_markers()` to save markers of a particular type and then attempted
+to decompress a JPEG image containing an excessive number of markers of that
+type.
 
 
 3.0.3
