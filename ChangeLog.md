@@ -90,6 +90,13 @@ triggered by setting the `align` parameter to an unreasonably large value.
 This issue did not pose a security threat, but removing the warning made it
 easier to detect actual security issues, should they arise in the future.
 
+14. Fixed an issue whereby the CPU usage of the default marker processor in the
+decompressor grew exponentially with the number of markers.  This caused an
+unreasonable slow-down in `jpeg_read_header()` if an application called
+`jpeg_save_markers()` to save markers of a particular type and then attempted
+to decompress a JPEG image containing an excessive number of markers of that
+type.
+
 
 2.0.8 ESR
 =========
