@@ -55,6 +55,13 @@ option with a specially-crafted malformed input image or drop image
 (specifically an image in which all of the scans contain fewer components than
 the number of components specified in the Start Of Frame segment.)
 
+8. Fixed an issue whereby the CPU usage of the default marker processor in the
+decompressor grew exponentially with the number of markers.  This caused an
+unreasonable slow-down in `jpeg_read_header()` if an application called
+`jpeg_save_markers()` to save markers of a particular type and then attempted
+to decompress a JPEG image containing an excessive number of markers of that
+type.
+
 
 2.1.5.1
 =======
