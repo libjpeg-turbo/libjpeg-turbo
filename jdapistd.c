@@ -313,7 +313,7 @@ _jpeg_read_scanlines(j_decompress_ptr cinfo, _JSAMPARRAY scanlines,
 #if BITS_IN_JSAMPLE != 16 || defined(D_LOSSLESS_SUPPORTED)
   JDIMENSION row_ctr;
 
-  if (cinfo->data_precision != BITS_IN_JSAMPLE)
+  if (cinfo->data_precision > BITS_IN_JSAMPLE)
     ERREXIT1(cinfo, JERR_BAD_PRECISION, cinfo->data_precision);
 
   if (cinfo->global_state != DSTATE_SCANNING)

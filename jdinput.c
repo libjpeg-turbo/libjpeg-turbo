@@ -58,8 +58,7 @@ initial_setup(j_decompress_ptr cinfo)
 
   /* For now, precision must match compiled-in value... */
 #ifdef D_LOSSLESS_SUPPORTED
-  if (cinfo->data_precision != 8 && cinfo->data_precision != 12 &&
-      cinfo->data_precision != 16)
+  if (!(2 <= cinfo->data_precision && cinfo->data_precision <= 16))
 #else
   if (cinfo->data_precision != 8 && cinfo->data_precision != 12)
 #endif
