@@ -382,6 +382,17 @@ set(TURBOJPEG_SO_MAJOR_VERSION 0)
 set(TURBOJPEG_SO_AGE 3)
 set(TURBOJPEG_SO_VERSION 0.${TURBOJPEG_SO_AGE}.0)
 
+# On Windows static and dynamic / shared libs use the same *.lib extension, whilst on
+# Unix distros for static libs it is *.a extension. Therefore you may want to override
+# the default output names via cmake config arguments.
+if(MSVC)
+  set(JPEG_STATIC_OUTPUT_NAME "jpeg-static" CACHE STRING "Output name for static jpeg lib")
+  set(TURBOJPEG_STATIC_OUTPUT_NAME "turbojpeg-static" CACHE STRING "Output name for static turbojpeg lib")
+elseif()
+  set(JPEG_STATIC_OUTPUT_NAME "jpeg" CACHE STRING "Output name for static jpeg lib")
+  set(TURBOJPEG_STATIC_OUTPUT_NAME "turbojpeg" CACHE STRING "Output name for static turbojpeg lib")
+endif()
+
 
 ###############################################################################
 # COMPILER SETTINGS
@@ -667,9 +678,7 @@ if(ENABLE_STATIC)
   add_library(jpeg-static STATIC ${JPEG_SOURCES} ${SIMD_TARGET_OBJECTS}
     ${SIMD_OBJS} $<TARGET_OBJECTS:jpeg12-static>
     $<TARGET_OBJECTS:jpeg16-static>)
-  if(NOT MSVC)
-    set_target_properties(jpeg-static PROPERTIES OUTPUT_NAME jpeg)
-  endif()
+  set_target_properties(jpeg-static PROPERTIES OUTPUT_NAME ${JPEG_STATIC_OUTPUT_NAME})
 endif()
 
 if(WITH_TURBOJPEG)
@@ -751,9 +760,7 @@ if(WITH_TURBOJPEG)
       $<TARGET_OBJECTS:turbojpeg16-static>)
     set_property(TARGET turbojpeg-static PROPERTY COMPILE_FLAGS
       "-DBMP_SUPPORTED -DPPM_SUPPORTED")
-    if(NOT MSVC)
-      set_target_properties(turbojpeg-static PROPERTIES OUTPUT_NAME turbojpeg)
-    endif()
+    set_target_properties(turbojpeg-static PROPERTIES OUTPUT_NAME ${TURBOJPEG_STATIC_OUTPUT_NAME})
 
     add_executable(tjunittest-static tjunittest.c tjutil.c md5/md5.c
       md5/md5hl.c)
