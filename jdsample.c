@@ -421,7 +421,7 @@ _jinit_upsampler(j_decompress_ptr cinfo)
   boolean need_buffer, do_fancy;
   int h_in_group, v_in_group, h_out_group, v_out_group;
 
-  if (cinfo->data_precision != BITS_IN_JSAMPLE)
+  if (cinfo->data_precision > BITS_IN_JSAMPLE)
     ERREXIT1(cinfo, JERR_BAD_PRECISION, cinfo->data_precision);
 
   if (!cinfo->master->jinit_upsampler_no_alloc) {
