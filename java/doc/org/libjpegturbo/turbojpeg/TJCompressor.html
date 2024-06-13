@@ -172,9 +172,9 @@ implements java.io.Closeable</pre>
             int&nbsp;height,
             int&nbsp;pixelFormat)</code></th>
 <td class="colLast">
-<div class="block">Create a TurboJPEG compressor instance and associate the 8-bit-per-sample
- packed-pixel source image stored in <code>srcImage</code> with the newly
- created instance.</div>
+<div class="block">Create a TurboJPEG compressor instance and associate the packed-pixel
+ source image, stored in <code>srcImage</code> with 2 to 8 bits of data
+ precision per sample, with the newly created instance.</div>
 </td>
 </tr>
 <tr class="altColor">
@@ -357,8 +357,8 @@ implements java.io.Closeable</pre>
               int&nbsp;height,
               int&nbsp;pixelFormat)</code></th>
 <td class="colLast">
-<div class="block">Associate an 8-bit-per-sample packed-pixel RGB, grayscale, or CMYK source
- image with this compressor instance.</div>
+<div class="block">Associate a packed-pixel RGB, grayscale, or CMYK source image with 2 to 8
+ bits of data precision per sample with this compressor instance.</div>
 </td>
 </tr>
 <tr id="i17" class="rowColor">
@@ -391,8 +391,8 @@ implements java.io.Closeable</pre>
                 int&nbsp;height,
                 int&nbsp;pixelFormat)</code></th>
 <td class="colLast">
-<div class="block">Associate a 12-bit-per-sample packed-pixel RGB, grayscale, or CMYK source
- image with this compressor instance.</div>
+<div class="block">Associate a packed-pixel RGB, grayscale, or CMYK source image with 9 to 12
+ bits of data precision per sample with this compressor instance.</div>
 </td>
 </tr>
 <tr id="i20" class="altColor">
@@ -405,8 +405,8 @@ implements java.io.Closeable</pre>
                 int&nbsp;height,
                 int&nbsp;pixelFormat)</code></th>
 <td class="colLast">
-<div class="block">Associate a 16-bit-per-sample packed-pixel RGB, grayscale, or CMYK source
- image with this compressor instance.</div>
+<div class="block">Associate a packed-pixel RGB, grayscale, or CMYK source image with 13 to
+ 16 bits of data precision per sample with this compressor instance.</div>
 </td>
 </tr>
 <tr id="i21" class="rowColor">
@@ -472,9 +472,9 @@ implements java.io.Closeable</pre>
                     int&nbsp;height,
                     int&nbsp;pixelFormat)
              throws <a href="TJException.html" title="class in org.libjpegturbo.turbojpeg">TJException</a></pre>
-<div class="block">Create a TurboJPEG compressor instance and associate the 8-bit-per-sample
- packed-pixel source image stored in <code>srcImage</code> with the newly
- created instance.</div>
+<div class="block">Create a TurboJPEG compressor instance and associate the packed-pixel
+ source image, stored in <code>srcImage</code> with 2 to 8 bits of data
+ precision per sample, with the newly created instance.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>srcImage</code> - see <a href="#setSourceImage(byte%5B%5D,int,int,int,int,int,int)"><code>setSourceImage(byte[], int, int, int, int, int, int)</code></a> for description</dd>
@@ -546,12 +546,17 @@ implements java.io.Closeable</pre>
                            int&nbsp;height,
                            int&nbsp;pixelFormat)
                     throws <a href="TJException.html" title="class in org.libjpegturbo.turbojpeg">TJException</a></pre>
-<div class="block">Associate an 8-bit-per-sample packed-pixel RGB, grayscale, or CMYK source
- image with this compressor instance.</div>
+<div class="block">Associate a packed-pixel RGB, grayscale, or CMYK source image with 2 to 8
+ bits of data precision per sample with this compressor instance.  Note
+ that packed-pixel source images with 2 to 7 bits of data precision per
+ sample can only be compressed into lossless JPEG images.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>srcImage</code> - buffer containing a packed-pixel RGB, grayscale, or CMYK
- source image to be compressed or encoded.  This buffer is not modified.</dd>
+ source image to be compressed or encoded.  The data precision of the
+ source image (from 2 to 8 bits per sample) can be specified using
+ <a href="TJ.html#PARAM_PRECISION"><code>TJ.PARAM_PRECISION</code></a> and defaults to 8 if <a href="TJ.html#PARAM_PRECISION"><code>TJ.PARAM_PRECISION</code></a>
+ is unset or out of range.  This buffer is not modified.</dd>
 <dd><code>x</code> - x offset (in pixels) of the region in the source image from which
  the JPEG or YUV image should be compressed/encoded</dd>
 <dd><code>y</code> - y offset (in pixels) of the region in the source image from which
@@ -589,14 +594,18 @@ implements java.io.Closeable</pre>
                              int&nbsp;height,
                              int&nbsp;pixelFormat)
                       throws <a href="TJException.html" title="class in org.libjpegturbo.turbojpeg">TJException</a></pre>
-<div class="block">Associate a 12-bit-per-sample packed-pixel RGB, grayscale, or CMYK source
- image with this compressor instance.  Note that 12-bit-per-sample
- packed-pixel source images can only be compressed into 12-bit-per-sample
- JPEG images.</div>
+<div class="block">Associate a packed-pixel RGB, grayscale, or CMYK source image with 9 to 12
+ bits of data precision per sample with this compressor instance.  Note
+ that packed-pixel source images with 9 to 11 bits of data precision per
+ sample can only be compressed into lossless JPEG images.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>srcImage</code> - buffer containing a packed-pixel RGB, grayscale, or CMYK
- source image to be compressed.  This buffer is not modified.</dd>
+ source image to be compressed.  The data precision of the source image
+ (from 9 to 12 bits per sample) can be specified using
+ <a href="TJ.html#PARAM_PRECISION"><code>TJ.PARAM_PRECISION</code></a> and defaults to 12 if
+ <a href="TJ.html#PARAM_PRECISION"><code>TJ.PARAM_PRECISION</code></a> is unset or out of range.  This buffer is not
+ modified.</dd>
 <dd><code>x</code> - x offset (in pixels) of the region in the source image from which
  the JPEG image should be compressed</dd>
 <dd><code>y</code> - y offset (in pixels) of the region in the source image from which
@@ -634,14 +643,18 @@ implements java.io.Closeable</pre>
                              int&nbsp;height,
                              int&nbsp;pixelFormat)
                       throws <a href="TJException.html" title="class in org.libjpegturbo.turbojpeg">TJException</a></pre>
-<div class="block">Associate a 16-bit-per-sample packed-pixel RGB, grayscale, or CMYK source
- image with this compressor instance.  Note that 16-bit-per-sample
- packed-pixel source images can only be compressed into 16-bit-per-sample
- lossless JPEG images.</div>
+<div class="block">Associate a packed-pixel RGB, grayscale, or CMYK source image with 13 to
+ 16 bits of data precision per sample with this compressor instance.  Note
+ that packed-pixel source images with 13 to 16 bits of data precision per
+ sample can only be compressed into lossless JPEG images.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>srcImage</code> - buffer containing a packed-pixel RGB, grayscale, or CMYK
- source image to be compressed.  This buffer is not modified.</dd>
+ source image to be compressed.  The data precision of the source image
+ (from 13 to 16 bits per sample) can be specified using
+ <a href="TJ.html#PARAM_PRECISION"><code>TJ.PARAM_PRECISION</code></a> and defaults to 16 if
+ <a href="TJ.html#PARAM_PRECISION"><code>TJ.PARAM_PRECISION</code></a> is unset or out of range.  This buffer is not
+ modified.</dd>
 <dd><code>x</code> - x offset (in pixels) of the region in the source image from which
  the JPEG image should be compressed</dd>
 <dd><code>y</code> - y offset (in pixels) of the region in the source image from which

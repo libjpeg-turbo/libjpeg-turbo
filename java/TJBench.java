@@ -203,7 +203,7 @@ final class TJBench {
     if (dstBuf == null) {
       if ((long)pitch * (long)scaledh > (long)Integer.MAX_VALUE)
         throw new Exception("Image is too large");
-      if (precision == 8)
+      if (precision <= 8)
         dstBuf = new byte[pitch * scaledh];
       else
         dstBuf = new short[pitch * scaledh];
@@ -211,9 +211,9 @@ final class TJBench {
 
     /* Set the destination buffer to gray so we know whether the decompressor
        attempted to write to it */
-    if (precision == 8)
+    if (precision <= 8)
       Arrays.fill((byte[])dstBuf, (byte)127);
-    else if (precision == 12)
+    else if (precision <= 12)
       Arrays.fill((short[])dstBuf, (short)2047);
     else
       Arrays.fill((short[])dstBuf, (short)32767);
@@ -256,9 +256,9 @@ final class TJBench {
               elapsedDecode += getTime() - startDecode;
           } else {
             try {
-              if (precision == 8)
+              if (precision <= 8)
                 tjd.decompress8((byte[])dstBuf, x, y, pitch, pf);
-              else if (precision == 12)
+              else if (precision <= 12)
                 tjd.decompress12((short[])dstBuf, x, y, pitch, pf);
               else
                 tjd.decompress16((short[])dstBuf, x, y, pitch, pf);
@@ -344,7 +344,7 @@ final class TJBench {
 
     if ((long)pitch * (long)h > (long)Integer.MAX_VALUE)
       throw new Exception("Image is too large");
-    if (precision == 8)
+    if (precision <= 8)
       tmpBuf = new byte[pitch * h];
     else
       tmpBuf = new short[pitch * h];
@@ -388,7 +388,7 @@ final class TJBench {
                           bottomUp ? "BU" : "TD", precision,
                           lossless ? "LOSSLS" : SUBNAME_LONG[subsamp],
                           jpegQual);
-      if (precision == 8) {
+      if (precision <= 8) {
         for (i = 0; i < h; i++)
           System.arraycopy((byte[])srcBuf, w * ps * i, (byte[])tmpBuf,
                            pitch * i, w * ps);
@@ -416,10 +416,10 @@ final class TJBench {
             int width = Math.min(tilew, w - x);
             int height = Math.min(tileh, h - y);
 
-            if (precision == 8)
+            if (precision <= 8)
               tjc.setSourceImage((byte[])srcBuf, x, y, width, pitch, height,
                                  pf);
-            else if (precision == 12)
+            else if (precision <= 12)
               tjc.setSourceImage12((short[])srcBuf, x, y, width, pitch, height,
                                    pf);
             else
@@ -793,8 +793,8 @@ final class TJBench {
     System.out.println("     [default = BGR]");
     System.out.println("-cmyk = Indirectly test YCCK JPEG compression/decompression");
     System.out.println("     (use the CMYK pixel format for packed-pixel source/destination buffers)");
-    System.out.println("-precision N = Use N-bit data precision when compressing [N is 8, 12, or 16;");
-    System.out.println("     default = 8; if N is 16, then -lossless must also be specified]");
+    System.out.println("-precision N = Use N-bit data precision when compressing [N=2..16; default = 8;");
+    System.out.println("     if N is not 8 or 12, then -lossless must also be specified]");
     System.out.println("     (-precision 12 implies -optimize unless -arithmetic is also specified)");
     System.out.println("-quiet = Output results in tabular rather than verbose format");
     System.out.println("-restart N = When compressing, add a restart marker every N MCU rows (lossy) or");
@@ -915,7 +915,7 @@ final class TJBench {
             try {
               temp = Integer.parseInt(argv[++i]);
             } catch (NumberFormatException e) {}
-            if (temp == 8 || temp == 12 || temp == 16)
+            if (temp >= 2 && temp <= 16)
               precision = temp;
             else
               usage();
@@ -1142,8 +1142,9 @@ final class TJBench {
       if (ext == null)
         ext = new String("ppm");
 
-      if (precision == 16 && !lossless)
-        throw new Exception("-lossless must be specified along with -precision 16");
+      if ((precision != 8 && precision != 12) && !lossless)
+        throw new Exception(
+          "-lossless must be specified along with -precision " + precision);
       if (precision != 8 && doYUV)
         throw new Exception("-yuv requires 8-bit data precision");
       if (lossless && doYUV)
@@ -1176,6 +1177,7 @@ final class TJBench {
         tjc = new TJCompressor();
         tjc.set(TJ.PARAM_STOPONWARNING, stopOnWarning ? 1 : 0);
         tjc.set(TJ.PARAM_BOTTOMUP, bottomUp ? 1 : 0);
+        tjc.set(TJ.PARAM_PRECISION, precision);
         tjc.set(TJ.PARAM_MAXPIXELS, maxPixels);
 
         pixelFormat[0] = pf;

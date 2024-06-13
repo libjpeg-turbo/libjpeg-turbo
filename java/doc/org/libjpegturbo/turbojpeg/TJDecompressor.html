@@ -295,9 +295,9 @@ implements java.io.Closeable</pre>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#decompress12(int,int)">decompress12</a></span>&#8203;(int&nbsp;pitch,
             int&nbsp;pixelFormat)</code></th>
 <td class="colLast">
-<div class="block">Decompress the 12-bit-per-sample JPEG source image associated with this
- decompressor instance and return a buffer containing a 12-bit-per-sample
- packed-pixel decompressed image.</div>
+<div class="block">Decompress the JPEG source image with 9 to 12 bits per sample associated
+ with this decompressor instance and return a buffer containing a
+ packed-pixel decompressed image with the same data precision.</div>
 </td>
 </tr>
 <tr id="i7" class="rowColor">
@@ -308,9 +308,10 @@ implements java.io.Closeable</pre>
             int&nbsp;pitch,
             int&nbsp;pixelFormat)</code></th>
 <td class="colLast">
-<div class="block">Decompress the 12-bit-per-sample JPEG source image associated with this
- decompressor instance and output a 12-bit-per-sample packed-pixel
- grayscale, RGB, or CMYK image to the given destination buffer.</div>
+<div class="block">Decompress the JPEG source image with 9 to 12 bits per sample associated
+ with this decompressor instance and output a packed-pixel grayscale, RGB,
+ or CMYK image with the same data precision to the given destination
+ buffer.</div>
 </td>
 </tr>
 <tr id="i8" class="altColor">
@@ -318,9 +319,9 @@ implements java.io.Closeable</pre>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#decompress16(int,int)">decompress16</a></span>&#8203;(int&nbsp;pitch,
             int&nbsp;pixelFormat)</code></th>
 <td class="colLast">
-<div class="block">Decompress the 16-bit-per-sample JPEG source image associated with this
- decompressor instance and return a buffer containing a 16-bit-per-sample
- packed-pixel decompressed image.</div>
+<div class="block">Decompress the JPEG source image with 13 to 16 bits per sample associated
+ with this decompressor instance and return a buffer containing a
+ packed-pixel decompressed image with the same data precision.</div>
 </td>
 </tr>
 <tr id="i9" class="rowColor">
@@ -331,9 +332,9 @@ implements java.io.Closeable</pre>
             int&nbsp;pitch,
             int&nbsp;pixelFormat)</code></th>
 <td class="colLast">
-<div class="block">Decompress the 16-bit-per-sample lossless JPEG source image associated
- with this decompressor instance and output a 16-bit-per-sample
- packed-pixel grayscale, RGB, or CMYK image to the given destination
+<div class="block">Decompress the JPEG source image with 13 to 16 bits per sample associated
+ with this decompressor instance and output a packed-pixel grayscale, RGB,
+ or CMYK image with the same data precision to the given destination
  buffer.</div>
 </td>
 </tr>
@@ -345,10 +346,10 @@ implements java.io.Closeable</pre>
            int&nbsp;pitch,
            int&nbsp;pixelFormat)</code></th>
 <td class="colLast">
-<div class="block">Decompress the 8-bit-per-sample JPEG source image or decode the planar YUV
- source image associated with this decompressor instance and output an
- 8-bit-per-sample packed-pixel grayscale, RGB, or CMYK image to the given
- destination buffer.</div>
+<div class="block">Decompress the JPEG source image with 2 to 8 bits per sample, or decode
+ the 8-bit-per-sample planar YUV source image, associated with this
+ decompressor instance and output a packed-pixel grayscale, RGB, or CMYK
+ image with the same data precision to the given destination buffer.</div>
 </td>
 </tr>
 <tr id="i11" class="rowColor">
@@ -380,9 +381,10 @@ implements java.io.Closeable</pre>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#decompress8(int,int)">decompress8</a></span>&#8203;(int&nbsp;pitch,
            int&nbsp;pixelFormat)</code></th>
 <td class="colLast">
-<div class="block">Decompress the 8-bit-per-sample JPEG source image or decode the planar YUV
- source image associated with this decompressor instance and return a
- buffer containing an 8-bit-per-sample packed-pixel decompressed image.</div>
+<div class="block">Decompress the JPEG source image with 2 to 8 bits per sample, or decode
+ the 8-bit-per-sample planar YUV source image, associated with this
+ decompressor instance and return a buffer containing a packed-pixel
+ decompressed image with the same data precision.</div>
 </td>
 </tr>
 <tr id="i14" class="altColor">
@@ -976,10 +978,10 @@ public&nbsp;int&nbsp;getScaledHeight&#8203;(int&nbsp;desiredWidth,
                         int&nbsp;pitch,
                         int&nbsp;pixelFormat)
                  throws <a href="TJException.html" title="class in org.libjpegturbo.turbojpeg">TJException</a></pre>
-<div class="block">Decompress the 8-bit-per-sample JPEG source image or decode the planar YUV
- source image associated with this decompressor instance and output an
- 8-bit-per-sample packed-pixel grayscale, RGB, or CMYK image to the given
- destination buffer.
+<div class="block">Decompress the JPEG source image with 2 to 8 bits per sample, or decode
+ the 8-bit-per-sample planar YUV source image, associated with this
+ decompressor instance and output a packed-pixel grayscale, RGB, or CMYK
+ image with the same data precision to the given destination buffer.
  <p>
  NOTE: The destination image is fully recoverable if this method throws a
  non-fatal <a href="TJException.html" title="class in org.libjpegturbo.turbojpeg"><code>TJException</code></a> (unless <a href="TJ.html#PARAM_STOPONWARNING"><code>TJ.PARAM_STOPONWARNING</code></a> is
@@ -1062,9 +1064,10 @@ public&nbsp;void&nbsp;decompress&#8203;(byte[]&nbsp;dstBuf,
 <pre class="methodSignature">public&nbsp;byte[]&nbsp;decompress8&#8203;(int&nbsp;pitch,
                           int&nbsp;pixelFormat)
                    throws <a href="TJException.html" title="class in org.libjpegturbo.turbojpeg">TJException</a></pre>
-<div class="block">Decompress the 8-bit-per-sample JPEG source image or decode the planar YUV
- source image associated with this decompressor instance and return a
- buffer containing an 8-bit-per-sample packed-pixel decompressed image.</div>
+<div class="block">Decompress the JPEG source image with 2 to 8 bits per sample, or decode
+ the 8-bit-per-sample planar YUV source image, associated with this
+ decompressor instance and return a buffer containing a packed-pixel
+ decompressed image with the same data precision.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>pitch</code> - see
@@ -1072,8 +1075,8 @@ public&nbsp;void&nbsp;decompress&#8203;(byte[]&nbsp;dstBuf,
 <dd><code>pixelFormat</code> - pixel format of the decompressed image (one of
  <a href="TJ.html#PF_RGB"><code>TJ.PF_*</code></a>)</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
-<dd>a buffer containing an 8-bit-per-sample packed-pixel decompressed
- image.</dd>
+<dd>a buffer containing a packed-pixel decompressed image with 2 to 8
+ bits of data precision per sample.</dd>
 <dt><span class="throwsLabel">Throws:</span></dt>
 <dd><code><a href="TJException.html" title="class in org.libjpegturbo.turbojpeg">TJException</a></code></dd>
 </dl>
@@ -1115,9 +1118,10 @@ public&nbsp;byte[]&nbsp;decompress&#8203;(int&nbsp;desiredWidth,
                          int&nbsp;pitch,
                          int&nbsp;pixelFormat)
                   throws <a href="TJException.html" title="class in org.libjpegturbo.turbojpeg">TJException</a></pre>
-<div class="block">Decompress the 12-bit-per-sample JPEG source image associated with this
- decompressor instance and output a 12-bit-per-sample packed-pixel
- grayscale, RGB, or CMYK image to the given destination buffer.
+<div class="block">Decompress the JPEG source image with 9 to 12 bits per sample associated
+ with this decompressor instance and output a packed-pixel grayscale, RGB,
+ or CMYK image with the same data precision to the given destination
+ buffer.
  <p>
  NOTE: The destination image is fully recoverable if this method throws a
  non-fatal <a href="TJException.html" title="class in org.libjpegturbo.turbojpeg"><code>TJException</code></a> (unless <a href="TJ.html#PARAM_STOPONWARNING"><code>TJ.PARAM_STOPONWARNING</code></a> is
@@ -1174,9 +1178,9 @@ public&nbsp;byte[]&nbsp;decompress&#8203;(int&nbsp;desiredWidth,
 <pre class="methodSignature">public&nbsp;short[]&nbsp;decompress12&#8203;(int&nbsp;pitch,
                             int&nbsp;pixelFormat)
                      throws <a href="TJException.html" title="class in org.libjpegturbo.turbojpeg">TJException</a></pre>
-<div class="block">Decompress the 12-bit-per-sample JPEG source image associated with this
- decompressor instance and return a buffer containing a 12-bit-per-sample
- packed-pixel decompressed image.</div>
+<div class="block">Decompress the JPEG source image with 9 to 12 bits per sample associated
+ with this decompressor instance and return a buffer containing a
+ packed-pixel decompressed image with the same data precision.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>pitch</code> - see
@@ -1184,8 +1188,8 @@ public&nbsp;byte[]&nbsp;decompress&#8203;(int&nbsp;desiredWidth,
 <dd><code>pixelFormat</code> - pixel format of the decompressed image (one of
  <a href="TJ.html#PF_RGB"><code>TJ.PF_*</code></a>)</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
-<dd>a buffer containing a 12-bit-per-sample packed-pixel decompressed
- image.</dd>
+<dd>a buffer containing a packed-pixel decompressed image with 9 to 12
+ bits of data precision per sample.</dd>
 <dt><span class="throwsLabel">Throws:</span></dt>
 <dd><code><a href="TJException.html" title="class in org.libjpegturbo.turbojpeg">TJException</a></code></dd>
 </dl>
@@ -1203,9 +1207,9 @@ public&nbsp;byte[]&nbsp;decompress&#8203;(int&nbsp;desiredWidth,
                          int&nbsp;pitch,
                          int&nbsp;pixelFormat)
                   throws <a href="TJException.html" title="class in org.libjpegturbo.turbojpeg">TJException</a></pre>
-<div class="block">Decompress the 16-bit-per-sample lossless JPEG source image associated
- with this decompressor instance and output a 16-bit-per-sample
- packed-pixel grayscale, RGB, or CMYK image to the given destination
+<div class="block">Decompress the JPEG source image with 13 to 16 bits per sample associated
+ with this decompressor instance and output a packed-pixel grayscale, RGB,
+ or CMYK image with the same data precision to the given destination
  buffer.
  <p>
  NOTE: The destination image is fully recoverable if this method throws a
@@ -1248,9 +1252,9 @@ public&nbsp;byte[]&nbsp;decompress&#8203;(int&nbsp;desiredWidth,
 <pre class="methodSignature">public&nbsp;short[]&nbsp;decompress16&#8203;(int&nbsp;pitch,
                             int&nbsp;pixelFormat)
                      throws <a href="TJException.html" title="class in org.libjpegturbo.turbojpeg">TJException</a></pre>
-<div class="block">Decompress the 16-bit-per-sample JPEG source image associated with this
- decompressor instance and return a buffer containing a 16-bit-per-sample
- packed-pixel decompressed image.</div>
+<div class="block">Decompress the JPEG source image with 13 to 16 bits per sample associated
+ with this decompressor instance and return a buffer containing a
+ packed-pixel decompressed image with the same data precision.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>pitch</code> - see
@@ -1258,8 +1262,8 @@ public&nbsp;byte[]&nbsp;decompress&#8203;(int&nbsp;desiredWidth,
 <dd><code>pixelFormat</code> - pixel format of the decompressed image (one of
  <a href="TJ.html#PF_RGB"><code>TJ.PF_*</code></a>)</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
-<dd>a buffer containing a 16-bit-per-sample packed-pixel decompressed
- image.</dd>
+<dd>a buffer containing a packed-pixel decompressed image with 13 to
+ 16 bits of data precision per sample.</dd>
 <dt><span class="throwsLabel">Throws:</span></dt>
 <dd><code><a href="TJException.html" title="class in org.libjpegturbo.turbojpeg">TJException</a></code></dd>
 </dl>

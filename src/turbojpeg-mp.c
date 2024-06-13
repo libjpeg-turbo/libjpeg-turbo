@@ -104,6 +104,14 @@ DLLEXPORT int GET_NAME(tj3Compress, BITS_IN_JSAMPLE)
   cinfo->image_width = width;
   cinfo->image_height = height;
   cinfo->data_precision = BITS_IN_JSAMPLE;
+#if BITS_IN_JSAMPLE == 8
+  if (this->lossless && this->precision >= 2 &&
+      this->precision <= BITS_IN_JSAMPLE)
+#else
+  if (this->lossless && this->precision >= BITS_IN_JSAMPLE - 3 &&
+      this->precision <= BITS_IN_JSAMPLE)
+#endif
+    cinfo->data_precision = this->precision;
 
   setCompDefaults(this, pixelFormat);
   if (this->noRealloc) {
@@ -342,6 +350,13 @@ DLLEXPORT _JSAMPLE *GET_NAME(tj3LoadImage, BITS_IN_JSAMPLE)
       THROW("Could not initialize bitmap loader");
     invert = !this->bottomUp;
   } else if (tempc == 'P') {
+#if BITS_IN_JSAMPLE == 8
+    if (this->precision >= 2 && this->precision <= BITS_IN_JSAMPLE)
+#else
+    if (this->precision >= BITS_IN_JSAMPLE - 3 &&
+        this->precision <= BITS_IN_JSAMPLE)
+#endif
+      cinfo->data_precision = this->precision;
     if ((src = _jinit_read_ppm(cinfo)) == NULL)
       THROW("Could not initialize PPM loader");
     invert = this->bottomUp;
@@ -484,6 +499,13 @@ DLLEXPORT int GET_NAME(tj3SaveImage, BITS_IN_JSAMPLE)
     dinfo->Y_density = (UINT16)this->yDensity;
     dinfo->density_unit = (UINT8)this->densityUnits;
   } else {
+#if BITS_IN_JSAMPLE == 8
+    if (this->precision >= 2 && this->precision <= BITS_IN_JSAMPLE)
+#else
+    if (this->precision >= BITS_IN_JSAMPLE - 3 &&
+        this->precision <= BITS_IN_JSAMPLE)
+#endif
+      dinfo->data_precision = this->precision;
     if ((dst = _jinit_write_ppm(dinfo)) == NULL)
       THROW("Could not initialize PPM writer");
     invert = this->bottomUp;

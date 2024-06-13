@@ -1281,8 +1281,7 @@ JNIEXPORT jobject JNICALL Java_org_libjpegturbo_turbojpeg_TJCompressor_loadImage
 
   GET_HANDLE();
 
-  if ((precision != 8 && precision != 12 && precision != 16) ||
-      jfilename == NULL || jwidth == NULL ||
+  if (precision < 2 || precision > 16 || jfilename == NULL || jwidth == NULL ||
       (*env)->GetArrayLength(env, jwidth) < 1 || jheight == NULL ||
       (*env)->GetArrayLength(env, jheight) < 1 || jpixelFormat == NULL ||
       (*env)->GetArrayLength(env, jpixelFormat) < 1)
@@ -1299,11 +1298,11 @@ JNIEXPORT jobject JNICALL Java_org_libjpegturbo_turbojpeg_TJCompressor_loadImage
   (*env)->ReleasePrimitiveArrayCritical(env, jpixelFormat, pfarr, 0);
   BAILIF0(filename = (*env)->GetStringUTFChars(env, jfilename, &isCopy));
 
-  if (precision == 8) {
+  if (precision <= 8) {
     if ((dstBuf = tj3LoadImage8(handle, filename, &width, align, &height,
                                 &pixelFormat)) == NULL)
       THROW_TJ();
-  } else if (precision == 12) {
+  } else if (precision <= 12) {
     if ((dstBuf = tj3LoadImage12(handle, filename, &width, align, &height,
                                  &pixelFormat)) == NULL)
       THROW_TJ();
@@ -1332,7 +1331,7 @@ JNIEXPORT jobject JNICALL Java_org_libjpegturbo_turbojpeg_TJCompressor_loadImage
   (*env)->ReleasePrimitiveArrayCritical(env, jpixelFormat, pfarr, 0);
 
   n = width * height * tjPixelSize[pixelFormat];
-  if (precision == 8)
+  if (precision <= 8)
     jdstBuf = (*env)->NewByteArray(env, n);
   else
     jdstBuf = (*env)->NewShortArray(env, n);
@@ -1359,9 +1358,9 @@ JNIEXPORT void JNICALL Java_org_libjpegturbo_turbojpeg_TJDecompressor_saveImage
 
   GET_HANDLE();
 
-  if ((precision != 8 && precision != 12 && precision != 16) ||
-      jfilename == NULL || jsrcBuf == NULL || width < 1 || height < 1 ||
-      pixelFormat < 0 || pixelFormat >= TJ_NUMPF)
+  if (precision < 2 || precision > 16 || jfilename == NULL ||
+      jsrcBuf == NULL || width < 1 || height < 1 || pixelFormat < 0 ||
+      pixelFormat >= TJ_NUMPF)
     THROW_ARG("Invalid argument in saveImage()");
 
   if ((unsigned long long)width * (unsigned long long)height *
@@ -1380,11 +1379,11 @@ JNIEXPORT void JNICALL Java_org_libjpegturbo_turbojpeg_TJDecompressor_saveImage
   (*env)->ReleasePrimitiveArrayCritical(env, jsrcBuf, jsrcPtr, 0);
   BAILIF0(filename = (*env)->GetStringUTFChars(env, jfilename, &isCopy));
 
-  if (precision == 8) {
+  if (precision <= 8) {
     if (tj3SaveImage8(handle, filename, srcBuf, width, pitch, height,
                       pixelFormat) == -1)
       THROW_TJ();
-  } else if (precision == 12) {
+  } else if (precision <= 12) {
     if (tj3SaveImage12(handle, filename, srcBuf, width, pitch, height,
                        pixelFormat) == -1)
       THROW_TJ();

@@ -6,7 +6,7 @@
  * Modified 2009-2017 by Guido Vollbeding.
  * libjpeg-turbo Modifications:
  * Modified 2011 by Siarhei Siamashka.
- * Copyright (C) 2015, 2017-2018, 2021-2023, D. R. Commander.
+ * Copyright (C) 2015, 2017-2018, 2021-2024, D. R. Commander.
  * For conditions of distribution and use, see the accompanying README.ijg
  * file.
  *
@@ -180,7 +180,7 @@ get_8bit_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
       t = *inptr++;
       if (t >= cmaplen)
         ERREXIT(cinfo, JERR_BMP_OUTOFRANGE);
-      rgb_to_cmyk(colormap[0][t], colormap[1][t], colormap[2][t], outptr,
+      rgb_to_cmyk(255, colormap[0][t], colormap[1][t], colormap[2][t], outptr,
                   outptr + 1, outptr + 2, outptr + 3);
       outptr += 4;
     }
@@ -250,7 +250,7 @@ get_24bit_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
   } else if (cinfo->in_color_space == JCS_CMYK) {
     for (col = cinfo->image_width; col > 0; col--) {
       JSAMPLE b = *inptr++, g = *inptr++, r = *inptr++;
-      rgb_to_cmyk(r, g, b, outptr, outptr + 1, outptr + 2, outptr + 3);
+      rgb_to_cmyk(255, r, g, b, outptr, outptr + 1, outptr + 2, outptr + 3);
       outptr += 4;
     }
   } else {
@@ -314,7 +314,7 @@ get_32bit_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
   } else if (cinfo->in_color_space == JCS_CMYK) {
     for (col = cinfo->image_width; col > 0; col--) {
       JSAMPLE b = *inptr++, g = *inptr++, r = *inptr++;
-      rgb_to_cmyk(r, g, b, outptr, outptr + 1, outptr + 2, outptr + 3);
+      rgb_to_cmyk(255, r, g, b, outptr, outptr + 1, outptr + 2, outptr + 3);
       inptr++;                          /* skip the 4th byte (Alpha channel) */
       outptr += 4;
     }

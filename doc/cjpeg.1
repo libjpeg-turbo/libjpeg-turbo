@@ -154,8 +154,8 @@ about the same --- often a little smaller.
 Switches for advanced users:
 .TP
 .BI \-precision " N"
-Create JPEG file with N-bit data precision.  N is 8, 12, or 16; default is 8.
-If N is 16, then
+Create JPEG file with N-bit data precision.  N is 2 to 16; default is 8.  If N
+is not 8 or 12, then
 .B -lossless
 must also be specified.  Note that only the PBMPLUS input file format supports
 data precisions other than 8.  Note also that PBMPLUS input files are silently
@@ -166,9 +166,8 @@ to
 .B cjpeg
 will cause it to print information about the precision of the input file.
 .B Caution:
-12-bit and 16-bit data precision is not yet widely implemented, so many
-decoders will be unable to handle a 12-bit-per-sample or 16-bit-per-sample JPEG
-file at all.
+only 8-bit data precision is widely implemented, so many decoders will be
+unable to handle JPEG files with other data precisions.
 .IP
 .B \-precision\ 12
 implies

@@ -62,8 +62,8 @@ static void usage(char *progName)
   printf("       (8-bit data precision only)\n");
   printf("-noyuvpad = do not pad each row in each Y, U, and V plane to the nearest\n");
   printf("            multiple of 4 bytes\n");
-  printf("-precision N = test N-bit data precision (N is 8, 12, or 16; default is 8; if N\n");
-  printf("               is 16, then -lossless is implied)\n");
+  printf("-precision N = test N-bit data precision (N=2..16; default is 8; if N is not 8\n");
+  printf("               or 12, then -lossless is implied)\n");
   printf("-lossless = test lossless JPEG compression/decompression\n");
   printf("-alloc = test automatic JPEG buffer allocation\n");
   printf("-bmp = test packed-pixel image I/O\n");
@@ -111,9 +111,9 @@ static int exitStatus = 0;
 
 static void setVal(void *buf, int index, int value)
 {
-  if (precision == 8)
+  if (precision <= 8)
     ((unsigned char *)buf)[index] = (unsigned char)value;
-  else if (precision == 12)
+  else if (precision <= 12)
     ((short *)buf)[index] = (short)value;
   else
     ((unsigned short *)buf)[index] = (unsigned short)value;
@@ -201,9 +201,9 @@ static void initBuf(void *buf, int w, int h, int pf, int bottomUp)
 
 static int getVal(void *buf, int index)
 {
-  if (precision == 8)
+  if (precision <= 8)
     return ((unsigned char *)buf)[index];
-  else if (precision == 12)
+  else if (precision <= 12)
     return ((short *)buf)[index];
   else
     return ((unsigned short *)buf)[index];
@@ -440,15 +440,16 @@ static void compTest(tjhandle handle, unsigned char **dstBuf, size_t *dstSize,
     TRY_TJ(handle, tj3CompressFromYUV8(handle, yuvBuf, w, yuvAlign, h, dstBuf,
                                        dstSize));
   } else {
-    if (lossless)
+    if (lossless) {
+      TRY_TJ(handle, tj3Set(handle, TJPARAM_PRECISION, precision));
       printf("%s %s -> LOSSLESS PSV%d ... ", pfStr, buStrLong, jpegPSV);
-    else
+    } else
       printf("%s %s -> %s Q%d ... ", pfStr, buStrLong, subNameLong[subsamp],
              jpegQual);
-    if (precision == 8) {
+    if (precision <= 8) {
       TRY_TJ(handle, tj3Compress8(handle, (unsigned char *)srcBuf, w, 0, h, pf,
                                   dstBuf, dstSize));
-    } else if (precision == 12) {
+    } else if (precision <= 12) {
       TRY_TJ(handle, tj3Compress12(handle, (short *)srcBuf, w, 0, h, pf,
                                    dstBuf, dstSize));
     } else {
@@ -536,10 +537,10 @@ static void _decompTest(tjhandle handle, unsigned char *jpegBuf,
     if (sf.num != 1 || sf.denom != 1)
       printf("%d/%d ... ", sf.num, sf.denom);
     else printf("... ");
-    if (precision == 8) {
+    if (precision <= 8) {
       TRY_TJ(handle, tj3Decompress8(handle, jpegBuf, jpegSize,
                                     (unsigned char *)dstBuf, 0, pf));
-    } else if (precision == 12) {
+    } else if (precision <= 12) {
       TRY_TJ(handle, tj3Decompress12(handle, jpegBuf, jpegSize,
                                      (short *)dstBuf, 0, pf));
     } else {
@@ -731,6 +732,7 @@ static void bufSizeTest(void)
 
   TRY_TJ(handle, tj3Set(handle, TJPARAM_NOREALLOC, !alloc));
   if (lossless) {
+    TRY_TJ(handle, tj3Set(handle, TJPARAM_PRECISION, precision));
     TRY_TJ(handle, tj3Set(handle, TJPARAM_LOSSLESS, lossless));
     TRY_TJ(handle, tj3Set(handle, TJPARAM_LOSSLESSPSV,
                           ((psv++ - 1) % 7) + 1));
@@ -764,10 +766,10 @@ static void bufSizeTest(void)
           TRY_TJ(handle, tj3EncodeYUV8(handle, (unsigned char *)srcBuf, w, 0,
                                        h, TJPF_BGRX, dstBuf, yuvAlign));
         } else {
-          if (precision == 8) {
+          if (precision <= 8) {
             TRY_TJ(handle, tj3Compress8(handle, (unsigned char *)srcBuf, w, 0,
                                         h, TJPF_BGRX, &dstBuf, &dstSize));
-          } else if (precision == 12) {
+          } else if (precision <= 12) {
             TRY_TJ(handle, tj3Compress12(handle, (short *)srcBuf, w, 0, h,
                                          TJPF_BGRX, &dstBuf, &dstSize));
           } else {
@@ -798,10 +800,10 @@ static void bufSizeTest(void)
           TRY_TJ(handle, tj3EncodeYUV8(handle, (unsigned char *)srcBuf, h, 0,
                                        w, TJPF_BGRX, dstBuf, yuvAlign));
         } else {
-          if (precision == 8) {
+          if (precision <= 8) {
             TRY_TJ(handle, tj3Compress8(handle, (unsigned char *)srcBuf, h, 0,
                                         w, TJPF_BGRX, &dstBuf, &dstSize));
-          } else if (precision == 12) {
+          } else if (precision <= 12) {
             TRY_TJ(handle, tj3Compress12(handle, (short *)srcBuf, h, 0, w,
                                          TJPF_BGRX, &dstBuf, &dstSize));
           } else {
@@ -952,39 +954,49 @@ static int doBmpTest(const char *ext, int width, int align, int height, int pf,
     loadHeight = 0, retval = 0, pixelFormat = pf;
   void *buf = NULL;
   char *md5ref;
+  char *colorPPMRefs[17] = {
+    "", "", "0bad09d9ef38eda566848fb7c0b7fd0a",
+    "7ef2c87261a8bd6838303b541563cf27", "28a37cf9636ff6bb9ed6b206bdac60db",
+    "723307791d42e0b5f9e91625c7636086", "d729c4bcd3addc14abc16b656c6bbc98",
+    "5d7636eedae3cf579b6de13078227548", "c0c9f772b464d1896326883a5c79c545",
+    "fcf6490e0445569427f1d95baf5f8fcb", "5cbc3b0ccba23f5781d950a72e0ccc83",
+    "0d4e26d6d16d7bfee380f6feb10f7e53", "2ff5299287017502832c99718450c90a",
+    "44ae6cd70c798ea583ab0c8c03621092", "697b2fe03892bc9a75396ad3e73d9203",
+    "599732f973eb7c0849a888e783bbe27e", "623f54661b928d170bd2324bc3620565"
+  };
+  char *grayPPMRefs[17] = {
+    "", "", "7565be35a2ce909cae016fa282af8efa",
+    "e86b9ea57f7d53f6b5497653740992b5", "8924d4d81fe0220c684719294f93407a",
+    "e2e69ba70efcfae317528c91651c7ae2", "e6154aafc1eb9e4333d68ce7ad9df051",
+    "3d7fe831d6fbe55d3fa12f52059c15d3", "112c682e82ce5de1cca089e20d60000b",
+    "05a7ce86c649dda86d6fed185ab78a67", "0b723c0bc087592816523fbc906b7c3a",
+    "5da422b1ddfd44c7659094d42ba5580c", "0d1895c7e6f2b2c9af6e821a655c239c",
+    "00fc2803bca103ff75785ea0dca992aa", "d8c91fac522c16b029e514d331a22bc4",
+    "e50cff0b3562ed7e64dbfc093440e333", "64f3320b226ea37fb58080713b4df1b2"
+  };
 
   if ((handle = tj3Init(TJINIT_TRANSFORM)) == NULL)
     THROW_TJ(NULL);
   TRY_TJ(handle, tj3Set(handle, TJPARAM_BOTTOMUP, bottomUp));
+  TRY_TJ(handle, tj3Set(handle, TJPARAM_PRECISION, precision));
 
-  if (pf == TJPF_GRAY) {
-    if (precision == 8)
-      md5ref = !strcasecmp(ext, "ppm") ? "112c682e82ce5de1cca089e20d60000b" :
-                                         "51976530acf75f02beddf5d21149101d";
-    else if (precision == 12)
-      md5ref = "0d1895c7e6f2b2c9af6e821a655c239c";
-    else
-      md5ref = "64f3320b226ea37fb58080713b4df1b2";
-  } else {
-    if (precision == 8)
-      md5ref = !strcasecmp(ext, "ppm") ? "c0c9f772b464d1896326883a5c79c545" :
-                                         "6d659071b9bfcdee2def22cb58ddadca";
-    else if (precision == 12)
-      md5ref = "2ff5299287017502832c99718450c90a";
-    else
-      md5ref = "623f54661b928d170bd2324bc3620565";
-  }
+  if (precision == 8 && !strcasecmp(ext, "bmp"))
+    md5ref = (pf == TJPF_GRAY ? "51976530acf75f02beddf5d21149101d" :
+                                "6d659071b9bfcdee2def22cb58ddadca");
+  else
+    md5ref = (pf == TJPF_GRAY ? grayPPMRefs[precision] :
+                                colorPPMRefs[precision]);
 
   if ((buf = tj3Alloc(pitch * height * sampleSize)) == NULL)
     THROW("Could not allocate memory");
   initBitmap(buf, width, pitch, height, pf, bottomUp);
 
-  SNPRINTF(filename, 80, "test_bmp%d_%s_%d_%s_%d.%s", precision, pixFormatStr[pf],
-           align, bottomUp ? "bu" : "td", getpid(), ext);
-  if (precision == 8) {
+  SNPRINTF(filename, 80, "test_bmp%d_%s_%d_%s_%d.%s", precision,
+           pixFormatStr[pf], align, bottomUp ? "bu" : "td", getpid(), ext);
+  if (precision <= 8) {
     TRY_TJ(handle, tj3SaveImage8(handle, filename, (unsigned char *)buf, width,
                                  pitch, height, pf));
-  } else if (precision == 12) {
+  } else if (precision <= 12) {
     TRY_TJ(handle, tj3SaveImage12(handle, filename, (short *)buf, width, pitch,
                                   height, pf));
   } else {
@@ -1000,11 +1012,11 @@ static int doBmpTest(const char *ext, int width, int align, int height, int pf,
     THROW_MD5(filename, md5sum, md5ref);
 
   tj3Free(buf);  buf = NULL;
-  if (precision == 8) {
+  if (precision <= 8) {
     if ((buf = tj3LoadImage8(handle, filename, &loadWidth, align, &loadHeight,
                              &pf)) == NULL)
       THROW_TJ(handle);
-  } else if (precision == 12) {
+  } else if (precision <= 12) {
     if ((buf = tj3LoadImage12(handle, filename, &loadWidth, align, &loadHeight,
                               &pf)) == NULL)
       THROW_TJ(handle);
@@ -1024,11 +1036,11 @@ static int doBmpTest(const char *ext, int width, int align, int height, int pf,
   if (pf == TJPF_GRAY) {
     tj3Free(buf);  buf = NULL;
     pf = TJPF_XBGR;
-    if (precision == 8) {
+    if (precision <= 8) {
       if ((buf = tj3LoadImage8(handle, filename, &loadWidth, align,
                                &loadHeight, &pf)) == NULL)
         THROW_TJ(handle);
-    } else if (precision == 12) {
+    } else if (precision <= 12) {
       if ((buf = tj3LoadImage12(handle, filename, &loadWidth, align,
                                 &loadHeight, &pf)) == NULL)
         THROW_TJ(handle);
@@ -1045,11 +1057,11 @@ static int doBmpTest(const char *ext, int width, int align, int height, int pf,
 
     tj3Free(buf);  buf = NULL;
     pf = TJPF_CMYK;
-    if (precision == 8) {
+    if (precision <= 8) {
       if ((buf = tj3LoadImage8(handle, filename, &loadWidth, align,
                                &loadHeight, &pf)) == NULL)
         THROW_TJ(handle);
-    } else if (precision == 12) {
+    } else if (precision <= 12) {
       if ((buf = tj3LoadImage12(handle, filename, &loadWidth, align,
                                 &loadHeight, &pf)) == NULL)
         THROW_TJ(handle);
@@ -1069,11 +1081,11 @@ static int doBmpTest(const char *ext, int width, int align, int height, int pf,
   tj3Free(buf);  buf = NULL;
   pf = pixelFormat;
   pixelFormat = TJPF_UNKNOWN;
-  if (precision == 8) {
+  if (precision <= 8) {
     if ((buf = tj3LoadImage8(handle, filename, &loadWidth, align, &loadHeight,
                              &pixelFormat)) == NULL)
       THROW_TJ(handle);
-  } else if (precision == 12) {
+  } else if (precision <= 12) {
     if ((buf = tj3LoadImage12(handle, filename, &loadWidth, align, &loadHeight,
                               &pixelFormat)) == NULL)
       THROW_TJ(handle);
@@ -1158,10 +1170,10 @@ int main(int argc, char *argv[])
       else if (!strcasecmp(argv[i], "-precision") && i < argc - 1) {
         int tempi = atoi(argv[++i]);
 
-        if (tempi != 8 && tempi != 12 && tempi != 16)
+        if (tempi < 2 || tempi > 16)
           usage(argv[0]);
         precision = tempi;
-        if (precision == 16) lossless = 1;
+        if (precision != 8 && precision != 12) lossless = 1;
       } else
         usage(argv[0]);
     }
@@ -1172,7 +1184,7 @@ int main(int argc, char *argv[])
     THROW("YUV encoding/decoding requires 8-bit data precision.");
 
   printf("Testing %d-bit precision\n", precision);
-  sampleSize = (precision == 8 ? sizeof(unsigned char) : sizeof(short));
+  sampleSize = (precision <= 8 ? sizeof(unsigned char) : sizeof(short));
   maxSample = (1 << precision) - 1;
   tolerance = (lossless ? 0 : (precision > 8 ? 2 : 1));
   redToY = (19595U * maxSample) >> 16;

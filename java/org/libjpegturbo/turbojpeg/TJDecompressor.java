@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2011-2015, 2018, 2022-2023 D. R. Commander.
+ * Copyright (C)2011-2015, 2018, 2022-2024 D. R. Commander.
  *                                         All Rights Reserved.
  * Copyright (C)2015 Viktor Szathmáry.  All Rights Reserved.
  *
@@ -376,10 +376,10 @@ public class TJDecompressor implements Closeable {
   }
 
   /**
-   * Decompress the 8-bit-per-sample JPEG source image or decode the planar YUV
-   * source image associated with this decompressor instance and output an
-   * 8-bit-per-sample packed-pixel grayscale, RGB, or CMYK image to the given
-   * destination buffer.
+   * Decompress the JPEG source image with 2 to 8 bits per sample, or decode
+   * the 8-bit-per-sample planar YUV source image, associated with this
+   * decompressor instance and output a packed-pixel grayscale, RGB, or CMYK
+   * image with the same data precision to the given destination buffer.
    * <p>
    * NOTE: The destination image is fully recoverable if this method throws a
    * non-fatal {@link TJException} (unless {@link TJ#PARAM_STOPONWARNING} is
@@ -464,9 +464,10 @@ public class TJDecompressor implements Closeable {
   }
 
   /**
-   * Decompress the 8-bit-per-sample JPEG source image or decode the planar YUV
-   * source image associated with this decompressor instance and return a
-   * buffer containing an 8-bit-per-sample packed-pixel decompressed image.
+   * Decompress the JPEG source image with 2 to 8 bits per sample, or decode
+   * the 8-bit-per-sample planar YUV source image, associated with this
+   * decompressor instance and return a buffer containing a packed-pixel
+   * decompressed image with the same data precision.
    *
    * @param pitch see
    * {@link #decompress8(byte[], int, int, int, int)} for description
@@ -474,8 +475,8 @@ public class TJDecompressor implements Closeable {
    * @param pixelFormat pixel format of the decompressed image (one of
    * {@link TJ#PF_RGB TJ.PF_*})
    *
-   * @return a buffer containing an 8-bit-per-sample packed-pixel decompressed
-   * image.
+   * @return a buffer containing a packed-pixel decompressed image with 2 to 8
+   * bits of data precision per sample.
    */
   public byte[] decompress8(int pitch, int pixelFormat) throws TJException {
     if (pitch < 0 || pixelFormat < 0 || pixelFormat >= TJ.NUMPF)
@@ -512,9 +513,10 @@ public class TJDecompressor implements Closeable {
   }
 
   /**
-   * Decompress the 12-bit-per-sample JPEG source image associated with this
-   * decompressor instance and output a 12-bit-per-sample packed-pixel
-   * grayscale, RGB, or CMYK image to the given destination buffer.
+   * Decompress the JPEG source image with 9 to 12 bits per sample associated
+   * with this decompressor instance and output a packed-pixel grayscale, RGB,
+   * or CMYK image with the same data precision to the given destination
+   * buffer.
    * <p>
    * NOTE: The destination image is fully recoverable if this method throws a
    * non-fatal {@link TJException} (unless {@link TJ#PARAM_STOPONWARNING} is
@@ -572,9 +574,9 @@ public class TJDecompressor implements Closeable {
   }
 
   /**
-   * Decompress the 12-bit-per-sample JPEG source image associated with this
-   * decompressor instance and return a buffer containing a 12-bit-per-sample
-   * packed-pixel decompressed image.
+   * Decompress the JPEG source image with 9 to 12 bits per sample associated
+   * with this decompressor instance and return a buffer containing a
+   * packed-pixel decompressed image with the same data precision.
    *
    * @param pitch see
    * {@link #decompress12(short[], int, int, int, int)} for description
@@ -582,8 +584,8 @@ public class TJDecompressor implements Closeable {
    * @param pixelFormat pixel format of the decompressed image (one of
    * {@link TJ#PF_RGB TJ.PF_*})
    *
-   * @return a buffer containing a 12-bit-per-sample packed-pixel decompressed
-   * image.
+   * @return a buffer containing a packed-pixel decompressed image with 9 to 12
+   * bits of data precision per sample.
    */
   public short[] decompress12(int pitch, int pixelFormat) throws TJException {
     if (pitch < 0 || pixelFormat < 0 || pixelFormat >= TJ.NUMPF)
@@ -599,9 +601,9 @@ public class TJDecompressor implements Closeable {
   }
 
   /**
-   * Decompress the 16-bit-per-sample lossless JPEG source image associated
-   * with this decompressor instance and output a 16-bit-per-sample
-   * packed-pixel grayscale, RGB, or CMYK image to the given destination
+   * Decompress the JPEG source image with 13 to 16 bits per sample associated
+   * with this decompressor instance and output a packed-pixel grayscale, RGB,
+   * or CMYK image with the same data precision to the given destination
    * buffer.
    * <p>
    * NOTE: The destination image is fully recoverable if this method throws a
@@ -645,9 +647,9 @@ public class TJDecompressor implements Closeable {
   }
 
   /**
-   * Decompress the 16-bit-per-sample JPEG source image associated with this
-   * decompressor instance and return a buffer containing a 16-bit-per-sample
-   * packed-pixel decompressed image.
+   * Decompress the JPEG source image with 13 to 16 bits per sample associated
+   * with this decompressor instance and return a buffer containing a
+   * packed-pixel decompressed image with the same data precision.
    *
    * @param pitch see
    * {@link #decompress16(short[], int, int, int, int)} for description
@@ -655,8 +657,8 @@ public class TJDecompressor implements Closeable {
    * @param pixelFormat pixel format of the decompressed image (one of
    * {@link TJ#PF_RGB TJ.PF_*})
    *
-   * @return a buffer containing a 16-bit-per-sample packed-pixel decompressed
-   * image.
+   * @return a buffer containing a packed-pixel decompressed image with 13 to
+   * 16 bits of data precision per sample.
    */
   public short[] decompress16(int pitch, int pixelFormat) throws TJException {
     if (pitch < 0 || pixelFormat < 0 || pixelFormat >= TJ.NUMPF)

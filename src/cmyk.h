@@ -1,7 +1,7 @@
 /*
  * cmyk.h
  *
- * Copyright (C) 2017-2018, 2022, D. R. Commander.
+ * Copyright (C) 2017-2018, 2022, 2024, D. R. Commander.
  * For conditions of distribution and use, see the accompanying README.ijg
  * file.
  *
@@ -24,12 +24,12 @@
 
 INLINE
 LOCAL(void)
-rgb_to_cmyk(_JSAMPLE r, _JSAMPLE g, _JSAMPLE b,
+rgb_to_cmyk(int maxval, _JSAMPLE r, _JSAMPLE g, _JSAMPLE b,
             _JSAMPLE *c, _JSAMPLE *m, _JSAMPLE *y, _JSAMPLE *k)
 {
-  double ctmp = 1.0 - ((double)r / (double)_MAXJSAMPLE);
-  double mtmp = 1.0 - ((double)g / (double)_MAXJSAMPLE);
-  double ytmp = 1.0 - ((double)b / (double)_MAXJSAMPLE);
+  double ctmp = 1.0 - ((double)r / (double)maxval);
+  double mtmp = 1.0 - ((double)g / (double)maxval);
+  double ytmp = 1.0 - ((double)b / (double)maxval);
   double ktmp = MIN(MIN(ctmp, mtmp), ytmp);
 
   if (ktmp == 1.0) ctmp = mtmp = ytmp = 0.0;
@@ -38,10 +38,10 @@ rgb_to_cmyk(_JSAMPLE r, _JSAMPLE g, _JSAMPLE b,
     mtmp = (mtmp - ktmp) / (1.0 - ktmp);
     ytmp = (ytmp - ktmp) / (1.0 - ktmp);
   }
-  *c = (_JSAMPLE)((double)_MAXJSAMPLE - ctmp * (double)_MAXJSAMPLE + 0.5);
-  *m = (_JSAMPLE)((double)_MAXJSAMPLE - mtmp * (double)_MAXJSAMPLE + 0.5);
-  *y = (_JSAMPLE)((double)_MAXJSAMPLE - ytmp * (double)_MAXJSAMPLE + 0.5);
-  *k = (_JSAMPLE)((double)_MAXJSAMPLE - ktmp * (double)_MAXJSAMPLE + 0.5);
+  *c = (_JSAMPLE)((double)maxval - ctmp * (double)maxval + 0.5);
+  *m = (_JSAMPLE)((double)maxval - mtmp * (double)maxval + 0.5);
+  *y = (_JSAMPLE)((double)maxval - ytmp * (double)maxval + 0.5);
+  *k = (_JSAMPLE)((double)maxval - ktmp * (double)maxval + 0.5);
 }
 
 
@@ -49,12 +49,12 @@ rgb_to_cmyk(_JSAMPLE r, _JSAMPLE g, _JSAMPLE b,
 
 INLINE
 LOCAL(void)
-cmyk_to_rgb(_JSAMPLE c, _JSAMPLE m, _JSAMPLE y, _JSAMPLE k,
+cmyk_to_rgb(int maxval, _JSAMPLE c, _JSAMPLE m, _JSAMPLE y, _JSAMPLE k,
             _JSAMPLE *r, _JSAMPLE *g, _JSAMPLE *b)
 {
-  *r = (_JSAMPLE)((double)c * (double)k / (double)_MAXJSAMPLE + 0.5);
-  *g = (_JSAMPLE)((double)m * (double)k / (double)_MAXJSAMPLE + 0.5);
-  *b = (_JSAMPLE)((double)y * (double)k / (double)_MAXJSAMPLE + 0.5);
+  *r = (_JSAMPLE)((double)c * (double)k / (double)maxval + 0.5);
+  *g = (_JSAMPLE)((double)m * (double)k / (double)maxval + 0.5);
+  *b = (_JSAMPLE)((double)y * (double)k / (double)maxval + 0.5);
 }
 
 

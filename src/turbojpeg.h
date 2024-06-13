@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2009-2015, 2017, 2020-2023 D. R. Commander.
+ * Copyright (C)2009-2015, 2017, 2020-2024 D. R. Commander.
  *                                         All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -257,8 +257,9 @@ enum TJPF {
   TJPF_XRGB,
   /**
    * Grayscale pixel format.  Each 1-sample pixel represents a luminance
-   * (brightness) level from 0 to the maximum sample value (255 for 8-bit
-   * samples, 4095 for 12-bit samples, and 65535 for 16-bit samples.)
+   * (brightness) level from 0 to the maximum sample value (which is, for
+   * instance, 255 for 8-bit samples or 4095 for 12-bit samples or 65535 for
+   * 16-bit samples.)
    */
   TJPF_GRAY,
   /**
@@ -489,15 +490,25 @@ enum TJPARAM {
    */
   TJPARAM_JPEGHEIGHT,
   /**
-   * JPEG data precision (bits per sample) [decompression only, read-only]
+   * Data precision (bits per sample)
    *
-   * The JPEG image uses the specified number of bits per sample.
+   * The JPEG image uses (decompression) or will use (lossless compression) the
+   * specified number of bits per sample.  This parameter also specifies the
+   * target data precision when loading a PBMPLUS file with #tj3LoadImage8(),
+   * #tj3LoadImage12(), or #tj3LoadImage16() and the source data precision when
+   * saving a PBMPLUS file with #tj3SaveImage8(), #tj3SaveImage12(), or
+   * #tj3SaveImage16().
+   *
+   * The data precision is the number of bits in the maximum sample value,
+   * which may not be the same as the width of the data type used to store the
+   * sample.
    *
    * **Value**
-   * - `8`, `12`, or `16`
+   * - `8` or `12` for lossy JPEG images; `2` to `16` for lossless JPEG and
+   * PBMPLUS images
    *
-   * 12-bit data precision implies #TJPARAM_OPTIMIZE unless #TJPARAM_ARITHMETIC
-   * is set.
+   * 12-bit JPEG data precision implies #TJPARAM_OPTIMIZE unless
+   * #TJPARAM_ARITHMETIC is set.
    */
   TJPARAM_PRECISION,
   /**
@@ -1116,8 +1127,8 @@ DLLEXPORT int tj3Get(tjhandle handle, int param);
 
 
 /**
- * Compress an 8-bit-per-sample packed-pixel RGB, grayscale, or CMYK image into
- * an 8-bit-per-sample JPEG image.
+ * Compress a packed-pixel RGB, grayscale, or CMYK image with 2 to 8 bits of
+ * data precision per sample into a JPEG image with the same data precision.
  *
  * @param handle handle to a TurboJPEG instance that has been initialized for
  * compression
@@ -1125,7 +1136,10 @@ DLLEXPORT int tj3Get(tjhandle handle, int param);
  * @param srcBuf pointer to a buffer containing a packed-pixel RGB, grayscale,
  * or CMYK source image to be compressed.  This buffer should normally be
  * `pitch * height` samples in size.  However, you can also use this parameter
- * to compress from a specific region of a larger buffer.
+ * to compress from a specific region of a larger buffer.  The data precision
+ * of the source image (from 2 to 8 bits per sample) can be specified using
+ * #TJPARAM_PRECISION and defaults to 8 if #TJPARAM_PRECISION is unset or out
+ * of range.
  *
  * @param width width (in pixels) of the source image
  *
@@ -1172,20 +1186,119 @@ DLLEXPORT int tj3Compress8(tjhandle handle, const unsigned char *srcBuf,
                            unsigned char **jpegBuf, size_t *jpegSize);
 
 /**
- * Compress a 12-bit-per-sample packed-pixel RGB, grayscale, or CMYK image into
- * a 12-bit-per-sample JPEG image.
+ * Compress a packed-pixel RGB, grayscale, or CMYK image with 9 to 12 bits of
+ * data precision per sample into a JPEG image with the same data precision.
  *
- * \details \copydetails tj3Compress8()
+ * @param handle handle to a TurboJPEG instance that has been initialized for
+ * compression
+ *
+ * @param srcBuf pointer to a buffer containing a packed-pixel RGB, grayscale,
+ * or CMYK source image to be compressed.  This buffer should normally be
+ * `pitch * height` samples in size.  However, you can also use this parameter
+ * to compress from a specific region of a larger buffer.  The data precision
+ * of the source image (from 9 to 12 bits per sample) can be specified using
+ * #TJPARAM_PRECISION and defaults to 12 if #TJPARAM_PRECISION is unset or out
+ * of range.
+ *
+ * @param width width (in pixels) of the source image
+ *
+ * @param pitch samples per row in the source image.  Normally this should be
+ * <tt>width * #tjPixelSize[pixelFormat]</tt>, if the image is unpadded.
+ * (Setting this parameter to 0 is the equivalent of setting it to
+ * <tt>width * #tjPixelSize[pixelFormat]</tt>.)  However, you can also use this
+ * parameter to specify the row alignment/padding of the source image, to skip
+ * rows, or to compress from a specific region of a larger buffer.
+ *
+ * @param height height (in pixels) of the source image
+ *
+ * @param pixelFormat pixel format of the source image (see @ref TJPF
+ * "Pixel formats".)
+ *
+ * @param jpegBuf address of a pointer to a byte buffer that will receive the
+ * JPEG image.  TurboJPEG has the ability to reallocate the JPEG buffer to
+ * accommodate the size of the JPEG image.  Thus, you can choose to:
+ * -# pre-allocate the JPEG buffer with an arbitrary size using #tj3Alloc() and
+ * let TurboJPEG grow the buffer as needed,
+ * -# set `*jpegBuf` to NULL to tell TurboJPEG to allocate the buffer for you,
+ * or
+ * -# pre-allocate the buffer to a "worst case" size determined by calling
+ * #tj3JPEGBufSize().  This should ensure that the buffer never has to be
+ * re-allocated.  (Setting #TJPARAM_NOREALLOC guarantees that it won't be.)
+ * .
+ * If you choose option 1, then `*jpegSize` should be set to the size of your
+ * pre-allocated buffer.  In any case, unless you have set #TJPARAM_NOREALLOC,
+ * you should always check `*jpegBuf` upon return from this function, as it may
+ * have changed.
+ *
+ * @param jpegSize pointer to a size_t variable that holds the size of the JPEG
+ * buffer.  If `*jpegBuf` points to a pre-allocated buffer, then `*jpegSize`
+ * should be set to the size of the buffer.  Upon return, `*jpegSize` will
+ * contain the size of the JPEG image (in bytes.)  If `*jpegBuf` points to a
+ * JPEG buffer that is being reused from a previous call to one of the JPEG
+ * compression functions, then `*jpegSize` is ignored.
+ *
+ * @return 0 if successful, or -1 if an error occurred (see #tj3GetErrorStr()
+ * and #tj3GetErrorCode().)
  */
 DLLEXPORT int tj3Compress12(tjhandle handle, const short *srcBuf, int width,
                             int pitch, int height, int pixelFormat,
                             unsigned char **jpegBuf, size_t *jpegSize);
 
 /**
- * Compress a 16-bit-per-sample packed-pixel RGB, grayscale, or CMYK image into
- * a 16-bit-per-sample lossless JPEG image.
+ * Compress a packed-pixel RGB, grayscale, or CMYK image with 13 to 16 bits of
+ * data precision per sample into a lossless JPEG image with the same data
+ * precision.
  *
- * \details \copydetails tj3Compress8()
+ * @param handle handle to a TurboJPEG instance that has been initialized for
+ * compression
+ *
+ * @param srcBuf pointer to a buffer containing a packed-pixel RGB, grayscale,
+ * or CMYK source image to be compressed.  This buffer should normally be
+ * `pitch * height` samples in size.  However, you can also use this parameter
+ * to compress from a specific region of a larger buffer.  The data precision
+ * of the source image (from 13 to 16 bits per sample) can be specified using
+ * #TJPARAM_PRECISION and defaults to 16 if #TJPARAM_PRECISION is unset or out
+ * of range.
+ *
+ * @param width width (in pixels) of the source image
+ *
+ * @param pitch samples per row in the source image.  Normally this should be
+ * <tt>width * #tjPixelSize[pixelFormat]</tt>, if the image is unpadded.
+ * (Setting this parameter to 0 is the equivalent of setting it to
+ * <tt>width * #tjPixelSize[pixelFormat]</tt>.)  However, you can also use this
+ * parameter to specify the row alignment/padding of the source image, to skip
+ * rows, or to compress from a specific region of a larger buffer.
+ *
+ * @param height height (in pixels) of the source image
+ *
+ * @param pixelFormat pixel format of the source image (see @ref TJPF
+ * "Pixel formats".)
+ *
+ * @param jpegBuf address of a pointer to a byte buffer that will receive the
+ * JPEG image.  TurboJPEG has the ability to reallocate the JPEG buffer to
+ * accommodate the size of the JPEG image.  Thus, you can choose to:
+ * -# pre-allocate the JPEG buffer with an arbitrary size using #tj3Alloc() and
+ * let TurboJPEG grow the buffer as needed,
+ * -# set `*jpegBuf` to NULL to tell TurboJPEG to allocate the buffer for you,
+ * or
+ * -# pre-allocate the buffer to a "worst case" size determined by calling
+ * #tj3JPEGBufSize().  This should ensure that the buffer never has to be
+ * re-allocated.  (Setting #TJPARAM_NOREALLOC guarantees that it won't be.)
+ * .
+ * If you choose option 1, then `*jpegSize` should be set to the size of your
+ * pre-allocated buffer.  In any case, unless you have set #TJPARAM_NOREALLOC,
+ * you should always check `*jpegBuf` upon return from this function, as it may
+ * have changed.
+ *
+ * @param jpegSize pointer to a size_t variable that holds the size of the JPEG
+ * buffer.  If `*jpegBuf` points to a pre-allocated buffer, then `*jpegSize`
+ * should be set to the size of the buffer.  Upon return, `*jpegSize` will
+ * contain the size of the JPEG image (in bytes.)  If `*jpegBuf` points to a
+ * JPEG buffer that is being reused from a previous call to one of the JPEG
+ * compression functions, then `*jpegSize` is ignored.
+ *
+ * @return 0 if successful, or -1 if an error occurred (see #tj3GetErrorStr()
+ * and #tj3GetErrorCode().)
  */
 DLLEXPORT int tj3Compress16(tjhandle handle, const unsigned short *srcBuf,
                             int width, int pitch, int height, int pixelFormat,
@@ -1620,9 +1733,10 @@ DLLEXPORT int tj3SetCroppingRegion(tjhandle handle, tjregion croppingRegion);
 
 
 /**
- * Decompress an 8-bit-per-sample JPEG image into an 8-bit-per-sample
- * packed-pixel RGB, grayscale, or CMYK image.  The @ref TJPARAM "parameters"
- * that describe the JPEG image will be set when this function returns.
+ * Decompress a JPEG image with 2 to 8 bits of data precision per sample into a
+ * packed-pixel RGB, grayscale, or CMYK image with the same data precision.
+ * The @ref TJPARAM "parameters" that describe the JPEG image will be set when
+ * this function returns.
  *
  * @param handle handle to a TurboJPEG instance that has been initialized for
  * decompression
@@ -1666,8 +1780,8 @@ DLLEXPORT int tj3Decompress8(tjhandle handle, const unsigned char *jpegBuf,
                              int pixelFormat);
 
 /**
- * Decompress a 12-bit-per-sample JPEG image into a 12-bit-per-sample
- * packed-pixel RGB, grayscale, or CMYK image.
+ * Decompress a JPEG image with 9 to 12 bits of data precision per sample into
+ * a packed-pixel RGB, grayscale, or CMYK image with the same data precision.
  *
  * \details \copydetails tj3Decompress8()
  */
@@ -1676,8 +1790,9 @@ DLLEXPORT int tj3Decompress12(tjhandle handle, const unsigned char *jpegBuf,
                               int pixelFormat);
 
 /**
- * Decompress a 16-bit-per-sample lossless JPEG image into a 16-bit-per-sample
- * packed-pixel RGB, grayscale, or CMYK image.
+ * Decompress a lossless JPEG image with 13 to 16 bits of data precision per
+ * sample into a packed-pixel RGB, grayscale, or CMYK image with the same
+ * data precision.
  *
  * \details \copydetails tj3Decompress8()
  */
@@ -1962,15 +2077,18 @@ DLLEXPORT void *tj3Alloc(size_t bytes);
 
 
 /**
- * Load an 8-bit-per-sample packed-pixel image from disk into memory.
+ * Load a packed-pixel image with 2 to 8 bits of data precision per sample from
+ * disk into memory.
  *
  * @param handle handle to a TurboJPEG instance
  *
  * @param filename name of a file containing a packed-pixel image in Windows
  * BMP or PBMPLUS (PPM/PGM) format.  Windows BMP files require 8-bit-per-sample
- * data precision.  If the data precision of the PBMPLUS file does not match
- * the target data precision, then upconverting or downconverting will be
- * performed.
+ * data precision.  When loading a PBMPLUS file, the target data precision
+ * (from 2 to 8 bits per sample) can be specified using #TJPARAM_PRECISION and
+ * defaults to 8 if #TJPARAM_PRECISION is unset or out of range.  If the data
+ * precision of the PBMPLUS file does not match the target data precision, then
+ * upconverting or downconverting will be performed.
  *
  * @param width pointer to an integer variable that will receive the width (in
  * pixels) of the packed-pixel image
@@ -2011,18 +2129,100 @@ DLLEXPORT unsigned char *tj3LoadImage8(tjhandle handle, const char *filename,
                                        int *pixelFormat);
 
 /**
- * Load a 12-bit-per-sample packed-pixel image from disk into memory.
+ * Load a packed-pixel image with 9 to 12 bits of data precision per sample
+ * from disk into memory.
  *
- * \details \copydetails tj3LoadImage8()
+ * @param handle handle to a TurboJPEG instance
+ *
+ * @param filename name of a file containing a packed-pixel image in PBMPLUS
+ * (PPM/PGM) format.  The target data precision (from 9 to 12 bits per sample)
+ * can be specified using #TJPARAM_PRECISION and defaults to 12 if
+ * #TJPARAM_PRECISION is unset or out of range.  If the data precision of the
+ * PBMPLUS file does not match the target data precision, then upconverting or
+ * downconverting will be performed.
+ *
+ * @param width pointer to an integer variable that will receive the width (in
+ * pixels) of the packed-pixel image
+ *
+ * @param align row alignment (in samples) of the packed-pixel buffer to be
+ * returned (must be a power of 2.)  Setting this parameter to n will cause all
+ * rows in the buffer to be padded to the nearest multiple of n samples
+ * (1 = unpadded.)
+ *
+ * @param height pointer to an integer variable that will receive the height
+ * (in pixels) of the packed-pixel image
+ *
+ * @param pixelFormat pointer to an integer variable that specifies or will
+ * receive the pixel format of the packed-pixel buffer.  The behavior of this
+ * function will vary depending on the value of `*pixelFormat` passed to the
+ * function:
+ * - @ref TJPF_UNKNOWN : The packed-pixel buffer returned by this function will
+ * use the most optimal pixel format for the file type, and `*pixelFormat` will
+ * contain the ID of that pixel format upon successful return from this
+ * function.
+ * - @ref TJPF_GRAY : Only PGM files can be loaded.
+ * - @ref TJPF_CMYK : The RGB or grayscale pixels stored in the file will be
+ * converted using a quick & dirty algorithm that is suitable only for testing
+ * purposes.  (Proper conversion between CMYK and other formats requires a
+ * color management system.)
+ * - Other @ref TJPF "pixel formats" : The packed-pixel buffer will use the
+ * specified pixel format, and pixel format conversion will be performed if
+ * necessary.
+ *
+ * @return a pointer to a newly-allocated buffer containing the packed-pixel
+ * image, converted to the chosen pixel format and with the chosen row
+ * alignment, or NULL if an error occurred (see #tj3GetErrorStr().)  This
+ * buffer should be freed using #tj3Free().
  */
 DLLEXPORT short *tj3LoadImage12(tjhandle handle, const char *filename,
                                 int *width, int align, int *height,
                                 int *pixelFormat);
 
 /**
- * Load a 16-bit-per-sample packed-pixel image from disk into memory.
+ * Load a packed-pixel image with 13 to 16 bits of data precision per sample
+ * from disk into memory.
  *
- * \details \copydetails tj3LoadImage8()
+ * @param handle handle to a TurboJPEG instance
+ *
+ * @param filename name of a file containing a packed-pixel image in PBMPLUS
+ * (PPM/PGM) format.  The target data precision (from 13 to 16 bits per sample)
+ * can be specified using #TJPARAM_PRECISION and defaults to 16 if
+ * #TJPARAM_PRECISION is unset or out of range.  If the data precision of the
+ * PBMPLUS file does not match the target data precision, then upconverting or
+ * downconverting will be performed.
+ *
+ * @param width pointer to an integer variable that will receive the width (in
+ * pixels) of the packed-pixel image
+ *
+ * @param align row alignment (in samples) of the packed-pixel buffer to be
+ * returned (must be a power of 2.)  Setting this parameter to n will cause all
+ * rows in the buffer to be padded to the nearest multiple of n samples
+ * (1 = unpadded.)
+ *
+ * @param height pointer to an integer variable that will receive the height
+ * (in pixels) of the packed-pixel image
+ *
+ * @param pixelFormat pointer to an integer variable that specifies or will
+ * receive the pixel format of the packed-pixel buffer.  The behavior of this
+ * function will vary depending on the value of `*pixelFormat` passed to the
+ * function:
+ * - @ref TJPF_UNKNOWN : The packed-pixel buffer returned by this function will
+ * use the most optimal pixel format for the file type, and `*pixelFormat` will
+ * contain the ID of that pixel format upon successful return from this
+ * function.
+ * - @ref TJPF_GRAY : Only PGM files can be loaded.
+ * - @ref TJPF_CMYK : The RGB or grayscale pixels stored in the file will be
+ * converted using a quick & dirty algorithm that is suitable only for testing
+ * purposes.  (Proper conversion between CMYK and other formats requires a
+ * color management system.)
+ * - Other @ref TJPF "pixel formats" : The packed-pixel buffer will use the
+ * specified pixel format, and pixel format conversion will be performed if
+ * necessary.
+ *
+ * @return a pointer to a newly-allocated buffer containing the packed-pixel
+ * image, converted to the chosen pixel format and with the chosen row
+ * alignment, or NULL if an error occurred (see #tj3GetErrorStr().)  This
+ * buffer should be freed using #tj3Free().
  */
 DLLEXPORT unsigned short *tj3LoadImage16(tjhandle handle, const char *filename,
                                          int *width, int align, int *height,
@@ -2030,14 +2230,17 @@ DLLEXPORT unsigned short *tj3LoadImage16(tjhandle handle, const char *filename,
 
 
 /**
- * Save an 8-bit-per-sample packed-pixel image from memory to disk.
+ * Save a packed-pixel image with 2 to 8 bits of data precision per sample from
+ * memory to disk.
  *
  * @param handle handle to a TurboJPEG instance
  *
  * @param filename name of a file to which to save the packed-pixel image.  The
  * image will be stored in Windows BMP or PBMPLUS (PPM/PGM) format, depending
  * on the file extension.  Windows BMP files require 8-bit-per-sample data
- * precision.
+ * precision.  When saving a PBMPLUS file, the source data precision (from 2 to
+ * 8 bits per sample) can be specified using #TJPARAM_PRECISION and defaults to
+ * 8 if #TJPARAM_PRECISION is unset or out of range.
  *
  * @param buffer pointer to a buffer containing a packed-pixel RGB, grayscale,
  * or CMYK image to be saved
@@ -2066,18 +2269,72 @@ DLLEXPORT int tj3SaveImage8(tjhandle handle, const char *filename,
                             int height, int pixelFormat);
 
 /**
- * Save a 12-bit-per-sample packed-pixel image from memory to disk.
+ * Save a packed-pixel image with 9 to 12 bits of data precision per sample
+ * from memory to disk.
  *
- * \details \copydetails tj3SaveImage8()
+ * @param handle handle to a TurboJPEG instance
+ *
+ * @param filename name of a file to which to save the packed-pixel image,
+ * which will be stored in PBMPLUS (PPM/PGM) format.  The source data precision
+ * (from 9 to 12 bits per sample) can be specified using #TJPARAM_PRECISION and
+ * defaults to 12 if #TJPARAM_PRECISION is unset or out of range.
+ *
+ * @param buffer pointer to a buffer containing a packed-pixel RGB, grayscale,
+ * or CMYK image to be saved
+ *
+ * @param width width (in pixels) of the packed-pixel image
+ *
+ * @param pitch samples per row in the packed-pixel image.  Setting this
+ * parameter to 0 is the equivalent of setting it to
+ * <tt>width * #tjPixelSize[pixelFormat]</tt>.
+ *
+ * @param height height (in pixels) of the packed-pixel image
+ *
+ * @param pixelFormat pixel format of the packed-pixel image (see @ref TJPF
+ * "Pixel formats".)  If this parameter is set to @ref TJPF_GRAY, then the
+ * image will be stored in PGM format.  Otherwise, the image will be stored in
+ * PPM format.  If this parameter is set to @ref TJPF_CMYK, then the CMYK
+ * pixels will be converted to RGB using a quick & dirty algorithm that is
+ * suitable only for testing purposes.  (Proper conversion between CMYK and
+ * other formats requires a color management system.)
+ *
+ * @return 0 if successful, or -1 if an error occurred (see #tj3GetErrorStr().)
  */
 DLLEXPORT int tj3SaveImage12(tjhandle handle, const char *filename,
                              const short *buffer, int width, int pitch,
                              int height, int pixelFormat);
 
 /**
- * Save a 16-bit-per-sample packed-pixel image from memory to disk.
+ * Save a packed-pixel image with 13 to 16 bits of data precision per sample
+ * from memory to disk.
  *
- * \details \copydetails tj3SaveImage8()
+ * @param handle handle to a TurboJPEG instance
+ *
+ * @param filename name of a file to which to save the packed-pixel image,
+ * which will be stored in PBMPLUS (PPM/PGM) format.  The source data precision
+ * (from 13 to 16 bits per sample) can be specified using #TJPARAM_PRECISION
+ * and defaults to 16 if #TJPARAM_PRECISION is unset or out of range.
+ *
+ * @param buffer pointer to a buffer containing a packed-pixel RGB, grayscale,
+ * or CMYK image to be saved
+ *
+ * @param width width (in pixels) of the packed-pixel image
+ *
+ * @param pitch samples per row in the packed-pixel image.  Setting this
+ * parameter to 0 is the equivalent of setting it to
+ * <tt>width * #tjPixelSize[pixelFormat]</tt>.
+ *
+ * @param height height (in pixels) of the packed-pixel image
+ *
+ * @param pixelFormat pixel format of the packed-pixel image (see @ref TJPF
+ * "Pixel formats".)  If this parameter is set to @ref TJPF_GRAY, then the
+ * image will be stored in PGM format.  Otherwise, the image will be stored in
+ * PPM format.  If this parameter is set to @ref TJPF_CMYK, then the CMYK
+ * pixels will be converted to RGB using a quick & dirty algorithm that is
+ * suitable only for testing purposes.  (Proper conversion between CMYK and
+ * other formats requires a color management system.)
+ *
+ * @return 0 if successful, or -1 if an error occurred (see #tj3GetErrorStr().)
  */
 DLLEXPORT int tj3SaveImage16(tjhandle handle, const char *filename,
                              const unsigned short *buffer, int width,

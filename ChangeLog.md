@@ -18,6 +18,18 @@ packed-pixel grayscale image.
 images have at most 256 colors referenced from a palette of 8-bit-per-component
 RGB values.
 
+4. Added support for lossless JPEG images with 2 to 15 bits per sample to the
+libjpeg and TurboJPEG APIs.  When creating or decompressing a lossless JPEG
+image and when loading or saving a PBMPLUS image, functions/methods specific to
+8-bit samples now handle 8-bit samples with 2 to 8 bits of data precision
+(specified using the `data_precision` field in `jpeg_compress_struct` or
+`jpeg_decompress_struct` or using `TJPARAM_PRECISION`/`TJ.PARAM_PRECISION`),
+functions/methods specific to 12-bit samples now handle 12-bit samples with 9
+to 12 bits of data precision, and functions/methods specific to 16-bit samples
+now handle 16-bit samples with 13 to 16 bits of data precision.  Refer to
+[libjpeg.txt](doc/libjpeg.txt), [usage.txt](doc/usage.txt), and the TurboJPEG
+API documentation for more details.
+
 
 3.0.4
 =====

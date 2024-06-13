@@ -5,7 +5,7 @@
  * Copyright (C) 1994-1996, Thomas G. Lane.
  * libjpeg-turbo Modifications:
  * Copyright (C) 2013, Linaro Limited.
- * Copyright (C) 2014-2015, 2017, 2019, 2022, D. R. Commander.
+ * Copyright (C) 2014-2015, 2017, 2019, 2022, 2024, D. R. Commander.
  * For conditions of distribution and use, see the accompanying README.ijg
  * file.
  *
@@ -142,7 +142,7 @@ put_pixel_rows(j_decompress_ptr cinfo, djpeg_dest_ptr dinfo,
   } else if (cinfo->out_color_space == JCS_CMYK) {
     for (col = cinfo->output_width; col > 0; col--) {
       JSAMPLE c = *inptr++, m = *inptr++, y = *inptr++, k = *inptr++;
-      cmyk_to_rgb(c, m, y, k, outptr + 2, outptr + 1, outptr);
+      cmyk_to_rgb(255, c, m, y, k, outptr + 2, outptr + 1, outptr);
       outptr += 3;
     }
   } else {

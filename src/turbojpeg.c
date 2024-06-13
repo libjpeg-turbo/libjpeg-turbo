@@ -624,9 +624,9 @@ DLLEXPORT int tj3Set(tjhandle handle, int param, int value)
     THROW("TJPARAM_JPEGHEIGHT is read-only in decompression instances.");
     break;
   case TJPARAM_PRECISION:
-    if (!(this->init & DECOMPRESS))
-      THROW("TJPARAM_PRECISION is not applicable to compression instances.");
-    THROW("TJPARAM_PRECISION is read-only in decompression instances.");
+    if (!(this->init & COMPRESS))
+      THROW("TJPARAM_PRECISION is read-only in decompression instances.");
+    SET_PARAM(precision, 2, 16);
     break;
   case TJPARAM_COLORSPACE:
     if (!(this->init & COMPRESS))
@@ -1929,7 +1929,7 @@ DLLEXPORT int tj3SetCroppingRegion(tjhandle handle, tjregion croppingRegion)
     THROW("Invalid cropping region");
   if (this->jpegWidth < 0 || this->jpegHeight < 0)
     THROW("JPEG header has not yet been read");
-  if (this->precision == 16 || this->lossless)
+  if ((this->precision != 8 && this->precision != 12) || this->lossless)
     THROW("Cannot partially decompress lossless JPEG images");
   if (this->subsamp == TJSAMP_UNKNOWN)
     THROW("Could not determine subsampling level of JPEG image");

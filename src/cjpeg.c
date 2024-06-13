@@ -109,17 +109,18 @@ select_file_type(j_compress_ptr cinfo, FILE *infile)
 #endif
 #ifdef PPM_SUPPORTED
   case 'P':
-    if (cinfo->data_precision == 16) {
+    if (cinfo->data_precision <= 8)
+      return jinit_read_ppm(cinfo);
+    else if (cinfo->data_precision <= 12)
+      return j12init_read_ppm(cinfo);
+    else {
 #ifdef C_LOSSLESS_SUPPORTED
       return j16init_read_ppm(cinfo);
 #else
       ERREXIT1(cinfo, JERR_BAD_PRECISION, cinfo->data_precision);
       break;
 #endif
-    } else if (cinfo->data_precision == 12)
-      return j12init_read_ppm(cinfo);
-    else
-      return jinit_read_ppm(cinfo);
+    }
 #endif
 #ifdef TARGA_SUPPORTED
   case 0x00:
@@ -218,7 +219,7 @@ usage(void)
   fprintf(stderr, "Switches for advanced users:\n");
   fprintf(stderr, "  -precision N   Create JPEG file with N-bit data precision\n");
 #ifdef C_LOSSLESS_SUPPORTED
-  fprintf(stderr, "                 (N is 8, 12, or 16; default is 8; if N is 16, then -lossless\n");
+  fprintf(stderr, "                 (N=2..16; default is 8; if N is not 8 or 12, then -lossless\n");
   fprintf(stderr, "                 must also be specified)\n");
 #else
   fprintf(stderr, "                 (N is 8 or 12; default is 8)\n");
@@ -439,7 +440,7 @@ parse_switches(j_compress_ptr cinfo, int argc, char **argv,
       if (sscanf(argv[argn], "%d", &val) != 1)
         usage();
 #ifdef C_LOSSLESS_SUPPORTED
-      if (val != 8 && val != 12 && val != 16)
+      if (val < 2 || val > 16)
 #else
       if (val != 8 && val != 12)
 #endif
@@ -788,7 +789,17 @@ main(int argc, char **argv)
     jpeg_write_icc_profile(&cinfo, icc_profile, (unsigned int)icc_len);
 
   /* Process data */
-  if (cinfo.data_precision == 16) {
+  if (cinfo.data_precision <= 8) {
+    while (cinfo.next_scanline < cinfo.image_height) {
+      num_scanlines = (*src_mgr->get_pixel_rows) (&cinfo, src_mgr);
+      (void)jpeg_write_scanlines(&cinfo, src_mgr->buffer, num_scanlines);
+    }
+  } else if (cinfo.data_precision <= 12) {
+    while (cinfo.next_scanline < cinfo.image_height) {
+      num_scanlines = (*src_mgr->get_pixel_rows) (&cinfo, src_mgr);
+      (void)jpeg12_write_scanlines(&cinfo, src_mgr->buffer12, num_scanlines);
+    }
+  } else {
 #ifdef C_LOSSLESS_SUPPORTED
     while (cinfo.next_scanline < cinfo.image_height) {
       num_scanlines = (*src_mgr->get_pixel_rows) (&cinfo, src_mgr);
@@ -797,16 +808,6 @@ main(int argc, char **argv)
 #else
     ERREXIT1(&cinfo, JERR_BAD_PRECISION, cinfo.data_precision);
 #endif
-  } else if (cinfo.data_precision == 12) {
-    while (cinfo.next_scanline < cinfo.image_height) {
-      num_scanlines = (*src_mgr->get_pixel_rows) (&cinfo, src_mgr);
-      (void)jpeg12_write_scanlines(&cinfo, src_mgr->buffer12, num_scanlines);
-    }
-  } else {
-    while (cinfo.next_scanline < cinfo.image_height) {
-      num_scanlines = (*src_mgr->get_pixel_rows) (&cinfo, src_mgr);
-      (void)jpeg_write_scanlines(&cinfo, src_mgr->buffer, num_scanlines);
-    }
   }
 
   /* Finish compression and release memory */

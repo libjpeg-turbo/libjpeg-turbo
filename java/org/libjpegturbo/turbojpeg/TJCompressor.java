@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2011-2015, 2018, 2020, 2022-2023 D. R. Commander.
+ * Copyright (C)2011-2015, 2018, 2020, 2022-2024 D. R. Commander.
  *                                               All Rights Reserved.
  * Copyright (C)2015 Viktor Szathmáry.  All Rights Reserved.
  *
@@ -47,9 +47,9 @@ public class TJCompressor implements Closeable {
   }
 
   /**
-   * Create a TurboJPEG compressor instance and associate the 8-bit-per-sample
-   * packed-pixel source image stored in <code>srcImage</code> with the newly
-   * created instance.
+   * Create a TurboJPEG compressor instance and associate the packed-pixel
+   * source image, stored in <code>srcImage</code> with 2 to 8 bits of data
+   * precision per sample, with the newly created instance.
    *
    * @param srcImage see {@link #setSourceImage} for description
    *
@@ -97,11 +97,16 @@ public class TJCompressor implements Closeable {
   }
 
   /**
-   * Associate an 8-bit-per-sample packed-pixel RGB, grayscale, or CMYK source
-   * image with this compressor instance.
+   * Associate a packed-pixel RGB, grayscale, or CMYK source image with 2 to 8
+   * bits of data precision per sample with this compressor instance.  Note
+   * that packed-pixel source images with 2 to 7 bits of data precision per
+   * sample can only be compressed into lossless JPEG images.
    *
    * @param srcImage buffer containing a packed-pixel RGB, grayscale, or CMYK
-   * source image to be compressed or encoded.  This buffer is not modified.
+   * source image to be compressed or encoded.  The data precision of the
+   * source image (from 2 to 8 bits per sample) can be specified using
+   * {@link TJ#PARAM_PRECISION} and defaults to 8 if {@link TJ#PARAM_PRECISION}
+   * is unset or out of range.  This buffer is not modified.
    *
    * @param x x offset (in pixels) of the region in the source image from which
    * the JPEG or YUV image should be compressed/encoded
@@ -151,13 +156,17 @@ public class TJCompressor implements Closeable {
   }
 
   /**
-   * Associate a 12-bit-per-sample packed-pixel RGB, grayscale, or CMYK source
-   * image with this compressor instance.  Note that 12-bit-per-sample
-   * packed-pixel source images can only be compressed into 12-bit-per-sample
-   * JPEG images.
+   * Associate a packed-pixel RGB, grayscale, or CMYK source image with 9 to 12
+   * bits of data precision per sample with this compressor instance.  Note
+   * that packed-pixel source images with 9 to 11 bits of data precision per
+   * sample can only be compressed into lossless JPEG images.
    *
    * @param srcImage buffer containing a packed-pixel RGB, grayscale, or CMYK
-   * source image to be compressed.  This buffer is not modified.
+   * source image to be compressed.  The data precision of the source image
+   * (from 9 to 12 bits per sample) can be specified using
+   * {@link TJ#PARAM_PRECISION} and defaults to 12 if
+   * {@link TJ#PARAM_PRECISION} is unset or out of range.  This buffer is not
+   * modified.
    *
    * @param x x offset (in pixels) of the region in the source image from which
    * the JPEG image should be compressed
@@ -207,13 +216,17 @@ public class TJCompressor implements Closeable {
   }
 
   /**
-   * Associate a 16-bit-per-sample packed-pixel RGB, grayscale, or CMYK source
-   * image with this compressor instance.  Note that 16-bit-per-sample
-   * packed-pixel source images can only be compressed into 16-bit-per-sample
-   * lossless JPEG images.
+   * Associate a packed-pixel RGB, grayscale, or CMYK source image with 13 to
+   * 16 bits of data precision per sample with this compressor instance.  Note
+   * that packed-pixel source images with 13 to 16 bits of data precision per
+   * sample can only be compressed into lossless JPEG images.
    *
    * @param srcImage buffer containing a packed-pixel RGB, grayscale, or CMYK
-   * source image to be compressed.  This buffer is not modified.
+   * source image to be compressed.  The data precision of the source image
+   * (from 13 to 16 bits per sample) can be specified using
+   * {@link TJ#PARAM_PRECISION} and defaults to 16 if
+   * {@link TJ#PARAM_PRECISION} is unset or out of range.  This buffer is not
+   * modified.
    *
    * @param x x offset (in pixels) of the region in the source image from which
    * the JPEG image should be compressed

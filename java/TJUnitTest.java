@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2011-2018, 2022-2023 D. R. Commander.  All Rights Reserved.
+ * Copyright (C)2011-2018, 2022-2024 D. R. Commander.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -52,8 +52,8 @@ final class TJUnitTest {
     System.out.println("       (8-bit data precision only)");
     System.out.println("-noyuvpad = do not pad each row in each Y, U, and V plane to the nearest");
     System.out.println("            multiple of 4 bytes");
-    System.out.println("-precision N = test N-bit data precision (N is 8, 12, or 16; default is 8; if N");
-    System.out.println("               is 16, then -lossless is implied)");
+    System.out.println("-precision N = test N-bit data precision (N=2..16; default is 8; if N is not 8");
+    System.out.println("               or 12, then -lossless is implied)");
     System.out.println("-lossless = test lossless JPEG compression/decompression");
     System.out.println("-bi = test BufferedImage I/O (8-bit data precision only)\n");
     System.exit(1);
@@ -151,14 +151,14 @@ final class TJUnitTest {
   }
 
   static void fillArray(Object buf, int val) {
-    if (precision == 8)
+    if (precision <= 8)
       Arrays.fill((byte[])buf, (byte)val);
     else
       Arrays.fill((short[])buf, (short)val);
   }
 
   static void setVal(Object buf, int index, int value) {
-    if (precision == 8)
+    if (precision <= 8)
       ((byte[])buf)[index] = (byte)value;
     else
       ((short[])buf)[index] = (short)value;
@@ -318,7 +318,7 @@ final class TJUnitTest {
 
   static int getVal(Object buf, int index) {
     int v;
-    if (precision == 8)
+    if (precision <= 8)
       v = (int)(((byte[])buf)[index]);
     else
       v = (int)(((short[])buf)[index]);
@@ -686,14 +686,14 @@ final class TJUnitTest {
       ImageIO.write(img, "png", file);
       tjc.setSourceImage(img, 0, 0, 0, 0);
     } else {
-      if (precision == 8)
+      if (precision <= 8)
         srcBuf = new byte[w * h * ps + 1];
       else
         srcBuf = new short[w * h * ps + 1];
       initBuf(srcBuf, w, w * ps, h, pf, bottomUp);
-      if (precision == 8)
+      if (precision <= 8)
         tjc.setSourceImage((byte[])srcBuf, 0, 0, w, 0, h, pf);
-      else if (precision == 12)
+      else if (precision <= 12)
         tjc.setSourceImage12((short[])srcBuf, 0, 0, w, 0, h, pf);
       else
         tjc.setSourceImage16((short[])srcBuf, 0, 0, w, 0, h, pf);
@@ -716,10 +716,11 @@ final class TJUnitTest {
                         buStrLong, jpegQual);
       tjc.setSourceImage(yuvImage);
     } else {
-      if (lossless)
+      if (lossless) {
+        tjc.set(TJ.PARAM_PRECISION, precision);
         System.out.format("%s %s -> LOSSLESS PSV%d ... ", pfStrLong, buStrLong,
                           jpegPSV);
-      else
+      } else
         System.out.format("%s %s -> %s Q%d ... ", pfStrLong, buStrLong,
                           SUBNAME_LONG[subsamp], jpegQual);
     }
@@ -792,9 +793,9 @@ final class TJUnitTest {
     if (bi)
       img = tjd.decompress8(imgType);
     else {
-      if (precision == 8)
+      if (precision <= 8)
         dstBuf = tjd.decompress8(0, pf);
-      else if (precision == 12)
+      else if (precision <= 12)
         dstBuf = tjd.decompress12(0, pf);
       else
         dstBuf = tjd.decompress16(0, pf);
@@ -956,6 +957,7 @@ final class TJUnitTest {
       tjc = new TJCompressor();
 
       if (lossless) {
+        tjc.set(TJ.PARAM_PRECISION, precision);
         tjc.set(TJ.PARAM_LOSSLESS, 1);
         tjc.set(TJ.PARAM_LOSSLESSPSV, ((psv++ - 1) % 7) + 1);
         numSamp = 1;
@@ -1031,10 +1033,10 @@ final class TJUnitTest {
           try {
             tempi = Integer.parseInt(argv[++i]);
           } catch (NumberFormatException e) {}
-          if (tempi != 8 && tempi != 12 && tempi != 16)
+          if (tempi < 2 || tempi > 16)
             usage();
           precision = tempi;
-          if (precision == 16)
+          if (precision != 8 && precision != 12)
             lossless = true;
         } else
           usage();
@@ -1047,7 +1049,7 @@ final class TJUnitTest {
         throw new Exception("BufferedImage support requires 8-bit data precision.");
 
       System.out.format("Testing %d-bit precision\n", precision);
-      sampleSize = (precision == 8 ? 1 : 2);
+      sampleSize = (precision <= 8 ? 1 : 2);
       maxSample = (1 << precision) - 1;
       tolerance = (lossless ? 0 : (precision > 8 ? 2 : 1));
       redToY = (19595 * maxSample) >> 16;

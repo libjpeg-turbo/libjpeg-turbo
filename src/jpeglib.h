@@ -86,22 +86,26 @@ extern "C" {
 /* Data structures for images (arrays of samples and of DCT coefficients).
  */
 
-typedef JSAMPLE *JSAMPROW;      /* ptr to one image row of pixel samples. */
-typedef JSAMPROW *JSAMPARRAY;   /* ptr to some rows (a 2-D sample array) */
-typedef JSAMPARRAY *JSAMPIMAGE; /* a 3-D sample array: top index is color */
+typedef JSAMPLE *JSAMPROW;      /* ptr to one image row of pixel samples with
+                                   2-bit through 8-bit data precision. */
+typedef JSAMPROW *JSAMPARRAY;   /* ptr to some JSAMPLE rows (a 2-D JSAMPLE
+                                   array) */
+typedef JSAMPARRAY *JSAMPIMAGE; /* a 3-D JSAMPLE array: top index is color */
 
-typedef J12SAMPLE *J12SAMPROW;      /* ptr to one image row of 12-bit pixel
-                                       samples. */
-typedef J12SAMPROW *J12SAMPARRAY;   /* ptr to some 12-bit sample rows (a 2-D
-                                       12-bit sample array) */
-typedef J12SAMPARRAY *J12SAMPIMAGE; /* a 3-D 12-bit sample array: top index is
+typedef J12SAMPLE *J12SAMPROW;      /* ptr to one image row of pixel samples
+                                       with 9-bit through 12-bit data
+                                       precision. */
+typedef J12SAMPROW *J12SAMPARRAY;   /* ptr to some J12SAMPLE rows (a 2-D
+                                       J12SAMPLE array) */
+typedef J12SAMPARRAY *J12SAMPIMAGE; /* a 3-D J12SAMPLE array: top index is
                                        color */
 
-typedef J16SAMPLE *J16SAMPROW;      /* ptr to one image row of 16-bit pixel
-                                       samples. */
-typedef J16SAMPROW *J16SAMPARRAY;   /* ptr to some 16-bit sample rows (a 2-D
-                                       16-bit sample array) */
-typedef J16SAMPARRAY *J16SAMPIMAGE; /* a 3-D 16-bit sample array: top index is
+typedef J16SAMPLE *J16SAMPROW;      /* ptr to one image row of pixel samples
+                                       with 13-bit through 16-bit data
+                                       precision. */
+typedef J16SAMPROW *J16SAMPARRAY;   /* ptr to some J16SAMPLE rows (a 2-D
+                                       J16SAMPLE array) */
+typedef J16SAMPARRAY *J16SAMPIMAGE; /* a 3-D J16SAMPLE array: top index is
                                        color */
 
 typedef JCOEF JBLOCK[DCTSIZE2]; /* one block of coefficients */
@@ -708,11 +712,12 @@ struct jpeg_decompress_struct {
    */
 
   JSAMPLE *sample_range_limit;  /* table for fast range-limiting
-                                   If data_precision is 12 or 16, then this is
-                                   actually a J12SAMPLE pointer or a J16SAMPLE
-                                   pointer, so callers must type-cast it in
-                                   order to read 12-bit or 16-bit samples from
-                                   the array. */
+                                   If data_precision is 9 to 12, then this is
+                                   actually a J12SAMPLE pointer, and if
+                                   data_precision is 13 to 16, then this is
+                                   actually a J16SAMPLE pointer, so callers
+                                   must type-cast it in order to read samples
+                                   from the array. */
 
   /*
    * These fields are valid during any one scan.

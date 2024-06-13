@@ -886,6 +886,54 @@ if(WITH_JAVA)
     ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
       -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
       TJUnitTest -precision 12 -lossless)
+  add_test(TJUnitTest2-lossless
+    ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
+      -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
+      TJUnitTest -precision 2)
+  add_test(TJUnitTest3-lossless
+    ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
+      -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
+      TJUnitTest -precision 3)
+  add_test(TJUnitTest4-lossless
+    ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
+      -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
+      TJUnitTest -precision 4)
+  add_test(TJUnitTest5-lossless
+    ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
+      -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
+      TJUnitTest -precision 5)
+  add_test(TJUnitTest6-lossless
+    ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
+      -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
+      TJUnitTest -precision 6)
+  add_test(TJUnitTest7-lossless
+    ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
+      -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
+      TJUnitTest -precision 7)
+  add_test(TJUnitTest9-lossless
+    ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
+      -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
+      TJUnitTest -precision 9)
+  add_test(TJUnitTest10-lossless
+    ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
+      -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
+      TJUnitTest -precision 10)
+  add_test(TJUnitTest11-lossless
+    ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
+      -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
+      TJUnitTest -precision 11)
+  add_test(TJUnitTest13-lossless
+    ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
+      -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
+      TJUnitTest -precision 13)
+  add_test(TJUnitTest14-lossless
+    ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
+      -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
+      TJUnitTest -precision 14)
+  add_test(TJUnitTest15-lossless
+    ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
+      -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
+      TJUnitTest -precision 15)
   add_test(TJUnitTest16-lossless
     ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
       -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
@@ -1041,6 +1089,78 @@ foreach(libtype ${TEST_LIBTYPES})
       COMMAND tjunittest${suffix} -precision 12 -lossless -alloc)
     add_test(NAME tjunittest12-${libtype}-bmp
       COMMAND tjunittest${suffix} -precision 12 -bmp)
+    add_test(NAME tjunittest2-${libtype}-lossless
+      COMMAND tjunittest${suffix} -precision 2)
+    add_test(NAME tjunittest2-${libtype}-lossless-alloc
+      COMMAND tjunittest${suffix} -precision 2 -alloc)
+    add_test(NAME tjunittest2-${libtype}-bmp
+      COMMAND tjunittest${suffix} -precision 2 -bmp)
+    add_test(NAME tjunittest3-${libtype}-lossless
+      COMMAND tjunittest${suffix} -precision 3)
+    add_test(NAME tjunittest3-${libtype}-lossless-alloc
+      COMMAND tjunittest${suffix} -precision 3 -alloc)
+    add_test(NAME tjunittest3-${libtype}-bmp
+      COMMAND tjunittest${suffix} -precision 3 -bmp)
+    add_test(NAME tjunittest4-${libtype}-lossless
+      COMMAND tjunittest${suffix} -precision 4)
+    add_test(NAME tjunittest4-${libtype}-lossless-alloc
+      COMMAND tjunittest${suffix} -precision 4 -alloc)
+    add_test(NAME tjunittest4-${libtype}-bmp
+      COMMAND tjunittest${suffix} -precision 4 -bmp)
+    add_test(NAME tjunittest5-${libtype}-lossless
+      COMMAND tjunittest${suffix} -precision 5)
+    add_test(NAME tjunittest5-${libtype}-lossless-alloc
+      COMMAND tjunittest${suffix} -precision 5 -alloc)
+    add_test(NAME tjunittest5-${libtype}-bmp
+      COMMAND tjunittest${suffix} -precision 5 -bmp)
+    add_test(NAME tjunittest6-${libtype}-lossless
+      COMMAND tjunittest${suffix} -precision 6)
+    add_test(NAME tjunittest6-${libtype}-lossless-alloc
+      COMMAND tjunittest${suffix} -precision 6 -alloc)
+    add_test(NAME tjunittest6-${libtype}-bmp
+      COMMAND tjunittest${suffix} -precision 6 -bmp)
+    add_test(NAME tjunittest7-${libtype}-lossless
+      COMMAND tjunittest${suffix} -precision 7)
+    add_test(NAME tjunittest7-${libtype}-lossless-alloc
+      COMMAND tjunittest${suffix} -precision 7 -alloc)
+    add_test(NAME tjunittest7-${libtype}-bmp
+      COMMAND tjunittest${suffix} -precision 7 -bmp)
+    add_test(NAME tjunittest9-${libtype}-lossless
+      COMMAND tjunittest${suffix} -precision 9)
+    add_test(NAME tjunittest9-${libtype}-lossless-alloc
+      COMMAND tjunittest${suffix} -precision 9 -alloc)
+    add_test(NAME tjunittest9-${libtype}-bmp
+      COMMAND tjunittest${suffix} -precision 9 -bmp)
+    add_test(NAME tjunittest10-${libtype}-lossless
+      COMMAND tjunittest${suffix} -precision 10)
+    add_test(NAME tjunittest10-${libtype}-lossless-alloc
+      COMMAND tjunittest${suffix} -precision 10 -alloc)
+    add_test(NAME tjunittest10-${libtype}-bmp
+      COMMAND tjunittest${suffix} -precision 10 -bmp)
+    add_test(NAME tjunittest11-${libtype}-lossless
+      COMMAND tjunittest${suffix} -precision 11)
+    add_test(NAME tjunittest11-${libtype}-lossless-alloc
+      COMMAND tjunittest${suffix} -precision 11 -alloc)
+    add_test(NAME tjunittest11-${libtype}-bmp
+      COMMAND tjunittest${suffix} -precision 11 -bmp)
+    add_test(NAME tjunittest13-${libtype}-lossless
+      COMMAND tjunittest${suffix} -precision 13)
+    add_test(NAME tjunittest13-${libtype}-lossless-alloc
+      COMMAND tjunittest${suffix} -precision 13 -alloc)
+    add_test(NAME tjunittest13-${libtype}-bmp
+      COMMAND tjunittest${suffix} -precision 13 -bmp)
+    add_test(NAME tjunittest14-${libtype}-lossless
+      COMMAND tjunittest${suffix} -precision 14)
+    add_test(NAME tjunittest14-${libtype}-lossless-alloc
+      COMMAND tjunittest${suffix} -precision 14 -alloc)
+    add_test(NAME tjunittest14-${libtype}-bmp
+      COMMAND tjunittest${suffix} -precision 14 -bmp)
+    add_test(NAME tjunittest15-${libtype}-lossless
+      COMMAND tjunittest${suffix} -precision 15)
+    add_test(NAME tjunittest15-${libtype}-lossless-alloc
+      COMMAND tjunittest${suffix} -precision 15 -alloc)
+    add_test(NAME tjunittest15-${libtype}-bmp
+      COMMAND tjunittest${suffix} -precision 15 -bmp)
     add_test(NAME tjunittest16-${libtype}-lossless
       COMMAND tjunittest${suffix} -precision 16)
     add_test(NAME tjunittest16-${libtype}-lossless-alloc
@@ -1718,6 +1838,30 @@ if(WITH_TURBOJPEG)
       ${CMAKE_CURRENT_BINARY_DIR}/tjbenchtest
       ${CMAKE_CURRENT_BINARY_DIR}/tjexampletest)
   add_custom_target(tjtest16 COMMAND ${CMAKE_COMMAND} -DWITH_JAVA=${WITH_JAVA}
+    -DPRECISION=2 -P ${CMAKE_SOURCE_DIR}/cmakescripts/tjbenchtest.cmake
+    COMMAND ${CMAKE_COMMAND} -DWITH_JAVA=${WITH_JAVA}
+    -DPRECISION=3 -P ${CMAKE_SOURCE_DIR}/cmakescripts/tjbenchtest.cmake
+    COMMAND ${CMAKE_COMMAND} -DWITH_JAVA=${WITH_JAVA}
+    -DPRECISION=4 -P ${CMAKE_SOURCE_DIR}/cmakescripts/tjbenchtest.cmake
+    COMMAND ${CMAKE_COMMAND} -DWITH_JAVA=${WITH_JAVA}
+    -DPRECISION=5 -P ${CMAKE_SOURCE_DIR}/cmakescripts/tjbenchtest.cmake
+    COMMAND ${CMAKE_COMMAND} -DWITH_JAVA=${WITH_JAVA}
+    -DPRECISION=6 -P ${CMAKE_SOURCE_DIR}/cmakescripts/tjbenchtest.cmake
+    COMMAND ${CMAKE_COMMAND} -DWITH_JAVA=${WITH_JAVA}
+    -DPRECISION=7 -P ${CMAKE_SOURCE_DIR}/cmakescripts/tjbenchtest.cmake
+    COMMAND ${CMAKE_COMMAND} -DWITH_JAVA=${WITH_JAVA}
+    -DPRECISION=9 -P ${CMAKE_SOURCE_DIR}/cmakescripts/tjbenchtest.cmake
+    COMMAND ${CMAKE_COMMAND} -DWITH_JAVA=${WITH_JAVA}
+    -DPRECISION=10 -P ${CMAKE_SOURCE_DIR}/cmakescripts/tjbenchtest.cmake
+    COMMAND ${CMAKE_COMMAND} -DWITH_JAVA=${WITH_JAVA}
+    -DPRECISION=11 -P ${CMAKE_SOURCE_DIR}/cmakescripts/tjbenchtest.cmake
+    COMMAND ${CMAKE_COMMAND} -DWITH_JAVA=${WITH_JAVA}
+    -DPRECISION=13 -P ${CMAKE_SOURCE_DIR}/cmakescripts/tjbenchtest.cmake
+    COMMAND ${CMAKE_COMMAND} -DWITH_JAVA=${WITH_JAVA}
+    -DPRECISION=14 -P ${CMAKE_SOURCE_DIR}/cmakescripts/tjbenchtest.cmake
+    COMMAND ${CMAKE_COMMAND} -DWITH_JAVA=${WITH_JAVA}
+    -DPRECISION=15 -P ${CMAKE_SOURCE_DIR}/cmakescripts/tjbenchtest.cmake
+    COMMAND ${CMAKE_COMMAND} -DWITH_JAVA=${WITH_JAVA}
     -DPRECISION=16 -P ${CMAKE_SOURCE_DIR}/cmakescripts/tjbenchtest.cmake
     DEPENDS ${CMAKE_SOURCE_DIR}/cmakescripts/tjbenchtest.cmake
       ${CMAKE_CURRENT_BINARY_DIR}/tjbenchtest

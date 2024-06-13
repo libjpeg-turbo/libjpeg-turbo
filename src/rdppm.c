@@ -125,10 +125,11 @@ read_pbm_integer(j_compress_ptr cinfo, FILE *infile, unsigned int maxval)
  * Read one row of pixels.
  *
  * We provide several different versions depending on input file format.
- * In all cases, input is scaled to the size of _JSAMPLE.
+ * In all cases, input is scaled to cinfo->data_precision.
  *
  * A really fast path is provided for reading byte/sample raw files with
- * maxval = _MAXJSAMPLE, which is the normal case for 8-bit data.
+ * maxval <= _MAXJSAMPLE and maxval == (1U << cinfo->data_precision) - 1U,
+ * which is the normal case for 8-bit data.
  */
 
 
@@ -177,16 +178,16 @@ get_text_gray_rgb_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
   register int ps = rgb_pixelsize[cinfo->in_color_space];
 
   ptr = source->pub._buffer[0];
-  if (maxval == _MAXJSAMPLE) {
+  if (maxval == (1U << cinfo->data_precision) - 1U) {
     if (aindex >= 0)
       GRAY_RGB_READ_LOOP((_JSAMPLE)read_pbm_integer(cinfo, infile, maxval),
-                         ptr[aindex] = _MAXJSAMPLE;)
+                         ptr[aindex] = (_JSAMPLE)maxval;)
     else
       GRAY_RGB_READ_LOOP((_JSAMPLE)read_pbm_integer(cinfo, infile, maxval), {})
   } else {
     if (aindex >= 0)
       GRAY_RGB_READ_LOOP(rescale[read_pbm_integer(cinfo, infile, maxval)],
-                         ptr[aindex] = _MAXJSAMPLE;)
+                         ptr[aindex] = (1 << cinfo->data_precision) - 1;)
     else
       GRAY_RGB_READ_LOOP(rescale[read_pbm_integer(cinfo, infile, maxval)], {})
   }
@@ -207,16 +208,16 @@ get_text_gray_cmyk_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
   unsigned int maxval = source->maxval;
 
   ptr = source->pub._buffer[0];
-  if (maxval == _MAXJSAMPLE) {
+  if (maxval == (1U << cinfo->data_precision) - 1U) {
     for (col = cinfo->image_width; col > 0; col--) {
       _JSAMPLE gray = (_JSAMPLE)read_pbm_integer(cinfo, infile, maxval);
-      rgb_to_cmyk(gray, gray, gray, ptr, ptr + 1, ptr + 2, ptr + 3);
+      rgb_to_cmyk(maxval, gray, gray, gray, ptr, ptr + 1, ptr + 2, ptr + 3);
       ptr += 4;
     }
   } else {
     for (col = cinfo->image_width; col > 0; col--) {
       _JSAMPLE gray = rescale[read_pbm_integer(cinfo, infile, maxval)];
-      rgb_to_cmyk(gray, gray, gray, ptr, ptr + 1, ptr + 2, ptr + 3);
+      rgb_to_cmyk(maxval, gray, gray, gray, ptr, ptr + 1, ptr + 2, ptr + 3);
       ptr += 4;
     }
   }
@@ -251,16 +252,16 @@ get_text_rgb_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
   register int ps = rgb_pixelsize[cinfo->in_color_space];
 
   ptr = source->pub._buffer[0];
-  if (maxval == _MAXJSAMPLE) {
+  if (maxval == (1U << cinfo->data_precision) - 1U) {
     if (aindex >= 0)
       RGB_READ_LOOP((_JSAMPLE)read_pbm_integer(cinfo, infile, maxval),
-                    ptr[aindex] = _MAXJSAMPLE;)
+                    ptr[aindex] = (_JSAMPLE)maxval;)
     else
       RGB_READ_LOOP((_JSAMPLE)read_pbm_integer(cinfo, infile, maxval), {})
   } else {
     if (aindex >= 0)
       RGB_READ_LOOP(rescale[read_pbm_integer(cinfo, infile, maxval)],
-                    ptr[aindex] = _MAXJSAMPLE;)
+                    ptr[aindex] = (1 << cinfo->data_precision) - 1;)
     else
       RGB_READ_LOOP(rescale[read_pbm_integer(cinfo, infile, maxval)], {})
   }
@@ -281,12 +282,12 @@ get_text_rgb_cmyk_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
   unsigned int maxval = source->maxval;
 
   ptr = source->pub._buffer[0];
-  if (maxval == _MAXJSAMPLE) {
+  if (maxval == (1U << cinfo->data_precision) - 1U) {
     for (col = cinfo->image_width; col > 0; col--) {
       _JSAMPLE r = (_JSAMPLE)read_pbm_integer(cinfo, infile, maxval);
       _JSAMPLE g = (_JSAMPLE)read_pbm_integer(cinfo, infile, maxval);
       _JSAMPLE b = (_JSAMPLE)read_pbm_integer(cinfo, infile, maxval);
-      rgb_to_cmyk(r, g, b, ptr, ptr + 1, ptr + 2, ptr + 3);
+      rgb_to_cmyk(maxval, r, g, b, ptr, ptr + 1, ptr + 2, ptr + 3);
       ptr += 4;
     }
   } else {
@@ -294,7 +295,7 @@ get_text_rgb_cmyk_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
       _JSAMPLE r = rescale[read_pbm_integer(cinfo, infile, maxval)];
       _JSAMPLE g = rescale[read_pbm_integer(cinfo, infile, maxval)];
       _JSAMPLE b = rescale[read_pbm_integer(cinfo, infile, maxval)];
-      rgb_to_cmyk(r, g, b, ptr, ptr + 1, ptr + 2, ptr + 3);
+      rgb_to_cmyk(maxval, r, g, b, ptr, ptr + 1, ptr + 2, ptr + 3);
       ptr += 4;
     }
   }
@@ -344,15 +345,15 @@ get_gray_rgb_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
     ERREXIT(cinfo, JERR_INPUT_EOF);
   ptr = source->pub._buffer[0];
   bufferptr = source->iobuffer;
-  if (maxval == _MAXJSAMPLE) {
+  if (maxval == (1U << cinfo->data_precision) - 1U) {
     if (aindex >= 0)
-      GRAY_RGB_READ_LOOP(*bufferptr++, ptr[aindex] = _MAXJSAMPLE;)
+      GRAY_RGB_READ_LOOP(*bufferptr++, ptr[aindex] = (_JSAMPLE)maxval;)
     else
       GRAY_RGB_READ_LOOP(*bufferptr++, {})
   } else {
     if (aindex >= 0)
       GRAY_RGB_READ_LOOP(rescale[UCH(*bufferptr++)],
-                         ptr[aindex] = _MAXJSAMPLE;)
+                         ptr[aindex] = (1 << cinfo->data_precision) - 1;)
     else
       GRAY_RGB_READ_LOOP(rescale[UCH(*bufferptr++)], {})
   }
@@ -376,16 +377,16 @@ get_gray_cmyk_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
     ERREXIT(cinfo, JERR_INPUT_EOF);
   ptr = source->pub._buffer[0];
   bufferptr = source->iobuffer;
-  if (maxval == _MAXJSAMPLE) {
+  if (maxval == (1U << cinfo->data_precision) - 1U) {
     for (col = cinfo->image_width; col > 0; col--) {
       _JSAMPLE gray = *bufferptr++;
-      rgb_to_cmyk(gray, gray, gray, ptr, ptr + 1, ptr + 2, ptr + 3);
+      rgb_to_cmyk(maxval, gray, gray, gray, ptr, ptr + 1, ptr + 2, ptr + 3);
       ptr += 4;
     }
   } else {
     for (col = cinfo->image_width; col > 0; col--) {
       _JSAMPLE gray = rescale[UCH(*bufferptr++)];
-      rgb_to_cmyk(gray, gray, gray, ptr, ptr + 1, ptr + 2, ptr + 3);
+      rgb_to_cmyk(maxval, gray, gray, gray, ptr, ptr + 1, ptr + 2, ptr + 3);
       ptr += 4;
     }
   }
@@ -413,14 +414,15 @@ get_rgb_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
     ERREXIT(cinfo, JERR_INPUT_EOF);
   ptr = source->pub._buffer[0];
   bufferptr = source->iobuffer;
-  if (maxval == _MAXJSAMPLE) {
+  if (maxval == (1U << cinfo->data_precision) - 1U) {
     if (aindex >= 0)
-      RGB_READ_LOOP(*bufferptr++, ptr[aindex] = _MAXJSAMPLE;)
+      RGB_READ_LOOP(*bufferptr++, ptr[aindex] = (_JSAMPLE)maxval;)
     else
       RGB_READ_LOOP(*bufferptr++, {})
   } else {
     if (aindex >= 0)
-      RGB_READ_LOOP(rescale[UCH(*bufferptr++)], ptr[aindex] = _MAXJSAMPLE;)
+      RGB_READ_LOOP(rescale[UCH(*bufferptr++)],
+                    ptr[aindex] = (1 << cinfo->data_precision) - 1;)
     else
       RGB_READ_LOOP(rescale[UCH(*bufferptr++)], {})
   }
@@ -444,12 +446,12 @@ get_rgb_cmyk_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
     ERREXIT(cinfo, JERR_INPUT_EOF);
   ptr = source->pub._buffer[0];
   bufferptr = source->iobuffer;
-  if (maxval == _MAXJSAMPLE) {
+  if (maxval == (1U << cinfo->data_precision) - 1U) {
     for (col = cinfo->image_width; col > 0; col--) {
       _JSAMPLE r = *bufferptr++;
       _JSAMPLE g = *bufferptr++;
       _JSAMPLE b = *bufferptr++;
-      rgb_to_cmyk(r, g, b, ptr, ptr + 1, ptr + 2, ptr + 3);
+      rgb_to_cmyk(maxval, r, g, b, ptr, ptr + 1, ptr + 2, ptr + 3);
       ptr += 4;
     }
   } else {
@@ -457,7 +459,7 @@ get_rgb_cmyk_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
       _JSAMPLE r = rescale[UCH(*bufferptr++)];
       _JSAMPLE g = rescale[UCH(*bufferptr++)];
       _JSAMPLE b = rescale[UCH(*bufferptr++)];
-      rgb_to_cmyk(r, g, b, ptr, ptr + 1, ptr + 2, ptr + 3);
+      rgb_to_cmyk(maxval, r, g, b, ptr, ptr + 1, ptr + 2, ptr + 3);
       ptr += 4;
     }
   }
@@ -467,7 +469,8 @@ get_rgb_cmyk_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
 
 METHODDEF(JDIMENSION)
 get_raw_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
-/* This version is for reading raw-byte-format files with maxval = _MAXJSAMPLE.
+/* This version is for reading raw-byte-format files with
+ * maxval <= _MAXJSAMPLE and maxval == (1U << cinfo->data_precision) - 1U.
  * In this case we just read right into the _JSAMPLE buffer!
  * Note that same code works for PPM and PGM files.
  */
@@ -535,7 +538,7 @@ get_word_gray_rgb_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
       ERREXIT(cinfo, JERR_PPM_OUTOFRANGE);
     ptr[rindex] = ptr[gindex] = ptr[bindex] = rescale[temp];
     if (aindex >= 0)
-      ptr[aindex] = _MAXJSAMPLE;
+      ptr[aindex] = (1 << cinfo->data_precision) - 1;
     ptr += ps;
   }
   return 1;
@@ -563,8 +566,8 @@ get_word_gray_cmyk_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
     gray |= UCH(*bufferptr++);
     if (gray > maxval)
       ERREXIT(cinfo, JERR_PPM_OUTOFRANGE);
-    rgb_to_cmyk(rescale[gray], rescale[gray], rescale[gray], ptr, ptr + 1,
-                ptr + 2, ptr + 3);
+    rgb_to_cmyk(maxval, rescale[gray], rescale[gray], rescale[gray], ptr,
+                ptr + 1, ptr + 2, ptr + 3);
     ptr += 4;
   }
   return 1;
@@ -609,7 +612,7 @@ get_word_rgb_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
       ERREXIT(cinfo, JERR_PPM_OUTOFRANGE);
     ptr[bindex] = rescale[temp];
     if (aindex >= 0)
-      ptr[aindex] = _MAXJSAMPLE;
+      ptr[aindex] = (1 << cinfo->data_precision) - 1;
     ptr += ps;
   }
   return 1;
@@ -645,8 +648,8 @@ get_word_rgb_cmyk_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
     b |= UCH(*bufferptr++);
     if (b > maxval)
       ERREXIT(cinfo, JERR_PPM_OUTOFRANGE);
-    rgb_to_cmyk(rescale[r], rescale[g], rescale[b], ptr, ptr + 1, ptr + 2,
-                ptr + 3);
+    rgb_to_cmyk(maxval, rescale[r], rescale[g], rescale[b], ptr, ptr + 1,
+                ptr + 2, ptr + 3);
     ptr += 4;
   }
   return 1;
@@ -692,7 +695,6 @@ start_input_ppm(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
   if (sinfo->max_pixels && (unsigned long long)w * h > sinfo->max_pixels)
     ERREXIT1(cinfo, JERR_IMAGE_TOO_BIG, sinfo->max_pixels);
 
-  cinfo->data_precision = BITS_IN_JSAMPLE; /* we always rescale data to this */
   cinfo->image_width = (JDIMENSION)w;
   cinfo->image_height = (JDIMENSION)h;
   source->maxval = maxval;
@@ -746,7 +748,8 @@ start_input_ppm(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
         source->pub.get_pixel_rows = get_word_gray_cmyk_row;
       else
         ERREXIT(cinfo, JERR_BAD_IN_COLORSPACE);
-    } else if (maxval == _MAXJSAMPLE && sizeof(_JSAMPLE) == sizeof(U_CHAR) &&
+    } else if (maxval <= _MAXJSAMPLE && sizeof(_JSAMPLE) == sizeof(U_CHAR) &&
+               maxval == ((1U << cinfo->data_precision) - 1U) &&
                cinfo->in_color_space == JCS_GRAYSCALE) {
       source->pub.get_pixel_rows = get_raw_row;
       use_raw_buffer = TRUE;
@@ -774,7 +777,8 @@ start_input_ppm(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
         source->pub.get_pixel_rows = get_word_rgb_cmyk_row;
       else
         ERREXIT(cinfo, JERR_BAD_IN_COLORSPACE);
-    } else if (maxval == _MAXJSAMPLE && sizeof(_JSAMPLE) == sizeof(U_CHAR) &&
+    } else if (maxval <= _MAXJSAMPLE && sizeof(_JSAMPLE) == sizeof(U_CHAR) &&
+               maxval == ((1U << cinfo->data_precision) - 1U) &&
 #if RGB_RED == 0 && RGB_GREEN == 1 && RGB_BLUE == 2 && RGB_PIXELSIZE == 3
                (cinfo->in_color_space == JCS_EXT_RGB ||
                 cinfo->in_color_space == JCS_RGB)) {
@@ -844,8 +848,9 @@ start_input_ppm(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
     half_maxval = maxval / 2;
     for (val = 0; val <= (long)maxval; val++) {
       /* The multiplication here must be done in 32 bits to avoid overflow */
-      source->rescale[val] = (_JSAMPLE)((val * _MAXJSAMPLE + half_maxval) /
-                                        maxval);
+      source->rescale[val] =
+        (_JSAMPLE)((val * ((1 << cinfo->data_precision) - 1) + half_maxval) /
+                   maxval);
     }
   }
 }
@@ -871,7 +876,12 @@ _jinit_read_ppm(j_compress_ptr cinfo)
 {
   ppm_source_ptr source;
 
-  if (cinfo->data_precision != BITS_IN_JSAMPLE)
+#if BITS_IN_JSAMPLE == 8
+  if (cinfo->data_precision > BITS_IN_JSAMPLE || cinfo->data_precision < 2)
+#else
+  if (cinfo->data_precision > BITS_IN_JSAMPLE ||
+      cinfo->data_precision < BITS_IN_JSAMPLE - 3)
+#endif
     ERREXIT1(cinfo, JERR_BAD_PRECISION, cinfo->data_precision);
 
   /* Create module interface object */

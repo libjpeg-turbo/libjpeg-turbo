@@ -190,8 +190,9 @@ public final class TJ {
   public static final int PF_XRGB = 5;
   /**
    * Grayscale pixel format.  Each 1-sample pixel represents a luminance
-   * (brightness) level from 0 to the maximum sample value (255 for 8-bit
-   * samples, 4095 for 12-bit samples, and 65535 for 16-bit samples.)
+   * (brightness) level from 0 to the maximum sample value  (which is, for
+   * instance, 255 for 8-bit samples or 4095 for 12-bit samples or 65535 for
+   * 16-bit samples.)
    */
   public static final int PF_GRAY = 6;
   /**
@@ -467,16 +468,22 @@ public final class TJ {
    */
   public static final int PARAM_JPEGHEIGHT = 6;
   /**
-   * JPEG data precision (bits per sample) [decompression only, read-only]
+   * Data precision (bits per sample)
    *
-   * <p>The JPEG image uses the specified number of bits per sample.
+   * <p>The JPEG image uses (decompression) or will use (lossless compression)
+   * the specified number of bits per sample.
+   *
+   * <p>The data precision is the number of bits in the maximum sample value,
+   * which may not be the same as the width of the data type used to store the
+   * sample.
    *
    * <p><b>Value</b>
    * <ul>
-   * <li> <code>8</code>, <code>12</code>, or <code>16</code>
+   * <li> <code>8</code> or <code>12</code> for lossy JPEG images;
+   * <code>2</code> to <code>16</code> for lossless JPEG images
    * </ul>
    *
-   * <p>12-bit data precision implies {@link #PARAM_OPTIMIZE} unless
+   * <p>12-bit JPEG data precision implies {@link #PARAM_OPTIMIZE} unless
    * {@link #PARAM_ARITHMETIC} is set.
    */
   public static final int PARAM_PRECISION = 7;

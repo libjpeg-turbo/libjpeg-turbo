@@ -396,7 +396,7 @@ extends java.lang.Object</pre>
 <td class="colFirst"><code>static int</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#PARAM_PRECISION">PARAM_PRECISION</a></span></code></th>
 <td class="colLast">
-<div class="block">JPEG data precision (bits per sample) [decompression only, read-only]</div>
+<div class="block">Data precision (bits per sample)</div>
 </td>
 </tr>
 <tr class="rowColor">
@@ -1053,8 +1053,9 @@ extends java.lang.Object</pre>
 <h4>PF_GRAY</h4>
 <pre>public static final&nbsp;int PF_GRAY</pre>
 <div class="block">Grayscale pixel format.  Each 1-sample pixel represents a luminance
- (brightness) level from 0 to the maximum sample value (255 for 8-bit
- samples, 4095 for 12-bit samples, and 65535 for 16-bit samples.)</div>
+ (brightness) level from 0 to the maximum sample value  (which is, for
+ instance, 255 for 8-bit samples or 4095 for 12-bit samples or 65535 for
+ 16-bit samples.)</div>
 <dl>
 <dt><span class="seeLabel">See Also:</span></dt>
 <dd><a href="../../../constant-values.html#org.libjpegturbo.turbojpeg.TJ.PF_GRAY">Constant Field Values</a></dd>
@@ -1400,16 +1401,22 @@ extends java.lang.Object</pre>
 <li class="blockList">
 <h4>PARAM_PRECISION</h4>
 <pre>public static final&nbsp;int PARAM_PRECISION</pre>
-<div class="block">JPEG data precision (bits per sample) [decompression only, read-only]
+<div class="block">Data precision (bits per sample)
 
- <p>The JPEG image uses the specified number of bits per sample.
+ <p>The JPEG image uses (decompression) or will use (lossless compression)
+ the specified number of bits per sample.
+
+ <p>The data precision is the number of bits in the maximum sample value,
+ which may not be the same as the width of the data type used to store the
+ sample.
 
  <p><b>Value</b>
  <ul>
- <li> <code>8</code>, <code>12</code>, or <code>16</code>
+ <li> <code>8</code> or <code>12</code> for lossy JPEG images;
+ <code>2</code> to <code>16</code> for lossless JPEG images
  </ul>
 
- <p>12-bit data precision implies <a href="#PARAM_OPTIMIZE"><code>PARAM_OPTIMIZE</code></a> unless
+ <p>12-bit JPEG data precision implies <a href="#PARAM_OPTIMIZE"><code>PARAM_OPTIMIZE</code></a> unless
  <a href="#PARAM_ARITHMETIC"><code>PARAM_ARITHMETIC</code></a> is set.</div>
 <dl>
 <dt><span class="seeLabel">See Also:</span></dt>

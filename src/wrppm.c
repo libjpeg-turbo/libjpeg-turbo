@@ -5,7 +5,7 @@
  * Copyright (C) 1991-1996, Thomas G. Lane.
  * Modified 2009 by Guido Vollbeding.
  * libjpeg-turbo Modifications:
- * Copyright (C) 2017, 2019-2020, 2022, D. R. Commander.
+ * Copyright (C) 2017, 2019-2020, 2022, 2024, D. R. Commander.
  * For conditions of distribution and use, see the accompanying README.ijg
  * file.
  *
@@ -39,10 +39,11 @@
 #if BITS_IN_JSAMPLE == 8
 #define PUTPPMSAMPLE(ptr, v)  *ptr++ = (char)(v)
 #define BYTESPERSAMPLE  1
-#define PPM_MAXVAL  255
+#define PPM_MAXVAL  ((1 << cinfo->data_precision) - 1)
 #else
 #ifdef PPM_NORAWWORD
-#define PUTPPMSAMPLE(ptr, v)  *ptr++ = (char)((v) >> (BITS_IN_JSAMPLE - 8))
+#define PUTPPMSAMPLE(ptr, v) \
+  *ptr++ = (char)((v) >> (cinfo->data_precision - 8))
 #define BYTESPERSAMPLE  1
 #define PPM_MAXVAL  255
 #else
@@ -53,7 +54,7 @@
   *ptr++ = (char)(val_ & 0xFF); \
 }
 #define BYTESPERSAMPLE  2
-#define PPM_MAXVAL  ((1 << BITS_IN_JSAMPLE) - 1)
+#define PPM_MAXVAL  ((1 << cinfo->data_precision) - 1)
 #endif
 #endif
 
@@ -171,7 +172,7 @@ put_cmyk(j_decompress_ptr cinfo, djpeg_dest_ptr dinfo,
   bufferptr = dest->iobuffer;
   for (col = cinfo->output_width; col > 0; col--) {
     _JSAMPLE r, g, b, c = *ptr++, m = *ptr++, y = *ptr++, k = *ptr++;
-    cmyk_to_rgb(c, m, y, k, &r, &g, &b);
+    cmyk_to_rgb(PPM_MAXVAL, c, m, y, k, &r, &g, &b);
     PUTPPMSAMPLE(bufferptr, r);
     PUTPPMSAMPLE(bufferptr, g);
     PUTPPMSAMPLE(bufferptr, b);
@@ -309,7 +310,12 @@ _jinit_write_ppm(j_decompress_ptr cinfo)
 {
   ppm_dest_ptr dest;
 
-  if (cinfo->data_precision != BITS_IN_JSAMPLE)
+#if BITS_IN_JSAMPLE == 8
+  if (cinfo->data_precision > BITS_IN_JSAMPLE || cinfo->data_precision < 2)
+#else
+  if (cinfo->data_precision > BITS_IN_JSAMPLE ||
+      cinfo->data_precision < BITS_IN_JSAMPLE - 3)
+#endif
     ERREXIT1(cinfo, JERR_BAD_PRECISION, cinfo->data_precision);
 
   /* Create module interface object, fill in method pointers */
