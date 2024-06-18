@@ -904,7 +904,7 @@ static void usage(char *progName)
   int i;
 
   printf("USAGE: %s\n", progName);
-  printf("       <Inputimage (BMP|PPM)> <Quality or PSV> [options]\n\n");
+  printf("       <Inputimage (BMP|PPM|PGM)> <Quality or PSV> [options]\n\n");
   printf("       %s\n", progName);
   printf("       <Inputimage (JPG)> [options]\n");
 
@@ -912,7 +912,7 @@ static void usage(char *progName)
   printf("---------------\n");
   printf("-alloc = Dynamically allocate JPEG buffers\n");
   printf("-benchtime T = Run each benchmark for at least T seconds [default = 5.0]\n");
-  printf("-bmp = Use Windows Bitmap format for output images [default = PPM]\n");
+  printf("-bmp = Use Windows Bitmap format for output images [default = PPM or PGM]\n");
   printf("     ** 8-bit data precision only **\n");
   printf("-bottomup = Use bottom-up row order for packed-pixel source/destination buffers\n");
   printf("-componly = Stop after running compression tests.  Do not test decompression.\n");
@@ -925,7 +925,7 @@ static void usage(char *progName)
   printf("-maxpixels = Input image size limit (in pixels) [default = no limit]\n");
   printf("-nowrite = Do not write reference or output images (improves consistency of\n");
   printf("     benchmark results)\n");
-  printf("-rgb, -bgr, -rgbx, -bgrx, -xbgr, -xrgb =\n");
+  printf("-rgb, -bgr, -rgbx, -bgrx, -xbgr, -xrgb, -gray =\n");
   printf("     Use the specified pixel format for packed-pixel source/destination buffers\n");
   printf("     [default = BGR]\n");
   printf("-cmyk = Indirectly test YCCK JPEG compression/decompression\n");
@@ -1072,6 +1072,8 @@ int main(int argc, char *argv[])
         pf = TJPF_XBGR;
       else if (!strcasecmp(argv[i], "-xrgb"))
         pf = TJPF_XRGB;
+      else if (!strcasecmp(argv[i], "-gray"))
+        pf = TJPF_GRAY;
       else if (!strcasecmp(argv[i], "-cmyk"))
         pf = TJPF_CMYK;
       else if (!strcasecmp(argv[i], "-bottomup"))
@@ -1198,6 +1200,11 @@ int main(int argc, char *argv[])
 
   if (optimize && !progressive && !arithmetic && !lossless && precision != 12)
     printf("Using optimized baseline entropy coding\n\n");
+
+  if (pf == TJPF_GRAY) {
+    if (!strcmp(ext, "ppm")) ext = "pgm";
+    subsamp = TJSAMP_GRAY;
+  }
 
   if (precision == 16 && !lossless) {
     printf("ERROR: -lossless must be specified along with -precision 16\n");

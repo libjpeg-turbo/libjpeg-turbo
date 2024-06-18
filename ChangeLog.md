@@ -9,6 +9,10 @@ documentation for the libjpeg API library and associated programs has been
 moved into the **doc/** subdirectory, and all C source code and headers have
 been moved into a new **src/** subdirectory.
 
+2. Added a new TJBench option (`-gray`) that can be used to test the
+performance of compressing/decompressing a grayscale JPEG image from/to a
+packed-pixel grayscale image.
+
 
 3.0.4
 =====

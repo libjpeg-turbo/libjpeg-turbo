@@ -44,8 +44,8 @@ final class TJBench {
   private static int maxMemory = 0, maxPixels = 0, precision = 8, quiet = 0,
     pf = TJ.PF_BGR, yuvAlign = 1, restartIntervalBlocks,
     restartIntervalRows = 0;
-  private static boolean compOnly, decompOnly, doTile, doYUV, write = true,
-    bmp = false;
+  private static boolean compOnly, decompOnly, doTile, doYUV, write = true;
+  private static String ext = null;
 
   static final String[] PIXFORMATSTR = {
     "RGB", "BGR", "RGBX", "BGRX", "XBGR", "XRGB", "GRAY", "", "", "", "",
@@ -319,11 +319,11 @@ final class TJBench {
     else
       sizeStr = new String("full");
     if (decompOnly)
-      tempStr = new String(fileName + "_" + sizeStr + (bmp ? ".bmp" : ".ppm"));
+      tempStr = new String(fileName + "_" + sizeStr + "." + ext);
     else
       tempStr = new String(fileName + "_" +
                            (lossless ? "LOSSLS" : SUBNAME[subsamp]) + qualStr +
-                           "_" + sizeStr + (bmp ? ".bmp" : ".ppm"));
+                           "_" + sizeStr + "." + ext);
 
     tjd.saveImage(precision, tempStr, dstBuf, scaledw, 0, scaledh, pf);
   }
@@ -768,14 +768,14 @@ final class TJBench {
     String className = new TJBench().getClass().getName();
 
     System.out.println("\nUSAGE: java " + className);
-    System.out.println("       <Inputimage (BMP|PPM)> <Quality or PSV> [options]\n");
+    System.out.println("       <Inputimage (BMP|PPM|PGM)> <Quality or PSV> [options]\n");
     System.out.println("       java " + className);
     System.out.println("       <Inputimage (JPG)> [options]");
 
     System.out.println("\nGENERAL OPTIONS");
     System.out.println("---------------");
     System.out.println("-benchtime T = Run each benchmark for at least T seconds [default = 5.0]");
-    System.out.println("-bmp = Use Windows Bitmap format for output images [default = PPM]");
+    System.out.println("-bmp = Use Windows Bitmap format for output images [default = PPM or PGM]");
     System.out.println("     ** 8-bit data precision only **");
     System.out.println("-bottomup = Use bottom-up row order for packed-pixel source/destination buffers");
     System.out.println("-componly = Stop after running compression tests.  Do not test decompression.");
@@ -788,7 +788,7 @@ final class TJBench {
     System.out.println("-maxpixels = Input image size limit (in pixels) [default = no limit]");
     System.out.println("-nowrite = Do not write reference or output images (improves consistency of");
     System.out.println("     benchmark results)");
-    System.out.println("-rgb, -bgr, -rgbx, -bgrx, -xbgr, -xrgb =");
+    System.out.println("-rgb, -bgr, -rgbx, -bgrx, -xbgr, -xrgb, -gray =");
     System.out.println("     Use the specified pixel format for packed-pixel source/destination buffers");
     System.out.println("     [default = BGR]");
     System.out.println("-cmyk = Indirectly test YCCK JPEG compression/decompression");
@@ -883,7 +883,7 @@ final class TJBench {
       if (tempStr.endsWith(".jpg") || tempStr.endsWith(".jpeg"))
         decompOnly = true;
       if (tempStr.endsWith(".bmp"))
-        bmp = true;
+        ext = new String("bmp");
 
       System.out.println("");
 
@@ -951,6 +951,8 @@ final class TJBench {
             pf = TJ.PF_XBGR;
           else if (argv[i].equalsIgnoreCase("-xrgb"))
             pf = TJ.PF_XRGB;
+          else if (argv[i].equalsIgnoreCase("-gray"))
+            pf = TJ.PF_GRAY;
           else if (argv[i].equalsIgnoreCase("-cmyk"))
             pf = TJ.PF_CMYK;
           else if (argv[i].equalsIgnoreCase("-bottomup"))
@@ -1043,9 +1045,10 @@ final class TJBench {
               System.out.format("Warmup time = %.1f seconds\n\n", warmup);
             } else
               usage();
-          } else if (argv[i].equalsIgnoreCase("-bmp"))
-            bmp = true;
-          else if (argv[i].equalsIgnoreCase("-yuv")) {
+          } else if (argv[i].equalsIgnoreCase("-bmp")) {
+            if (ext == null)
+              ext = new String("bmp");
+          } else if (argv[i].equalsIgnoreCase("-yuv")) {
             System.out.println("Testing planar YUV encoding/decoding\n");
             doYUV = true;
           } else if (argv[i].equalsIgnoreCase("-yuvpad") &&
@@ -1129,6 +1132,15 @@ final class TJBench {
       if (optimize && !progressive && !arithmetic && !lossless &&
           precision != 12)
         System.out.println("Using optimized baseline entropy coding\n");
+
+      if (pf == TJ.PF_GRAY) {
+        if (ext == null)
+          ext = new String("pgm");
+        subsamp = TJ.SAMP_GRAY;
+      }
+
+      if (ext == null)
+        ext = new String("ppm");
 
       if (precision == 16 && !lossless)
         throw new Exception("-lossless must be specified along with -precision 16");
