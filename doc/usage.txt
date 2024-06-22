@@ -170,17 +170,15 @@ Switches for advanced users:
                        N is 8, 12, or 16; default is 8.  If N is 16, then
                        -lossless must also be specified.  Note that only the
                        PBMPLUS input file format supports data precisions other
-                       than 8.  (For historical reasons, cjpeg allows GIF input
-                       files to be converted into 12-bit-per-sample JPEG files,
-                       but this is not a useful conversion.)  Note also that
-                       PBMPLUS input files are silently scaled to the target
-                       data precision, even if it is lower than the precision
-                       of the input file.  Passing an argument of -verbose to
-                       cjpeg will cause it to print information about the
-                       precision of the input file.  CAUTION: 12-bit and 16-bit
-                       data precision is not yet widely implemented, so many
-                       decoders will be unable to handle a 12-bit-per-sample or
-                       16-bit-per-sample JPEG file at all.
+                       than 8.  Note also that PBMPLUS input files are silently
+                       scaled to the target data precision, even if it is lower
+                       than the precision of the input file.  Passing an
+                       argument of -verbose to cjpeg will cause it to print
+                       information about the precision of the input file.
+                       CAUTION: 12-bit and 16-bit data precision is not yet
+                       widely implemented, so many decoders will be unable to
+                       handle a 12-bit-per-sample or 16-bit-per-sample JPEG
+                       file at all.
 
                        "-precision 12" implies -optimize unless -arithmetic is
                        also specified.

@@ -158,12 +158,9 @@ Create JPEG file with N-bit data precision.  N is 8, 12, or 16; default is 8.
 If N is 16, then
 .B -lossless
 must also be specified.  Note that only the PBMPLUS input file format supports
-data precisions other than 8.  (For historical reasons,
-.B cjpeg
-allows GIF input files to be converted into 12-bit-per-sample JPEG files, but
-this is not a useful conversion.)  Note also that PBMPLUS input files are
-silently scaled to the target data precision, even if it is lower than the
-precision of the input file.  Passing an argument of
+data precisions other than 8.  Note also that PBMPLUS input files are silently
+scaled to the target data precision, even if it is lower than the precision of
+the input file.  Passing an argument of
 .B \-verbose
 to
 .B cjpeg

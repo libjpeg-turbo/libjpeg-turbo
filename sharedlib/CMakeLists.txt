@@ -82,10 +82,10 @@ set(CDJPEG_COMPILE_FLAGS
 
 # Compile a separate version of these source files with 12-bit and 16-bit data
 # precision.
-add_library(cjpeg12 OBJECT ../src/rdgif.c ../src/rdppm.c)
+add_library(cjpeg12 OBJECT ../src/rdppm.c)
 set_property(TARGET cjpeg12 PROPERTY COMPILE_FLAGS
   "-DBITS_IN_JSAMPLE=12 -DGIF_SUPPORTED -DPPM_SUPPORTED")
-add_library(cjpeg16 OBJECT ../src/rdgif.c ../src/rdppm.c)
+add_library(cjpeg16 OBJECT ../src/rdppm.c)
 set_property(TARGET cjpeg16 PROPERTY COMPILE_FLAGS
   "-DBITS_IN_JSAMPLE=16 -DGIF_SUPPORTED -DPPM_SUPPORTED")
 add_executable(cjpeg ../src/cjpeg.c ../src/cdjpeg.c ../src/rdbmp.c

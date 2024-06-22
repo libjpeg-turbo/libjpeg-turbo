@@ -105,17 +105,7 @@ select_file_type(j_compress_ptr cinfo, FILE *infile)
 #endif
 #ifdef GIF_SUPPORTED
   case 'G':
-    if (cinfo->data_precision == 16) {
-#ifdef C_LOSSLESS_SUPPORTED
-      return j16init_read_gif(cinfo);
-#else
-      ERREXIT1(cinfo, JERR_BAD_PRECISION, cinfo->data_precision);
-      break;
-#endif
-    } else if (cinfo->data_precision == 12)
-      return j12init_read_gif(cinfo);
-    else
-      return jinit_read_gif(cinfo);
+    return jinit_read_gif(cinfo);
 #endif
 #ifdef PPM_SUPPORTED
   case 'P':

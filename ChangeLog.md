@@ -13,6 +13,11 @@ been moved into a new **src/** subdirectory.
 performance of compressing/decompressing a grayscale JPEG image from/to a
 packed-pixel grayscale image.
 
+3. cjpeg no longer allows GIF input files to be converted into
+12-bit-per-sample JPEG files.  That was never a useful feature, since GIF
+images have at most 256 colors referenced from a palette of 8-bit-per-component
+RGB values.
+
 
 3.0.4
 =====

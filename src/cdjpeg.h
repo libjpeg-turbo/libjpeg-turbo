@@ -114,10 +114,6 @@ EXTERN(cjpeg_source_ptr) jinit_read_bmp(j_compress_ptr cinfo,
 EXTERN(djpeg_dest_ptr) jinit_write_bmp(j_decompress_ptr cinfo, boolean is_os2,
                                        boolean use_inversion_array);
 EXTERN(cjpeg_source_ptr) jinit_read_gif(j_compress_ptr cinfo);
-EXTERN(cjpeg_source_ptr) j12init_read_gif(j_compress_ptr cinfo);
-#ifdef C_LOSSLESS_SUPPORTED
-EXTERN(cjpeg_source_ptr) j16init_read_gif(j_compress_ptr cinfo);
-#endif
 EXTERN(djpeg_dest_ptr) jinit_write_gif(j_decompress_ptr cinfo, boolean is_lzw);
 EXTERN(djpeg_dest_ptr) j12init_write_gif(j_decompress_ptr cinfo,
                                          boolean is_lzw);

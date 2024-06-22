@@ -120,9 +120,10 @@ and 16-bit-per-sample lossless (predictive) processes.  This code supports
 12-bit-per-sample lossy or lossless JPEG if you set cinfo->data_precision to 12
 and 16-bit-per-sample lossless JPEG if you set cinfo->data_precision to 16.
 Note that this causes the sample size to be larger than a char, so it affects
-the surrounding application's image data.  The sample applications cjpeg and
-djpeg can support 12-bit data precision only for PPM, PGM, and GIF file formats
-and 16-bit data precision only for PPM and PGM file formats.
+the surrounding application's image data.  The sample application djpeg can
+support 12-bit data precision only for PPM, PGM, and GIF file formats.  The
+sample applications cjpeg and djpeg can support 16-bit data precision only for
+PPM and PGM file formats.
 
 Note that, when 12-bit data precision is enabled in lossy mode, the library
 compresses in Huffman optimization mode by default, in order to generate valid
