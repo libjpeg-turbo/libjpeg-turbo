@@ -382,6 +382,17 @@ set(TURBOJPEG_SO_MAJOR_VERSION 0)
 set(TURBOJPEG_SO_AGE 3)
 set(TURBOJPEG_SO_VERSION 0.${TURBOJPEG_SO_AGE}.0)
 
+# On Windows static and dynamic / shared libs use the same *.lib extension, whilst on
+# Unix distros for static libs it is *.a extension. Therefore you may want to override
+# the default output names via cmake config arguments.
+if(MSVC)
+  set(JPEG_STATIC_OUTPUT_NAME "jpeg-static" CACHE STRING "Output name for static jpeg lib")
+  set(TURBOJPEG_STATIC_OUTPUT_NAME "turbojpeg-static" CACHE STRING "Output name for static turbojpeg lib")
+elseif()
+  set(JPEG_STATIC_OUTPUT_NAME "jpeg" CACHE STRING "Output name for static jpeg lib")
+  set(TURBOJPEG_STATIC_OUTPUT_NAME "turbojpeg" CACHE STRING "Output name for static turbojpeg lib")
+endif()
+
 
 ###############################################################################
 # COMPILER SETTINGS
@@ -667,9 +678,13 @@ if(ENABLE_STATIC)
   add_library(jpeg-static STATIC ${JPEG_SOURCES} ${SIMD_TARGET_OBJECTS}
     ${SIMD_OBJS} $<TARGET_OBJECTS:jpeg12-static>
     $<TARGET_OBJECTS:jpeg16-static>)
-  if(NOT MSVC)
-    set_target_properties(jpeg-static PROPERTIES OUTPUT_NAME jpeg)
-  endif()
+  set_target_properties(jpeg-static PROPERTIES
+    OUTPUT_NAME ${JPEG_STATIC_OUTPUT_NAME}
+    DEBUG_POSTFIX "d"
+    RELEASE_POSTFIX ""
+    MINSIZEREL_POSTFIX "mr"
+    RELWITHDEBINFO_POSTFIX "rd"
+  )
 endif()
 
 if(WITH_TURBOJPEG)
@@ -751,10 +766,13 @@ if(WITH_TURBOJPEG)
       $<TARGET_OBJECTS:turbojpeg16-static>)
     set_property(TARGET turbojpeg-static PROPERTY COMPILE_FLAGS
       "-DBMP_SUPPORTED -DPPM_SUPPORTED")
-    if(NOT MSVC)
-      set_target_properties(turbojpeg-static PROPERTIES OUTPUT_NAME turbojpeg)
-    endif()
-
+    set_target_properties(turbojpeg-static PROPERTIES
+      OUTPUT_NAME ${TURBOJPEG_STATIC_OUTPUT_NAME}
+      DEBUG_POSTFIX "d"
+      RELEASE_POSTFIX ""
+      MINSIZEREL_POSTFIX "mr"
+      RELWITHDEBINFO_POSTFIX "rd"
+    )
     add_executable(tjunittest-static tjunittest.c tjutil.c md5/md5.c
       md5/md5hl.c)
     target_link_libraries(tjunittest-static turbojpeg-static)
@@ -1732,16 +1750,25 @@ if(WITH_TURBOJPEG)
       RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT bin)
     install(TARGETS tjbench
       RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT bin)
-    if(NOT CMAKE_VERSION VERSION_LESS "3.1" AND MSVC AND
-      CMAKE_C_LINKER_SUPPORTS_PDB)
-      install(FILES "$<TARGET_PDB_FILE:turbojpeg>"
-        DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT bin OPTIONAL)
+    if(MSVC AND CMAKE_C_LINKER_SUPPORTS_PDB AND NOT CMAKE_VERSION VERSION_LESS "3.1")
+      install(FILES $<TARGET_PDB_FILE:turbojpeg>
+        DESTINATION ${CMAKE_INSTALL_BINDIR}
+        COMPONENT bin
+        OPTIONAL
+      )
     endif()
   endif()
   if(ENABLE_STATIC)
     install(TARGETS turbojpeg-static EXPORT ${CMAKE_PROJECT_NAME}Targets
       INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
       ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib)
+    if(MSVC AND CMAKE_C_LINKER_SUPPORTS_PDB AND NOT CMAKE_VERSION VERSION_LESS "3.15")
+      install(FILES ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/$<TARGET_FILE_BASE_NAME:turbojpeg-static>.pdb
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        COMPONENT lib
+        OPTIONAL
+      )
+    endif()
     if(NOT ENABLE_SHARED)
       if(GENERATOR_IS_MULTI_CONFIG)
         set(DIR "${CMAKE_CURRENT_BINARY_DIR}/\${CMAKE_INSTALL_CONFIG_NAME}")
@@ -1760,6 +1787,13 @@ if(ENABLE_STATIC)
   install(TARGETS jpeg-static EXPORT ${CMAKE_PROJECT_NAME}Targets
     INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib)
+  if(MSVC AND CMAKE_C_LINKER_SUPPORTS_PDB AND NOT CMAKE_VERSION VERSION_LESS "3.15")
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/$<TARGET_FILE_BASE_NAME:jpeg-static>.pdb
+      DESTINATION ${CMAKE_INSTALL_LIBDIR}
+      COMPONENT lib
+      OPTIONAL
+    )
+  endif()
   if(NOT ENABLE_SHARED)
     if(GENERATOR_IS_MULTI_CONFIG)
       set(DIR "${CMAKE_CURRENT_BINARY_DIR}/\${CMAKE_INSTALL_CONFIG_NAME}")
