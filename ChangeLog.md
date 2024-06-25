@@ -25,11 +25,20 @@ type.
 2. Hardened the default marker processor in the decompressor to guard against
 an issue (exposed by 3.0 beta2[6]) whereby attempting to decompress a
 specially-crafted malformed JPEG image (specifically an image with a complete
-12-bit-per-component Start Of Frame segment followed by an incomplete
-8-bit-per-component Start Of Frame segment) using buffered-image mode and input
+12-bit-per-sample Start Of Frame segment followed by an incomplete
+8-bit-per-sample Start Of Frame segment) using buffered-image mode and input
 prefetching caused a segfault if the `fill_input_buffer()` method in the
 calling application's custom source manager incorrectly returned `FALSE` in
 response to a prematurely-terminated JPEG data stream.
+
+3. Fixed an issue in cjpeg whereby, when generating a 12-bit-per-sample or
+16-bit-per-sample lossless JPEG image, specifying a point transform value
+greater than 7 resulted in an error ("Invalid progressive/lossless parameters")
+unless the `-precision` option was specified before the `-lossless` option.
+
+4. Fixed a regression introduced by 3.0.3[3] that made it impossible for
+calling applications to generate 12-bit-per-sample arithmetic-coded lossy JPEG
+images using the TurboJPEG API.
 
 
 3.0.3
