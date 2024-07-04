@@ -366,6 +366,7 @@ if(NOT NEON_INTRINSICS)
   separate_arguments(CMAKE_ASM_FLAGS_SEP UNIX_COMMAND "${CMAKE_ASM_FLAGS}")
   execute_process(COMMAND ${CMAKE_ASM_COMPILER} ${CMAKE_ASM_FLAGS_SEP}
       -x assembler-with-cpp -c ${CMAKE_CURRENT_BINARY_DIR}/gastest.S
+      -o ${CMAKE_CURRENT_BINARY_DIR}/gastest.o
     RESULT_VARIABLE RESULT OUTPUT_VARIABLE OUTPUT ERROR_VARIABLE ERROR)
   if(NOT RESULT EQUAL 0)
     message(WARNING "GAS appears to be broken.  Using the full Neon SIMD intrinsics implementation.")
