@@ -40,7 +40,7 @@ jobs:
           sudo chown -R runner:runner $HOME/src/ljt.nightly
           mv $HOME/src/ljt.nightly/latest/log-${{github.job}}.txt $HOME/src/ljt.nightly/latest/files/
   macos:
-    runs-on: macos-11
+    runs-on: macos-12
     steps:
       - name: Set global environment variables
         run: |
@@ -50,7 +50,7 @@ jobs:
       - name: Set up build
         run: |
           brew install yasm md5sha1sum
-          sudo xcode-select -s /Applications/Xcode_12.4.app
+          sudo xcode-select -s /Applications/Xcode_13.2.1.app
           mkdir -p $HOME/src/ljt.nightly
           git clone --depth=1 https://github.com/libjpeg-turbo/buildscripts.git -b $BRANCH $HOME/src/buildscripts
       - name: Configure GPG signing
