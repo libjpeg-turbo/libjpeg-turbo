@@ -31,7 +31,11 @@
 GLOBAL(void *)
 jpeg_get_small(j_common_ptr cinfo, size_t sizeofobject)
 {
+#ifdef WITH_CALLOC
+  return (void *)calloc(1, sizeofobject);
+#else
   return (void *)malloc(sizeofobject);
+#endif
 }
 
 GLOBAL(void)
@@ -48,7 +52,11 @@ jpeg_free_small(j_common_ptr cinfo, void *object, size_t sizeofobject)
 GLOBAL(void *)
 jpeg_get_large(j_common_ptr cinfo, size_t sizeofobject)
 {
+#ifdef WITH_CALLOC
+  return (void *)calloc(1, sizeofobject);
+#else
   return (void *)malloc(sizeofobject);
+#endif
 }
 
 GLOBAL(void)
