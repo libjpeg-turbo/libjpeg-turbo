@@ -250,6 +250,7 @@ boolean_number(WITH_SIMD)
 option(WITH_TURBOJPEG
   "Include the TurboJPEG API library and associated test programs" TRUE)
 boolean_number(WITH_TURBOJPEG)
+option(WITH_CALLOC "Use calloc" TRUE)
 option(WITH_FUZZ "Build fuzz targets" FALSE)
 
 macro(report_option var desc)
@@ -624,6 +625,10 @@ if(WITH_SIMD)
   endif()
 else()
   message(STATUS "SIMD extensions: None (WITH_SIMD = ${WITH_SIMD})")
+endif()
+
+if (WITH_CALLOC)
+    add_definitions(-DWITH_CALLOC)
 endif()
 
 # We have to generate these here, because if the build system tries and fails
