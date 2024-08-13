@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2021 D. R. Commander.  All Rights Reserved.
+ * Copyright (C)2021, 2024 D. R. Commander.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -62,13 +62,6 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
   };
   char arithEnv[16] = "TJ_ARITHMETIC=0";
   char restartEnv[13] = "TJ_RESTART=0";
-#if defined(__has_feature) && __has_feature(memory_sanitizer)
-  char simdEnv[18] = "JSIMD_FORCENONE=1";
-
-  /* The libjpeg-turbo SIMD extensions produce false positives with
-     MemorySanitizer. */
-  putenv(simdEnv);
-#endif
   putenv(arithEnv);
   putenv(restartEnv);
 
@@ -105,7 +98,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
       continue;
 
     maxBufSize = tjBufSize(width, height, tests[ti].subsamp);
-    if ((dstBuf = (unsigned char *)malloc(maxBufSize)) == NULL)
+    if ((dstBuf = (unsigned char *)tjAlloc(maxBufSize)) == NULL)
       goto bailout;
     if ((yuvBuf =
          (unsigned char *)malloc(tjBufSizeYUV2(width, 1, height,

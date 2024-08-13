@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2021 D. R. Commander.  All Rights Reserved.
+ * Copyright (C)2021, 2024 D. R. Commander.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -61,13 +61,6 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
     { TJPF_GRAY, TJSAMP_GRAY, 50 },
     { TJPF_CMYK, TJSAMP_440, 40 }
   };
-#if defined(__has_feature) && __has_feature(memory_sanitizer)
-  char env[18] = "JSIMD_FORCENONE=1";
-
-  /* The libjpeg-turbo SIMD extensions produce false positives with
-     MemorySanitizer. */
-  putenv(env);
-#endif
 
   snprintf(filename, FILENAME_MAX, "/tmp/libjpeg-turbo_compress_fuzz.XXXXXX");
   if ((fd = mkstemp(filename)) < 0 || write(fd, data, size) < 0)
@@ -97,7 +90,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 
     maxBufSize = tjBufSize(width, height, tests[ti].subsamp);
     if (flags & TJFLAG_NOREALLOC) {
-      if ((dstBuf = (unsigned char *)malloc(maxBufSize)) == NULL)
+      if ((dstBuf = (unsigned char *)tjAlloc(maxBufSize)) == NULL)
         goto bailout;
     } else
       dstBuf = NULL;

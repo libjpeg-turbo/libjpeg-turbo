@@ -638,6 +638,11 @@ encode_mcu_AC_first(j_compress_ptr cinfo, JBLOCKROW *MCU_data)
   size_t zerobits;
   size_t bits[8 / SIZEOF_SIZE_T];
 
+#ifdef ZERO_BUFFERS
+  memset(values_unaligned, 0, sizeof(values_unaligned));
+  memset(bits, 0, sizeof(bits));
+#endif
+
   entropy->next_output_byte = cinfo->dest->next_output_byte;
   entropy->free_in_buffer = cinfo->dest->free_in_buffer;
 
@@ -902,6 +907,11 @@ encode_mcu_AC_refine(j_compress_ptr cinfo, JBLOCKROW *MCU_data)
   const UJCOEF *cabsvalue, *EOBPTR;
   size_t zerobits, signbits;
   size_t bits[16 / SIZEOF_SIZE_T];
+
+#ifdef ZERO_BUFFERS
+  memset(absvalues_unaligned, 0, sizeof(absvalues_unaligned));
+  memset(bits, 0, sizeof(bits));
+#endif
 
   entropy->next_output_byte = cinfo->dest->next_output_byte;
   entropy->free_in_buffer = cinfo->dest->free_in_buffer;

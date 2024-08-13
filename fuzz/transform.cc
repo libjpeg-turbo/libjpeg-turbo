@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2021, 2023 D. R. Commander.  All Rights Reserved.
+ * Copyright (C)2021, 2023-2024 D. R. Commander.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -39,13 +39,6 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
   unsigned long dstSizes[1] = { 0 }, maxBufSize;
   int width = 0, height = 0, jpegSubsamp, jpegColorspace, i;
   tjtransform transforms[1];
-#if defined(__has_feature) && __has_feature(memory_sanitizer)
-  char env[18] = "JSIMD_FORCENONE=1";
-
-  /* The libjpeg-turbo SIMD extensions produce false positives with
-     MemorySanitizer. */
-  putenv(env);
-#endif
 
   if ((handle = tjInitTransform()) == NULL)
     goto bailout;
@@ -68,7 +61,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 
   transforms[0].op = TJXOP_NONE;
   transforms[0].options = TJXOPT_PROGRESSIVE | TJXOPT_COPYNONE;
-  dstBufs[0] = (unsigned char *)malloc(tjBufSize(width, height, jpegSubsamp));
+  dstBufs[0] = (unsigned char *)tjAlloc(tjBufSize(width, height, jpegSubsamp));
   if (!dstBufs[0])
     goto bailout;
 
@@ -97,8 +90,8 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
   transforms[0].op = TJXOP_TRANSPOSE;
   transforms[0].options = TJXOPT_GRAY | TJXOPT_CROP | TJXOPT_COPYNONE;
   dstBufs[0] =
-    (unsigned char *)malloc(tjBufSize((height + 1) / 2, (width + 1) / 2,
-                                      jpegSubsamp));
+    (unsigned char *)tjAlloc(tjBufSize((height + 1) / 2, (width + 1) / 2,
+                                       jpegSubsamp));
   if (!dstBufs[0])
     goto bailout;
 
@@ -120,7 +113,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 
   transforms[0].op = TJXOP_ROT90;
   transforms[0].options = TJXOPT_TRIM;
-  dstBufs[0] = (unsigned char *)malloc(tjBufSize(height, width, jpegSubsamp));
+  dstBufs[0] = (unsigned char *)tjAlloc(tjBufSize(height, width, jpegSubsamp));
   if (!dstBufs[0])
     goto bailout;
 

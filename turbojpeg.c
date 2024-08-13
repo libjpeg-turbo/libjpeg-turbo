@@ -485,11 +485,10 @@ DLLEXPORT void tjFree(unsigned char *buf)
   free(buf);
 }
 
-
 /* TurboJPEG 1.2+ */
 DLLEXPORT unsigned char *tjAlloc(int bytes)
 {
-  return (unsigned char *)malloc(bytes);
+  return (unsigned char *)MALLOC(bytes);
 }
 
 
@@ -883,7 +882,7 @@ DLLEXPORT int tjEncodeYUVPlanes(tjhandle handle, const unsigned char *srcBuf,
 
   for (i = 0; i < cinfo->num_components; i++) {
     compptr = &cinfo->comp_info[i];
-    _tmpbuf[i] = (JSAMPLE *)malloc(
+    _tmpbuf[i] = (JSAMPLE *)MALLOC(
       PAD((compptr->width_in_blocks * cinfo->max_h_samp_factor * DCTSIZE) /
           compptr->h_samp_factor, 32) *
       cinfo->max_v_samp_factor + 32);
@@ -902,7 +901,7 @@ DLLEXPORT int tjEncodeYUVPlanes(tjhandle handle, const unsigned char *srcBuf,
             compptr->h_samp_factor, 32) * row];
     }
     _tmpbuf2[i] =
-      (JSAMPLE *)malloc(PAD(compptr->width_in_blocks * DCTSIZE, 32) *
+      (JSAMPLE *)MALLOC(PAD(compptr->width_in_blocks * DCTSIZE, 32) *
                         compptr->v_samp_factor + 32);
     if (!_tmpbuf2[i])
       THROW("tjEncodeYUVPlanes(): Memory allocation failure");
@@ -1797,7 +1796,7 @@ DLLEXPORT int tjDecompressToYUVPlanes(tjhandle handle,
     }
   }
   if (usetmpbuf) {
-    if ((_tmpbuf = (JSAMPLE *)malloc(sizeof(JSAMPLE) * tmpbufsize)) == NULL)
+    if ((_tmpbuf = (JSAMPLE *)MALLOC(sizeof(JSAMPLE) * tmpbufsize)) == NULL)
       THROW("tjDecompressToYUVPlanes(): Memory allocation failure");
     ptr = _tmpbuf;
     for (i = 0; i < dinfo->num_components; i++) {

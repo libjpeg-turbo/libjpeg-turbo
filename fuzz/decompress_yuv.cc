@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2021, 2023 D. R. Commander.  All Rights Reserved.
+ * Copyright (C)2021, 2023-2024 D. R. Commander.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -44,13 +44,6 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
      necessary to achieve full coverage. */
   enum TJPF pixelFormats[NUMPF] =
     { TJPF_BGR, TJPF_XRGB, TJPF_GRAY };
-#if defined(__has_feature) && __has_feature(memory_sanitizer)
-  char env[18] = "JSIMD_FORCENONE=1";
-
-  /* The libjpeg-turbo SIMD extensions produce false positives with
-     MemorySanitizer. */
-  putenv(env);
-#endif
 
   if ((handle = tjInitDecompress()) == NULL)
     goto bailout;
@@ -77,7 +70,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
       h = (height + 3) / 4;
     }
 
-    if ((dstBuf = (unsigned char *)malloc(w * h * tjPixelSize[pf])) == NULL)
+    if ((dstBuf = (unsigned char *)tjAlloc(w * h * tjPixelSize[pf])) == NULL)
       goto bailout;
     if ((yuvBuf =
          (unsigned char *)malloc(tjBufSizeYUV2(w, 1, h, jpegSubsamp))) == NULL)
