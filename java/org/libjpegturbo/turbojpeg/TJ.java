@@ -1,6 +1,6 @@
 /*
- * Copyright (C)2011-2013, 2017-2018, 2020-2021, 2023 D. R. Commander.
- *                                                    All Rights Reserved.
+ * Copyright (C)2011-2013, 2017-2018, 2020-2021, 2023-2024 D. R. Commander.
+ *                                                         All Rights Reserved.
  * Copyright (C)2015 Viktor Szathmáry.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,40 +42,52 @@ public final class TJ {
    */
   public static final int NUMSAMP   = 6;
   /**
-   * 4:4:4 chrominance subsampling (no chrominance subsampling).  The JPEG
-   * or YUV image will contain one chrominance component for every pixel in the
-   * source image.
+   * 4:4:4 chrominance subsampling (no chrominance subsampling)
+   *
+   * <p>The JPEG or YUV image will contain one chrominance component for every
+   * pixel in the source image.
    */
   public static final int SAMP_444  = 0;
   /**
-   * 4:2:2 chrominance subsampling.  The JPEG or YUV image will contain one
-   * chrominance component for every 2x1 block of pixels in the source image.
+   * 4:2:2 chrominance subsampling
+   *
+   * <p>The JPEG or YUV image will contain one chrominance component for every
+   * 2x1 block of pixels in the source image.
    */
   public static final int SAMP_422  = 1;
   /**
-   * 4:2:0 chrominance subsampling.  The JPEG or YUV image will contain one
-   * chrominance component for every 2x2 block of pixels in the source image.
+   * 4:2:0 chrominance subsampling
+   *
+   * <p>The JPEG or YUV image will contain one chrominance component for every
+   * 2x2 block of pixels in the source image.
    */
   public static final int SAMP_420  = 2;
   /**
-   * Grayscale.  The JPEG or YUV image will contain no chrominance components.
+   * Grayscale
+   *
+   * <p>The JPEG or YUV image will contain no chrominance components.
    */
   public static final int SAMP_GRAY = 3;
   /**
-   * 4:4:0 chrominance subsampling.  The JPEG or YUV image will contain one
-   * chrominance component for every 1x2 block of pixels in the source image.
-   * Note that 4:4:0 subsampling is not fully accelerated in libjpeg-turbo.
+   * 4:4:0 chrominance subsampling
+   *
+   * <p>The JPEG or YUV image will contain one chrominance component for every
+   * 1x2 block of pixels in the source image.
+   *
+   * <p>NOTE: 4:4:0 subsampling is not fully accelerated in libjpeg-turbo.
    */
   public static final int SAMP_440  = 4;
   /**
-   * 4:1:1 chrominance subsampling.  The JPEG or YUV image will contain one
-   * chrominance component for every 4x1 block of pixels in the source image.
-   * JPEG images compressed with 4:1:1 subsampling will be almost exactly the
-   * same size as those compressed with 4:2:0 subsampling, and in the
-   * aggregate, both subsampling methods produce approximately the same
-   * perceptual quality.  However, 4:1:1 is better able to reproduce sharp
-   * horizontal features.  Note that 4:1:1 subsampling is not fully accelerated
-   * in libjpeg-turbo.
+   * 4:1:1 chrominance subsampling
+   *
+   * <p>The JPEG or YUV image will contain one chrominance component for every
+   * 4x1 block of pixels in the source image.  All else being equal, a JPEG
+   * image with 4:1:1 subsampling is almost exactly the same size as a JPEG
+   * image with 4:2:0 subsampling, and in the aggregate, both subsampling
+   * methods produce approximately the same perceptual quality.  However, 4:1:1
+   * is better able to reproduce sharp horizontal features.
+   *
+   * <p>NOTE: 4:1:1 subsampling is not fully accelerated in libjpeg-turbo.
    */
   public static final int SAMP_411  = 5;
 
@@ -125,88 +137,112 @@ public final class TJ {
    */
   public static final int NUMPF   = 12;
   /**
-   * RGB pixel format.  The red, green, and blue components in the image are
-   * stored in 3-byte pixels in the order R, G, B from lowest to highest byte
-   * address within each pixel.
+   * RGB pixel format
+   *
+   * <p>The red, green, and blue components in the image are stored in 3-byte
+   * pixels in the order R, G, B from lowest to highest byte address within
+   * each pixel.
    */
   public static final int PF_RGB  = 0;
   /**
-   * BGR pixel format.  The red, green, and blue components in the image are
-   * stored in 3-byte pixels in the order B, G, R from lowest to highest byte
-   * address within each pixel.
+   * BGR pixel format
+   *
+   * <p>The red, green, and blue components in the image are stored in 3-byte
+   * pixels in the order B, G, R from lowest to highest byte address within
+   * each pixel.
    */
   public static final int PF_BGR  = 1;
   /**
-   * RGBX pixel format.  The red, green, and blue components in the image are
-   * stored in 4-byte pixels in the order R, G, B from lowest to highest byte
-   * address within each pixel.  The X component is ignored when compressing
-   * and undefined when decompressing.
+   * RGBX pixel format
+   *
+   * <p>The red, green, and blue components in the image are stored in 4-byte
+   * pixels in the order R, G, B from lowest to highest byte address within
+   * each pixel.  The X component is ignored when compressing/encoding and
+   * undefined when decompressing/decoding.
    */
   public static final int PF_RGBX = 2;
   /**
-   * BGRX pixel format.  The red, green, and blue components in the image are
-   * stored in 4-byte pixels in the order B, G, R from lowest to highest byte
-   * address within each pixel.  The X component is ignored when compressing
-   * and undefined when decompressing.
+   * BGRX pixel format
+   *
+   * <p>The red, green, and blue components in the image are stored in 4-byte
+   * pixels in the order B, G, R from lowest to highest byte address within
+   * each pixel.  The X component is ignored when compressing/encoding and
+   * undefined when decompressing/decoding.
    */
   public static final int PF_BGRX = 3;
   /**
-   * XBGR pixel format.  The red, green, and blue components in the image are
-   * stored in 4-byte pixels in the order R, G, B from highest to lowest byte
-   * address within each pixel.  The X component is ignored when compressing
-   * and undefined when decompressing.
+   * XBGR pixel format
+   *
+   * <p>The red, green, and blue components in the image are stored in 4-byte
+   * pixels in the order R, G, B from highest to lowest byte address within
+   * each pixel.  The X component is ignored when compressing/encoding and
+   * undefined when decompressing/decoding.
    */
   public static final int PF_XBGR = 4;
   /**
-   * XRGB pixel format.  The red, green, and blue components in the image are
-   * stored in 4-byte pixels in the order B, G, R from highest to lowest byte
-   * address within each pixel.  The X component is ignored when compressing
-   * and undefined when decompressing.
+   * XRGB pixel format
+   *
+   * <p>The red, green, and blue components in the image are stored in 4-byte
+   * pixels in the order B, G, R from highest to lowest byte address within
+   * each pixel.  The X component is ignored when compressing/encoding and
+   * undefined when decompressing/decoding.
    */
   public static final int PF_XRGB = 5;
   /**
-   * Grayscale pixel format.  Each 1-byte pixel represents a luminance
-   * (brightness) level from 0 to 255.
+   * Grayscale pixel format
+   *
+   * <p>Each 1-byte pixel represents a luminance (brightness) level from 0 to
+   * 255.
    */
   public static final int PF_GRAY = 6;
   /**
-   * RGBA pixel format.  This is the same as {@link #PF_RGBX}, except that when
-   * decompressing, the X byte is guaranteed to be 0xFF, which can be
+   * RGBA pixel format
+   *
+   * <p>This is the same as {@link #PF_RGBX}, except that when
+   * decompressing/decoding, the X byte is guaranteed to be 0xFF, which can be
    * interpreted as an opaque alpha channel.
    */
   public static final int PF_RGBA = 7;
   /**
-   * BGRA pixel format.  This is the same as {@link #PF_BGRX}, except that when
-   * decompressing, the X byte is guaranteed to be 0xFF, which can be
+   * BGRA pixel format
+   *
+   * <p>This is the same as {@link #PF_BGRX}, except that when
+   * decompressing/decoding, the X byte is guaranteed to be 0xFF, which can be
    * interpreted as an opaque alpha channel.
    */
   public static final int PF_BGRA = 8;
   /**
-   * ABGR pixel format.  This is the same as {@link #PF_XBGR}, except that when
-   * decompressing, the X byte is guaranteed to be 0xFF, which can be
+   * ABGR pixel format
+   *
+   * <p>This is the same as {@link #PF_XBGR}, except that when
+   * decompressing/decoding, the X byte is guaranteed to be 0xFF, which can be
    * interpreted as an opaque alpha channel.
    */
   public static final int PF_ABGR = 9;
   /**
-   * ARGB pixel format.  This is the same as {@link #PF_XRGB}, except that when
-   * decompressing, the X byte is guaranteed to be 0xFF, which can be
+   * ARGB pixel format
+   *
+   * <p>This is the same as {@link #PF_XRGB}, except that when
+   * decompressing/decoding, the X byte is guaranteed to be 0xFF, which can be
    * interpreted as an opaque alpha channel.
    */
   public static final int PF_ARGB = 10;
   /**
-   * CMYK pixel format.  Unlike RGB, which is an additive color model used
-   * primarily for display, CMYK (Cyan/Magenta/Yellow/Key) is a subtractive
-   * color model used primarily for printing.  In the CMYK color model, the
-   * value of each color component typically corresponds to an amount of cyan,
-   * magenta, yellow, or black ink that is applied to a white background.  In
-   * order to convert between CMYK and RGB, it is necessary to use a color
-   * management system (CMS.)  A CMS will attempt to map colors within the
-   * printer's gamut to perceptually similar colors in the display's gamut and
-   * vice versa, but the mapping is typically not 1:1 or reversible, nor can it
-   * be defined with a simple formula.  Thus, such a conversion is out of scope
-   * for a codec library.  However, the TurboJPEG API allows for compressing
-   * packed-pixel CMYK images into YCCK JPEG images (see {@link #CS_YCCK}) and
-   * decompressing YCCK JPEG images into packed-pixel CMYK images.
+   * CMYK pixel format
+   *
+   * <p>Unlike RGB, which is an additive color model used primarily for
+   * display, CMYK (Cyan/Magenta/Yellow/Key) is a subtractive color model used
+   * primarily for printing.  In the CMYK color model, the value of each color
+   * component typically corresponds to an amount of cyan, magenta, yellow, or
+   * black ink that is applied to a white background.  In order to convert
+   * between CMYK and RGB, it is necessary to use a color management system
+   * (CMS.)  A CMS will attempt to map colors within the printer's gamut to
+   * perceptually similar colors in the display's gamut and vice versa, but the
+   * mapping is typically not 1:1 or reversible, nor can it be defined with a
+   * simple formula.  Thus, such a conversion is out of scope for a codec
+   * library.  However, the TurboJPEG API allows for compressing packed-pixel
+   * CMYK images into YCCK JPEG images (see {@link #CS_YCCK}) and decompressing
+   * YCCK JPEG images into packed-pixel CMYK images.
    */
   public static final int PF_CMYK = 11;
 
@@ -232,8 +268,7 @@ public final class TJ {
    * For the given pixel format, returns the number of bytes that the red
    * component is offset from the start of the pixel.  For instance, if a pixel
    * of format <code>TJ.PF_BGRX</code> is stored in <code>char pixel[]</code>,
-   * then the red component will be
-   * <code>pixel[TJ.getRedOffset(TJ.PF_BGRX)]</code>.
+   * then the red component is <code>pixel[TJ.getRedOffset(TJ.PF_BGRX)]</code>.
    *
    * @param pixelFormat the pixel format (one of {@link #PF_RGB PF_*})
    *
@@ -254,7 +289,7 @@ public final class TJ {
    * For the given pixel format, returns the number of bytes that the green
    * component is offset from the start of the pixel.  For instance, if a pixel
    * of format <code>TJ.PF_BGRX</code> is stored in <code>char pixel[]</code>,
-   * then the green component will be
+   * then the green component is
    * <code>pixel[TJ.getGreenOffset(TJ.PF_BGRX)]</code>.
    *
    * @param pixelFormat the pixel format (one of {@link #PF_RGB PF_*})
@@ -276,7 +311,7 @@ public final class TJ {
    * For the given pixel format, returns the number of bytes that the blue
    * component is offset from the start of the pixel.  For instance, if a pixel
    * of format <code>TJ.PF_BGRX</code> is stored in <code>char pixel[]</code>,
-   * then the blue component will be
+   * then the blue component is
    * <code>pixel[TJ.getBlueOffset(TJ.PF_BGRX)]</code>.
    *
    * @param pixelFormat the pixel format (one of {@link #PF_RGB PF_*})
@@ -298,7 +333,7 @@ public final class TJ {
    * For the given pixel format, returns the number of bytes that the alpha
    * component is offset from the start of the pixel.  For instance, if a pixel
    * of format <code>TJ.PF_BGRA</code> is stored in <code>char pixel[]</code>,
-   * then the alpha component will be
+   * then the alpha component is
    * <code>pixel[TJ.getAlphaOffset(TJ.PF_BGRA)]</code>.
    *
    * @param pixelFormat the pixel format (one of {@link #PF_RGB PF_*})
@@ -321,56 +356,63 @@ public final class TJ {
    */
   public static final int NUMCS = 5;
   /**
-   * RGB colorspace.  When compressing the JPEG image, the R, G, and B
-   * components in the source image are reordered into image planes, but no
-   * colorspace conversion or subsampling is performed.  RGB JPEG images can be
-   * decompressed to packed-pixel images with any of the extended RGB or
-   * grayscale pixel formats, but they cannot be decompressed to planar YUV
-   * images.
+   * RGB colorspace
+   *
+   * <p>When generating the JPEG image, the R, G, and B components in the
+   * sourceimage are reordered into image planes, but no colorspace conversion
+   * or subsampling is performed.  RGB JPEG images can be decompressed to
+   * packed-pixel images with any of the extended RGB or grayscale pixel
+   * formats, but they cannot be decompressed to planar YUV images.
    */
   public static final int CS_RGB = 0;
   /**
-   * YCbCr colorspace.  YCbCr is not an absolute colorspace but rather a
-   * mathematical transformation of RGB designed solely for storage and
-   * transmission.  YCbCr images must be converted to RGB before they can
-   * actually be displayed.  In the YCbCr colorspace, the Y (luminance)
-   * component represents the black &amp; white portion of the original image,
-   * and the Cb and Cr (chrominance) components represent the color portion of
-   * the original image.  Originally, the analog equivalent of this
-   * transformation allowed the same signal to drive both black &amp; white and
-   * color televisions, but JPEG images use YCbCr primarily because it allows
-   * the color data to be optionally subsampled for the purposes of reducing
-   * network or disk usage.  YCbCr is the most common JPEG colorspace, and
-   * YCbCr JPEG images can be compressed from and decompressed to packed-pixel
-   * images with any of the extended RGB or grayscale pixel formats.  YCbCr
-   * JPEG images can also be compressed from and decompressed to planar YUV
-   * images.
+   * YCbCr colorspace
+   *
+   * <p>YCbCr is not an absolute colorspace but rather a mathematical
+   * transformation of RGB designed solely for storage and transmission.  YCbCr
+   * images must be converted to RGB before they can be displayed.  In the
+   * YCbCr colorspace, the Y (luminance) component represents the black &amp;
+   * white portion of the original image, and the Cb and Cr (chrominance)
+   * components represent the color portion of the original image.
+   * Historically, the analog equivalent of this transformation allowed the
+   * same signal to be displayed to both black &amp; white and color
+   * televisions, but JPEG images use YCbCr primarily because it allows the
+   * color data to be optionally subsampled in order to reduce network and disk
+   * usage.  YCbCr is the most common JPEG colorspace, and YCbCr JPEG images
+   * can be generated from and decompressed to packed-pixel images with any of
+   * the extended RGB or grayscale pixel formats.  YCbCr JPEG images can also
+   * be generated from and decompressed to planar YUV images.
    */
   @SuppressWarnings("checkstyle:ConstantName")
   public static final int CS_YCbCr = 1;
   /**
-   * Grayscale colorspace.  The JPEG image retains only the luminance data (Y
-   * component), and any color data from the source image is discarded.
-   * Grayscale JPEG images can be compressed from and decompressed to
-   * packed-pixel images with any of the extended RGB or grayscale pixel
-   * formats, or they can be compressed from and decompressed to planar YUV
-   * images.
+   * Grayscale colorspace
+   *
+   * <p>The JPEG image retains only the luminance data (Y component), and any
+   * color data from the source image is discarded. Grayscale JPEG images can
+   * be generated from and decompressed to packed-pixel images with any of the
+   * extended RGB or grayscale pixel formats, or they can be generated from and
+   * decompressed to planar YUV images.
    */
   public static final int CS_GRAY = 2;
   /**
-   * CMYK colorspace.  When compressing the JPEG image, the C, M, Y, and K
-   * components in the source image are reordered into image planes, but no
-   * colorspace conversion or subsampling is performed.  CMYK JPEG images can
-   * only be decompressed to packed-pixel images with the CMYK pixel format.
+   * CMYK colorspace
+   *
+   * <p>When generating the JPEG image, the C, M, Y, and K components in the
+   * source image are reordered into image planes, but no colorspace conversion
+   * or subsampling is performed.  CMYK JPEG images can only be decompressed to
+   * packed-pixel images with the CMYK pixel format.
    */
   public static final int CS_CMYK = 3;
   /**
-   * YCCK colorspace.  YCCK (AKA "YCbCrK") is not an absolute colorspace but
-   * rather a mathematical transformation of CMYK designed solely for storage
-   * and transmission.  It is to CMYK as YCbCr is to RGB.  CMYK pixels can be
+   * YCCK colorspace
+   *
+   * <p>YCCK (AKA "YCbCrK") is not an absolute colorspace but rather a
+   * mathematical transformation of CMYK designed solely for storage and
+   * transmission.  It is to CMYK as YCbCr is to RGB.  CMYK pixels can be
    * reversibly transformed into YCCK, and as with YCbCr, the chrominance
    * components in the YCCK pixels can be subsampled without incurring major
-   * perceptual loss.  YCCK JPEG images can only be compressed from and
+   * perceptual loss.  YCCK JPEG images can only be generated from and
    * decompressed to packed-pixel images with the CMYK pixel format.
    */
   public static final int CS_YCCK = 4;
@@ -396,7 +438,7 @@ public final class TJ {
   public static final int FLAG_FORCESSE3     = 128;
 
   /**
-   * When decompressing an image that was compressed using chrominance
+   * When decompressing an image that was generated using chrominance
    * subsampling, use the fastest chrominance upsampling algorithm available.
    * The default is to use smooth upsampling, which creates a smooth transition
    * between neighboring chrominance components in order to reduce upsampling
@@ -425,18 +467,20 @@ public final class TJ {
    * Immediately discontinue the current compression/decompression/transform
    * operation if a warning (non-fatal error) occurs.  The default behavior is
    * to allow the operation to complete unless a fatal error is encountered.
-   * <p>
-   * NOTE: due to the design of the TurboJPEG Java API, only certain methods
+   *
+   * <p>NOTE: Due to the design of the TurboJPEG Java API, only certain methods
    * (specifically, {@link TJDecompressor TJDecompressor.decompress*()} methods
    * with a void return type) will complete and leave the destination image in
    * a fully recoverable state after a non-fatal error occurs.
    */
   public static final int FLAG_STOPONWARNING = 8192;
   /**
-   * Use progressive entropy coding in JPEG images generated by compression and
-   * transform operations.  Progressive entropy coding will generally improve
-   * compression relative to baseline entropy coding (the default), but it will
-   * reduce compression and decompression performance considerably.
+   * When compressing or transforming, generate a progressive JPEG image
+   * instead of a single-scan JPEG image.  Progressive JPEG images generally
+   * have better compression ratios than single-scan JPEG images (much better
+   * if the image has large areas of solid color), but progressive JPEG
+   * compression and decompression is considerably slower than single-scan JPEG
+   * compression and decompression.
    */
   public static final int FLAG_PROGRESSIVE   = 16384;
   /**
@@ -458,8 +502,8 @@ public final class TJ {
   /**
    * The error was non-fatal and recoverable, but the destination image may
    * still be corrupt.
-   * <p>
-   * NOTE: due to the design of the TurboJPEG Java API, only certain methods
+   *
+   * <p>NOTE: Due to the design of the TurboJPEG Java API, only certain methods
    * (specifically, {@link TJDecompressor TJDecompressor.decompress*()} methods
    * with a void return type) will complete and leave the destination image in
    * a fully recoverable state after a non-fatal error occurs.
@@ -525,12 +569,12 @@ public final class TJ {
    * @param componentID ID number of the image plane (0 = Y, 1 = U/Cb,
    * 2 = V/Cr)
    *
-   * @param width width (in pixels) of the YUV image.  NOTE: this is the width
+   * @param width width (in pixels) of the YUV image.  NOTE: This is the width
    * of the whole image, not the plane width.
    *
    * @param stride bytes per row in the image plane.
    *
-   * @param height height (in pixels) of the YUV image.  NOTE: this is the
+   * @param height height (in pixels) of the YUV image.  NOTE: This is the
    * height of the whole image, not the plane height.
    *
    * @param subsamp the level of chrominance subsampling used in the YUV

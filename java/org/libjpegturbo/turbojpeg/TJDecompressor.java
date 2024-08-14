@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2011-2015, 2018, 2022-2023 D. R. Commander.
+ * Copyright (C)2011-2015, 2018, 2022-2024 D. R. Commander.
  *                                         All Rights Reserved.
  * Copyright (C)2015 Viktor Szathmáry.  All Rights Reserved.
  *
@@ -325,9 +325,9 @@ public class TJDecompressor implements Closeable {
    * Decompress the JPEG source image or decode the planar YUV source image
    * associated with this decompressor instance and output a packed-pixel
    * grayscale, RGB, or CMYK image to the given destination buffer.
-   * <p>
-   * NOTE: The destination image is fully recoverable if this method throws a
-   * non-fatal {@link TJException} (unless
+   *
+   * <p>NOTE: The destination image is fully recoverable if this method throws
+   * a non-fatal {@link TJException} (unless
    * {@link TJ#FLAG_STOPONWARNING TJ.FLAG_STOPONWARNING} is specified.)
    *
    * @param dstBuf buffer that will receive the packed-pixel
@@ -366,7 +366,7 @@ public class TJDecompressor implements Closeable {
    * if the destination image will be unpadded.  However, you can use this to,
    * for instance, pad each row of the destination image to the nearest
    * multiple of 4 bytes or to decompress/decode the source image into a region
-   * of a larger image.  NOTE: if the source image is a JPEG image, then
+   * of a larger image.  NOTE: If the source image is a JPEG image, then
    * <code>scaledWidth</code> can be determined by calling
    * <code>scalingFactor.</code>{@link TJScalingFactor#getScaled getScaled}<code>(jpegWidth)</code>
    * or by calling {@link #getScaledWidth}.  If the source image is a YUV
@@ -476,9 +476,9 @@ public class TJDecompressor implements Closeable {
    * leaves out the color conversion step, so a planar YUV image is generated
    * instead of a packed-pixel image.  This method cannot be used to decompress
    * JPEG source images with the CMYK or YCCK colorspace.
-   * <p>
-   * NOTE: The planar YUV destination image is fully recoverable if this method
-   * throws a non-fatal {@link TJException} (unless
+   *
+   * <p>NOTE: The planar YUV destination image is fully recoverable if this
+   * method throws a non-fatal {@link TJException} (unless
    * {@link TJ#FLAG_STOPONWARNING TJ.FLAG_STOPONWARNING} is specified.)
    *
    * @param dstImage {@link YUVImage} instance that will receive the planar YUV
@@ -651,9 +651,9 @@ public class TJDecompressor implements Closeable {
    * Decompress the JPEG source image or decode the planar YUV source image
    * associated with this decompressor instance and output a packed-pixel
    * grayscale, RGB, or CMYK image to the given destination buffer.
-   * <p>
-   * NOTE: The destination image is fully recoverable if this method throws a
-   * non-fatal {@link TJException} (unless
+   *
+   * <p>NOTE: The destination image is fully recoverable if this method throws
+   * a non-fatal {@link TJException} (unless
    * {@link TJ#FLAG_STOPONWARNING TJ.FLAG_STOPONWARNING} is specified.)
    *
    * @param dstBuf buffer that will receive the packed-pixel
@@ -689,7 +689,7 @@ public class TJDecompressor implements Closeable {
    * @param stride pixels per row in the destination image.  Normally this
    * should be set to <code>scaledWidth</code>, but you can use this to, for
    * instance, decompress the JPEG image into a region of a larger image.
-   * NOTE: if the source image is a JPEG image, then <code>scaledWidth</code>
+   * NOTE: If the source image is a JPEG image, then <code>scaledWidth</code>
    * can be determined by calling
    * <code>scalingFactor.</code>{@link TJScalingFactor#getScaled getScaled}<code>(jpegWidth)</code>
    * or by calling {@link #getScaledWidth}.  If the source image is a YUV
@@ -737,9 +737,9 @@ public class TJDecompressor implements Closeable {
    * associated with this decompressor instance and output a packed-pixel
    * decompressed/decoded image to the given <code>BufferedImage</code>
    * instance.
-   * <p>
-   * NOTE: The destination image is fully recoverable if this method throws a
-   * non-fatal {@link TJException} (unless
+   *
+   * <p>NOTE: The destination image is fully recoverable if this method throws
+   * a non-fatal {@link TJException} (unless
    * {@link TJ#FLAG_STOPONWARNING TJ.FLAG_STOPONWARNING} is specified.)
    *
    * @param dstImage a <code>BufferedImage</code> instance that will receive

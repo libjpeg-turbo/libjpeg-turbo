@@ -1,6 +1,6 @@
 /*
- * Copyright (C)2011-2015, 2018, 2020, 2023 D. R. Commander.
- *                                          All Rights Reserved.
+ * Copyright (C)2011-2015, 2018, 2020, 2023-2024 D. R. Commander.
+ *                                               All Rights Reserved.
  * Copyright (C)2015 Viktor Szathmáry.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -287,8 +287,8 @@ public class TJCompressor implements Closeable {
    * image with little perceptible loss of image clarity.  (The human eye is
    * more sensitive to small changes in brightness than to small changes in
    * color.)  This is called "chrominance subsampling".
-   * <p>
-   * NOTE: This method has no effect when compressing a JPEG image from a
+   *
+   * <p>NOTE: This method has no effect when compressing a JPEG image from a
    * planar YUV source image.  In that case, the level of chrominance
    * subsampling in the JPEG image is determined by the source image.
    * Furthermore, this method has no effect when encoding to a pre-allocated
