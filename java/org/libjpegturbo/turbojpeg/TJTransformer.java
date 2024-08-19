@@ -102,18 +102,6 @@ public class TJTransformer extends TJDecompressor {
   }
 
   /**
-   * @deprecated Use {@link #set TJDecompressor.set()} and
-   * {@link #transform(byte[][], TJTransform[])} instead.
-   */
-  @SuppressWarnings("checkstyle:JavadocMethod")
-  @Deprecated
-  public void transform(byte[][] dstBufs, TJTransform[] transforms,
-                        int flags) throws TJException {
-    processFlags(flags);
-    transform(dstBufs, transforms);
-  }
-
-  /**
    * Losslessly transform the JPEG source image associated with this
    * transformer instance and return an array of {@link TJDecompressor}
    * instances, each of which has a transformed JPEG image associated with it.
@@ -144,18 +132,6 @@ public class TJTransformer extends TJDecompressor {
     for (int i = 0; i < transforms.length; i++)
       tjd[i] = new TJDecompressor(dstBufs[i], transformedSizes[i]);
     return tjd;
-  }
-
-  /**
-   * @deprecated Use {@link #set TJDecompressor.set()} and
-   * {@link #transform(TJTransform[])} instead.
-   */
-  @SuppressWarnings("checkstyle:JavadocMethod")
-  @Deprecated
-  public TJDecompressor[] transform(TJTransform[] transforms, int flags)
-                                    throws TJException {
-    processFlags(flags);
-    return transform(transforms);
   }
 
   /**

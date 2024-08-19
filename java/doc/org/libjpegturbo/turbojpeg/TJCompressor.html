@@ -27,8 +27,8 @@
     catch(err) {
     }
 //-->
-var data = {"i0":10,"i1":10,"i2":10,"i3":42,"i4":42,"i5":10,"i6":10,"i7":42,"i8":42,"i9":10,"i10":42,"i11":10,"i12":10,"i13":10,"i14":10,"i15":42,"i16":10,"i17":10,"i18":10,"i19":10,"i20":10,"i21":42};
-var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"],32:["t6","Deprecated Methods"]};
+var data = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10,"i14":10};
+var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
 var tableTab = "tableTab";
@@ -201,7 +201,7 @@ implements java.io.Closeable</pre>
 </a>
 <h3>Method Summary</h3>
 <table class="memberSummary">
-<caption><span id="t0" class="activeTableTab"><span>All Methods</span><span class="tabEnd">&nbsp;</span></span><span id="t2" class="tableTab"><span><a href="javascript:show(2);">Instance Methods</a></span><span class="tabEnd">&nbsp;</span></span><span id="t4" class="tableTab"><span><a href="javascript:show(8);">Concrete Methods</a></span><span class="tabEnd">&nbsp;</span></span><span id="t6" class="tableTab"><span><a href="javascript:show(32);">Deprecated Methods</a></span><span class="tabEnd">&nbsp;</span></span></caption>
+<caption><span id="t0" class="activeTableTab"><span>All Methods</span><span class="tabEnd">&nbsp;</span></span><span id="t2" class="tableTab"><span><a href="javascript:show(2);">Instance Methods</a></span><span class="tabEnd">&nbsp;</span></span><span id="t4" class="tableTab"><span><a href="javascript:show(8);">Concrete Methods</a></span><span class="tabEnd">&nbsp;</span></span></caption>
 <tr>
 <th class="colFirst" scope="col">Modifier and Type</th>
 <th class="colSecond" scope="col">Method</th>
@@ -232,25 +232,6 @@ implements java.io.Closeable</pre>
 </td>
 </tr>
 <tr id="i3" class="rowColor">
-<td class="colFirst"><code>void</code></td>
-<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#compress(byte%5B%5D,int)">compress</a></span>&#8203;(byte[]&nbsp;dstBuf,
-        int&nbsp;flags)</code></th>
-<td class="colLast">
-<div class="block"><span class="deprecatedLabel">Deprecated.</span>
-<div class="deprecationComment">Use <a href="#set(int,int)"><code>set()</code></a> and <a href="#compress(byte%5B%5D)"><code>compress(byte[])</code></a> instead.</div>
-</div>
-</td>
-</tr>
-<tr id="i4" class="altColor">
-<td class="colFirst"><code>byte[]</code></td>
-<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#compress(int)">compress</a></span>&#8203;(int&nbsp;flags)</code></th>
-<td class="colLast">
-<div class="block"><span class="deprecatedLabel">Deprecated.</span>
-<div class="deprecationComment">Use <a href="#set(int,int)"><code>set()</code></a> and <a href="#compress()"><code>compress()</code></a> instead.</div>
-</div>
-</td>
-</tr>
-<tr id="i5" class="rowColor">
 <td class="colFirst"><code><a href="YUVImage.html" title="class in org.libjpegturbo.turbojpeg">YUVImage</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#encodeYUV(int)">encodeYUV</a></span>&#8203;(int&nbsp;align)</code></th>
 <td class="colLast">
@@ -259,7 +240,7 @@ implements java.io.Closeable</pre>
  return a <a href="YUVImage.html" title="class in org.libjpegturbo.turbojpeg"><code>YUVImage</code></a> instance containing the encoded image.</div>
 </td>
 </tr>
-<tr id="i6" class="altColor">
+<tr id="i4" class="altColor">
 <td class="colFirst"><code><a href="YUVImage.html" title="class in org.libjpegturbo.turbojpeg">YUVImage</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#encodeYUV(int%5B%5D)">encodeYUV</a></span>&#8203;(int[]&nbsp;strides)</code></th>
 <td class="colLast">
@@ -269,27 +250,7 @@ implements java.io.Closeable</pre>
  image planes.</div>
 </td>
 </tr>
-<tr id="i7" class="rowColor">
-<td class="colFirst"><code><a href="YUVImage.html" title="class in org.libjpegturbo.turbojpeg">YUVImage</a></code></td>
-<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#encodeYUV(int%5B%5D,int)">encodeYUV</a></span>&#8203;(int[]&nbsp;strides,
-         int&nbsp;flags)</code></th>
-<td class="colLast">
-<div class="block"><span class="deprecatedLabel">Deprecated.</span>
-<div class="deprecationComment">Use <a href="#set(int,int)"><code>set()</code></a> and <a href="#encodeYUV(int%5B%5D)"><code>encodeYUV(int[])</code></a> instead.</div>
-</div>
-</td>
-</tr>
-<tr id="i8" class="altColor">
-<td class="colFirst"><code><a href="YUVImage.html" title="class in org.libjpegturbo.turbojpeg">YUVImage</a></code></td>
-<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#encodeYUV(int,int)">encodeYUV</a></span>&#8203;(int&nbsp;align,
-         int&nbsp;flags)</code></th>
-<td class="colLast">
-<div class="block"><span class="deprecatedLabel">Deprecated.</span>
-<div class="deprecationComment">Use <a href="#set(int,int)"><code>set()</code></a> and <a href="#encodeYUV(int)"><code>encodeYUV(int)</code></a> instead.</div>
-</div>
-</td>
-</tr>
-<tr id="i9" class="rowColor">
+<tr id="i5" class="rowColor">
 <td class="colFirst"><code>void</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#encodeYUV(org.libjpegturbo.turbojpeg.YUVImage)">encodeYUV</a></span>&#8203;(<a href="YUVImage.html" title="class in org.libjpegturbo.turbojpeg">YUVImage</a>&nbsp;dstImage)</code></th>
 <td class="colLast">
@@ -298,30 +259,19 @@ implements java.io.Closeable</pre>
  in the given <a href="YUVImage.html" title="class in org.libjpegturbo.turbojpeg"><code>YUVImage</code></a> instance.</div>
 </td>
 </tr>
-<tr id="i10" class="altColor">
-<td class="colFirst"><code>void</code></td>
-<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#encodeYUV(org.libjpegturbo.turbojpeg.YUVImage,int)">encodeYUV</a></span>&#8203;(<a href="YUVImage.html" title="class in org.libjpegturbo.turbojpeg">YUVImage</a>&nbsp;dstImage,
-         int&nbsp;flags)</code></th>
-<td class="colLast">
-<div class="block"><span class="deprecatedLabel">Deprecated.</span>
-<div class="deprecationComment">Use <a href="#set(int,int)"><code>set()</code></a> and <a href="#encodeYUV(org.libjpegturbo.turbojpeg.YUVImage)"><code>encodeYUV(YUVImage)</code></a>
- instead.</div>
-</div>
-</td>
-</tr>
-<tr id="i11" class="rowColor">
+<tr id="i6" class="altColor">
 <td class="colFirst"><code>protected void</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#finalize()">finalize</a></span>()</code></th>
 <td class="colLast">&nbsp;</td>
 </tr>
-<tr id="i12" class="altColor">
+<tr id="i7" class="rowColor">
 <td class="colFirst"><code>int</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#get(int)">get</a></span>&#8203;(int&nbsp;param)</code></th>
 <td class="colLast">
 <div class="block">Get the value of a compression parameter.</div>
 </td>
 </tr>
-<tr id="i13" class="rowColor">
+<tr id="i8" class="altColor">
 <td class="colFirst"><code>int</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getCompressedSize()">getCompressedSize</a></span>()</code></th>
 <td class="colLast">
@@ -329,7 +279,7 @@ implements java.io.Closeable</pre>
  compress operation.</div>
 </td>
 </tr>
-<tr id="i14" class="altColor">
+<tr id="i9" class="rowColor">
 <td class="colFirst"><code>void</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#set(int,int)">set</a></span>&#8203;(int&nbsp;param,
    int&nbsp;value)</code></th>
@@ -337,17 +287,7 @@ implements java.io.Closeable</pre>
 <div class="block">Set the value of a compression parameter.</div>
 </td>
 </tr>
-<tr id="i15" class="rowColor">
-<td class="colFirst"><code>void</code></td>
-<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#setJPEGQuality(int)">setJPEGQuality</a></span>&#8203;(int&nbsp;quality)</code></th>
-<td class="colLast">
-<div class="block"><span class="deprecatedLabel">Deprecated.</span>
-<div class="deprecationComment">Use
- <code><a href="#set(int,int)"><code>set</code></a>(<a href="TJ.html#PARAM_QUALITY"><code>TJ.PARAM_QUALITY</code></a>, ...)</code> instead.</div>
-</div>
-</td>
-</tr>
-<tr id="i16" class="altColor">
+<tr id="i10" class="altColor">
 <td class="colFirst"><code>void</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#setSourceImage(byte%5B%5D,int,int,int,int,int,int)">setSourceImage</a></span>&#8203;(byte[]&nbsp;srcImage,
               int&nbsp;x,
@@ -361,7 +301,7 @@ implements java.io.Closeable</pre>
  bits of data precision per sample with this compressor instance.</div>
 </td>
 </tr>
-<tr id="i17" class="rowColor">
+<tr id="i11" class="rowColor">
 <td class="colFirst"><code>void</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#setSourceImage(java.awt.image.BufferedImage,int,int,int,int)">setSourceImage</a></span>&#8203;(java.awt.image.BufferedImage&nbsp;srcImage,
               int&nbsp;x,
@@ -373,7 +313,7 @@ implements java.io.Closeable</pre>
  with this compressor instance.</div>
 </td>
 </tr>
-<tr id="i18" class="altColor">
+<tr id="i12" class="altColor">
 <td class="colFirst"><code>void</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#setSourceImage(org.libjpegturbo.turbojpeg.YUVImage)">setSourceImage</a></span>&#8203;(<a href="YUVImage.html" title="class in org.libjpegturbo.turbojpeg">YUVImage</a>&nbsp;srcImage)</code></th>
 <td class="colLast">
@@ -381,7 +321,7 @@ implements java.io.Closeable</pre>
  instance.</div>
 </td>
 </tr>
-<tr id="i19" class="rowColor">
+<tr id="i13" class="rowColor">
 <td class="colFirst"><code>void</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#setSourceImage12(short%5B%5D,int,int,int,int,int,int)">setSourceImage12</a></span>&#8203;(short[]&nbsp;srcImage,
                 int&nbsp;x,
@@ -395,7 +335,7 @@ implements java.io.Closeable</pre>
  bits of data precision per sample with this compressor instance.</div>
 </td>
 </tr>
-<tr id="i20" class="altColor">
+<tr id="i14" class="altColor">
 <td class="colFirst"><code>void</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#setSourceImage16(short%5B%5D,int,int,int,int,int,int)">setSourceImage16</a></span>&#8203;(short[]&nbsp;srcImage,
                 int&nbsp;x,
@@ -407,16 +347,6 @@ implements java.io.Closeable</pre>
 <td class="colLast">
 <div class="block">Associate a packed-pixel RGB, grayscale, or CMYK source image with 13 to
  16 bits of data precision per sample with this compressor instance.</div>
-</td>
-</tr>
-<tr id="i21" class="rowColor">
-<td class="colFirst"><code>void</code></td>
-<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#setSubsamp(int)">setSubsamp</a></span>&#8203;(int&nbsp;subsamp)</code></th>
-<td class="colLast">
-<div class="block"><span class="deprecatedLabel">Deprecated.</span>
-<div class="deprecationComment">Use
- <code><a href="#set(int,int)"><code>set</code></a>(<a href="TJ.html#PARAM_SUBSAMP"><code>TJ.PARAM_SUBSAMP</code></a>, ...)</code> instead.</div>
-</div>
 </td>
 </tr>
 </table>
@@ -766,34 +696,6 @@ implements java.io.Closeable</pre>
 </dl>
 </li>
 </ul>
-<a id="setSubsamp(int)">
-<!--   -->
-</a>
-<ul class="blockList">
-<li class="blockList">
-<h4>setSubsamp</h4>
-<pre class="methodSignature">@Deprecated
-public&nbsp;void&nbsp;setSubsamp&#8203;(int&nbsp;subsamp)</pre>
-<div class="deprecationBlock"><span class="deprecatedLabel">Deprecated.</span>
-<div class="deprecationComment">Use
- <code><a href="#set(int,int)"><code>set</code></a>(<a href="TJ.html#PARAM_SUBSAMP"><code>TJ.PARAM_SUBSAMP</code></a>, ...)</code> instead.</div>
-</div>
-</li>
-</ul>
-<a id="setJPEGQuality(int)">
-<!--   -->
-</a>
-<ul class="blockList">
-<li class="blockList">
-<h4>setJPEGQuality</h4>
-<pre class="methodSignature">@Deprecated
-public&nbsp;void&nbsp;setJPEGQuality&#8203;(int&nbsp;quality)</pre>
-<div class="deprecationBlock"><span class="deprecatedLabel">Deprecated.</span>
-<div class="deprecationComment">Use
- <code><a href="#set(int,int)"><code>set</code></a>(<a href="TJ.html#PARAM_QUALITY"><code>TJ.PARAM_QUALITY</code></a>, ...)</code> instead.</div>
-</div>
-</li>
-</ul>
 <a id="compress(byte[])">
 <!--   -->
 </a>
@@ -811,25 +713,6 @@ public&nbsp;void&nbsp;setJPEGQuality&#8203;(int&nbsp;quality)</pre>
  <a href="TJ.html#bufSize(int,int,int)"><code>TJ.bufSize()</code></a> to determine the maximum size for this
  buffer based on the source image's width and height and the desired level
  of chrominance subsampling (see <a href="TJ.html#PARAM_SUBSAMP"><code>TJ.PARAM_SUBSAMP</code></a>.)</dd>
-<dt><span class="throwsLabel">Throws:</span></dt>
-<dd><code><a href="TJException.html" title="class in org.libjpegturbo.turbojpeg">TJException</a></code></dd>
-</dl>
-</li>
-</ul>
-<a id="compress(byte[],int)">
-<!--   -->
-</a>
-<ul class="blockList">
-<li class="blockList">
-<h4>compress</h4>
-<pre class="methodSignature">@Deprecated
-public&nbsp;void&nbsp;compress&#8203;(byte[]&nbsp;dstBuf,
-                     int&nbsp;flags)
-              throws <a href="TJException.html" title="class in org.libjpegturbo.turbojpeg">TJException</a></pre>
-<div class="deprecationBlock"><span class="deprecatedLabel">Deprecated.</span>
-<div class="deprecationComment">Use <a href="#set(int,int)"><code>set()</code></a> and <a href="#compress(byte%5B%5D)"><code>compress(byte[])</code></a> instead.</div>
-</div>
-<dl>
 <dt><span class="throwsLabel">Throws:</span></dt>
 <dd><code><a href="TJException.html" title="class in org.libjpegturbo.turbojpeg">TJException</a></code></dd>
 </dl>
@@ -855,24 +738,6 @@ public&nbsp;void&nbsp;compress&#8203;(byte[]&nbsp;dstBuf,
 </dl>
 </li>
 </ul>
-<a id="compress(int)">
-<!--   -->
-</a>
-<ul class="blockList">
-<li class="blockList">
-<h4>compress</h4>
-<pre class="methodSignature">@Deprecated
-public&nbsp;byte[]&nbsp;compress&#8203;(int&nbsp;flags)
-                throws <a href="TJException.html" title="class in org.libjpegturbo.turbojpeg">TJException</a></pre>
-<div class="deprecationBlock"><span class="deprecatedLabel">Deprecated.</span>
-<div class="deprecationComment">Use <a href="#set(int,int)"><code>set()</code></a> and <a href="#compress()"><code>compress()</code></a> instead.</div>
-</div>
-<dl>
-<dt><span class="throwsLabel">Throws:</span></dt>
-<dd><code><a href="TJException.html" title="class in org.libjpegturbo.turbojpeg">TJException</a></code></dd>
-</dl>
-</li>
-</ul>
 <a id="encodeYUV(org.libjpegturbo.turbojpeg.YUVImage)">
 <!--   -->
 </a>
@@ -893,26 +758,6 @@ public&nbsp;byte[]&nbsp;compress&#8203;(int&nbsp;flags)
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>dstImage</code> - <a href="YUVImage.html" title="class in org.libjpegturbo.turbojpeg"><code>YUVImage</code></a> instance that will receive the planar YUV
  image</dd>
-<dt><span class="throwsLabel">Throws:</span></dt>
-<dd><code><a href="TJException.html" title="class in org.libjpegturbo.turbojpeg">TJException</a></code></dd>
-</dl>
-</li>
-</ul>
-<a id="encodeYUV(org.libjpegturbo.turbojpeg.YUVImage,int)">
-<!--   -->
-</a>
-<ul class="blockList">
-<li class="blockList">
-<h4>encodeYUV</h4>
-<pre class="methodSignature">@Deprecated
-public&nbsp;void&nbsp;encodeYUV&#8203;(<a href="YUVImage.html" title="class in org.libjpegturbo.turbojpeg">YUVImage</a>&nbsp;dstImage,
-                      int&nbsp;flags)
-               throws <a href="TJException.html" title="class in org.libjpegturbo.turbojpeg">TJException</a></pre>
-<div class="deprecationBlock"><span class="deprecatedLabel">Deprecated.</span>
-<div class="deprecationComment">Use <a href="#set(int,int)"><code>set()</code></a> and <a href="#encodeYUV(org.libjpegturbo.turbojpeg.YUVImage)"><code>encodeYUV(YUVImage)</code></a>
- instead.</div>
-</div>
-<dl>
 <dt><span class="throwsLabel">Throws:</span></dt>
 <dd><code><a href="TJException.html" title="class in org.libjpegturbo.turbojpeg">TJException</a></code></dd>
 </dl>
@@ -946,25 +791,6 @@ public&nbsp;void&nbsp;encodeYUV&#8203;(<a href="YUVImage.html" title="class in o
 </dl>
 </li>
 </ul>
-<a id="encodeYUV(int,int)">
-<!--   -->
-</a>
-<ul class="blockList">
-<li class="blockList">
-<h4>encodeYUV</h4>
-<pre class="methodSignature">@Deprecated
-public&nbsp;<a href="YUVImage.html" title="class in org.libjpegturbo.turbojpeg">YUVImage</a>&nbsp;encodeYUV&#8203;(int&nbsp;align,
-                          int&nbsp;flags)
-                   throws <a href="TJException.html" title="class in org.libjpegturbo.turbojpeg">TJException</a></pre>
-<div class="deprecationBlock"><span class="deprecatedLabel">Deprecated.</span>
-<div class="deprecationComment">Use <a href="#set(int,int)"><code>set()</code></a> and <a href="#encodeYUV(int)"><code>encodeYUV(int)</code></a> instead.</div>
-</div>
-<dl>
-<dt><span class="throwsLabel">Throws:</span></dt>
-<dd><code><a href="TJException.html" title="class in org.libjpegturbo.turbojpeg">TJException</a></code></dd>
-</dl>
-</li>
-</ul>
 <a id="encodeYUV(int[])">
 <!--   -->
 </a>
@@ -991,25 +817,6 @@ public&nbsp;<a href="YUVImage.html" title="class in org.libjpegturbo.turbojpeg">
  each plane.</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>a <a href="YUVImage.html" title="class in org.libjpegturbo.turbojpeg"><code>YUVImage</code></a> instance containing the encoded image planes</dd>
-<dt><span class="throwsLabel">Throws:</span></dt>
-<dd><code><a href="TJException.html" title="class in org.libjpegturbo.turbojpeg">TJException</a></code></dd>
-</dl>
-</li>
-</ul>
-<a id="encodeYUV(int[],int)">
-<!--   -->
-</a>
-<ul class="blockList">
-<li class="blockList">
-<h4>encodeYUV</h4>
-<pre class="methodSignature">@Deprecated
-public&nbsp;<a href="YUVImage.html" title="class in org.libjpegturbo.turbojpeg">YUVImage</a>&nbsp;encodeYUV&#8203;(int[]&nbsp;strides,
-                          int&nbsp;flags)
-                   throws <a href="TJException.html" title="class in org.libjpegturbo.turbojpeg">TJException</a></pre>
-<div class="deprecationBlock"><span class="deprecatedLabel">Deprecated.</span>
-<div class="deprecationComment">Use <a href="#set(int,int)"><code>set()</code></a> and <a href="#encodeYUV(int%5B%5D)"><code>encodeYUV(int[])</code></a> instead.</div>
-</div>
-<dl>
 <dt><span class="throwsLabel">Throws:</span></dt>
 <dd><code><a href="TJException.html" title="class in org.libjpegturbo.turbojpeg">TJException</a></code></dd>
 </dl>

@@ -892,43 +892,6 @@ public final class TJ {
 
 
   /**
-   * @deprecated Use {@link #PARAM_BOTTOMUP} instead.
-   */
-  @Deprecated
-  public static final int FLAG_BOTTOMUP      = 2;
-  /**
-   * @deprecated Use {@link #PARAM_FASTUPSAMPLE} instead.
-   */
-  @Deprecated
-  public static final int FLAG_FASTUPSAMPLE  = 256;
-  /**
-   * @deprecated Use {@link #PARAM_FASTDCT} instead.
-   */
-  @Deprecated
-  public static final int FLAG_FASTDCT       = 2048;
-  /**
-   * @deprecated Use {@link #PARAM_FASTDCT} instead.
-   */
-  @Deprecated
-  public static final int FLAG_ACCURATEDCT   = 4096;
-  /**
-   * @deprecated Use {@link #PARAM_STOPONWARNING} instead.
-   */
-  @Deprecated
-  public static final int FLAG_STOPONWARNING = 8192;
-  /**
-   * @deprecated Use {@link #PARAM_PROGRESSIVE} instead.
-   */
-  @Deprecated
-  public static final int FLAG_PROGRESSIVE   = 16384;
-  /**
-   * @deprecated Use {@link #PARAM_SCANLIMIT} instead.
-   */
-  @Deprecated
-  public static final int FLAG_LIMITSCANS    = 32768;
-
-
-  /**
    * The number of error codes
    */
   public static final int NUMERR = 2;

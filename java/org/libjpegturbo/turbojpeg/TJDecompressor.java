@@ -273,38 +273,6 @@ public class TJDecompressor implements Closeable {
   }
 
   /**
-   * @deprecated Use <code>{@link #get get}({@link TJ#PARAM_SUBSAMP})</code>
-   * instead.
-   */
-  @SuppressWarnings("checkstyle:JavadocMethod")
-  @Deprecated
-  public int getSubsamp() {
-    int subsamp = get(TJ.PARAM_SUBSAMP);
-    if (subsamp == TJ.SAMP_UNKNOWN)
-      throw new IllegalStateException(NO_ASSOC_ERROR);
-    if (subsamp >= TJ.NUMSAMP)
-      throw new IllegalStateException("JPEG header information is invalid");
-    return subsamp;
-  }
-
-  /**
-   * @deprecated Use <code>{@link #get get}({@link TJ#PARAM_COLORSPACE})</code>
-   * instead.
-   */
-  @SuppressWarnings("checkstyle:JavadocMethod")
-  @Deprecated
-  public int getColorspace() {
-    if (yuvImage != null)
-      return TJ.CS_YCbCr;
-    int jpegColorspace = get(TJ.PARAM_COLORSPACE);
-    if (jpegColorspace < 0)
-      throw new IllegalStateException(NO_ASSOC_ERROR);
-    if (jpegColorspace >= TJ.NUMCS)
-      throw new IllegalStateException("JPEG header information is invalid");
-    return jpegColorspace;
-  }
-
-  /**
    * Returns the JPEG buffer associated with this decompressor instance.
    *
    * @return the JPEG buffer associated with this decompressor instance.
@@ -326,28 +294,6 @@ public class TJDecompressor implements Closeable {
     if (jpegBufSize < 1)
       throw new IllegalStateException(NO_ASSOC_ERROR);
     return jpegBufSize;
-  }
-
-  /**
-   * @deprecated Use {@link #setScalingFactor setScalingFactor()} and
-   * {@link TJScalingFactor#getScaled TJScalingFactor.getScaled()} instead.
-   */
-  @SuppressWarnings("checkstyle:JavadocMethod")
-  @Deprecated
-  public int getScaledWidth(int desiredWidth, int desiredHeight) {
-    TJScalingFactor sf = getScalingFactor(desiredWidth, desiredHeight);
-    return sf.getScaled(getJPEGWidth());
-  }
-
-  /**
-   * @deprecated Use {@link #setScalingFactor setScalingFactor()} and
-   * {@link TJScalingFactor#getScaled TJScalingFactor.getScaled()} instead.
-   */
-  @SuppressWarnings("checkstyle:JavadocMethod")
-  @Deprecated
-  public int getScaledHeight(int desiredWidth, int desiredHeight) {
-    TJScalingFactor sf = getScalingFactor(desiredWidth, desiredHeight);
-    return sf.getScaled(getJPEGHeight());
   }
 
   private TJScalingFactor getScalingFactor(int desiredWidth,
@@ -442,28 +388,6 @@ public class TJDecompressor implements Closeable {
   }
 
   /**
-   * @deprecated Use {@link #set set()},
-   * {@link #setScalingFactor setScalingFactor()}, and
-   * {@link #decompress8(byte[], int, int, int, int)} instead.
-   */
-  @SuppressWarnings("checkstyle:JavadocMethod")
-  @Deprecated
-  public void decompress(byte[] dstBuf, int x, int y, int desiredWidth,
-                         int pitch, int desiredHeight, int pixelFormat,
-                         int flags) throws TJException {
-    if ((yuvImage != null && (desiredWidth < 0 || desiredHeight < 0)) ||
-        flags < 0)
-      throw new IllegalArgumentException("Invalid argument in decompress()");
-
-    if (yuvImage == null) {
-      TJScalingFactor sf = getScalingFactor(desiredWidth, desiredHeight);
-      setScalingFactor(sf);
-    }
-    processFlags(flags);
-    decompress8(dstBuf, x, y, pitch, pixelFormat);
-  }
-
-  /**
    * Decompress the JPEG source image with 2 to 8 bits per sample, or decode
    * the 8-bit-per-sample planar YUV source image, associated with this
    * decompressor instance and return a buffer containing a packed-pixel
@@ -489,27 +413,6 @@ public class TJDecompressor implements Closeable {
     byte[] buf = new byte[pitch * scaledHeight];
     decompress8(buf, 0, 0, pitch, pixelFormat);
     return buf;
-  }
-
-  /**
-   * @deprecated Use {@link #set set()},
-   * {@link #setScalingFactor setScalingFactor()}, and
-   * {@link #decompress8(int, int)} instead.
-   */
-  @SuppressWarnings("checkstyle:JavadocMethod")
-  @Deprecated
-  public byte[] decompress(int desiredWidth, int pitch, int desiredHeight,
-                           int pixelFormat, int flags) throws TJException {
-    if ((yuvImage == null && (desiredWidth < 0 || desiredHeight < 0)) ||
-        flags < 0)
-      throw new IllegalArgumentException("Invalid argument in decompress()");
-
-    if (yuvImage == null) {
-      TJScalingFactor sf = getScalingFactor(desiredWidth, desiredHeight);
-      setScalingFactor(sf);
-    }
-    processFlags(flags);
-    return decompress8(pitch, pixelFormat);
   }
 
   /**
@@ -710,28 +613,6 @@ public class TJDecompressor implements Closeable {
   }
 
   /**
-   * @deprecated Use {@link #set set()}, {@link #setScalingFactor
-   * setScalingFactor()}, and {@link #decompressToYUV(YUVImage)} instead.
-   */
-  @SuppressWarnings("checkstyle:JavadocMethod")
-  @Deprecated
-  public void decompressToYUV(YUVImage dstImage, int flags)
-                              throws TJException {
-    if (flags < 0)
-      throw new IllegalArgumentException("Invalid argument in decompressToYUV()");
-
-    TJScalingFactor sf = getScalingFactor(dstImage.getWidth(),
-                                          dstImage.getHeight());
-    if (sf.getScaled(getJPEGWidth()) != dstImage.getWidth() ||
-        sf.getScaled(getJPEGHeight()) != dstImage.getHeight())
-      throw new IllegalArgumentException("YUVImage dimensions do not match one of the scaled image sizes that the decompressor is capable of generating.");
-
-    setScalingFactor(sf);
-    processFlags(flags);
-    decompressToYUV(dstImage);
-  }
-
-  /**
    * Decompress the 8-bit-per-sample JPEG source image associated with this
    * decompressor instance into a set of 8-bit-per-sample Y, U (Cb), and V (Cr)
    * image planes and return a {@link YUVImage} instance containing the
@@ -767,24 +648,6 @@ public class TJDecompressor implements Closeable {
   }
 
   /**
-   * @deprecated Use {@link #set set()}, {@link #setScalingFactor
-   * setScalingFactor()}, and {@link #decompressToYUV(int[])} instead.
-   */
-  @SuppressWarnings("checkstyle:JavadocMethod")
-  @Deprecated
-  public YUVImage decompressToYUV(int desiredWidth, int[] strides,
-                                  int desiredHeight,
-                                  int flags) throws TJException {
-    if (flags < 0)
-      throw new IllegalArgumentException("Invalid argument in decompressToYUV()");
-
-    TJScalingFactor sf = getScalingFactor(desiredWidth, desiredHeight);
-    setScalingFactor(sf);
-    processFlags(flags);
-    return decompressToYUV(strides);
-  }
-
-  /**
    * Decompress the 8-bit-per-sample JPEG source image associated with this
    * decompressor instance into an 8-bit-per-sample unified planar YUV image
    * and return a {@link YUVImage} instance containing the decompressed image.
@@ -813,24 +676,6 @@ public class TJDecompressor implements Closeable {
                                         get(TJ.PARAM_SUBSAMP));
     decompressToYUV(dstYUVImage);
     return dstYUVImage;
-  }
-
-  /**
-   * @deprecated Use {@link #set set()}, {@link #setScalingFactor
-   * setScalingFactor()}, and {@link #decompressToYUV(int)} instead.
-   */
-  @SuppressWarnings("checkstyle:JavadocMethod")
-  @Deprecated
-  public YUVImage decompressToYUV(int desiredWidth, int align,
-                                  int desiredHeight, int flags)
-                                  throws TJException {
-    if (flags < 0)
-      throw new IllegalArgumentException("Invalid argument in decompressToYUV()");
-
-    TJScalingFactor sf = getScalingFactor(desiredWidth, desiredHeight);
-    setScalingFactor(sf);
-    processFlags(flags);
-    return decompressToYUV(align);
   }
 
   /**
@@ -894,28 +739,6 @@ public class TJDecompressor implements Closeable {
                  stride, yuvImage.getHeight(), pixelFormat);
     } else
       decompress8(jpegBuf, jpegBufSize, dstBuf, x, y, stride, pixelFormat);
-  }
-
-  /**
-   * @deprecated Use {@link #set set()}, {@link #setScalingFactor
-   * setScalingFactor()}, and {@link #decompress8(int[], int, int, int, int)}
-   * instead.
-   */
-  @SuppressWarnings("checkstyle:JavadocMethod")
-  @Deprecated
-  public void decompress(int[] dstBuf, int x, int y, int desiredWidth,
-                         int stride, int desiredHeight, int pixelFormat,
-                         int flags) throws TJException {
-    if ((yuvImage != null && (desiredWidth < 0 || desiredHeight < 0)) ||
-       flags < 0)
-      throw new IllegalArgumentException("Invalid argument in decompress()");
-
-    if (yuvImage == null) {
-      TJScalingFactor sf = getScalingFactor(desiredWidth, desiredHeight);
-      setScalingFactor(sf);
-    }
-    processFlags(flags);
-    decompress8(dstBuf, x, y, stride, pixelFormat);
   }
 
   /**
@@ -1017,31 +840,6 @@ public class TJDecompressor implements Closeable {
   }
 
   /**
-   * @deprecated Use {@link #set set()}, {@link #setScalingFactor
-   * setScalingFactor()}, and {@link #decompress8(BufferedImage)} instead.
-   */
-  @SuppressWarnings("checkstyle:JavadocMethod")
-  @Deprecated
-  public void decompress(BufferedImage dstImage, int flags)
-                         throws TJException {
-    if (flags < 0)
-      throw new IllegalArgumentException("Invalid argument in decompress()");
-
-    if (yuvImage == null) {
-      TJScalingFactor sf = getScalingFactor(dstImage.getWidth(),
-                                            dstImage.getHeight());
-      if (sf.getScaled(getJPEGWidth()) != dstImage.getWidth() ||
-          sf.getScaled(getJPEGHeight()) != dstImage.getHeight())
-        throw new IllegalArgumentException("BufferedImage dimensions do not match one of the scaled image sizes that TurboJPEG is capable of generating.");
-
-      setScalingFactor(sf);
-    }
-
-    processFlags(flags);
-    decompress8(dstImage);
-  }
-
-  /**
    * Decompress the 8-bit-per-sample JPEG source image or decode the planar YUV
    * source image associated with this decompressor instance and return a
    * <code>BufferedImage</code> instance containing the 8-bit-per-sample
@@ -1064,27 +862,6 @@ public class TJDecompressor implements Closeable {
   }
 
   /**
-   * @deprecated Use {@link #set set()}, {@link #setScalingFactor
-   * setScalingFactor()}, and {@link #decompress8(int)} instead.
-   */
-  @SuppressWarnings("checkstyle:JavadocMethod")
-  @Deprecated
-  public BufferedImage decompress(int desiredWidth, int desiredHeight,
-                                  int bufferedImageType, int flags)
-                                  throws TJException {
-    if ((yuvImage == null && (desiredWidth < 0 || desiredHeight < 0)) ||
-        flags < 0)
-      throw new IllegalArgumentException("Invalid argument in decompress()");
-
-    if (yuvImage == null) {
-      TJScalingFactor sf = getScalingFactor(desiredWidth, desiredHeight);
-      setScalingFactor(sf);
-    }
-    processFlags(flags);
-    return decompress8(bufferedImageType);
-  }
-
-  /**
    * Free the native structures associated with this decompressor instance.
    */
   @Override
@@ -1103,15 +880,6 @@ public class TJDecompressor implements Closeable {
       super.finalize();
     }
   };
-
-  @SuppressWarnings("deprecation")
-  final void processFlags(int flags) {
-    set(TJ.PARAM_BOTTOMUP, (flags & TJ.FLAG_BOTTOMUP) != 0 ? 1 : 0);
-    set(TJ.PARAM_FASTUPSAMPLE, (flags & TJ.FLAG_FASTUPSAMPLE) != 0 ? 1 : 0);
-    set(TJ.PARAM_FASTDCT, (flags & TJ.FLAG_FASTDCT) != 0 ? 1 : 0);
-    set(TJ.PARAM_STOPONWARNING, (flags & TJ.FLAG_STOPONWARNING) != 0 ? 1 : 0);
-    set(TJ.PARAM_SCANLIMIT, (flags & TJ.FLAG_LIMITSCANS) != 0 ? 500 : 0);
-  }
 
   final void checkSubsampling() {
     if (get(TJ.PARAM_SUBSAMP) == TJ.SAMP_UNKNOWN)

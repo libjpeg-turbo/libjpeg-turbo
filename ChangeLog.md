@@ -30,6 +30,9 @@ now handle 16-bit samples with 13 to 16 bits of data precision.  Refer to
 [libjpeg.txt](doc/libjpeg.txt), [usage.txt](doc/usage.txt), and the TurboJPEG
 API documentation for more details.
 
+5. All deprecated constants and methods in the TurboJPEG Java API have been
+removed.
+
 
 3.0.4
 =====
