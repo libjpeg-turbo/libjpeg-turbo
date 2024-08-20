@@ -33,6 +33,22 @@ API documentation for more details.
 5. All deprecated constants and methods in the TurboJPEG Java API have been
 removed.
 
+6. TJBench command-line arguments have been made more consistent with those of
+cjpeg, djpeg, and jpegtran.  More specifically:
+
+     - `-hflip` and `-vflip` have been replaced with `-flip horizontal` and
+`-flip vertical`.
+     - `-limitscans` has been replaced with `-maxscans`, which allows the scan
+limit to be specified.
+     - `-rot90`, `-rot180`, and `-rot270` have been replaced with
+`-rotate 90`, `-rotate 180`, and `-rotate 270`.
+     - `-stoponwarning` has been replaced with `-strict`.
+
+The old command-line arguments are deprecated and will be removed in a future
+release.  TJBench command-line arguments can now be abbreviated as well.
+(Where possible, the abbreviations are the same as those supported by cjpeg,
+djpeg, and jpegtran.)
+
 
 3.0.4
 =====
