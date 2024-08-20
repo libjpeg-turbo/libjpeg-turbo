@@ -95,8 +95,12 @@ Section "@CMAKE_PROJECT_NAME@ SDK for @INST_PLATFORM@ (required)"
 	File "@CMAKE_CURRENT_SOURCE_DIR@\doc\structure.txt"
 	File "@CMAKE_CURRENT_SOURCE_DIR@\doc\usage.txt"
 	File "@CMAKE_CURRENT_SOURCE_DIR@\doc\wizard.txt"
-	File "@CMAKE_CURRENT_SOURCE_DIR@\src\tjexample.c"
-	File "@CMAKE_CURRENT_SOURCE_DIR@\java\TJExample.java"
+	File "@CMAKE_CURRENT_SOURCE_DIR@\src\tjcomp.c"
+	File "@CMAKE_CURRENT_SOURCE_DIR@\src\tjdecomp.c"
+	File "@CMAKE_CURRENT_SOURCE_DIR@\src\tjtran.c"
+	File "@CMAKE_CURRENT_SOURCE_DIR@\java\TJComp.java"
+	File "@CMAKE_CURRENT_SOURCE_DIR@\java\TJDecomp.java"
+	File "@CMAKE_CURRENT_SOURCE_DIR@\java\TJTran.java"
 !ifdef GCC
 	SetOutPath $INSTDIR\man\man1
 	File "@CMAKE_CURRENT_SOURCE_DIR@\doc\cjpeg.1"
@@ -173,8 +177,12 @@ Section "Uninstall"
 	Delete $INSTDIR\doc\structure.txt
 	Delete $INSTDIR\doc\usage.txt
 	Delete $INSTDIR\doc\wizard.txt
-	Delete $INSTDIR\doc\tjexample.c
-	Delete $INSTDIR\doc\TJExample.java
+	Delete $INSTDIR\doc\tjcomp.c
+	Delete $INSTDIR\doc\tjdecomp.c
+	Delete $INSTDIR\doc\tjtran.c
+	Delete $INSTDIR\doc\TJComp.java
+	Delete $INSTDIR\doc\TJDecomp.java
+	Delete $INSTDIR\doc\TJTran.java
 !ifdef GCC
 	Delete $INSTDIR\man\man1\cjpeg.1
 	Delete $INSTDIR\man\man1\djpeg.1

@@ -736,8 +736,14 @@ if(WITH_TURBOJPEG)
       target_link_libraries(tjbench m)
     endif()
 
-    add_executable(tjexample src/tjexample.c)
-    target_link_libraries(tjexample turbojpeg)
+    add_executable(tjcomp src/tjcomp.c)
+    target_link_libraries(tjcomp turbojpeg)
+
+    add_executable(tjdecomp src/tjdecomp.c)
+    target_link_libraries(tjdecomp turbojpeg)
+
+    add_executable(tjtran src/tjtran.c)
+    target_link_libraries(tjtran turbojpeg)
 
     add_custom_target(tjdoc COMMAND doxygen -s ../doc/doxygen.config
       WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src)
@@ -1881,20 +1887,20 @@ add_custom_target(croptest
 
 if(WITH_TURBOJPEG)
   configure_file(test/tjbenchtest.in test/tjbenchtest @ONLY)
-  configure_file(test/tjexampletest.in test/tjexampletest @ONLY)
+  configure_file(test/tjcomptest.in test/tjcomptest @ONLY)
+  configure_file(test/tjdecomptest.in test/tjdecomptest @ONLY)
+  configure_file(test/tjtrantest.in test/tjtrantest @ONLY)
   if(WIN32)
     set(BASH bash)
   endif()
   add_custom_target(tjtest COMMAND ${CMAKE_COMMAND} -DWITH_JAVA=${WITH_JAVA}
     -DPRECISION=8 -P ${CMAKE_SOURCE_DIR}/cmakescripts/tjbenchtest.cmake
     DEPENDS ${CMAKE_SOURCE_DIR}/cmakescripts/tjbenchtest.cmake
-      ${CMAKE_CURRENT_BINARY_DIR}/test/tjbenchtest
-      ${CMAKE_CURRENT_BINARY_DIR}/test/tjexampletest)
+      ${CMAKE_CURRENT_BINARY_DIR}/test/tjbenchtest)
   add_custom_target(tjtest12 COMMAND ${CMAKE_COMMAND} -DWITH_JAVA=${WITH_JAVA}
     -DPRECISION=12 -P ${CMAKE_SOURCE_DIR}/cmakescripts/tjbenchtest.cmake
     DEPENDS ${CMAKE_SOURCE_DIR}/cmakescripts/tjbenchtest.cmake
-      ${CMAKE_CURRENT_BINARY_DIR}/test/tjbenchtest
-      ${CMAKE_CURRENT_BINARY_DIR}/test/tjexampletest)
+      ${CMAKE_CURRENT_BINARY_DIR}/test/tjbenchtest)
   add_custom_target(tjtest16 COMMAND ${CMAKE_COMMAND} -DWITH_JAVA=${WITH_JAVA}
     -DPRECISION=2 -P ${CMAKE_SOURCE_DIR}/cmakescripts/tjbenchtest.cmake
     COMMAND ${CMAKE_COMMAND} -DWITH_JAVA=${WITH_JAVA}
@@ -1922,8 +1928,14 @@ if(WITH_TURBOJPEG)
     COMMAND ${CMAKE_COMMAND} -DWITH_JAVA=${WITH_JAVA}
     -DPRECISION=16 -P ${CMAKE_SOURCE_DIR}/cmakescripts/tjbenchtest.cmake
     DEPENDS ${CMAKE_SOURCE_DIR}/cmakescripts/tjbenchtest.cmake
-      ${CMAKE_CURRENT_BINARY_DIR}/test/tjbenchtest
-      ${CMAKE_CURRENT_BINARY_DIR}/test/tjexampletest)
+      ${CMAKE_CURRENT_BINARY_DIR}/test/tjbenchtest)
+  add_custom_target(tjexampletest COMMAND ${CMAKE_COMMAND}
+    -DWITH_JAVA=${WITH_JAVA}
+    -P ${CMAKE_SOURCE_DIR}/cmakescripts/tjexampletest.cmake
+    DEPENDS ${CMAKE_SOURCE_DIR}/cmakescripts/tjexampletest.cmake
+      ${CMAKE_CURRENT_BINARY_DIR}/test/tjcomptest
+      ${CMAKE_CURRENT_BINARY_DIR}/test/tjdecomptest
+      ${CMAKE_CURRENT_BINARY_DIR}/test/tjtrantest)
 endif()
 
 
@@ -1991,7 +2003,9 @@ install(TARGETS rdjpgcom wrjpgcom
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/README.ijg
   ${CMAKE_CURRENT_SOURCE_DIR}/README.md
   ${CMAKE_CURRENT_SOURCE_DIR}/src/example.c
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/tjexample.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/tjcomp.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/tjdecomp.c
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/tjtran.c
   ${CMAKE_CURRENT_SOURCE_DIR}/doc/libjpeg.txt
   ${CMAKE_CURRENT_SOURCE_DIR}/doc/structure.txt
   ${CMAKE_CURRENT_SOURCE_DIR}/doc/usage.txt
@@ -1999,7 +2013,9 @@ install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/README.ijg
   ${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.md DESTINATION ${CMAKE_INSTALL_DOCDIR}
   COMPONENT doc)
 if(WITH_JAVA)
-  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/java/TJExample.java
+  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/java/TJComp.java
+    ${CMAKE_CURRENT_SOURCE_DIR}/java/TJDeomp.java
+    ${CMAKE_CURRENT_SOURCE_DIR}/java/TJTran.java
     DESTINATION ${CMAKE_INSTALL_DOCDIR} COMPONENT doc)
 endif()
 

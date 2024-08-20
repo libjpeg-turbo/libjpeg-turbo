@@ -61,6 +61,10 @@ djpeg, and jpegtran.)
 work similarly to the `tj3LoadImage*()` and `tj3SaveImage*()` functions in the
 C API.
 
+8. TJExample has been replaced with three programs (TJComp, TJDecomp, and
+TJTran) that demonstrate how to approximate the functionality of cjpeg, djpeg,
+and jpegtran using the TurboJPEG C and Java APIs.
+
 
 3.0.4
 =====

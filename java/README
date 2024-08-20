@@ -10,9 +10,9 @@ directly into both open source and proprietary projects without restriction.  A
 Java archive (JAR) file containing these classes is also shipped with the
 "official" distribution packages of libjpeg-turbo.
 
-TJExample.java, which should also be located in the same directory as this
-README file, demonstrates how to use the TurboJPEG Java API to compress and
-decompress JPEG images in memory.
+TJComp.java, TJDecomp.java, and TJTran.java, which should be located in the
+same directory as this README file, demonstrate how to use the TurboJPEG Java
+API to compress, decompress, and transform JPEG images in memory.
 
 
 Performance Pitfalls

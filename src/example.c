@@ -19,9 +19,10 @@
  */
 
 /* First-time users of libjpeg-turbo might be better served by looking at
- * tjexample.c, which uses the more straightforward TurboJPEG API.  Note that
- * this example, like cjpeg and djpeg, interleaves disk I/O with JPEG
- * compression/decompression, so it is not suitable for benchmarking purposes.
+ * tjcomp.c, tjdecomp.c, and tjtran.c, which use the more straightforward
+ * TurboJPEG API and are more full-featured.  Note that this example, like
+ * cjpeg and djpeg, interleaves disk I/O with JPEG compression/decompression,
+ * so it is not suitable for benchmarking purposes.
  */
 
 #ifdef _MSC_VER

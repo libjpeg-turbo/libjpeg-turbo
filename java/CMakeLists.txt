@@ -25,7 +25,9 @@ set(JAVA_SOURCES org/libjpegturbo/turbojpeg/TJ.java
   org/libjpegturbo/turbojpeg/TJTransformer.java
   org/libjpegturbo/turbojpeg/YUVImage.java
   TJUnitTest.java
-  TJExample.java
+  TJComp.java
+  TJDecomp.java
+  TJTran.java
   TJBench.java)
 
 set(TURBOJPEG_DLL_NAME "turbojpeg")
@@ -50,7 +52,7 @@ if(MSYS)
   set(CMAKE_HOST_SYSTEM_NAME "MSYS")
 endif()
 add_jar(turbojpeg-java ${JAVA_SOURCES} OUTPUT_NAME turbojpeg
-  ENTRY_POINT TJExample)
+  ENTRY_POINT TJBench)
 if(MSYS)
   set(CMAKE_HOST_SYSTEM_NAME ${CMAKE_HOST_SYSTEM_NAME_BAK})
 endif()
