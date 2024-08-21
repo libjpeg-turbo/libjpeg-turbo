@@ -173,7 +173,7 @@ for image in $IMAGES; do
 	for dct in accurate fast; do
 		dctarg=
 		if [ "${dct}" = "fast" ]; then
-			dctarg=-fastd
+			dctarg="-d f"
 		fi
 		runme $TJBENCH $OUTDIR/$image $TJQUAL -pre $PRECISION -rgb -q -be 0.01 -w 0 ${dctarg} $YUVARG $ALLOCARG $ENTROPYARG $LOSSLSARG
 		if [ "$LOSSLSARG" != "-l" ]; then
@@ -193,7 +193,7 @@ for image in $IMAGES; do
 	for dct in fast accurate; do
 		dctarg=
 		if [ "${dct}" = "fast" ]; then
-			dctarg=-fastd
+			dctarg="-d f"
 		fi
 
 		# Tiled compression & decompression
@@ -223,11 +223,11 @@ for image in $IMAGES; do
 				fi
 			fi
 		done
-		runme $TJBENCH $OUTDIR/$image $TJQUAL -pre $PRECISION -rgb -ti -q -be 0.01 -w 0 -fastu ${dctarg} $YUVARG $ALLOCARG $ENTROPYARG $LOSSLSARG
+		runme $TJBENCH $OUTDIR/$image $TJQUAL -pre $PRECISION -rgb -ti -q -be 0.01 -w 0 -nos ${dctarg} $YUVARG $ALLOCARG $ENTROPYARG $LOSSLSARG
 		if [ "$LOSSLSARG" != "-l" ]; then
-			runme $TJBENCH $OUTDIR/$image $TJQUAL -pre $PRECISION -su 440 -rgb -ti -q -be 0.01 -w 0 -fastu ${dctarg} $YUVARG $ALLOCARG $ENTROPYARG $LOSSLSARG
-			runme $TJBENCH $OUTDIR/$image $TJQUAL -pre $PRECISION -su 411 -rgb -ti -q -be 0.01 -w 0 -fastu ${dctarg} $YUVARG $ALLOCARG $ENTROPYARG $LOSSLSARG
-			runme $TJBENCH $OUTDIR/$image $TJQUAL -pre $PRECISION -su 441 -rgb -ti -q -be 0.01 -w 0 -fastu ${dctarg} $YUVARG $ALLOCARG $ENTROPYARG $LOSSLSARG
+			runme $TJBENCH $OUTDIR/$image $TJQUAL -pre $PRECISION -su 440 -rgb -ti -q -be 0.01 -w 0 -nos ${dctarg} $YUVARG $ALLOCARG $ENTROPYARG $LOSSLSARG
+			runme $TJBENCH $OUTDIR/$image $TJQUAL -pre $PRECISION -su 411 -rgb -ti -q -be 0.01 -w 0 -nos ${dctarg} $YUVARG $ALLOCARG $ENTROPYARG $LOSSLSARG
+			runme $TJBENCH $OUTDIR/$image $TJQUAL -pre $PRECISION -su 441 -rgb -ti -q -be 0.01 -w 0 -nos ${dctarg} $YUVARG $ALLOCARG $ENTROPYARG $LOSSLSARG
 		fi
 		for samp in $x24SUBSAMP; do
 			if [ $ALLOC = 1 ]; then
@@ -282,7 +282,7 @@ for image in $IMAGES; do
 				fi
 			done
 			for samp in $x24SUBSAMP; do
-				runme $TJBENCH $OUTDIR/${basename}_${samp}_Q95.jpg $BMPARG -ti -q -be 0.01 -w 0 -fastu ${dctarg} $YUVARG $ALLOCARG $ENTROPYARG
+				runme $TJBENCH $OUTDIR/${basename}_${samp}_Q95.jpg $BMPARG -ti -q -be 0.01 -w 0 -nos ${dctarg} $YUVARG $ALLOCARG $ENTROPYARG
 				if [ $ALLOC = 1 ]; then
 					runme cmp $OUTDIR/${basename}_${samp}_Q95_full.${EXT} $OUTDIR/${basename}_${samp}_${dct}_nosmooth_djpeg.${EXT}
 					rm $OUTDIR/${basename}_${samp}_Q95_full.${EXT}
@@ -380,7 +380,7 @@ for image in $IMAGES; do
 			done
 			for samp in $x24SUBSAMP; do
 				runme $EXEDIR/djpeg -nos -rg $BMPARG -outf $OUTDIR/${basename}_${samp}_${XFORMNAME[$xform]}_jpegtran.${EXT} $OUTDIR/${basename}_${samp}_${XFORMNAME[$xform]}_jpegtran.jpg
-				runme $TJBENCH $OUTDIR/${basename}_${samp}_Q95.jpg $BMPARG ${XFORMARGS[$xform]} -ti -q -be 0.01 -w 0 -fastu $YUVARG $ALLOCARG $ENTROPYARG
+				runme $TJBENCH $OUTDIR/${basename}_${samp}_Q95.jpg $BMPARG ${XFORMARGS[$xform]} -ti -q -be 0.01 -w 0 -nos $YUVARG $ALLOCARG $ENTROPYARG
 				if [ $ALLOC = 1 ]; then
 					runme cmp $OUTDIR/${basename}_${samp}_Q95_full.${EXT} $OUTDIR/${basename}_${samp}_${XFORMNAME[$xform]}_jpegtran.${EXT}
 					rm $OUTDIR/${basename}_${samp}_Q95_full.${EXT}
