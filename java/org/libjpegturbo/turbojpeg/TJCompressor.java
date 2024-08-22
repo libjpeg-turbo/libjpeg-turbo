@@ -348,6 +348,8 @@ public class TJCompressor implements Closeable {
       DataBufferInt db = (DataBufferInt)wr.getDataBuffer();
       srcBufInt = db.getData();
       srcBuf8 = null;
+      srcBuf12 = null;
+      srcBuf16 = null;
     } else {
       ComponentSampleModel sm =
         (ComponentSampleModel)srcImage.getSampleModel();
@@ -357,6 +359,8 @@ public class TJCompressor implements Closeable {
       srcPitch = sm.getScanlineStride();
       DataBufferByte db = (DataBufferByte)wr.getDataBuffer();
       srcBuf8 = db.getData();
+      srcBuf12 = null;
+      srcBuf16 = null;
       srcBufInt = null;
     }
     srcYUVImage = null;
@@ -377,6 +381,8 @@ public class TJCompressor implements Closeable {
     srcYUVImage = srcImage;
     set(TJ.PARAM_SUBSAMP, srcImage.getSubsamp());
     srcBuf8 = null;
+    srcBuf12 = null;
+    srcBuf16 = null;
     srcBufInt = null;
   }
 
