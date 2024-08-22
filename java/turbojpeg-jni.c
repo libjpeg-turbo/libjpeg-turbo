@@ -1272,11 +1272,11 @@ JNIEXPORT void JNICALL Java_org_libjpegturbo_turbojpeg_TJDecompressor_destroy
 /* Private image I/O routines (used only by TJBench) */
 JNIEXPORT jobject JNICALL Java_org_libjpegturbo_turbojpeg_TJCompressor_loadSourceImage
   (JNIEnv *env, jobject obj, jint precision, jstring jfilename, jint align,
-   jint pixelFormat)
+   jint jPixelFormat)
 {
   tjhandle handle = NULL;
   void *dstBuf = NULL, *jdstPtr;
-  int width, height;
+  int width, height, pixelFormat = jPixelFormat;
   jsize arraySize, pitch;
   const char *filename = NULL;
   jboolean isCopy;
