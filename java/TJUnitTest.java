@@ -327,14 +327,16 @@ final class TJUnitTest {
     return v;
   }
 
-  static int checkBuf(Object buf, int w, int pitch, int h, int pf, int subsamp,
-                      TJScalingFactor sf, boolean bottomUp) throws Exception {
+  static boolean checkBuf(Object buf, int w, int pitch, int h, int pf,
+                          int subsamp, TJScalingFactor sf, boolean bottomUp)
+                          throws Exception {
     int roffset = TJ.getRedOffset(pf);
     int goffset = TJ.getGreenOffset(pf);
     int boffset = TJ.getBlueOffset(pf);
     int aoffset = TJ.getAlphaOffset(pf);
     int ps = TJ.getPixelSize(pf);
-    int index, row, col, retval = 1;
+    int index, row, col;
+    boolean retval = true;
     int halfway = 16 * sf.getNum() / sf.getDenom();
     int blockSize = 8 * sf.getNum() / sf.getDenom();
 
@@ -372,7 +374,7 @@ final class TJUnitTest {
             }
           }
         }
-        return 1;
+        return true;
       }
 
       for (row = 0; row < halfway; row++) {
@@ -421,10 +423,10 @@ final class TJUnitTest {
       }
     } catch (Exception e) {
       System.out.println("\n" + e.getMessage());
-      retval = 0;
+      retval = false;
     }
 
-    if (retval == 0) {
+    if (!retval) {
       for (row = 0; row < h; row++) {
         for (col = 0; col < w; col++) {
           if (pf == TJ.PF_CMYK) {
@@ -446,14 +448,15 @@ final class TJUnitTest {
     return retval;
   }
 
-  static int checkIntBuf(int[] buf, int w, int pitch, int h, int pf,
-                         int subsamp, TJScalingFactor sf, boolean bottomUp)
-                         throws Exception {
+  static boolean checkIntBuf(int[] buf, int w, int pitch, int h, int pf,
+                             int subsamp, TJScalingFactor sf, boolean bottomUp)
+                             throws Exception {
     int rshift = TJ.getRedOffset(pf) * 8;
     int gshift = TJ.getGreenOffset(pf) * 8;
     int bshift = TJ.getBlueOffset(pf) * 8;
     int ashift = TJ.getAlphaOffset(pf) * 8;
-    int index, row, col, retval = 1;
+    int index, row, col;
+    boolean retval = true;
     int halfway = 16 * sf.getNum() / sf.getDenom();
     int blockSize = 8 * sf.getNum() / sf.getDenom();
 
@@ -504,10 +507,10 @@ final class TJUnitTest {
       }
     } catch (Exception e) {
       System.out.println("\n" + e.getMessage());
-      retval = 0;
+      retval = false;
     }
 
-    if (retval == 0) {
+    if (!retval) {
       for (row = 0; row < h; row++) {
         for (col = 0; col < w; col++) {
           int r = (buf[pitch * row + col] >> rshift) & 0xFF;
@@ -524,8 +527,9 @@ final class TJUnitTest {
     return retval;
   }
 
-  static int checkImg(BufferedImage img, int pf, int subsamp,
-                      TJScalingFactor sf, boolean bottomUp) throws Exception {
+  static boolean checkImg(BufferedImage img, int pf, int subsamp,
+                          TJScalingFactor sf, boolean bottomUp)
+                          throws Exception {
     WritableRaster wr = img.getRaster();
     int imgType = img.getType();
     if (imgType == BufferedImage.TYPE_INT_RGB ||
@@ -553,14 +557,14 @@ final class TJUnitTest {
     return ((v + (p) - 1) & (~((p) - 1)));
   }
 
-  static int checkBufYUV(byte[] buf, int size, int w, int h, int subsamp,
-                         TJScalingFactor sf) throws Exception {
+  static boolean checkBufYUV(byte[] buf, int size, int w, int h, int subsamp,
+                             TJScalingFactor sf) throws Exception {
     int row, col;
     int hsf = TJ.getMCUWidth(subsamp) / 8, vsf = TJ.getMCUHeight(subsamp) / 8;
     int pw = pad(w, hsf), ph = pad(h, vsf);
     int cw = pw / hsf, ch = ph / vsf;
     int ypitch = pad(pw, yuvAlign), uvpitch = pad(cw, yuvAlign);
-    int retval = 1;
+    boolean retval = true;
     int correctsize = ypitch * ph +
                       (subsamp == TJ.SAMP_GRAY ? 0 : uvpitch * ch * 2);
     int halfway = 16 * sf.getNum() / sf.getDenom();
@@ -610,10 +614,10 @@ final class TJUnitTest {
       }
     } catch (Exception e) {
       System.out.println("\n" + e.getMessage());
-      retval = 0;
+      retval = false;
     }
 
-    if (retval == 0) {
+    if (!retval) {
       for (row = 0; row < ph; row++) {
         for (col = 0; col < pw; col++) {
           int y = buf[ypitch * row + col];
@@ -705,7 +709,7 @@ final class TJUnitTest {
                         SUBNAME_LONG[subsamp]);
       YUVImage yuvImage = tjc.encodeYUV(yuvAlign);
       if (checkBufYUV(yuvImage.getBuf(), yuvImage.getSize(), w, h, subsamp,
-                      new TJScalingFactor(1, 1)) == 1)
+                      new TJScalingFactor(1, 1)))
         System.out.print("Passed.\n");
       else {
         System.out.print("FAILED!\n");
@@ -775,7 +779,7 @@ final class TJUnitTest {
       else System.out.print("... ");
       YUVImage yuvImage = tjd.decompressToYUV(yuvAlign);
       if (checkBufYUV(yuvImage.getBuf(), yuvImage.getSize(), scaledWidth,
-                      scaledHeight, subsamp, sf) == 1)
+                      scaledHeight, subsamp, sf))
         System.out.print("Passed.\n");
       else {
         System.out.print("FAILED!\n");  exitStatus = -1;
@@ -809,10 +813,10 @@ final class TJUnitTest {
       ImageIO.write(img, "png", file);
     }
 
-    if ((bi && checkImg(img, pf, subsamp, sf, bottomUp) == 1) ||
+    if ((bi && checkImg(img, pf, subsamp, sf, bottomUp)) ||
         (!bi && checkBuf(dstBuf, scaledWidth,
                          scaledWidth * TJ.getPixelSize(pf), scaledHeight, pf,
-                         subsamp, sf, bottomUp) == 1))
+                         subsamp, sf, bottomUp)))
       System.out.print("Passed.\n");
     else {
       System.out.print("FAILED!\n");
