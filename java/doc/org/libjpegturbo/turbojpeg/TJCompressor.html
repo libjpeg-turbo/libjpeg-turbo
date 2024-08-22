@@ -27,7 +27,7 @@
     catch(err) {
     }
 //-->
-var data = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10,"i14":10};
+var data = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10,"i14":10,"i15":10,"i16":10,"i17":10,"i18":10,"i19":10,"i20":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -280,6 +280,57 @@ implements java.io.Closeable</pre>
 </td>
 </tr>
 <tr id="i9" class="rowColor">
+<td class="colFirst"><code>int</code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getHeight()">getHeight</a></span>()</code></th>
+<td class="colLast">
+<div class="block">Returns the height of the source image (packed-pixel or YUV) associated
+ with this compressor instance.</div>
+</td>
+</tr>
+<tr id="i10" class="altColor">
+<td class="colFirst"><code>int</code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getPitch()">getPitch</a></span>()</code></th>
+<td class="colLast">
+<div class="block">Returns the pitch (samples per row) of the packed-pixel source image
+ associated with this compressor instance.</div>
+</td>
+</tr>
+<tr id="i11" class="rowColor">
+<td class="colFirst"><code>int</code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getPixelFormat()">getPixelFormat</a></span>()</code></th>
+<td class="colLast">
+<div class="block">Returns the pixel format of the packed-pixel source image associated with
+ this compressor instance.</div>
+</td>
+</tr>
+<tr id="i12" class="altColor">
+<td class="colFirst"><code>java.lang.Object</code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getSourceBuf()">getSourceBuf</a></span>()</code></th>
+<td class="colLast">
+<div class="block">Returns the buffer containing the packed-pixel image associated with this
+ compressor instance.</div>
+</td>
+</tr>
+<tr id="i13" class="rowColor">
+<td class="colFirst"><code>int</code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getWidth()">getWidth</a></span>()</code></th>
+<td class="colLast">
+<div class="block">Returns the width of the source image (packed-pixel or YUV) associated
+ with this compressor instance.</div>
+</td>
+</tr>
+<tr id="i14" class="altColor">
+<td class="colFirst"><code>void</code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#loadSourceImage(java.lang.String,int,int)">loadSourceImage</a></span>&#8203;(java.lang.String&nbsp;fileName,
+               int&nbsp;align,
+               int&nbsp;pixelFormat)</code></th>
+<td class="colLast">
+<div class="block">Load a packed-pixel RGB or grayscale source image with 2 to 16 bits of
+ data precision per sample from disk into memory and associate it with this
+ compressor instance.</div>
+</td>
+</tr>
+<tr id="i15" class="rowColor">
 <td class="colFirst"><code>void</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#set(int,int)">set</a></span>&#8203;(int&nbsp;param,
    int&nbsp;value)</code></th>
@@ -287,7 +338,7 @@ implements java.io.Closeable</pre>
 <div class="block">Set the value of a compression parameter.</div>
 </td>
 </tr>
-<tr id="i10" class="altColor">
+<tr id="i16" class="altColor">
 <td class="colFirst"><code>void</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#setSourceImage(byte%5B%5D,int,int,int,int,int,int)">setSourceImage</a></span>&#8203;(byte[]&nbsp;srcImage,
               int&nbsp;x,
@@ -301,7 +352,7 @@ implements java.io.Closeable</pre>
  bits of data precision per sample with this compressor instance.</div>
 </td>
 </tr>
-<tr id="i11" class="rowColor">
+<tr id="i17" class="rowColor">
 <td class="colFirst"><code>void</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#setSourceImage(java.awt.image.BufferedImage,int,int,int,int)">setSourceImage</a></span>&#8203;(java.awt.image.BufferedImage&nbsp;srcImage,
               int&nbsp;x,
@@ -313,7 +364,7 @@ implements java.io.Closeable</pre>
  with this compressor instance.</div>
 </td>
 </tr>
-<tr id="i12" class="altColor">
+<tr id="i18" class="altColor">
 <td class="colFirst"><code>void</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#setSourceImage(org.libjpegturbo.turbojpeg.YUVImage)">setSourceImage</a></span>&#8203;(<a href="YUVImage.html" title="class in org.libjpegturbo.turbojpeg">YUVImage</a>&nbsp;srcImage)</code></th>
 <td class="colLast">
@@ -321,7 +372,7 @@ implements java.io.Closeable</pre>
  instance.</div>
 </td>
 </tr>
-<tr id="i13" class="rowColor">
+<tr id="i19" class="rowColor">
 <td class="colFirst"><code>void</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#setSourceImage12(short%5B%5D,int,int,int,int,int,int)">setSourceImage12</a></span>&#8203;(short[]&nbsp;srcImage,
                 int&nbsp;x,
@@ -335,7 +386,7 @@ implements java.io.Closeable</pre>
  bits of data precision per sample with this compressor instance.</div>
 </td>
 </tr>
-<tr id="i14" class="altColor">
+<tr id="i20" class="altColor">
 <td class="colFirst"><code>void</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#setSourceImage16(short%5B%5D,int,int,int,int,int,int)">setSourceImage16</a></span>&#8203;(short[]&nbsp;srcImage,
                 int&nbsp;x,
@@ -659,6 +710,150 @@ implements java.io.Closeable</pre>
  not modified.</dd>
 <dt><span class="throwsLabel">Throws:</span></dt>
 <dd><code><a href="TJException.html" title="class in org.libjpegturbo.turbojpeg">TJException</a></code></dd>
+</dl>
+</li>
+</ul>
+<a id="loadSourceImage(java.lang.String,int,int)">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>loadSourceImage</h4>
+<pre class="methodSignature">public&nbsp;void&nbsp;loadSourceImage&#8203;(java.lang.String&nbsp;fileName,
+                            int&nbsp;align,
+                            int&nbsp;pixelFormat)
+                     throws <a href="TJException.html" title="class in org.libjpegturbo.turbojpeg">TJException</a></pre>
+<div class="block">Load a packed-pixel RGB or grayscale source image with 2 to 16 bits of
+ data precision per sample from disk into memory and associate it with this
+ compressor instance.  Note that packed-pixel source images with 2 to 7, 9
+ to 11, or 13 to 16 bits of data precision per sample can only be
+ compressed into lossless JPEG images.
+
+ <p><a href="#getWidth()"><code>getWidth()</code></a>, <a href="#getPitch()"><code>getPitch()</code></a>, <a href="#getHeight()"><code>getHeight()</code></a>,
+ <a href="#getPixelFormat()"><code>getPixelFormat()</code></a>, and <a href="#getSourceBuf()"><code>getSourceBuf()</code></a> can be used to
+ obtain the source image's dimensions, pixel format, and buffer after it is
+ loaded.</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>fileName</code> - name of a file containing a packed-pixel image in Windows
+ BMP or PBMPLUS (PPM/PGM) format.  Windows BMP files require
+ 8-bit-per-sample data precision.  When loading a PBMPLUS file, the target
+ data precision (from 2 to 16 bits per sample) can be specified using
+ <a href="TJ.html#PARAM_PRECISION"><code>TJ.PARAM_PRECISION</code></a> and defaults to 8 if <a href="TJ.html#PARAM_PRECISION"><code>TJ.PARAM_PRECISION</code></a>
+ is unset.  If the data precision of the PBMPLUS file does not match the
+ target data precision, then upconverting or downconverting will be
+ performed.</dd>
+<dd><code>align</code> - row alignment (in samples) of the packed-pixel buffer into
+ which the source image will be loaded (must be a power of 2.)  Setting
+ this parameter to n will cause all rows in the buffer to be padded to the
+ nearest multiple of n samples (1 = unpadded.)</dd>
+<dd><code>pixelFormat</code> - pixel format of the packed-pixel buffer into which the
+ source image will be loaded.  The behavior of this method varies depending
+ on the value of <code>pixelFormat</code>:
+ <ul>
+ <li> <a href="TJ.html#PF_UNKNOWN"><code>TJ.PF_UNKNOWN</code></a> : The packed-pixel buffer created by this
+ method will use the most optimal pixel format for the file type.  Use
+ <a href="#getPixelFormat()"><code>getPixelFormat()</code></a> to obtain the ID of that pixel format.
+ <li> <a href="TJ.html#PF_GRAY"><code>TJ.PF_GRAY</code></a> : Only PGM files and 8-bit-per-pixel BMP files
+ with a grayscale colormap can be loaded.
+ <li> <a href="TJ.html#PF_CMYK"><code>TJ.PF_CMYK</code></a> : The RGB or grayscale pixels stored in the file
+ will be converted using a quick &amp; dirty algorithm that is suitable
+ only for testing purposes.  (Proper conversion between CMYK and other
+ formats requires a color management system.)
+ <li> Other <a href="TJ.html#PF_RGB"><code>pixel formats</code></a> : The packed-pixel buffer
+ will use the specified pixel format, and pixel format conversion will be
+ performed if necessary.
+ </ul></dd>
+<dt><span class="throwsLabel">Throws:</span></dt>
+<dd><code><a href="TJException.html" title="class in org.libjpegturbo.turbojpeg">TJException</a></code></dd>
+</dl>
+</li>
+</ul>
+<a id="getWidth()">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getWidth</h4>
+<pre class="methodSignature">public&nbsp;int&nbsp;getWidth()</pre>
+<div class="block">Returns the width of the source image (packed-pixel or YUV) associated
+ with this compressor instance.</div>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>the width of the source image (packed-pixel or YUV) associated
+ with this compressor instance.</dd>
+</dl>
+</li>
+</ul>
+<a id="getPitch()">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getPitch</h4>
+<pre class="methodSignature">public&nbsp;int&nbsp;getPitch()</pre>
+<div class="block">Returns the pitch (samples per row) of the packed-pixel source image
+ associated with this compressor instance.  If the source image is a
+ <code>BufferedImage</code> instance with integer pixels, then the stride
+ (pixels per row) is returned instead.</div>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>the pitch (samples per row) of the packed-pixel source image
+ associated with this compressor instance.</dd>
+</dl>
+</li>
+</ul>
+<a id="getHeight()">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getHeight</h4>
+<pre class="methodSignature">public&nbsp;int&nbsp;getHeight()</pre>
+<div class="block">Returns the height of the source image (packed-pixel or YUV) associated
+ with this compressor instance.</div>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>the height of the source image (packed-pixel or YUV) associated
+ with this compressor instance.</dd>
+</dl>
+</li>
+</ul>
+<a id="getPixelFormat()">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getPixelFormat</h4>
+<pre class="methodSignature">public&nbsp;int&nbsp;getPixelFormat()</pre>
+<div class="block">Returns the pixel format of the packed-pixel source image associated with
+ this compressor instance.  The pixel format is one of
+ <a href="TJ.html#PF_RGB"><code>TJ.PF_*</code></a>.</div>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>the pixel format of the packed-pixel source image associated with
+ this compressor instance.</dd>
+</dl>
+</li>
+</ul>
+<a id="getSourceBuf()">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getSourceBuf</h4>
+<pre class="methodSignature">public&nbsp;java.lang.Object&nbsp;getSourceBuf()</pre>
+<div class="block">Returns the buffer containing the packed-pixel image associated with this
+ compressor instance.  The buffer is a <code>byte</code> array if the
+ source image has 2 to 8 bits of data precision per sample, a
+ <code>short</code> array if the source image has 9 to 16 bits of data
+ precision per sample, and either a <code>byte</code> or an
+ <code>int</code> array (depending on the image type) if the source image
+ is a <code>BufferedImage</code> instance.</div>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>the buffer containing the packed-pixel image associated with this
+ compressor instance.</dd>
 </dl>
 </li>
 </ul>

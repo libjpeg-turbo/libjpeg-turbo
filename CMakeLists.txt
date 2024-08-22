@@ -878,6 +878,10 @@ if(WITH_JAVA)
     ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
       -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
       TJUnitTest -bi -lossless)
+  add_test(TJUnitTest-bmp
+    ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
+      -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
+      TJUnitTest -bmp)
   add_test(TJUnitTest12
     ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
       -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
@@ -886,58 +890,114 @@ if(WITH_JAVA)
     ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
       -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
       TJUnitTest -precision 12 -lossless)
+  add_test(TJUnitTest12-bmp
+    ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
+      -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
+      TJUnitTest -precision 12 -bmp)
   add_test(TJUnitTest2-lossless
     ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
       -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
       TJUnitTest -precision 2)
+  add_test(TJUnitTest2-bmp
+    ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
+      -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
+      TJUnitTest -precision 2 -bmp)
   add_test(TJUnitTest3-lossless
     ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
       -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
       TJUnitTest -precision 3)
+  add_test(TJUnitTest3-bmp
+    ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
+      -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
+      TJUnitTest -precision 3 -bmp)
   add_test(TJUnitTest4-lossless
     ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
       -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
       TJUnitTest -precision 4)
+  add_test(TJUnitTest4-bmp
+    ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
+      -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
+      TJUnitTest -precision 4 -bmp)
   add_test(TJUnitTest5-lossless
     ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
       -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
       TJUnitTest -precision 5)
+  add_test(TJUnitTest5-bmp
+    ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
+      -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
+      TJUnitTest -precision 5 -bmp)
   add_test(TJUnitTest6-lossless
     ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
       -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
       TJUnitTest -precision 6)
+  add_test(TJUnitTest6-bmp
+    ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
+      -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
+      TJUnitTest -precision 6 -bmp)
   add_test(TJUnitTest7-lossless
     ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
       -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
       TJUnitTest -precision 7)
+  add_test(TJUnitTest7-bmp
+    ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
+      -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
+      TJUnitTest -precision 7 -bmp)
   add_test(TJUnitTest9-lossless
     ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
       -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
       TJUnitTest -precision 9)
+  add_test(TJUnitTest9-bmp
+    ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
+      -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
+      TJUnitTest -precision 9 -bmp)
   add_test(TJUnitTest10-lossless
     ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
       -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
       TJUnitTest -precision 10)
+  add_test(TJUnitTest10-bmp
+    ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
+      -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
+      TJUnitTest -precision 10 -bmp)
   add_test(TJUnitTest11-lossless
     ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
       -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
       TJUnitTest -precision 11)
+  add_test(TJUnitTest11-bmp
+    ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
+      -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
+      TJUnitTest -precision 11 -bmp)
   add_test(TJUnitTest13-lossless
     ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
       -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
       TJUnitTest -precision 13)
+  add_test(TJUnitTest13-bmp
+    ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
+      -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
+      TJUnitTest -precision 13 -bmp)
   add_test(TJUnitTest14-lossless
     ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
       -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
       TJUnitTest -precision 14)
+  add_test(TJUnitTest14-bmp
+    ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
+      -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
+      TJUnitTest -precision 14 -bmp)
   add_test(TJUnitTest15-lossless
     ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
       -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
       TJUnitTest -precision 15)
+  add_test(TJUnitTest15-bmp
+    ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
+      -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
+      TJUnitTest -precision 15 -bmp)
   add_test(TJUnitTest16-lossless
     ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
       -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
       TJUnitTest -precision 16)
+  add_test(TJUnitTest16-bmp
+    ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
+      -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
+      TJUnitTest -precision 16 -bmp)
 endif()
 
 set(TEST_LIBTYPES "")

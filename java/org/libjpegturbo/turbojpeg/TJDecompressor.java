@@ -862,6 +862,59 @@ public class TJDecompressor implements Closeable {
   }
 
   /**
+   * Save a packed-pixel image with 2 to 16 bits of data precision per sample
+   * from memory to disk.
+   *
+   * @param fileName name of a file to which to save the packed-pixel image.
+   * The image will be stored in Windows BMP or PBMPLUS (PPM/PGM) format,
+   * depending on the file extension.  Windows BMP files require
+   * 8-bit-per-sample data precision.  When saving a PBMPLUS file, the source
+   * data precision (from 2 to 16 bits per sample) can be specified using
+   * {@link TJ#PARAM_PRECISION} and defaults to 8 if {@link TJ#PARAM_PRECISION}
+   * is unset.
+   *
+   * @param image buffer containing a packed-pixel RGB, grayscale, or CMYK
+   * image to be saved.  The buffer is a <code>byte</code> array if the image
+   * has 2 to 8 bits of data precision per sample and a <code>short</code>
+   * array otherwise.
+   *
+   * @param x x offset (in pixels) of the region in the buffer from which to
+   * save the packed-pixel image
+   *
+   * @param y y offset (in pixels) of the region in the buffer from which to
+   * save the packed-pixel image
+   *
+   * @param width width (in pixels) of the region in the buffer from which to
+   * save the packed-pixel image
+   *
+   * @param pitch samples per row in the packed-pixel buffer.  Setting this
+   * parameter to 0 is the equivalent of setting it to <code>width *
+   * {@link TJ#getPixelSize TJ.getPixelSize}(pixelFormat)</code>.
+   *
+   * @param height height (in pixels) of the region in the buffer from which to
+   * save the packed-pixel image
+   *
+   * @param pixelFormat pixel format of the packed-pixel image (one of
+   * {@link TJ#PF_RGB TJ.PF_*}).  If this parameter is set to
+   * {@link TJ#PF_GRAY}, then the image will be stored in PGM or
+   * 8-bit-per-pixel (indexed color) BMP format.  Otherwise, the image will be
+   * stored in PPM or 24-bit-per-pixel BMP format.  If this parameter is set to
+   * {@link TJ#PF_CMYK}, then the CMYK pixels will be converted to RGB using a
+   * quick &amp; dirty algorithm that is suitable only for testing purposes.
+   * (Proper conversion between CMYK and other formats requires a color
+   * management system.)
+   */
+  public void saveImage(String fileName, Object image, int x, int y, int width,
+                        int pitch, int height, int pixelFormat)
+                        throws TJException {
+    int precision = get(TJ.PARAM_PRECISION);
+    if (precision < 2 || precision > 16)
+      precision = 8;
+    saveImage(precision, fileName, image, x, y, width, pitch, height,
+              pixelFormat);
+  }
+
+  /**
    * Free the native structures associated with this decompressor instance.
    */
   @Override
@@ -923,18 +976,9 @@ public class TJDecompressor implements Closeable {
     int[] srcStrides, int[] dstBuf, int x, int y, int width, int stride,
     int height, int pixelFormat) throws TJException;
 
-  /**
-   * @hidden
-   * Ugly hack alert.  It isn't straightforward to save 12-bit-per-sample and
-   * 16-bit-per-sample images using the ImageIO and BufferedImage classes, and
-   * ImageIO doesn't support PBMPLUS files anyhow.  This method accesses
-   * tj3SaveImage() through JNI and copies the pixel data between the C and
-   * Java heaps.  Currently it is undocumented and used only by TJBench.
-   */
-  @SuppressWarnings("checkstyle:JavadocMethod")
-  public native void saveImage(int precision, String fileName, Object srcBuf,
-                               int width, int pitch, int height,
-                               int pixelFormat) throws TJException;
+  private native void saveImage(int precision, String fileName, Object buffer,
+    int x, int y, int width, int pitch, int height, int pixelFormat)
+    throws TJException;
 
   static {
     TJLoader.load();

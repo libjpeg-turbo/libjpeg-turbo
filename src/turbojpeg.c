@@ -624,8 +624,6 @@ DLLEXPORT int tj3Set(tjhandle handle, int param, int value)
     THROW("TJPARAM_JPEGHEIGHT is read-only in decompression instances.");
     break;
   case TJPARAM_PRECISION:
-    if (!(this->init & COMPRESS))
-      THROW("TJPARAM_PRECISION is read-only in decompression instances.");
     SET_PARAM(precision, 2, 16);
     break;
   case TJPARAM_COLORSPACE:

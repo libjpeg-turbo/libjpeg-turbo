@@ -91,7 +91,7 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 </nav>
 </header>
 <main role="main">
-<div class="contentContainer"><a href="#I:B">B</a>&nbsp;<a href="#I:C">C</a>&nbsp;<a href="#I:D">D</a>&nbsp;<a href="#I:E">E</a>&nbsp;<a href="#I:F">F</a>&nbsp;<a href="#I:G">G</a>&nbsp;<a href="#I:I">I</a>&nbsp;<a href="#I:N">N</a>&nbsp;<a href="#I:O">O</a>&nbsp;<a href="#I:P">P</a>&nbsp;<a href="#I:S">S</a>&nbsp;<a href="#I:T">T</a>&nbsp;<a href="#I:U">U</a>&nbsp;<a href="#I:Y">Y</a>&nbsp;<br><a href="allclasses-index.html">All&nbsp;Classes</a>&nbsp;<a href="allpackages-index.html">All&nbsp;Packages</a><a id="I:B">
+<div class="contentContainer"><a href="#I:B">B</a>&nbsp;<a href="#I:C">C</a>&nbsp;<a href="#I:D">D</a>&nbsp;<a href="#I:E">E</a>&nbsp;<a href="#I:F">F</a>&nbsp;<a href="#I:G">G</a>&nbsp;<a href="#I:I">I</a>&nbsp;<a href="#I:L">L</a>&nbsp;<a href="#I:N">N</a>&nbsp;<a href="#I:O">O</a>&nbsp;<a href="#I:P">P</a>&nbsp;<a href="#I:S">S</a>&nbsp;<a href="#I:T">T</a>&nbsp;<a href="#I:U">U</a>&nbsp;<a href="#I:Y">Y</a>&nbsp;<br><a href="allclasses-index.html">All&nbsp;Classes</a>&nbsp;<a href="allpackages-index.html">All&nbsp;Packages</a><a id="I:B">
 <!--   -->
 </a>
 <h2 class="title">B</h2>
@@ -345,6 +345,11 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <div class="block">For the given pixel format, returns the number of samples that the green
  component is offset from the start of the pixel.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="org/libjpegturbo/turbojpeg/TJCompressor.html#getHeight()">getHeight()</a></span> - Method in class org.libjpegturbo.turbojpeg.<a href="org/libjpegturbo/turbojpeg/TJCompressor.html" title="class in org.libjpegturbo.turbojpeg">TJCompressor</a></dt>
+<dd>
+<div class="block">Returns the height of the source image (packed-pixel or YUV) associated
+ with this compressor instance.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="org/libjpegturbo/turbojpeg/TJDecompressor.html#getHeight()">getHeight()</a></span> - Method in class org.libjpegturbo.turbojpeg.<a href="org/libjpegturbo/turbojpeg/TJDecompressor.html" title="class in org.libjpegturbo.turbojpeg">TJDecompressor</a></dt>
 <dd>
 <div class="block">Returns the height of the source image (JPEG or YUV) associated with this
@@ -387,6 +392,16 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <div class="block">Returns the row alignment (in bytes) of the YUV buffer (if this image is
  stored in a unified buffer rather than separate image planes.)</div>
 </dd>
+<dt><span class="memberNameLink"><a href="org/libjpegturbo/turbojpeg/TJCompressor.html#getPitch()">getPitch()</a></span> - Method in class org.libjpegturbo.turbojpeg.<a href="org/libjpegturbo/turbojpeg/TJCompressor.html" title="class in org.libjpegturbo.turbojpeg">TJCompressor</a></dt>
+<dd>
+<div class="block">Returns the pitch (samples per row) of the packed-pixel source image
+ associated with this compressor instance.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="org/libjpegturbo/turbojpeg/TJCompressor.html#getPixelFormat()">getPixelFormat()</a></span> - Method in class org.libjpegturbo.turbojpeg.<a href="org/libjpegturbo/turbojpeg/TJCompressor.html" title="class in org.libjpegturbo.turbojpeg">TJCompressor</a></dt>
+<dd>
+<div class="block">Returns the pixel format of the packed-pixel source image associated with
+ this compressor instance.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="org/libjpegturbo/turbojpeg/TJ.html#getPixelSize(int)">getPixelSize(int)</a></span> - Static method in class org.libjpegturbo.turbojpeg.<a href="org/libjpegturbo/turbojpeg/TJ.html" title="class in org.libjpegturbo.turbojpeg">TJ</a></dt>
 <dd>
 <div class="block">Returns the pixel size (in samples) for the given pixel format.</div>
@@ -414,6 +429,11 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <div class="block">Returns the size (in bytes) of the YUV buffer (if this image is stored in
  a unified buffer rather than separate image planes.)</div>
 </dd>
+<dt><span class="memberNameLink"><a href="org/libjpegturbo/turbojpeg/TJCompressor.html#getSourceBuf()">getSourceBuf()</a></span> - Method in class org.libjpegturbo.turbojpeg.<a href="org/libjpegturbo/turbojpeg/TJCompressor.html" title="class in org.libjpegturbo.turbojpeg">TJCompressor</a></dt>
+<dd>
+<div class="block">Returns the buffer containing the packed-pixel image associated with this
+ compressor instance.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="org/libjpegturbo/turbojpeg/YUVImage.html#getStrides()">getStrides()</a></span> - Method in class org.libjpegturbo.turbojpeg.<a href="org/libjpegturbo/turbojpeg/YUVImage.html" title="class in org.libjpegturbo.turbojpeg">YUVImage</a></dt>
 <dd>
 <div class="block">Returns the number of bytes per row of each plane in the YUV image.</div>
@@ -426,6 +446,11 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dd>
 <div class="block">Returns an array containing the sizes of the transformed JPEG images
  (in bytes) generated by the most recent transform operation.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="org/libjpegturbo/turbojpeg/TJCompressor.html#getWidth()">getWidth()</a></span> - Method in class org.libjpegturbo.turbojpeg.<a href="org/libjpegturbo/turbojpeg/TJCompressor.html" title="class in org.libjpegturbo.turbojpeg">TJCompressor</a></dt>
+<dd>
+<div class="block">Returns the width of the source image (packed-pixel or YUV) associated
+ with this compressor instance.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="org/libjpegturbo/turbojpeg/TJDecompressor.html#getWidth()">getWidth()</a></span> - Method in class org.libjpegturbo.turbojpeg.<a href="org/libjpegturbo/turbojpeg/TJDecompressor.html" title="class in org.libjpegturbo.turbojpeg">TJDecompressor</a></dt>
 <dd>
@@ -446,6 +471,18 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dd>
 <div class="block">Returns true or false, depending on whether this instance is equal to
  1/1.</div>
+</dd>
+</dl>
+<a id="I:L">
+<!--   -->
+</a>
+<h2 class="title">L</h2>
+<dl>
+<dt><span class="memberNameLink"><a href="org/libjpegturbo/turbojpeg/TJCompressor.html#loadSourceImage(java.lang.String,int,int)">loadSourceImage(String, int, int)</a></span> - Method in class org.libjpegturbo.turbojpeg.<a href="org/libjpegturbo/turbojpeg/TJCompressor.html" title="class in org.libjpegturbo.turbojpeg">TJCompressor</a></dt>
+<dd>
+<div class="block">Load a packed-pixel RGB or grayscale source image with 2 to 16 bits of
+ data precision per sample from disk into memory and associate it with this
+ compressor instance.</div>
 </dd>
 </dl>
 <a id="I:N">
@@ -712,6 +749,10 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dd>
 <div class="block">RGBX pixel format</div>
 </dd>
+<dt><span class="memberNameLink"><a href="org/libjpegturbo/turbojpeg/TJ.html#PF_UNKNOWN">PF_UNKNOWN</a></span> - Static variable in class org.libjpegturbo.turbojpeg.<a href="org/libjpegturbo/turbojpeg/TJ.html" title="class in org.libjpegturbo.turbojpeg">TJ</a></dt>
+<dd>
+<div class="block">Unknown pixel format</div>
+</dd>
 <dt><span class="memberNameLink"><a href="org/libjpegturbo/turbojpeg/TJ.html#PF_XBGR">PF_XBGR</a></span> - Static variable in class org.libjpegturbo.turbojpeg.<a href="org/libjpegturbo/turbojpeg/TJ.html" title="class in org.libjpegturbo.turbojpeg">TJ</a></dt>
 <dd>
 <div class="block">XBGR pixel format</div>
@@ -770,6 +811,11 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <dt><span class="memberNameLink"><a href="org/libjpegturbo/turbojpeg/TJ.html#SAMP_UNKNOWN">SAMP_UNKNOWN</a></span> - Static variable in class org.libjpegturbo.turbojpeg.<a href="org/libjpegturbo/turbojpeg/TJ.html" title="class in org.libjpegturbo.turbojpeg">TJ</a></dt>
 <dd>
 <div class="block">Unknown subsampling</div>
+</dd>
+<dt><span class="memberNameLink"><a href="org/libjpegturbo/turbojpeg/TJDecompressor.html#saveImage(java.lang.String,java.lang.Object,int,int,int,int,int,int)">saveImage(String, Object, int, int, int, int, int, int)</a></span> - Method in class org.libjpegturbo.turbojpeg.<a href="org/libjpegturbo/turbojpeg/TJDecompressor.html" title="class in org.libjpegturbo.turbojpeg">TJDecompressor</a></dt>
+<dd>
+<div class="block">Save a packed-pixel image with 2 to 16 bits of data precision per sample
+ from memory to disk.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="org/libjpegturbo/turbojpeg/TJCompressor.html#set(int,int)">set(int, int)</a></span> - Method in class org.libjpegturbo.turbojpeg.<a href="org/libjpegturbo/turbojpeg/TJCompressor.html" title="class in org.libjpegturbo.turbojpeg">TJCompressor</a></dt>
 <dd>
@@ -1008,7 +1054,7 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
  and allocate memory for the buffer.</div>
 </dd>
 </dl>
-<a href="#I:B">B</a>&nbsp;<a href="#I:C">C</a>&nbsp;<a href="#I:D">D</a>&nbsp;<a href="#I:E">E</a>&nbsp;<a href="#I:F">F</a>&nbsp;<a href="#I:G">G</a>&nbsp;<a href="#I:I">I</a>&nbsp;<a href="#I:N">N</a>&nbsp;<a href="#I:O">O</a>&nbsp;<a href="#I:P">P</a>&nbsp;<a href="#I:S">S</a>&nbsp;<a href="#I:T">T</a>&nbsp;<a href="#I:U">U</a>&nbsp;<a href="#I:Y">Y</a>&nbsp;<br><a href="allclasses-index.html">All&nbsp;Classes</a>&nbsp;<a href="allpackages-index.html">All&nbsp;Packages</a></div>
+<a href="#I:B">B</a>&nbsp;<a href="#I:C">C</a>&nbsp;<a href="#I:D">D</a>&nbsp;<a href="#I:E">E</a>&nbsp;<a href="#I:F">F</a>&nbsp;<a href="#I:G">G</a>&nbsp;<a href="#I:I">I</a>&nbsp;<a href="#I:L">L</a>&nbsp;<a href="#I:N">N</a>&nbsp;<a href="#I:O">O</a>&nbsp;<a href="#I:P">P</a>&nbsp;<a href="#I:S">S</a>&nbsp;<a href="#I:T">T</a>&nbsp;<a href="#I:U">U</a>&nbsp;<a href="#I:Y">Y</a>&nbsp;<br><a href="allclasses-index.html">All&nbsp;Classes</a>&nbsp;<a href="allpackages-index.html">All&nbsp;Packages</a></div>
 </main>
 <footer role="contentinfo">
 <nav role="navigation">

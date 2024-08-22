@@ -51,6 +51,8 @@ extern "C" {
 #define org_libjpegturbo_turbojpeg_TJ_PF_ARGB 10L
 #undef org_libjpegturbo_turbojpeg_TJ_PF_CMYK
 #define org_libjpegturbo_turbojpeg_TJ_PF_CMYK 11L
+#undef org_libjpegturbo_turbojpeg_TJ_PF_UNKNOWN
+#define org_libjpegturbo_turbojpeg_TJ_PF_UNKNOWN -1L
 #undef org_libjpegturbo_turbojpeg_TJ_NUMCS
 #define org_libjpegturbo_turbojpeg_TJ_NUMCS 5L
 #undef org_libjpegturbo_turbojpeg_TJ_CS_RGB

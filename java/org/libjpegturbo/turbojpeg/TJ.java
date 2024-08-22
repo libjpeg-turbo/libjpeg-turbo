@@ -273,6 +273,13 @@ public final class TJ {
    * YCCK JPEG images into packed-pixel CMYK images.
    */
   public static final int PF_CMYK = 11;
+  /**
+   * Unknown pixel format
+   *
+   * <p>Currently this is only used by
+   * {@link TJCompressor#loadSourceImage TJCompressor.loadSourceImage()}.
+   */
+  public static final int PF_UNKNOWN = -1;
 
 
   /**
@@ -516,7 +523,11 @@ public final class TJ {
    * Data precision (bits per sample)
    *
    * <p>The JPEG image uses (decompression) or will use (lossless compression)
-   * the specified number of bits per sample.
+   * the specified number of bits per sample.  This parameter also specifies
+   * the target data precision when loading a PBMPLUS file with
+   * {@link TJCompressor#loadSourceImage TJCompressor.loadSourceImage()} and
+   * the source data precision when saving a PBMPLUS file with
+   * {@link TJDecompressor#saveImage TJDecompressor.saveImage()}.
    *
    * <p>The data precision is the number of bits in the maximum sample value,
    * which may not be the same as the width of the data type used to store the
@@ -525,7 +536,7 @@ public final class TJ {
    * <p><b>Value</b>
    * <ul>
    * <li> <code>8</code> or <code>12</code> for lossy JPEG images;
-   * <code>2</code> to <code>16</code> for lossless JPEG images
+   * <code>2</code> to <code>16</code> for lossless JPEG and PBMPLUS images
    * </ul>
    *
    * <p>12-bit JPEG data precision implies {@link #PARAM_OPTIMIZE} unless
@@ -819,7 +830,12 @@ public final class TJ {
    * </ul>
    *
    * <p>This value is stored in or read from the JPEG header.  It does not
-   * affect the contents of the JPEG image.
+   * affect the contents of the JPEG image.  Note that this parameter is set by
+   * {@link TJCompressor#loadSourceImage TJCompressor.loadSourceImage()} when
+   * loading a Windows BMP file that contains pixel density information, and
+   * the value of this parameter is stored to a Windows BMP file by
+   * {@link TJDecompressor#saveImage TJDecompressor.saveImage()} if the value
+   * of {@link #PARAM_DENSITYUNITS} is <code>2</code>.
    *
    * @see #PARAM_DENSITYUNITS
    */
@@ -835,7 +851,12 @@ public final class TJ {
    * </ul>
    *
    * <p>This value is stored in or read from the JPEG header.  It does not
-   * affect the contents of the JPEG image.
+   * affect the contents of the JPEG image.  Note that this parameter is set by
+   * {@link TJCompressor#loadSourceImage TJCompressor.loadSourceImage()} when
+   * loading a Windows BMP file that contains pixel density information, and
+   * the value of this parameter is stored to a Windows BMP file by
+   * {@link TJDecompressor#saveImage TJDecompressor.saveImage()} if the value
+   * of {@link #PARAM_DENSITYUNITS} is <code>2</code>.
    *
    * @see #PARAM_DENSITYUNITS
    */
@@ -856,7 +877,12 @@ public final class TJ {
    * </ul>
    *
    * <p>This value is stored in or read from the JPEG header.  It does not
-   * affect the contents of the JPEG image.
+   * affect the contents of the JPEG image.  Note that this parameter is set by
+   * {@link TJCompressor#loadSourceImage TJCompressor.loadSourceImage()} when
+   * loading a Windows BMP file that contains pixel density information, and
+   * the value of this parameter is stored to a Windows BMP file by
+   * {@link TJDecompressor#saveImage TJDecompressor.saveImage()} if the value
+   * is <code>2</code>.
    *
    * @see #PARAM_XDENSITY
    * @see #PARAM_YDENSITY

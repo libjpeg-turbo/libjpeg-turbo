@@ -325,7 +325,7 @@ final class TJBench {
                            (lossless ? "LOSSLS" : SUBNAME[subsamp]) + qualStr +
                            "_" + sizeStr + "." + ext);
 
-    tjd.saveImage(precision, tempStr, dstBuf, scaledw, 0, scaledh, pf);
+    tjd.saveImage(tempStr, dstBuf, 0, 0, scaledw, 0, scaledh, pf);
   }
 
 
@@ -1217,19 +1217,17 @@ final class TJBench {
       }
 
       if (!decompOnly) {
-        int[] width = new int[1], height = new int[1],
-          pixelFormat = new int[1];
-
         tjc = new TJCompressor();
         tjc.set(TJ.PARAM_STOPONWARNING, stopOnWarning ? 1 : 0);
         tjc.set(TJ.PARAM_BOTTOMUP, bottomUp ? 1 : 0);
         tjc.set(TJ.PARAM_PRECISION, precision);
         tjc.set(TJ.PARAM_MAXPIXELS, maxPixels);
 
-        pixelFormat[0] = pf;
-        srcBuf = tjc.loadImage(precision, argv[0], width, 1, height,
-                               pixelFormat);
-        w = width[0];  h = height[0];  pf = pixelFormat[0];
+        tjc.loadSourceImage(argv[0], 1, pf);
+        srcBuf = tjc.getSourceBuf();
+        w = tjc.getWidth();
+        h = tjc.getHeight();
+        pf = tjc.getPixelFormat();
         int index = -1;
         if ((index = argv[0].lastIndexOf('.')) >= 0)
           argv[0] = argv[0].substring(0, index);

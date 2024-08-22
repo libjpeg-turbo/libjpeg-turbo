@@ -126,7 +126,7 @@ TURBOJPEG_3
     Java_org_libjpegturbo_turbojpeg_TJCompressor_encodeYUV8___3BIIIIII_3_3B_3I_3I;
     Java_org_libjpegturbo_turbojpeg_TJCompressor_encodeYUV8___3IIIIIII_3_3B_3I_3I;
     Java_org_libjpegturbo_turbojpeg_TJCompressor_get;
-    Java_org_libjpegturbo_turbojpeg_TJCompressor_loadImage;
+    Java_org_libjpegturbo_turbojpeg_TJCompressor_loadSourceImage;
     Java_org_libjpegturbo_turbojpeg_TJCompressor_set;
     Java_org_libjpegturbo_turbojpeg_TJDecompressor_decodeYUV8___3_3B_3I_3I_3BIIIIII;
     Java_org_libjpegturbo_turbojpeg_TJDecompressor_decodeYUV8___3_3B_3I_3I_3IIIIIII;

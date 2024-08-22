@@ -478,82 +478,89 @@ extends java.lang.Object</pre>
 </tr>
 <tr class="rowColor">
 <td class="colFirst"><code>static int</code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#PF_UNKNOWN">PF_UNKNOWN</a></span></code></th>
+<td class="colLast">
+<div class="block">Unknown pixel format</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>static int</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#PF_XBGR">PF_XBGR</a></span></code></th>
 <td class="colLast">
 <div class="block">XBGR pixel format</div>
 </td>
 </tr>
-<tr class="altColor">
+<tr class="rowColor">
 <td class="colFirst"><code>static int</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#PF_XRGB">PF_XRGB</a></span></code></th>
 <td class="colLast">
 <div class="block">XRGB pixel format</div>
 </td>
 </tr>
-<tr class="rowColor">
+<tr class="altColor">
 <td class="colFirst"><code>static int</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#SAMP_411">SAMP_411</a></span></code></th>
 <td class="colLast">
 <div class="block">4:1:1 chrominance subsampling</div>
 </td>
 </tr>
-<tr class="altColor">
+<tr class="rowColor">
 <td class="colFirst"><code>static int</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#SAMP_420">SAMP_420</a></span></code></th>
 <td class="colLast">
 <div class="block">4:2:0 chrominance subsampling</div>
 </td>
 </tr>
-<tr class="rowColor">
+<tr class="altColor">
 <td class="colFirst"><code>static int</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#SAMP_422">SAMP_422</a></span></code></th>
 <td class="colLast">
 <div class="block">4:2:2 chrominance subsampling</div>
 </td>
 </tr>
-<tr class="altColor">
+<tr class="rowColor">
 <td class="colFirst"><code>static int</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#SAMP_440">SAMP_440</a></span></code></th>
 <td class="colLast">
 <div class="block">4:4:0 chrominance subsampling</div>
 </td>
 </tr>
-<tr class="rowColor">
+<tr class="altColor">
 <td class="colFirst"><code>static int</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#SAMP_441">SAMP_441</a></span></code></th>
 <td class="colLast">
 <div class="block">4:4:1 chrominance subsampling</div>
 </td>
 </tr>
-<tr class="altColor">
+<tr class="rowColor">
 <td class="colFirst"><code>static int</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#SAMP_444">SAMP_444</a></span></code></th>
 <td class="colLast">
 <div class="block">4:4:4 chrominance subsampling (no chrominance subsampling)</div>
 </td>
 </tr>
-<tr class="rowColor">
+<tr class="altColor">
 <td class="colFirst"><code>static int</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#SAMP_GRAY">SAMP_GRAY</a></span></code></th>
 <td class="colLast">
 <div class="block">Grayscale</div>
 </td>
 </tr>
-<tr class="altColor">
+<tr class="rowColor">
 <td class="colFirst"><code>static int</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#SAMP_UNKNOWN">SAMP_UNKNOWN</a></span></code></th>
 <td class="colLast">
 <div class="block">Unknown subsampling</div>
 </td>
 </tr>
-<tr class="rowColor">
+<tr class="altColor">
 <td class="colFirst"><code>static java.awt.Rectangle</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#UNCROPPED">UNCROPPED</a></span></code></th>
 <td class="colLast">
 <div class="block">A <code>java.awt.Rectangle</code> instance that specifies no cropping</div>
 </td>
 </tr>
-<tr class="altColor">
+<tr class="rowColor">
 <td class="colFirst"><code>static <a href="TJScalingFactor.html" title="class in org.libjpegturbo.turbojpeg">TJScalingFactor</a></code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#UNSCALED">UNSCALED</a></span></code></th>
 <td class="colLast">
@@ -1131,6 +1138,23 @@ extends java.lang.Object</pre>
 </dl>
 </li>
 </ul>
+<a id="PF_UNKNOWN">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>PF_UNKNOWN</h4>
+<pre>public static final&nbsp;int PF_UNKNOWN</pre>
+<div class="block">Unknown pixel format
+
+ <p>Currently this is only used by
+ <a href="TJCompressor.html#loadSourceImage(java.lang.String,int,int)"><code>TJCompressor.loadSourceImage()</code></a>.</div>
+<dl>
+<dt><span class="seeLabel">See Also:</span></dt>
+<dd><a href="../../../constant-values.html#org.libjpegturbo.turbojpeg.TJ.PF_UNKNOWN">Constant Field Values</a></dd>
+</dl>
+</li>
+</ul>
 <a id="NUMCS">
 <!--   -->
 </a>
@@ -1390,7 +1414,11 @@ extends java.lang.Object</pre>
 <div class="block">Data precision (bits per sample)
 
  <p>The JPEG image uses (decompression) or will use (lossless compression)
- the specified number of bits per sample.
+ the specified number of bits per sample.  This parameter also specifies
+ the target data precision when loading a PBMPLUS file with
+ <a href="TJCompressor.html#loadSourceImage(java.lang.String,int,int)"><code>TJCompressor.loadSourceImage()</code></a> and
+ the source data precision when saving a PBMPLUS file with
+ <a href="TJDecompressor.html#saveImage(java.lang.String,java.lang.Object,int,int,int,int,int,int)"><code>TJDecompressor.saveImage()</code></a>.
 
  <p>The data precision is the number of bits in the maximum sample value,
  which may not be the same as the width of the data type used to store the
@@ -1399,7 +1427,7 @@ extends java.lang.Object</pre>
  <p><b>Value</b>
  <ul>
  <li> <code>8</code> or <code>12</code> for lossy JPEG images;
- <code>2</code> to <code>16</code> for lossless JPEG images
+ <code>2</code> to <code>16</code> for lossless JPEG and PBMPLUS images
  </ul>
 
  <p>12-bit JPEG data precision implies <a href="#PARAM_OPTIMIZE"><code>PARAM_OPTIMIZE</code></a> unless
@@ -1819,7 +1847,12 @@ extends java.lang.Object</pre>
  </ul>
 
  <p>This value is stored in or read from the JPEG header.  It does not
- affect the contents of the JPEG image.</div>
+ affect the contents of the JPEG image.  Note that this parameter is set by
+ <a href="TJCompressor.html#loadSourceImage(java.lang.String,int,int)"><code>TJCompressor.loadSourceImage()</code></a> when
+ loading a Windows BMP file that contains pixel density information, and
+ the value of this parameter is stored to a Windows BMP file by
+ <a href="TJDecompressor.html#saveImage(java.lang.String,java.lang.Object,int,int,int,int,int,int)"><code>TJDecompressor.saveImage()</code></a> if the value
+ of <a href="#PARAM_DENSITYUNITS"><code>PARAM_DENSITYUNITS</code></a> is <code>2</code>.</div>
 <dl>
 <dt><span class="seeLabel">See Also:</span></dt>
 <dd><a href="#PARAM_DENSITYUNITS"><code>PARAM_DENSITYUNITS</code></a>, 
@@ -1844,7 +1877,12 @@ extends java.lang.Object</pre>
  </ul>
 
  <p>This value is stored in or read from the JPEG header.  It does not
- affect the contents of the JPEG image.</div>
+ affect the contents of the JPEG image.  Note that this parameter is set by
+ <a href="TJCompressor.html#loadSourceImage(java.lang.String,int,int)"><code>TJCompressor.loadSourceImage()</code></a> when
+ loading a Windows BMP file that contains pixel density information, and
+ the value of this parameter is stored to a Windows BMP file by
+ <a href="TJDecompressor.html#saveImage(java.lang.String,java.lang.Object,int,int,int,int,int,int)"><code>TJDecompressor.saveImage()</code></a> if the value
+ of <a href="#PARAM_DENSITYUNITS"><code>PARAM_DENSITYUNITS</code></a> is <code>2</code>.</div>
 <dl>
 <dt><span class="seeLabel">See Also:</span></dt>
 <dd><a href="#PARAM_DENSITYUNITS"><code>PARAM_DENSITYUNITS</code></a>, 
@@ -1874,7 +1912,12 @@ extends java.lang.Object</pre>
  </ul>
 
  <p>This value is stored in or read from the JPEG header.  It does not
- affect the contents of the JPEG image.</div>
+ affect the contents of the JPEG image.  Note that this parameter is set by
+ <a href="TJCompressor.html#loadSourceImage(java.lang.String,int,int)"><code>TJCompressor.loadSourceImage()</code></a> when
+ loading a Windows BMP file that contains pixel density information, and
+ the value of this parameter is stored to a Windows BMP file by
+ <a href="TJDecompressor.html#saveImage(java.lang.String,java.lang.Object,int,int,int,int,int,int)"><code>TJDecompressor.saveImage()</code></a> if the value
+ is <code>2</code>.</div>
 <dl>
 <dt><span class="seeLabel">See Also:</span></dt>
 <dd><a href="#PARAM_XDENSITY"><code>PARAM_XDENSITY</code></a>, 

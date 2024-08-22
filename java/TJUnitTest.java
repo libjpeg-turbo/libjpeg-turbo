@@ -35,6 +35,7 @@ import java.util.*;
 import java.awt.image.*;
 import javax.imageio.*;
 import java.nio.*;
+import java.nio.file.*;
 import org.libjpegturbo.turbojpeg.*;
 
 @SuppressWarnings("checkstyle:JavadocType")
@@ -104,6 +105,9 @@ final class TJUnitTest {
   private static boolean bi = false;
 
   private static int exitStatus = 0;
+
+  private static String uniqueID =
+    java.util.UUID.randomUUID().toString().replace("-", "");
 
   static int biTypePF(int biType) {
     ByteOrder byteOrder = ByteOrder.nativeOrder();
@@ -1017,9 +1021,292 @@ final class TJUnitTest {
     if (tjc != null) tjc.close();
   }
 
+  static void rgbToCMYK(int r, int g, int b, int[] c, int[] m, int[] y,
+                        int[] k) {
+    double ctmp = 1.0 - ((double)r / (double)maxSample);
+    double mtmp = 1.0 - ((double)g / (double)maxSample);
+    double ytmp = 1.0 - ((double)b / (double)maxSample);
+    double ktmp = Math.min(Math.min(ctmp, mtmp), ytmp);
+
+    if (ktmp == 1.0)
+      ctmp = mtmp = ytmp = 0.0;
+    else {
+      ctmp = (ctmp - ktmp) / (1.0 - ktmp);
+      mtmp = (mtmp - ktmp) / (1.0 - ktmp);
+      ytmp = (ytmp - ktmp) / (1.0 - ktmp);
+    }
+    c[0] = (int)((double)maxSample - ctmp * (double)maxSample + 0.5);
+    m[0] = (int)((double)maxSample - mtmp * (double)maxSample + 0.5);
+    y[0] = (int)((double)maxSample - ytmp * (double)maxSample + 0.5);
+    k[0] = (int)((double)maxSample - ktmp * (double)maxSample + 0.5);
+  }
+
+  static void initBitmap(Object buf, int width, int pitch, int height, int pf,
+                         boolean bottomUp) {
+    int roffset = TJ.getRedOffset(pf);
+    int goffset = TJ.getGreenOffset(pf);
+    int boffset = TJ.getBlueOffset(pf);
+    int ps = TJ.getPixelSize(pf);
+    int i, j, ci;
+
+    for (j = 0; j < height; j++) {
+      int row = bottomUp ? height - j - 1 : j;
+
+      for (i = 0; i < width; i++) {
+        int r = (i * (maxSample + 1) / width) % (maxSample + 1);
+        int g = (j * (maxSample + 1) / height) % (maxSample + 1);
+        int b = (j * (maxSample + 1) / height +
+                 i * (maxSample + 1) / width) % (maxSample + 1);
+
+        for (ci = 0; ci < ps; ci++)
+          setVal(buf, row * pitch + i * ps + ci, 0);
+        if (pf == TJ.PF_GRAY)
+          setVal(buf, row * pitch + i * ps, b);
+        else if (pf == TJ.PF_CMYK) {
+          int[] c = new int[1], m = new int[1], y = new int[1], k = new int[1];
+
+          rgbToCMYK(r, g, b, c, m, y, k);
+          setVal(buf, row * pitch + i * ps + 0, c[0]);
+          setVal(buf, row * pitch + i * ps + 1, m[0]);
+          setVal(buf, row * pitch + i * ps + 2, y[0]);
+          setVal(buf, row * pitch + i * ps + 3, k[0]);
+        } else {
+          setVal(buf, row * pitch + i * ps + roffset, r);
+          setVal(buf, row * pitch + i * ps + goffset, g);
+          setVal(buf, row * pitch + i * ps + boffset, b);
+        }
+      }
+    }
+  }
+
+  static void cmykToRGB(int c, int m, int y, int k, int[] r, int[] g,
+                        int[] b) {
+    r[0] = (int)((double)c * (double)k / (double)maxSample + 0.5);
+    g[0] = (int)((double)m * (double)k / (double)maxSample + 0.5);
+    b[0] = (int)((double)y * (double)k / (double)maxSample + 0.5);
+  }
+
+  static boolean cmpBitmap(Object buf, int width, int pitch, int height,
+                           int pf, boolean bottomUp, boolean gray2rgb) {
+    int roffset = TJ.getRedOffset(pf);
+    int goffset = TJ.getGreenOffset(pf);
+    int boffset = TJ.getBlueOffset(pf);
+    int aoffset = TJ.getAlphaOffset(pf);
+    int ps = TJ.getPixelSize(pf);
+    int i, j;
+
+    for (j = 0; j < height; j++) {
+      int row = bottomUp ? height - j - 1 : j;
+
+      for (i = 0; i < width; i++) {
+        int r = (i * (maxSample + 1) / width) % (maxSample + 1);
+        int g = (j * (maxSample + 1) / height) % (maxSample + 1);
+        int b = (j * (maxSample + 1) / height +
+                 i * (maxSample + 1) / width) % (maxSample + 1);
+
+        if (pf == TJ.PF_GRAY) {
+          if (getVal(buf, row * pitch + i * ps) != b)
+            return false;
+        } else if (pf == TJ.PF_CMYK) {
+          int[] rf = new int[1], gf = new int[1], bf = new int[1];
+
+          cmykToRGB(getVal(buf, row * pitch + i * ps + 0),
+                    getVal(buf, row * pitch + i * ps + 1),
+                    getVal(buf, row * pitch + i * ps + 2),
+                    getVal(buf, row * pitch + i * ps + 3), rf, gf, bf);
+          if (gray2rgb) {
+            if (rf[0] != b || gf[0] != b || bf[0] != b)
+              return false;
+          } else if (rf[0] != r || gf[0] != g || bf[0] != b)
+            return false;
+        } else {
+          if (gray2rgb) {
+            if (getVal(buf, row * pitch + i * ps + roffset) != b ||
+                getVal(buf, row * pitch + i * ps + goffset) != b ||
+                getVal(buf, row * pitch + i * ps + boffset) != b)
+              return false;
+          } else if (getVal(buf, row * pitch + i * ps + roffset) != r ||
+                     getVal(buf, row * pitch + i * ps + goffset) != g ||
+                     getVal(buf, row * pitch + i * ps + boffset) != b)
+            return false;
+          if (aoffset >= 0 &&
+              getVal(buf, row * pitch + i * ps + aoffset) != maxSample)
+            return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  static String getMD5Sum(String filename) throws Exception {
+    byte[] bytes = Files.readAllBytes(Paths.get(filename));
+    byte[] md5sum =
+      java.security.MessageDigest.getInstance("MD5").digest(bytes);
+    return new java.math.BigInteger(1, md5sum).toString(16);
+  }
+
+  static void doBmpTest(String ext, int width, int align, int height, int pf,
+                        boolean bottomUp) throws Exception {
+    TJCompressor tjc = null;
+    TJDecompressor tjd = null;
+    String filename, md5sum;
+    int ps = TJ.getPixelSize(pf), pitch = pad(width * ps, align),
+      loadWidth = 0, loadPitch = 0, loadHeight = 0, pixelFormat = pf;
+    Object buf = null;
+    String md5ref;
+    String[] colorPPMRefs = new String[] {
+      "", "", "bad09d9ef38eda566848fb7c0b7fd0a",
+      "7ef2c87261a8bd6838303b541563cf27", "28a37cf9636ff6bb9ed6b206bdac60db",
+      "723307791d42e0b5f9e91625c7636086", "d729c4bcd3addc14abc16b656c6bbc98",
+      "5d7636eedae3cf579b6de13078227548", "c0c9f772b464d1896326883a5c79c545",
+      "fcf6490e0445569427f1d95baf5f8fcb", "5cbc3b0ccba23f5781d950a72e0ccc83",
+      "d4e26d6d16d7bfee380f6feb10f7e53",  "2ff5299287017502832c99718450c90a",
+      "44ae6cd70c798ea583ab0c8c03621092", "697b2fe03892bc9a75396ad3e73d9203",
+      "599732f973eb7c0849a888e783bbe27e", "623f54661b928d170bd2324bc3620565"
+    };
+    String[] grayPPMRefs = new String[] {
+      "", "", "7565be35a2ce909cae016fa282af8efa",
+      "e86b9ea57f7d53f6b5497653740992b5", "8924d4d81fe0220c684719294f93407a",
+      "e2e69ba70efcfae317528c91651c7ae2", "e6154aafc1eb9e4333d68ce7ad9df051",
+      "3d7fe831d6fbe55d3fa12f52059c15d3", "112c682e82ce5de1cca089e20d60000b",
+      "5a7ce86c649dda86d6fed185ab78a67",  "b723c0bc087592816523fbc906b7c3a",
+      "5da422b1ddfd44c7659094d42ba5580c", "d1895c7e6f2b2c9af6e821a655c239c",
+      "fc2803bca103ff75785ea0dca992aa",   "d8c91fac522c16b029e514d331a22bc4",
+      "e50cff0b3562ed7e64dbfc093440e333", "64f3320b226ea37fb58080713b4df1b2"
+    };
+
+    try {
+      tjc = new TJCompressor();
+      tjc.set(TJ.PARAM_BOTTOMUP, bottomUp ? 1 : 0);
+      tjc.set(TJ.PARAM_PRECISION, precision);
+      tjd = new TJDecompressor();
+      tjd.set(TJ.PARAM_BOTTOMUP, bottomUp ? 1 : 0);
+      tjd.set(TJ.PARAM_PRECISION, precision);
+
+      if (precision == 8 && ext.equalsIgnoreCase("bmp"))
+        md5ref = (pf == TJ.PF_GRAY ? "51976530acf75f02beddf5d21149101d" :
+                                     "6d659071b9bfcdee2def22cb58ddadca");
+      else
+        md5ref = (pf == TJ.PF_GRAY ? grayPPMRefs[precision] :
+                                     colorPPMRefs[precision]);
+
+      if (precision <= 8)
+        buf = new byte[pitch * height];
+      else
+        buf = new short[pitch * height];
+      initBitmap(buf, width, pitch, height, pf, bottomUp);
+
+      filename = String.format("test_bmp%d_%s_%d_%s_%s.%s", precision,
+                               PIXFORMATSTR[pf], align, bottomUp ? "bu" : "td",
+                               uniqueID, ext);
+      tjd.saveImage(filename, buf, 0, 0, width, pitch, height, pf);
+      md5sum = getMD5Sum(filename);
+      if (md5sum == null)
+        throw new Exception("Could not determine MD5 sum of " + filename);
+      if (!md5sum.equalsIgnoreCase(md5ref))
+        throw new Exception(filename + " has an MD5 sum of " + md5sum +
+                            ".  Should be " + md5ref);
+
+      tjc.loadSourceImage(filename, align, pf);
+      loadWidth = tjc.getWidth();
+      loadPitch = tjc.getPitch();
+      loadHeight = tjc.getHeight();
+      pf = tjc.getPixelFormat();
+      buf = tjc.getSourceBuf();
+      if (width != loadWidth || pitch != loadPitch || height != loadHeight)
+        throw new Exception("Image dimensions of " + filename + " are bogus");
+      if (!cmpBitmap(buf, width, pitch, height, pf, bottomUp, false))
+        throw new Exception("Pixel data in " + filename + " is bogus");
+      if (pf == TJ.PF_GRAY) {
+        pf = TJ.PF_XBGR;
+        tjc.loadSourceImage(filename, align, pf);
+        loadWidth = tjc.getWidth();
+        loadPitch = tjc.getPitch();
+        loadHeight = tjc.getHeight();
+        pf = tjc.getPixelFormat();
+        buf = tjc.getSourceBuf();
+        pitch = pad(width * TJ.getPixelSize(pf), align);
+        if (width != loadWidth || pitch != loadPitch || height != loadHeight)
+          throw new Exception("Image dimensions of " + filename +
+                              " are bogus");
+        if (!cmpBitmap(buf, width, pitch, height, pf, bottomUp, true))
+          throw new Exception("Converting " + filename + " to RGB failed");
+
+        pf = TJ.PF_CMYK;
+        tjc.loadSourceImage(filename, align, pf);
+        loadWidth = tjc.getWidth();
+        loadPitch = tjc.getPitch();
+        loadHeight = tjc.getHeight();
+        pf = tjc.getPixelFormat();
+        buf = tjc.getSourceBuf();
+        pitch = pad(width * TJ.getPixelSize(pf), align);
+        if (width != loadWidth || pitch != loadPitch || height != loadHeight)
+          throw new Exception("Image dimensions of " + filename +
+                              " are bogus");
+        if (!cmpBitmap(buf, width, pitch, height, pf, bottomUp, true))
+          throw new Exception("Converting " + filename + " to CMYK failed");
+      }
+      /* Verify that TJCompressor.loadSourceImage() returns the proper
+         "preferred" pixel format for the file type. */
+      pf = pixelFormat;
+      pixelFormat = TJ.PF_UNKNOWN;
+      tjc.loadSourceImage(filename, align, pixelFormat);
+      pixelFormat = tjc.getPixelFormat();
+      if ((pf == TJ.PF_GRAY && pixelFormat != TJ.PF_GRAY) ||
+          (pf != TJ.PF_GRAY && ext.equalsIgnoreCase("bmp") &&
+           pixelFormat != TJ.PF_BGR) ||
+          (pf != TJ.PF_GRAY && ext.equalsIgnoreCase("ppm") &&
+           pixelFormat != TJ.PF_RGB))
+        throw new Exception("TJCompressor.loadImage() returned unexpected " +
+                            "pixel format: " + PIXFORMATSTR[pixelFormat]);
+      File file = new File(filename);
+      file.delete();
+    } catch (Exception e) {
+      if (tjc != null) tjc.close();
+      if (tjd != null) tjd.close();
+      throw e;
+    }
+    if (tjc != null) tjc.close();
+    if (tjd != null) tjd.close();
+  }
+
+  static void bmpTest() throws Exception {
+    int align, width = 35, height = 39, format;
+
+    for (align = 1; align <= 8; align *= 2) {
+      for (format = 0; format < TJ.NUMPF; format++) {
+        if (precision == 8) {
+          System.out.format("%s Top-Down BMP (row alignment = %d samples)  ...  ",
+                            PIXFORMATSTR[format], align);
+          doBmpTest("bmp", width, align, height, format, false);
+          System.out.println("OK.");
+        }
+
+        System.out.format("%s Top-Down PPM (row alignment = %d samples)  ...  ",
+                          PIXFORMATSTR[format], align);
+        doBmpTest("ppm", width, align, height, format, true);
+        System.out.println("OK.");
+
+        if (precision == 8) {
+          System.out.format("%s Bottom-Up BMP (row alignment = %d samples)  ...  ",
+                            PIXFORMATSTR[format], align);
+          doBmpTest("bmp", width, align, height, format, false);
+          System.out.println("OK.");
+        }
+
+        System.out.format("%s Bottom-Up PPM (row alignment = %d samples)  ...  ",
+                          PIXFORMATSTR[format], align);
+        doBmpTest("ppm", width, align, height, format, true);
+        System.out.println("OK.");
+      }
+    }
+  }
+
   public static void main(String[] argv) {
     try {
       String testName = "javatest";
+      boolean bmp = false;
+
       for (int i = 0; i < argv.length; i++) {
         if (argv[i].equalsIgnoreCase("-yuv"))
           doYUV = true;
@@ -1030,8 +1317,10 @@ final class TJUnitTest {
         else if (argv[i].equalsIgnoreCase("-bi")) {
           bi = true;
           testName = "javabitest";
-        } else if (argv[i].equalsIgnoreCase("-precision") &&
-                   i < argv.length - 1) {
+        } else if (argv[i].equalsIgnoreCase("-bmp"))
+          bmp = true;
+        else if (argv[i].equalsIgnoreCase("-precision") &&
+                 i < argv.length - 1) {
           int tempi = -1;
 
           try {
@@ -1059,6 +1348,10 @@ final class TJUnitTest {
       redToY = (19595 * maxSample) >> 16;
       yellowToY = (58065 * maxSample) >> 16;
 
+      if (bmp) {
+        bmpTest();
+        System.exit(exitStatus);
+      }
       if (doYUV)
         FORMATS_4SAMPLE[4] = -1;
       overflowTest();

@@ -97,11 +97,11 @@ JNIEXPORT void JNICALL Java_org_libjpegturbo_turbojpeg_TJCompressor_encodeYUV8__
 
 /*
  * Class:     org_libjpegturbo_turbojpeg_TJCompressor
- * Method:    loadImage
- * Signature: (ILjava/lang/String;[II[I[I)Ljava/lang/Object;
+ * Method:    loadSourceImage
+ * Signature: (ILjava/lang/String;II)Ljava/lang/Object;
  */
-JNIEXPORT jobject JNICALL Java_org_libjpegturbo_turbojpeg_TJCompressor_loadImage
-  (JNIEnv *, jobject, jint, jstring, jintArray, jint, jintArray, jintArray);
+JNIEXPORT jobject JNICALL Java_org_libjpegturbo_turbojpeg_TJCompressor_loadSourceImage
+  (JNIEnv *, jobject, jint, jstring, jint, jint);
 
 #ifdef __cplusplus
 }

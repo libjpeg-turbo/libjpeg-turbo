@@ -1270,35 +1270,25 @@ JNIEXPORT void JNICALL Java_org_libjpegturbo_turbojpeg_TJDecompressor_destroy
 }
 
 /* Private image I/O routines (used only by TJBench) */
-JNIEXPORT jobject JNICALL Java_org_libjpegturbo_turbojpeg_TJCompressor_loadImage
-  (JNIEnv *env, jobject obj, jint precision, jstring jfilename,
-   jintArray jwidth, jint align, jintArray jheight, jintArray jpixelFormat)
+JNIEXPORT jobject JNICALL Java_org_libjpegturbo_turbojpeg_TJCompressor_loadSourceImage
+  (JNIEnv *env, jobject obj, jint precision, jstring jfilename, jint align,
+   jint pixelFormat)
 {
   tjhandle handle = NULL;
   void *dstBuf = NULL, *jdstPtr;
-  int width, *warr, height, *harr, pixelFormat, *pfarr;
+  int width, height;
   jsize arraySize, pitch;
   const char *filename = NULL;
   jboolean isCopy;
   jobject jdstBuf = NULL;
+  jfieldID fid;
+  jclass cls;
 
   GET_HANDLE();
 
-  if (precision < 2 || precision > 16 || jfilename == NULL || jwidth == NULL ||
-      (*env)->GetArrayLength(env, jwidth) < 1 || jheight == NULL ||
-      (*env)->GetArrayLength(env, jheight) < 1 || jpixelFormat == NULL ||
-      (*env)->GetArrayLength(env, jpixelFormat) < 1)
+  if (precision < 2 || precision > 16 || jfilename == NULL)
     THROW_ARG("Invalid argument in loadImage()");
 
-  BAILIF0NOEC(warr = (*env)->GetPrimitiveArrayCritical(env, jwidth, 0));
-  width = warr[0];
-  (*env)->ReleasePrimitiveArrayCritical(env, jwidth, warr, 0);
-  BAILIF0NOEC(harr = (*env)->GetPrimitiveArrayCritical(env, jheight, 0));
-  height = harr[0];
-  (*env)->ReleasePrimitiveArrayCritical(env, jheight, harr, 0);
-  BAILIF0NOEC(pfarr = (*env)->GetPrimitiveArrayCritical(env, jpixelFormat, 0));
-  pixelFormat = pfarr[0];
-  (*env)->ReleasePrimitiveArrayCritical(env, jpixelFormat, pfarr, 0);
   BAILIF0(filename = (*env)->GetStringUTFChars(env, jfilename, &isCopy));
 
   if (precision <= 8) {
@@ -1323,17 +1313,17 @@ JNIEXPORT jobject JNICALL Java_org_libjpegturbo_turbojpeg_TJCompressor_loadImage
       (unsigned long long)((unsigned int)-1))
     THROW_ARG("Image is too large");
 
-  BAILIF0NOEC(warr = (*env)->GetPrimitiveArrayCritical(env, jwidth, 0));
-  warr[0] = width;
-  (*env)->ReleasePrimitiveArrayCritical(env, jwidth, warr, 0);
-  BAILIF0NOEC(harr = (*env)->GetPrimitiveArrayCritical(env, jheight, 0));
-  harr[0] = height;
-  (*env)->ReleasePrimitiveArrayCritical(env, jheight, harr, 0);
-  BAILIF0NOEC(pfarr = (*env)->GetPrimitiveArrayCritical(env, jpixelFormat, 0));
-  pfarr[0] = pixelFormat;
-  (*env)->ReleasePrimitiveArrayCritical(env, jpixelFormat, pfarr, 0);
-
+  cls = (*env)->GetObjectClass(env, obj);
+  BAILIF0(fid = (*env)->GetFieldID(env, cls, "srcWidth", "I"));
+  (*env)->SetIntField(env, obj, fid, width);
+  BAILIF0(fid = (*env)->GetFieldID(env, cls, "srcPitch", "I"));
   pitch = PAD(width * tjPixelSize[pixelFormat], align);
+  (*env)->SetIntField(env, obj, fid, pitch);
+  BAILIF0(fid = (*env)->GetFieldID(env, cls, "srcHeight", "I"));
+  (*env)->SetIntField(env, obj, fid, height);
+  BAILIF0(fid = (*env)->GetFieldID(env, cls, "srcPixelFormat", "I"));
+  (*env)->SetIntField(env, obj, fid, pixelFormat);
+
   arraySize = pitch * height;
   if (precision <= 8)
     jdstBuf = (*env)->NewByteArray(env, arraySize);
@@ -1352,10 +1342,11 @@ bailout:
 
 JNIEXPORT void JNICALL Java_org_libjpegturbo_turbojpeg_TJDecompressor_saveImage
   (JNIEnv *env, jobject obj, jint precision, jstring jfilename,
-   jobject jsrcBuf, jint width, jint pitch, jint height, jint pixelFormat)
+   jobject jbuffer, jint x, jint y, jint width, jint pitch, jint height,
+   jint pf)
 {
   tjhandle handle = NULL;
-  void *srcBuf = NULL, *jsrcPtr;
+  void *buffer = NULL;
   const char *filename = NULL;
   jsize arraySize, actualPitch;
   jboolean isCopy;
@@ -1363,44 +1354,52 @@ JNIEXPORT void JNICALL Java_org_libjpegturbo_turbojpeg_TJDecompressor_saveImage
   GET_HANDLE();
 
   if (precision < 2 || precision > 16 || jfilename == NULL ||
-      jsrcBuf == NULL || width < 1 || pitch < 0 || height < 1 ||
-      pixelFormat < 0 || pixelFormat >= org_libjpegturbo_turbojpeg_TJ_NUMPF)
+      jbuffer == NULL || x < 0 || y < 0 || width < 1 || pitch < 0 ||
+      height < 1 || pf < 0 || pf >= org_libjpegturbo_turbojpeg_TJ_NUMPF)
     THROW_ARG("Invalid argument in saveImage()");
   if (org_libjpegturbo_turbojpeg_TJ_NUMPF != TJ_NUMPF)
     THROW_ARG("Mismatch between Java and C API");
 
   if ((unsigned long long)width * (unsigned long long)height *
-      (unsigned long long)tjPixelSize[pixelFormat] >
+      (unsigned long long)tjPixelSize[pf] >
       (unsigned long long)((unsigned int)-1))
     THROW_ARG("Image is too large");
-  actualPitch = (pitch == 0) ? width * tjPixelSize[pixelFormat] : pitch;
+  actualPitch = (pitch == 0) ? width * tjPixelSize[pf] : pitch;
   arraySize = actualPitch * height;
-  if ((*env)->GetArrayLength(env, jsrcBuf) < arraySize)
+  if ((*env)->GetArrayLength(env, jbuffer) < arraySize)
     THROW_ARG("Source buffer is not large enough");
 
-  if ((srcBuf = malloc(arraySize * (precision > 8 ? 2 : 1))) == NULL)
-    THROW_MEM();
-
-  BAILIF0NOEC(jsrcPtr = (*env)->GetPrimitiveArrayCritical(env, jsrcBuf, 0));
-  memcpy(srcBuf, jsrcPtr, arraySize * (precision > 8 ? 2 : 1));
-  (*env)->ReleasePrimitiveArrayCritical(env, jsrcBuf, jsrcPtr, 0);
+  BAILIF0NOEC(buffer = (*env)->GetPrimitiveArrayCritical(env, jbuffer, 0));
   BAILIF0(filename = (*env)->GetStringUTFChars(env, jfilename, &isCopy));
 
   if (precision <= 8) {
-    if (tj3SaveImage8(handle, filename, srcBuf, width, pitch, height,
-                      pixelFormat) == -1)
+    if (tj3SaveImage8(handle, filename,
+                      &((unsigned char *)buffer)[y * actualPitch +
+                                                 x * tjPixelSize[pf]], width,
+                      pitch, height, pf) == -1) {
+      SAFE_RELEASE(jbuffer, buffer);
       THROW_TJ();
+    }
   } else if (precision <= 12) {
-    if (tj3SaveImage12(handle, filename, srcBuf, width, pitch, height,
-                       pixelFormat) == -1)
+    if (tj3SaveImage12(handle, filename,
+                       &((short *)buffer)[y * actualPitch +
+                                          x * tjPixelSize[pf]], width, pitch,
+                       height, pf) == -1) {
+      SAFE_RELEASE(jbuffer, buffer);
       THROW_TJ();
+    }
   } else {
-    if (tj3SaveImage16(handle, filename, srcBuf, width, pitch, height,
-                       pixelFormat) == -1)
+    if (tj3SaveImage16(handle, filename,
+                       &((unsigned short *)buffer)[y * actualPitch +
+                                                   x * tjPixelSize[pf]], width,
+                       pitch, height, pf) == -1) {
+      SAFE_RELEASE(jbuffer, buffer);
       THROW_TJ();
+    }
   }
 
 bailout:
+  SAFE_RELEASE(jbuffer, buffer);
   if (filename) (*env)->ReleaseStringUTFChars(env, jfilename, filename);
-  free(srcBuf);
+  free(buffer);
 }
