@@ -950,7 +950,7 @@ final class TJBench {
             xformOpt |= TJTransform.OPT_COPYNONE;
           else if (matchArg(argv[i], "-crop", 3) && i < argv.length - 1) {
             int temp1 = -1, temp2 = -1, temp3 = -1, temp4 = -1;
-            Scanner scanner = new Scanner(argv[++i]).useDelimiter("x|\\+");
+            Scanner scanner = new Scanner(argv[++i]).useDelimiter("x|X|\\+");
 
             try {
               temp1 = scanner.nextInt();
