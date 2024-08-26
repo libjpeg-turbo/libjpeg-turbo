@@ -921,11 +921,11 @@ static void usage(char *progName)
   printf("-componly = Stop after running compression tests.  Do not test decompression.\n");
   printf("-lossless = Generate lossless JPEG images when compressing (implies\n");
   printf("     -subsamp 444).  PSV is the predictor selection value (1-7).\n");
-  printf("-maxmemory = Memory limit (in megabytes) for intermediate buffers used with\n");
+  printf("-maxmemory N = Memory limit (in megabytes) for intermediate buffers used with\n");
   printf("     progressive JPEG compression and decompression, Huffman table\n");
   printf("     optimization, lossless JPEG compression, and lossless transformation\n");
   printf("     [default = no limit]\n");
-  printf("-maxpixels = Input image size limit (in pixels) [default = no limit]\n");
+  printf("-maxpixels N = Input image size limit (in pixels) [default = no limit]\n");
   printf("-nowrite = Do not write reference or output images (improves consistency of\n");
   printf("     benchmark results)\n");
   printf("-rgb, -bgr, -rgbx, -bgrx, -xbgr, -xrgb, -gray =\n");
@@ -1065,8 +1065,8 @@ int main(int argc, char *argv[])
         int temp1 = -1, temp2 = -1, temp3 = -1, temp4 = -1;
 
         if (sscanf(argv[++i], "%dx%d+%d+%d", &temp1, &temp2, &temp3,
-                   &temp4) == 4 && temp1 >= 0 && temp2 >= 0 && temp3 >= 0 &&
-                   temp4 >= 0) {
+                   &temp4) == 4 &&
+            temp1 >= 0 && temp2 >= 0 && temp3 >= 0 && temp4 >= 0) {
           cr.w = temp1;  cr.h = temp2;  cr.x = temp3;  cr.y = temp4;
         } else usage(argv[0]);
       } else if (MATCH_ARG(argv[i], "-custom", 3))
