@@ -1321,6 +1321,10 @@ JNIEXPORT jobject JNICALL Java_org_libjpegturbo_turbojpeg_TJCompressor_loadSourc
   (*env)->SetIntField(env, obj, fid, pitch);
   BAILIF0(fid = (*env)->GetFieldID(env, cls, "srcHeight", "I"));
   (*env)->SetIntField(env, obj, fid, height);
+  BAILIF0(fid = (*env)->GetFieldID(env, cls, "srcX", "I"));
+  (*env)->SetIntField(env, obj, fid, 0);
+  BAILIF0(fid = (*env)->GetFieldID(env, cls, "srcY", "I"));
+  (*env)->SetIntField(env, obj, fid, 0);
   BAILIF0(fid = (*env)->GetFieldID(env, cls, "srcPixelFormat", "I"));
   (*env)->SetIntField(env, obj, fid, pixelFormat);
 
