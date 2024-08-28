@@ -782,8 +782,7 @@ public final class TJ {
    */
   public static final int PARAM_LOSSLESSPT = 17;
   /**
-   * JPEG restart marker interval in MCU blocks (lossy) or samples (lossless)
-   * [compression only]
+   * JPEG restart marker interval in MCU blocks [lossy compression only]
    *
    * <p>The nature of entropy coding is such that a corrupt JPEG image cannot
    * be decompressed beyond the point of corruption unless it contains restart
@@ -795,8 +794,8 @@ public final class TJ {
    *
    * <p><b>Value</b>
    * <ul>
-   * <li> the number of MCU blocks or samples between each restart marker
-   * <i>[default: <code>0</code> (no restart markers)]</i>
+   * <li> the number of MCU blocks between each restart marker <i>[default:
+   * <code>0</code> (no restart markers)]</i>
    * </ul>
    *
    * <p> Setting this parameter to a non-zero value sets

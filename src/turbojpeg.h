@@ -762,8 +762,7 @@ enum TJPARAM {
    */
   TJPARAM_LOSSLESSPT,
   /**
-   * JPEG restart marker interval in MCU blocks (lossy) or samples (lossless)
-   * [compression only]
+   * JPEG restart marker interval in MCU blocks [lossy compression only]
    *
    * The nature of entropy coding is such that a corrupt JPEG image cannot
    * be decompressed beyond the point of corruption unless it contains restart
@@ -774,8 +773,8 @@ enum TJPARAM {
    * adversely affect the compression ratio and performance.
    *
    * **Value**
-   * - the number of MCU blocks or samples between each restart marker
-   * *[default: `0` (no restart markers)]*
+   * - the number of MCU blocks between each restart marker *[default: `0` (no
+   * restart markers)]*
    *
    * Setting this parameter to a non-zero value sets #TJPARAM_RESTARTROWS to 0.
    */

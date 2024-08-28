@@ -1100,10 +1100,9 @@ int main(int argc, char *argv[])
         xformOp = TJXOP_HFLIP;
       else if (MATCH_ARG(argv[i], "-limitscans", 3))
         maxScans = 500;
-      else if (MATCH_ARG(argv[i], "-lossless", 2)) {
+      else if (MATCH_ARG(argv[i], "-lossless", 2))
         lossless = 1;
-        subsamp = TJSAMP_444;
-      } else if (MATCH_ARG(argv[i], "-maxpixels", 5) && i < argc - 1) {
+      else if (MATCH_ARG(argv[i], "-maxpixels", 5) && i < argc - 1) {
         int tempi = atoi(argv[++i]);
 
         if (tempi < 0) usage(argv[0]);
@@ -1200,8 +1199,9 @@ int main(int argc, char *argv[])
 
         if (sscanf(argv[++i], "%d/%d", &temp1, &temp2) == 2) {
           for (j = 0; j < nsf; j++) {
-            if (temp1 == scalingFactors[j].num &&
-                temp2 == scalingFactors[j].denom) {
+            if ((double)temp1 / (double)temp2 ==
+                (double)scalingFactors[j].num /
+                (double)scalingFactors[j].denom) {
               sf = scalingFactors[j];
               match = 1;  break;
             }
@@ -1241,6 +1241,8 @@ int main(int argc, char *argv[])
   if (optimize && !progressive && !arithmetic && !lossless && precision != 12)
     printf("Computing optimal Huffman tables\n\n");
 
+  if (lossless)
+    subsamp = TJSAMP_444;
   if (pf == TJPF_GRAY) {
     if (!strcmp(ext, "ppm")) ext = "pgm";
     subsamp = TJSAMP_GRAY;

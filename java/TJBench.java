@@ -993,11 +993,9 @@ final class TJBench {
             xformOp = TJTransform.OP_HFLIP;
           else if (matchArg(argv[i], "-limitscans", 3))
             maxScans = 500;
-          else if (matchArg(argv[i], "-lossless", 2)) {
+          else if (matchArg(argv[i], "-lossless", 2))
             lossless = true;
-            subsamp = TJ.SAMP_444;
-          } else if (matchArg(argv[i], "-maxpixels", 5) &&
-                     i < argv.length - 1) {
+          else if (matchArg(argv[i], "-maxpixels", 5) && i < argv.length - 1) {
             int temp = -1;
 
             try {
@@ -1179,6 +1177,8 @@ final class TJBench {
           precision != 12)
         System.out.println("Computing optimal Huffman tables\n");
 
+      if (lossless)
+        subsamp = TJ.SAMP_444;
       if (pf == TJ.PF_GRAY) {
         if (ext == null)
           ext = new String("pgm");
