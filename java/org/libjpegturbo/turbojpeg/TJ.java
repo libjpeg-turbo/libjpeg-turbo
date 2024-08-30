@@ -93,14 +93,24 @@ public final class TJ {
 
 
   /**
-   * Returns the MCU block width for the given level of chrominance
-   * subsampling.
+   * Returns the iMCU width for the given level of chrominance subsampling.
+   *
+   * <p>In a typical JPEG image, 8x8 blocks of DCT coefficients for each
+   * component are interleaved in a single scan.  If the image uses chrominance
+   * subsampling, then multiple luminance blocks are stored together, followed
+   * by a single block for each chrominance component.  The combination of the
+   * full-resolution luminance block(s) and the (possibly subsampled)
+   * chrominance blocks corresponding to the same pixels is called a "Minimum
+   * Coded Unit" (MCU.)  In a non-interleaved JPEG image, each component is
+   * stored in a separate scan, and an MCU is a single DCT block, so we use the
+   * term "iMCU" (interleaved MCU) to refer to the equivalent of an MCU in an
+   * interleaved JPEG image.  For the common case of interleaved JPEG images,
+   * an iMCU is the same as an MCU.
    *
    * @param subsamp the level of chrominance subsampling (one of
    * {@link #SAMP_444 SAMP_*})
    *
-   * @return the MCU block width for the given level of chrominance
-   * subsampling.
+   * @return the iMCU width for the given level of chrominance subsampling.
    */
   public static int getMCUWidth(int subsamp) {
     checkSubsampling(subsamp);
@@ -113,14 +123,24 @@ public final class TJ {
 
 
   /**
-   * Returns the MCU block height for the given level of chrominance
-   * subsampling.
+   * Returns the iMCU height for the given level of chrominance subsampling.
+   *
+   * <p>In a typical JPEG image, 8x8 blocks of DCT coefficients for each
+   * component are interleaved in a single scan.  If the image uses chrominance
+   * subsampling, then multiple luminance blocks are stored together, followed
+   * by a single block for each chrominance component.  The combination of the
+   * full-resolution luminance block(s) and the (possibly subsampled)
+   * chrominance blocks corresponding to the same pixels is called a "Minimum
+   * Coded Unit" (MCU.)  In a non-interleaved JPEG image, each component is
+   * stored in a separate scan, and an MCU is a single DCT block, so we use the
+   * term "iMCU" (interleaved MCU) to refer to the equivalent of an MCU in an
+   * interleaved JPEG image.  For the common case of interleaved JPEG images,
+   * an iMCU is the same as an MCU.
    *
    * @param subsamp the level of chrominance subsampling (one of
    * {@link #SAMP_444 SAMP_*})
    *
-   * @return the MCU block height for the given level of chrominance
-   * subsampling.
+   * @return the iMCU height for the given level of chrominance subsampling.
    */
   public static int getMCUHeight(int subsamp) {
     checkSubsampling(subsamp);

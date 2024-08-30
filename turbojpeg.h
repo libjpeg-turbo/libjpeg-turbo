@@ -145,9 +145,21 @@ enum TJSAMP {
 };
 
 /**
- * MCU block width (in pixels) for a given level of chrominance subsampling
+ * iMCU width (in pixels) for a given level of chrominance subsampling
  *
- * MCU block sizes:
+ * In a typical JPEG image, 8x8 blocks of DCT coefficients for each component
+ * are interleaved in a single scan.  If the image uses chrominance
+ * subsampling, then multiple luminance blocks are stored together, followed by
+ * a single block for each chrominance component.  The combination of the
+ * full-resolution luminance block(s) and the (possibly subsampled) chrominance
+ * blocks corresponding to the same pixels is called a "Minimum Coded Unit"
+ * (MCU.)  In a non-interleaved JPEG image, each component is stored in a
+ * separate scan, and an MCU is a single DCT block, so we use the term "iMCU"
+ * (interleaved MCU) to refer to the equivalent of an MCU in an interleaved
+ * JPEG image.  For the common case of interleaved JPEG images, an iMCU is the
+ * same as an MCU.
+ *
+ * iMCU sizes:
  * - 8x8 for no subsampling or grayscale
  * - 16x8 for 4:2:2
  * - 8x16 for 4:4:0
@@ -157,9 +169,21 @@ enum TJSAMP {
 static const int tjMCUWidth[TJ_NUMSAMP]  = { 8, 16, 16, 8, 8, 32 };
 
 /**
- * MCU block height (in pixels) for a given level of chrominance subsampling
+ * iMCU height (in pixels) for a given level of chrominance subsampling
  *
- * MCU block sizes:
+ * In a typical JPEG image, 8x8 blocks of DCT coefficients for each component
+ * are interleaved in a single scan.  If the image uses chrominance
+ * subsampling, then multiple luminance blocks are stored together, followed by
+ * a single block for each chrominance component.  The combination of the
+ * full-resolution luminance block(s) and the (possibly subsampled) chrominance
+ * blocks corresponding to the same pixels is called a "Minimum Coded Unit"
+ * (MCU.)  In a non-interleaved JPEG image, each component is stored in a
+ * separate scan, and an MCU is a single DCT block, so we use the term "iMCU"
+ * (interleaved MCU) to refer to the equivalent of an MCU in an interleaved
+ * JPEG image.  For the common case of interleaved JPEG images, an iMCU is the
+ * same as an MCU.
+ *
+ * iMCU sizes:
  * - 8x8 for no subsampling or grayscale
  * - 16x8 for 4:2:2
  * - 8x16 for 4:4:0
@@ -523,12 +547,12 @@ enum TJXOP {
   TJXOP_NONE = 0,
   /**
    * Flip (mirror) image horizontally.  This transform is imperfect if there
-   * are any partial MCU blocks on the right edge (see #TJXOPT_PERFECT.)
+   * are any partial iMCUs on the right edge (see #TJXOPT_PERFECT.)
    */
   TJXOP_HFLIP,
   /**
    * Flip (mirror) image vertically.  This transform is imperfect if there are
-   * any partial MCU blocks on the bottom edge (see #TJXOPT_PERFECT.)
+   * any partial iMCUs on the bottom edge (see #TJXOPT_PERFECT.)
    */
   TJXOP_VFLIP,
   /**
@@ -538,25 +562,23 @@ enum TJXOP {
   TJXOP_TRANSPOSE,
   /**
    * Transverse transpose image (flip/mirror along upper right to lower left
-   * axis.)  This transform is imperfect if there are any partial MCU blocks in
-   * the image (see #TJXOPT_PERFECT.)
+   * axis.)  This transform is imperfect if there are any partial iMCUs in the
+   * image (see #TJXOPT_PERFECT.)
    */
   TJXOP_TRANSVERSE,
   /**
    * Rotate image clockwise by 90 degrees.  This transform is imperfect if
-   * there are any partial MCU blocks on the bottom edge (see
-   * #TJXOPT_PERFECT.)
+   * there are any partial iMCUs on the bottom edge (see #TJXOPT_PERFECT.)
    */
   TJXOP_ROT90,
   /**
    * Rotate image 180 degrees.  This transform is imperfect if there are any
-   * partial MCU blocks in the image (see #TJXOPT_PERFECT.)
+   * partial iMCUs in the image (see #TJXOPT_PERFECT.)
    */
   TJXOP_ROT180,
   /**
    * Rotate image counter-clockwise by 90 degrees.  This transform is imperfect
-   * if there are any partial MCU blocks on the right edge (see
-   * #TJXOPT_PERFECT.)
+   * if there are any partial iMCUs on the right edge (see #TJXOPT_PERFECT.)
    */
   TJXOP_ROT270
 };
@@ -564,19 +586,19 @@ enum TJXOP {
 
 /**
  * This option causes #tjTransform() to return an error if the transform is not
- * perfect.  Lossless transforms operate on MCU blocks, the size of which
- * depends on the level of chrominance subsampling used (see #tjMCUWidth and
+ * perfect.  Lossless transforms operate on iMCUs, the size of which depends on
+ * the level of chrominance subsampling used (see #tjMCUWidth and
  * #tjMCUHeight.)  If the image's width or height is not evenly divisible by
- * the MCU block size, then there will be partial MCU blocks on the right
- * and/or bottom edges.  It is not possible to move these partial MCU blocks to
- * the top or left of the image, so any transform that would require that is
- * "imperfect."  If this option is not specified, then any partial MCU blocks
- * that cannot be transformed will be left in place, which will create
- * odd-looking strips on the right or bottom edge of the image.
+ * the iMCU size, then there will be partial iMCUs on the right and/or bottom
+ * edges.  It is not possible to move these partial iMCUs to the top or left of
+ * the image, so any transform that would require that is "imperfect."  If this
+ * option is not specified, then any partial iMCUs that cannot be transformed
+ * will be left in place, which will create odd-looking strips on the right or
+ * bottom edge of the image.
  */
 #define TJXOPT_PERFECT  1
 /**
- * Discard any partial MCU blocks that cannot be transformed.
+ * Discard any partial iMCUs that cannot be transformed.
  */
 #define TJXOPT_TRIM  2
 /**
@@ -629,12 +651,12 @@ typedef struct {
 typedef struct {
   /**
    * The left boundary of the cropping region.  This must be evenly divisible
-   * by the MCU block width (see #tjMCUWidth.)
+   * by the iMCU width (see #tjMCUWidth.)
    */
   int x;
   /**
    * The upper boundary of the cropping region.  This must be evenly divisible
-   * by the MCU block height (see #tjMCUHeight.)
+   * by the iMCU height (see #tjMCUHeight.)
    */
   int y;
   /**
@@ -822,7 +844,7 @@ DLLEXPORT int tjCompress2(tjhandle handle, const unsigned char *srcBuf,
  * @ref YUVnotes "YUV Image Format Notes".)
  *
  * @param width width (in pixels) of the source image.  If the width is not an
- * even multiple of the MCU block width (see #tjMCUWidth), then an intermediate
+ * even multiple of the iMCU width (see #tjMCUWidth), then an intermediate
  * buffer copy will be performed.
  *
  * @param align row alignment (in bytes) of the source image (must be a power
@@ -831,8 +853,8 @@ DLLEXPORT int tjCompress2(tjhandle handle, const unsigned char *srcBuf,
  * (1 = unpadded.)
  *
  * @param height height (in pixels) of the source image.  If the height is not
- * an even multiple of the MCU block height (see #tjMCUHeight), then an
- * intermediate buffer copy will be performed.
+ * an even multiple of the iMCU height (see #tjMCUHeight), then an intermediate
+ * buffer copy will be performed.
  *
  * @param subsamp the level of chrominance subsampling used in the source image
  * (see @ref TJSAMP "Chrominance subsampling options".)
@@ -890,7 +912,7 @@ DLLEXPORT int tjCompressFromYUV(tjhandle handle, const unsigned char *srcBuf,
  * "YUV Image Format Notes" for more details.
  *
  * @param width width (in pixels) of the source image.  If the width is not an
- * even multiple of the MCU block width (see #tjMCUWidth), then an intermediate
+ * even multiple of the iMCU width (see #tjMCUWidth), then an intermediate
  * buffer copy will be performed.
  *
  * @param strides an array of integers, each specifying the number of bytes per
@@ -903,8 +925,8 @@ DLLEXPORT int tjCompressFromYUV(tjhandle handle, const unsigned char *srcBuf,
  * planar YUV image.
  *
  * @param height height (in pixels) of the source image.  If the height is not
- * an even multiple of the MCU block height (see #tjMCUHeight), then an
- * intermediate buffer copy will be performed.
+ * an even multiple of the iMCU height (see #tjMCUHeight), then an intermediate
+ * buffer copy will be performed.
  *
  * @param subsamp the level of chrominance subsampling used in the source image
  * (see @ref TJSAMP "Chrominance subsampling options".)
@@ -1320,8 +1342,8 @@ DLLEXPORT int tjDecompress2(tjhandle handle, const unsigned char *jpegBuf,
  * TurboJPEG will use scaling in the JPEG decompressor to generate the largest
  * possible image that will fit within the desired width.  If `width` is set to
  * 0, then only the height will be considered when determining the scaled image
- * size.  If the scaled width is not an even multiple of the MCU block width
- * (see #tjMCUWidth), then an intermediate buffer copy will be performed.
+ * size.  If the scaled width is not an even multiple of the iMCU width (see
+ * #tjMCUWidth), then an intermediate buffer copy will be performed.
  *
  * @param align row alignment (in bytes) of the YUV image (must be a power of
  * 2.)  Setting this parameter to n will cause each row in each plane of the
@@ -1333,8 +1355,8 @@ DLLEXPORT int tjDecompress2(tjhandle handle, const unsigned char *jpegBuf,
  * TurboJPEG will use scaling in the JPEG decompressor to generate the largest
  * possible image that will fit within the desired height.  If `height` is set
  * to 0, then only the width will be considered when determining the scaled
- * image size.  If the scaled height is not an even multiple of the MCU block
- * height (see #tjMCUHeight), then an intermediate buffer copy will be
+ * image size.  If the scaled height is not an even multiple of the iMCU height
+ * (see #tjMCUHeight), then an intermediate buffer copy will be
  * performed.
  *
  * @param flags the bitwise OR of one or more of the @ref TJFLAG_ACCURATEDCT
@@ -1374,8 +1396,8 @@ DLLEXPORT int tjDecompressToYUV2(tjhandle handle, const unsigned char *jpegBuf,
  * TurboJPEG will use scaling in the JPEG decompressor to generate the largest
  * possible image that will fit within the desired width.  If `width` is set to
  * 0, then only the height will be considered when determining the scaled image
- * size.  If the scaled width is not an even multiple of the MCU block width
- * (see #tjMCUWidth), then an intermediate buffer copy will be performed.
+ * size.  If the scaled width is not an even multiple of the iMCU width (see
+ * #tjMCUWidth), then an intermediate buffer copy will be performed.
  *
  * @param strides an array of integers, each specifying the number of bytes per
  * row in the corresponding plane of the YUV image.  Setting the stride for any
@@ -1391,8 +1413,8 @@ DLLEXPORT int tjDecompressToYUV2(tjhandle handle, const unsigned char *jpegBuf,
  * TurboJPEG will use scaling in the JPEG decompressor to generate the largest
  * possible image that will fit within the desired height.  If `height` is set
  * to 0, then only the width will be considered when determining the scaled
- * image size.  If the scaled height is not an even multiple of the MCU block
- * height (see #tjMCUHeight), then an intermediate buffer copy will be
+ * image size.  If the scaled height is not an even multiple of the iMCU height
+ * (see #tjMCUHeight), then an intermediate buffer copy will be
  * performed.
  *
  * @param flags the bitwise OR of one or more of the @ref TJFLAG_ACCURATEDCT

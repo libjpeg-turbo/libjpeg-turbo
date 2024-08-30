@@ -442,15 +442,13 @@ extends java.lang.Object</pre>
 <tr id="i6" class="altColor">
 <td class="colFirst"><code>static int</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../org/libjpegturbo/turbojpeg/TJ.html#getMCUHeight-int-">getMCUHeight</a></span>(int&nbsp;subsamp)</code>
-<div class="block">Returns the MCU block height for the given level of chrominance
- subsampling.</div>
+<div class="block">Returns the iMCU height for the given level of chrominance subsampling.</div>
 </td>
 </tr>
 <tr id="i7" class="rowColor">
 <td class="colFirst"><code>static int</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../org/libjpegturbo/turbojpeg/TJ.html#getMCUWidth-int-">getMCUWidth</a></span>(int&nbsp;subsamp)</code>
-<div class="block">Returns the MCU block width for the given level of chrominance
- subsampling.</div>
+<div class="block">Returns the iMCU width for the given level of chrominance subsampling.</div>
 </td>
 </tr>
 <tr id="i8" class="altColor">
@@ -1266,15 +1264,25 @@ public static final&nbsp;int FLAG_FORCESSE3</pre>
 <li class="blockList">
 <h4>getMCUWidth</h4>
 <pre>public static&nbsp;int&nbsp;getMCUWidth(int&nbsp;subsamp)</pre>
-<div class="block">Returns the MCU block width for the given level of chrominance
- subsampling.</div>
+<div class="block">Returns the iMCU width for the given level of chrominance subsampling.
+
+ <p>In a typical JPEG image, 8x8 blocks of DCT coefficients for each
+ component are interleaved in a single scan.  If the image uses chrominance
+ subsampling, then multiple luminance blocks are stored together, followed
+ by a single block for each chrominance component.  The combination of the
+ full-resolution luminance block(s) and the (possibly subsampled)
+ chrominance blocks corresponding to the same pixels is called a "Minimum
+ Coded Unit" (MCU.)  In a non-interleaved JPEG image, each component is
+ stored in a separate scan, and an MCU is a single DCT block, so we use the
+ term "iMCU" (interleaved MCU) to refer to the equivalent of an MCU in an
+ interleaved JPEG image.  For the common case of interleaved JPEG images,
+ an iMCU is the same as an MCU.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>subsamp</code> - the level of chrominance subsampling (one of
  <a href="../../../org/libjpegturbo/turbojpeg/TJ.html#SAMP_444"><code>SAMP_*</code></a>)</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
-<dd>the MCU block width for the given level of chrominance
- subsampling.</dd>
+<dd>the iMCU width for the given level of chrominance subsampling.</dd>
 </dl>
 </li>
 </ul>
@@ -1285,15 +1293,25 @@ public static final&nbsp;int FLAG_FORCESSE3</pre>
 <li class="blockList">
 <h4>getMCUHeight</h4>
 <pre>public static&nbsp;int&nbsp;getMCUHeight(int&nbsp;subsamp)</pre>
-<div class="block">Returns the MCU block height for the given level of chrominance
- subsampling.</div>
+<div class="block">Returns the iMCU height for the given level of chrominance subsampling.
+
+ <p>In a typical JPEG image, 8x8 blocks of DCT coefficients for each
+ component are interleaved in a single scan.  If the image uses chrominance
+ subsampling, then multiple luminance blocks are stored together, followed
+ by a single block for each chrominance component.  The combination of the
+ full-resolution luminance block(s) and the (possibly subsampled)
+ chrominance blocks corresponding to the same pixels is called a "Minimum
+ Coded Unit" (MCU.)  In a non-interleaved JPEG image, each component is
+ stored in a separate scan, and an MCU is a single DCT block, so we use the
+ term "iMCU" (interleaved MCU) to refer to the equivalent of an MCU in an
+ interleaved JPEG image.  For the common case of interleaved JPEG images,
+ an iMCU is the same as an MCU.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>subsamp</code> - the level of chrominance subsampling (one of
  <a href="../../../org/libjpegturbo/turbojpeg/TJ.html#SAMP_444"><code>SAMP_*</code></a>)</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
-<dd>the MCU block height for the given level of chrominance
- subsampling.</dd>
+<dd>the iMCU height for the given level of chrominance subsampling.</dd>
 </dl>
 </li>
 </ul>

@@ -40,7 +40,7 @@ into a baseline Huffman-coded JPEG destination image.
 
 5. Fixed two minor issues in the interblock smoothing algorithm that caused
 mathematical (but not necessarily perceptible) edge block errors when
-decompressing progressive JPEG images exactly two MCU blocks in width or that
+decompressing progressive JPEG images exactly two DCT blocks in width or that
 use vertical chrominance subsampling.
 
 6. Fixed a signed integer overflow in the `tjCompressFromYUV()`,
@@ -222,9 +222,9 @@ prevented libjpeg-turbo from working properly with other linkers and also
 represented a potential security risk.
 
 2. Fixed an issue whereby the `tjTransform()` function incorrectly computed the
-MCU block size for 4:4:4 JPEG images with non-unary sampling factors and thus
-unduly rejected some cropping regions, even though those regions aligned with
-8x8 MCU block boundaries.
+iMCU size for 4:4:4 JPEG images with non-unary sampling factors and thus unduly
+rejected some cropping regions, even though those regions aligned with 8x8 iMCU
+boundaries.
 
 3. Fixed a regression introduced by 2.1 beta1[13] that caused the build system
 to enable the Arm Neon SIMD extensions when targetting Armv6 and other legacy
