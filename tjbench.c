@@ -809,7 +809,7 @@ static void usage(char *progName)
   printf("     prior to decompression (these operations are mutually exclusive)\n");
   printf("-grayscale = Transform the input image into a grayscale JPEG image prior to\n");
   printf("     decompression (can be combined with the other transform operations above)\n");
-  printf("-copynone = Do not copy any extra markers (including EXIF and ICC profile data)\n");
+  printf("-copynone = Do not copy any extra markers (including Exif and ICC profile data)\n");
   printf("     when transforming the input image\n");
   printf("-benchtime <t> = Run each benchmark for at least <t> seconds [default = 5.0]\n");
   printf("-warmup <t> = Run each benchmark for <t> seconds [default = 1.0] prior to\n");

@@ -625,7 +625,7 @@ enum TJXOP {
  */
 #define TJXOPT_PROGRESSIVE  32
 /**
- * Do not copy any extra markers (including EXIF and ICC profile data) from the
+ * Do not copy any extra markers (including Exif and ICC profile data) from the
  * source image to the destination image.
  */
 #define TJXOPT_COPYNONE  64
@@ -1593,7 +1593,7 @@ DLLEXPORT tjhandle tjInitTransform(void);
  * should ensure that the buffer never has to be re-allocated.  (Setting
  * #TJFLAG_NOREALLOC guarantees that it won't be.)  Note, however, that there
  * are some rare cases (such as transforming images with a large amount of
- * embedded EXIF or ICC profile data) in which the transformed JPEG image will
+ * embedded Exif or ICC profile data) in which the transformed JPEG image will
  * be larger than the worst-case size, and #TJFLAG_NOREALLOC cannot be used in
  * those cases.
  * .
