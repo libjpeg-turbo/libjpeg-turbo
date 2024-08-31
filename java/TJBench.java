@@ -984,9 +984,11 @@ final class TJBench {
               xformOp = TJTransform.OP_VFLIP;
             else
               usage();
-          } else if (argv[i].equalsIgnoreCase("-gray"))
+          } else if (argv[i].equalsIgnoreCase("-gray") ||
+                     argv[i].equalsIgnoreCase("-grey"))
             pf = TJ.PF_GRAY;
-          else if (matchArg(argv[i], "-grayscale", 2))
+          else if (matchArg(argv[i], "-grayscale", 2) ||
+                   matchArg(argv[i], "-greyscale", 2))
             xformOpt |= TJTransform.OPT_GRAY;
           else if (matchArg(argv[i], "-hflip", 2))
             xformOp = TJTransform.OP_HFLIP;
@@ -1030,7 +1032,8 @@ final class TJBench {
             fastUpsample = true;
           } else if (matchArg(argv[i], "-nowrite", 4))
             write = false;
-          else if (matchArg(argv[i], "-optimize", 2)) {
+          else if (matchArg(argv[i], "-optimize", 2) ||
+                   matchArg(argv[i], "-optimise", 2)) {
             optimize = true;
             xformOpt |= TJTransform.OPT_OPTIMIZE;
           } else if (matchArg(argv[i], "-precision", 4) &&
@@ -1092,7 +1095,7 @@ final class TJBench {
             stopOnWarning = true;
           else if (matchArg(argv[i], "-subsamp", 3) && i < argv.length - 1) {
             i++;
-            if (argv[i].toUpperCase().startsWith("G"))
+            if (matchArg(argv[i], "gray", 1) || matchArg(argv[i], "grey", 1))
               subsamp = TJ.SAMP_GRAY;
             else if (argv[i].equals("444"))
               subsamp = TJ.SAMP_444;

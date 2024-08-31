@@ -46,6 +46,8 @@ limit to be specified.
      - `-rot90`, `-rot180`, and `-rot270` have been replaced with
 `-rotate 90`, `-rotate 180`, and `-rotate 270`.
      - `-stoponwarning` has been replaced with `-strict`.
+     - British spellings for `gray` (`grey`) and `optimize` (`optimise`) are
+now allowed.
 
     The old command-line arguments are deprecated and will be removed in a
 future release.  TJBench command-line arguments can now be abbreviated as well.

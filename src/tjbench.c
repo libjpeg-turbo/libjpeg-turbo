@@ -1093,9 +1093,11 @@ int main(int argc, char *argv[])
           xformOp = TJXOP_VFLIP;
         else
           usage(argv[0]);
-      } else if (!strcasecmp(argv[i], "-gray"))
+      } else if (!strcasecmp(argv[i], "-gray") ||
+                 !strcasecmp(argv[i], "-grey"))
         pf = TJPF_GRAY;
-      else if (MATCH_ARG(argv[i], "-grayscale", 2))
+      else if (MATCH_ARG(argv[i], "-grayscale", 2) ||
+               MATCH_ARG(argv[i], "-greyscale", 2))
         xformOpt |= TJXOPT_GRAY;
       else if (MATCH_ARG(argv[i], "-hflip", 2))
         xformOp = TJXOP_HFLIP;
@@ -1125,7 +1127,8 @@ int main(int argc, char *argv[])
         fastUpsample = 1;
       } else if (MATCH_ARG(argv[i], "-nowrite", 4))
         doWrite = 0;
-      else if (MATCH_ARG(argv[i], "-optimize", 2)) {
+      else if (MATCH_ARG(argv[i], "-optimize", 2) ||
+               MATCH_ARG(argv[i], "-optimise", 2)) {
         optimize = 1;
         xformOpt |= TJXOPT_OPTIMIZE;
       } else if (MATCH_ARG(argv[i], "-precision", 4) && i < argc - 1) {
@@ -1179,7 +1182,7 @@ int main(int argc, char *argv[])
         stopOnWarning = 1;
       else if (MATCH_ARG(argv[i], "-subsamp", 3) && i < argc - 1) {
         i++;
-        if (MATCH_ARG(argv[i], "gray", 1))
+        if (MATCH_ARG(argv[i], "gray", 1) || MATCH_ARG(argv[i], "grey", 1))
           subsamp = TJSAMP_GRAY;
         else if (MATCH_ARG(argv[i], "444", 3))
           subsamp = TJSAMP_444;
