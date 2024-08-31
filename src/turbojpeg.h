@@ -188,16 +188,29 @@ enum TJSAMP {
    * The JPEG image uses an unusual type of chrominance subsampling.  Such
    * images can be decompressed into packed-pixel images, but they cannot be
    * - decompressed into planar YUV images,
-   * - losslessly transformed if #TJXOPT_CROP is specified, or
+   * - losslessly transformed if #TJXOPT_CROP is specified and #TJXOPT_GRAY is
+   * not specified, or
    * - partially decompressed using a cropping region.
    */
   TJSAMP_UNKNOWN = -1
 };
 
 /**
- * MCU block width (in pixels) for a given level of chrominance subsampling
+ * iMCU width (in pixels) for a given level of chrominance subsampling
  *
- * MCU block sizes:
+ * In a typical lossy JPEG image, 8x8 blocks of DCT coefficients for each
+ * component are interleaved in a single scan.  If the image uses chrominance
+ * subsampling, then multiple luminance blocks are stored together, followed by
+ * a single block for each chrominance component.  The combination of the
+ * full-resolution luminance block(s) and the (possibly subsampled) chrominance
+ * blocks corresponding to the same pixels is called a "Minimum Coded Unit"
+ * (MCU.)  In a non-interleaved lossy JPEG image, each component is stored in a
+ * separate scan, and an MCU is a single DCT block, so we use the term "iMCU"
+ * (interleaved MCU) to refer to the equivalent of an MCU in an interleaved
+ * JPEG image.  For the common case of interleaved JPEG images, an iMCU is the
+ * same as an MCU.
+ *
+ * iMCU sizes:
  * - 8x8 for no subsampling or grayscale
  * - 16x8 for 4:2:2
  * - 8x16 for 4:4:0
@@ -208,9 +221,21 @@ enum TJSAMP {
 static const int tjMCUWidth[TJ_NUMSAMP]  = { 8, 16, 16, 8, 8, 32, 8 };
 
 /**
- * MCU block height (in pixels) for a given level of chrominance subsampling
+ * iMCU height (in pixels) for a given level of chrominance subsampling
  *
- * MCU block sizes:
+ * In a typical lossy JPEG image, 8x8 blocks of DCT coefficients for each
+ * component are interleaved in a single scan.  If the image uses chrominance
+ * subsampling, then multiple luminance blocks are stored together, followed by
+ * a single block for each chrominance component.  The combination of the
+ * full-resolution luminance block(s) and the (possibly subsampled) chrominance
+ * blocks corresponding to the same pixels is called a "Minimum Coded Unit"
+ * (MCU.)  In a non-interleaved lossy JPEG image, each component is stored in a
+ * separate scan, and an MCU is a single DCT block, so we use the term "iMCU"
+ * (interleaved MCU) to refer to the equivalent of an MCU in an interleaved
+ * JPEG image.  For the common case of interleaved JPEG images, an iMCU is the
+ * same as an MCU.
+ *
+ * iMCU sizes:
  * - 8x8 for no subsampling or grayscale
  * - 16x8 for 4:2:2
  * - 8x16 for 4:4:0
@@ -630,8 +655,8 @@ enum TJPARAM {
    * and refined with subsequent higher-quality scans containing
    * higher-frequency DCT coefficients.  When using Huffman entropy coding, the
    * progressive JPEG format also provides an "end-of-bands (EOB) run" feature
-   * that allows large groups of zeroes, potentially spanning multiple MCU
-   * blocks, to be represented using only a few bytes.
+   * that allows large groups of zeroes, potentially spanning multiple MCUs,
+   * to be represented using only a few bytes.
    *
    * **Value**
    * - `0` *[default for compression, lossless transformation]* The lossy JPEG
@@ -762,7 +787,7 @@ enum TJPARAM {
    */
   TJPARAM_LOSSLESSPT,
   /**
-   * JPEG restart marker interval in MCU blocks [lossy compression only]
+   * JPEG restart marker interval in MCUs [lossy compression only]
    *
    * The nature of entropy coding is such that a corrupt JPEG image cannot
    * be decompressed beyond the point of corruption unless it contains restart
@@ -772,22 +797,30 @@ enum TJPARAM {
    * tolerance of the JPEG image, but adding too many restart markers can
    * adversely affect the compression ratio and performance.
    *
+   * In typical JPEG images, an MCU (Minimum Coded Unit) is the minimum set of
+   * interleaved "data units" (8x8 DCT blocks if the image is lossy or samples
+   * if the image is lossless) necessary to represent at least one data unit
+   * per component.  (For example, an MCU in an interleaved lossy JPEG image
+   * that uses 4:2:2 subsampling consists of two luminance blocks followed by
+   * one block for each chrominance component.)  In single-component or
+   * non-interleaved JPEG images, an MCU is the same as a data unit.
+   *
    * **Value**
-   * - the number of MCU blocks between each restart marker *[default: `0` (no
+   * - the number of MCUs between each restart marker *[default: `0` (no
    * restart markers)]*
    *
    * Setting this parameter to a non-zero value sets #TJPARAM_RESTARTROWS to 0.
    */
   TJPARAM_RESTARTBLOCKS,
   /**
-   * JPEG restart marker interval in MCU rows (lossy) or sample rows (lossless)
-   * [compression only]
+   * JPEG restart marker interval in MCU rows [compression only]
    *
-   * See #TJPARAM_RESTARTBLOCKS for a description of restart markers.
+   * See #TJPARAM_RESTARTBLOCKS for a description of restart markers and MCUs.
+   * An MCU row is a row of MCUs spanning the entire width of the image.
    *
    * **Value**
-   * - the number of MCU rows or sample rows between each restart marker
-   * *[default: `0` (no restart markers)]*
+   * - the number of MCU rows between each restart marker *[default: `0` (no
+   * restart markers)]*
    *
    * Setting this parameter to a non-zero value sets #TJPARAM_RESTARTBLOCKS to
    * 0.
@@ -911,12 +944,12 @@ enum TJXOP {
   TJXOP_NONE,
   /**
    * Flip (mirror) image horizontally.  This transform is imperfect if there
-   * are any partial MCU blocks on the right edge (see #TJXOPT_PERFECT.)
+   * are any partial iMCUs on the right edge (see #TJXOPT_PERFECT.)
    */
   TJXOP_HFLIP,
   /**
    * Flip (mirror) image vertically.  This transform is imperfect if there are
-   * any partial MCU blocks on the bottom edge (see #TJXOPT_PERFECT.)
+   * any partial iMCUs on the bottom edge (see #TJXOPT_PERFECT.)
    */
   TJXOP_VFLIP,
   /**
@@ -926,25 +959,23 @@ enum TJXOP {
   TJXOP_TRANSPOSE,
   /**
    * Transverse transpose image (flip/mirror along upper right to lower left
-   * axis.)  This transform is imperfect if there are any partial MCU blocks in
-   * the image (see #TJXOPT_PERFECT.)
+   * axis.)  This transform is imperfect if there are any partial iMCUs in the
+   * image (see #TJXOPT_PERFECT.)
    */
   TJXOP_TRANSVERSE,
   /**
    * Rotate image clockwise by 90 degrees.  This transform is imperfect if
-   * there are any partial MCU blocks on the bottom edge (see
-   * #TJXOPT_PERFECT.)
+   * there are any partial iMCUs on the bottom edge (see #TJXOPT_PERFECT.)
    */
   TJXOP_ROT90,
   /**
    * Rotate image 180 degrees.  This transform is imperfect if there are any
-   * partial MCU blocks in the image (see #TJXOPT_PERFECT.)
+   * partial iMCUs in the image (see #TJXOPT_PERFECT.)
    */
   TJXOP_ROT180,
   /**
    * Rotate image counter-clockwise by 90 degrees.  This transform is imperfect
-   * if there are any partial MCU blocks on the right edge (see
-   * #TJXOPT_PERFECT.)
+   * if there are any partial iMCUs on the right edge (see #TJXOPT_PERFECT.)
    */
   TJXOP_ROT270
 };
@@ -952,19 +983,19 @@ enum TJXOP {
 
 /**
  * This option causes #tj3Transform() to return an error if the transform is
- * not perfect.  Lossless transforms operate on MCU blocks, the size of which
+ * not perfect.  Lossless transforms operate on iMCUs, the size of which
  * depends on the level of chrominance subsampling used (see #tjMCUWidth and
  * #tjMCUHeight.)  If the image's width or height is not evenly divisible by
- * the MCU block size, then there will be partial MCU blocks on the right
- * and/or bottom edges.  It is not possible to move these partial MCU blocks to
- * the top or left of the image, so any transform that would require that is
- * "imperfect."  If this option is not specified, then any partial MCU blocks
- * that cannot be transformed will be left in place, which will create
- * odd-looking strips on the right or bottom edge of the image.
+ * the iMCU size, then there will be partial iMCUs on the right and/or bottom
+ * edges.  It is not possible to move these partial iMCUs to the top or left of
+ * the image, so any transform that would require that is "imperfect."  If this
+ * option is not specified, then any partial iMCUs that cannot be transformed
+ * will be left in place, which will create odd-looking strips on the right or
+ * bottom edge of the image.
  */
 #define TJXOPT_PERFECT  (1 << 0)
 /**
- * Discard any partial MCU blocks that cannot be transformed.
+ * Discard any partial iMCUs that cannot be transformed.
  */
 #define TJXOPT_TRIM  (1 << 1)
 /**
@@ -993,7 +1024,7 @@ enum TJXOP {
  */
 #define TJXOPT_PROGRESSIVE  (1 << 5)
 /**
- * Do not copy any extra markers (including EXIF and ICC profile data) from the
+ * Do not copy any extra markers (including Exif and ICC profile data) from the
  * source image to the destination image.
  */
 #define TJXOPT_COPYNONE  (1 << 6)
@@ -1030,13 +1061,16 @@ typedef struct {
  */
 typedef struct {
   /**
-   * The left boundary of the cropping region.  This must be evenly divisible
-   * by the MCU block width (see #tjMCUWidth.)
+   * The left boundary of the cropping region.  For lossless transformation,
+   * this must be evenly divisible by the iMCU width (see #tjMCUWidth) of the
+   * destination image.  For decompression, this must be evenly divisible by
+   * the scaled iMCU width of the source image.
    */
   int x;
   /**
    * The upper boundary of the cropping region.  For lossless transformation,
-   * this must be evenly divisible by the MCU block height (see #tjMCUHeight.)
+   * this must be evenly divisible by the iMCU height (see #tjMCUHeight) of the
+   * destination image.
    */
   int y;
   /**
@@ -1375,7 +1409,7 @@ DLLEXPORT int tj3Compress16(tjhandle handle, const unsigned short *srcBuf,
  * buffer.  (Refer to @ref YUVnotes "YUV Image Format Notes".)
  *
  * @param width width (in pixels) of the source image.  If the width is not an
- * even multiple of the MCU block width (see #tjMCUWidth), then an intermediate
+ * even multiple of the iMCU width (see #tjMCUWidth), then an intermediate
  * buffer copy will be performed.
  *
  * @param align row alignment (in bytes) of the source image (must be a power
@@ -1384,8 +1418,8 @@ DLLEXPORT int tj3Compress16(tjhandle handle, const unsigned short *srcBuf,
  * (1 = unpadded.)
  *
  * @param height height (in pixels) of the source image.  If the height is not
- * an even multiple of the MCU block height (see #tjMCUHeight), then an
- * intermediate buffer copy will be performed.
+ * an even multiple of the iMCU height (see #tjMCUHeight), then an intermediate
+ * buffer copy will be performed.
  *
  * @param jpegBuf address of a pointer to a byte buffer that will receive the
  * JPEG image.  TurboJPEG has the ability to reallocate the JPEG buffer to
@@ -1435,7 +1469,7 @@ DLLEXPORT int tj3CompressFromYUV8(tjhandle handle,
  * @ref YUVnotes "YUV Image Format Notes" for more details.
  *
  * @param width width (in pixels) of the source image.  If the width is not an
- * even multiple of the MCU block width (see #tjMCUWidth), then an intermediate
+ * even multiple of the iMCU width (see #tjMCUWidth), then an intermediate
  * buffer copy will be performed.
  *
  * @param strides an array of integers, each specifying the number of bytes per
@@ -1448,8 +1482,8 @@ DLLEXPORT int tj3CompressFromYUV8(tjhandle handle,
  * planar YUV image.
  *
  * @param height height (in pixels) of the source image.  If the height is not
- * an even multiple of the MCU block height (see #tjMCUHeight), then an
- * intermediate buffer copy will be performed.
+ * an even multiple of the iMCU height (see #tjMCUHeight), then an intermediate
+ * buffer copy will be performed.
  *
  * @param jpegBuf address of a pointer to a byte buffer that will receive the
  * JPEG image.  TurboJPEG has the ability to reallocate the JPEG buffer to
@@ -1752,7 +1786,7 @@ DLLEXPORT tjscalingfactor *tj3GetScalingFactors(int *numScalingFactors);
  * #TJPARAM_JPEGHEIGHT) and the specified scaling factor.  When decompressing
  * into a planar YUV image, an intermediate buffer copy will be performed if
  * the width or height of the scaled destination image is not an even multiple
- * of the MCU block size (see #tjMCUWidth and #tjMCUHeight.)  Note that
+ * of the iMCU size (see #tjMCUWidth and #tjMCUHeight.)  Note that
  * decompression scaling is not available (and the specified scaling factor is
  * ignored) when decompressing lossless JPEG images (see #TJPARAM_LOSSLESS),
  * since the IDCT algorithm is not used with those images.  Note also that
@@ -1774,12 +1808,12 @@ DLLEXPORT int tj3SetScalingFactor(tjhandle handle,
  * @param croppingRegion #tjregion structure that specifies a subregion of the
  * JPEG image to decompress, or <tt>#TJUNCROPPED</tt> for no cropping.  The
  * left boundary of the cropping region must be evenly divisible by the scaled
- * MCU block width-- <tt>#TJSCALED(#tjMCUWidth[subsamp], scalingFactor)</tt>,
- * where `subsamp` is the level of chrominance subsampling in the JPEG image
- * (see #TJPARAM_SUBSAMP) and `scalingFactor` is the decompression scaling
- * factor (see #tj3SetScalingFactor().)  The cropping region should be
- * specified relative to the scaled image dimensions.  Unless `croppingRegion`
- * is <tt>#TJUNCROPPED</tt>, the JPEG header must be read (see
+ * iMCU width-- <tt>#TJSCALED(#tjMCUWidth[subsamp], scalingFactor)</tt>, where
+ * `subsamp` is the level of chrominance subsampling in the JPEG image (see
+ * #TJPARAM_SUBSAMP) and `scalingFactor` is the decompression scaling factor
+ * (see #tj3SetScalingFactor().)  The cropping region should be specified
+ * relative to the scaled image dimensions.  Unless `croppingRegion` is
+ * <tt>#TJUNCROPPED</tt>, the JPEG header must be read (see
  * #tj3DecompressHeader()) prior to calling this function.
  *
  * @return 0 if successful, or -1 if an error occurred (see #tj3GetErrorStr().)
@@ -2079,7 +2113,7 @@ DLLEXPORT int tj3DecodeYUVPlanes8(tjhandle handle,
  * this should ensure that the buffer never has to be re-allocated.  (Setting
  * #TJPARAM_NOREALLOC guarantees that it won't be.)  Note, however, that there
  * are some rare cases (such as transforming images with a large amount of
- * embedded EXIF or ICC profile data) in which the transformed JPEG image will
+ * embedded Exif or ICC profile data) in which the transformed JPEG image will
  * be larger than the worst-case size, and #TJPARAM_NOREALLOC cannot be used in
  * those cases.
  * .
