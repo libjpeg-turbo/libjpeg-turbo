@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2011-2023 D. R. Commander.  All Rights Reserved.
+ * Copyright (C)2011-2024 D. R. Commander.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -1132,7 +1132,7 @@ JNIEXPORT jintArray JNICALL Java_org_libjpegturbo_turbojpeg_TJTransformer_transf
   unsigned long *dstSizes = NULL;
   tjtransform *t = NULL;
   jbyteArray *jdstBufs = NULL;
-  int i, jpegWidth = 0, jpegHeight = 0, jpegSubsamp;
+  int i, jpegWidth = 0, jpegHeight = 0, srcSubsamp;
   jintArray jdstSizes = 0;
   jint *dstSizesi = NULL;
   JNICustomFilterParams *params = NULL;
@@ -1146,7 +1146,7 @@ JNIEXPORT jintArray JNICALL Java_org_libjpegturbo_turbojpeg_TJTransformer_transf
   BAILIF0(_fid = (*env)->GetFieldID(env, _cls, "jpegHeight", "I"));
   jpegHeight = (int)(*env)->GetIntField(env, obj, _fid);
   BAILIF0(_fid = (*env)->GetFieldID(env, _cls, "jpegSubsamp", "I"));
-  jpegSubsamp = (int)(*env)->GetIntField(env, obj, _fid);
+  srcSubsamp = (int)(*env)->GetIntField(env, obj, _fid);
 
   n = (*env)->GetArrayLength(env, dstobjs);
   if (n != (*env)->GetArrayLength(env, tobjs))
@@ -1202,6 +1202,10 @@ JNIEXPORT jintArray JNICALL Java_org_libjpegturbo_turbojpeg_TJTransformer_transf
 
   for (i = 0; i < n; i++) {
     int w = jpegWidth, h = jpegHeight;
+    int dstSubsamp = (t[i].options & TJXOPT_GRAY) ? TJSAMP_GRAY : srcSubsamp;
+
+    if (dstSubsamp < 0)
+      THROW_ARG("Could not determine subsampling type for JPEG image");
 
     if (t[i].op == TJXOP_TRANSPOSE || t[i].op == TJXOP_TRANSVERSE ||
         t[i].op == TJXOP_ROT90 || t[i].op == TJXOP_ROT270) {
@@ -1211,7 +1215,7 @@ JNIEXPORT jintArray JNICALL Java_org_libjpegturbo_turbojpeg_TJTransformer_transf
     if (t[i].r.h != 0) h = t[i].r.h;
     BAILIF0(jdstBufs[i] = (*env)->GetObjectArrayElement(env, dstobjs, i));
     if ((unsigned long)(*env)->GetArrayLength(env, jdstBufs[i]) <
-        tjBufSize(w, h, jpegSubsamp))
+        tjBufSize(w, h, dstSubsamp))
       THROW_ARG("Destination buffer is not large enough");
   }
   BAILIF0NOEC(jpegBuf = (*env)->GetPrimitiveArrayCritical(env, jsrcBuf, 0));

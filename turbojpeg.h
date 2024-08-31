@@ -651,12 +651,12 @@ typedef struct {
 typedef struct {
   /**
    * The left boundary of the cropping region.  This must be evenly divisible
-   * by the iMCU width (see #tjMCUWidth.)
+   * by the iMCU width (see #tjMCUWidth) of the destination image.
    */
   int x;
   /**
    * The upper boundary of the cropping region.  This must be evenly divisible
-   * by the iMCU height (see #tjMCUHeight.)
+   * by the iMCU height (see #tjMCUHeight) of the destination image.
    */
   int y;
   /**
