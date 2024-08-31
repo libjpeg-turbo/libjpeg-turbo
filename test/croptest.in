@@ -22,9 +22,9 @@ runme()
 IMAGE=vgl_6548_0026a.bmp
 WIDTH=128
 HEIGHT=95
-IMGDIR=@CMAKE_CURRENT_SOURCE_DIR@/testimages
+IMGDIR=@CMAKE_SOURCE_DIR@/testimages
 OUTDIR=`mktemp -d /tmp/__croptest_output.XXXXXX`
-EXEDIR=@CMAKE_CURRENT_BINARY_DIR@
+EXEDIR=@CMAKE_BINARY_DIR@
 
 if [ -d $OUTDIR ]; then
 	rm -rf $OUTDIR

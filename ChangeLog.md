@@ -6,8 +6,9 @@
 1. The libjpeg-turbo source tree has been reorganized to make it easier to find
 the README files, license information, and build instructions.  The
 documentation for the libjpeg API library and associated programs has been
-moved into the **doc/** subdirectory, and all C source code and headers have
-been moved into a new **src/** subdirectory.
+moved into the **doc/** subdirectory, all C source code and headers have been
+moved into a new **src/** subdirectory, and test scripts have been moved into a
+new **test/** subdirectory.
 
 2. Added a new TJBench option (`-gray`) that can be used to test the
 performance of compressing/decompressing a grayscale JPEG image from/to a

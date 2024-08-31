@@ -15,7 +15,7 @@ endmacro()
 macro(run_test PROG ARGS)
   string(REPLACE ";" " " SPACED_ARGS "${ARGS}")
   message(STATUS "${PROG} ${SPACED_ARGS}")
-  execute_process(COMMAND ${CMAKE_CURRENT_BINARY_DIR}/${PROG} ${ARGS}
+  execute_process(COMMAND ${CMAKE_CURRENT_BINARY_DIR}/test/${PROG} ${ARGS}
     RESULT_VARIABLE RESULT)
   check_error("${PROG} ${SPACED_ARGS}")
 endmacro()
