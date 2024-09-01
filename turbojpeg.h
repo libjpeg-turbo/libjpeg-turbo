@@ -150,14 +150,16 @@ enum TJSAMP {
  * In a typical JPEG image, 8x8 blocks of DCT coefficients for each component
  * are interleaved in a single scan.  If the image uses chrominance
  * subsampling, then multiple luminance blocks are stored together, followed by
- * a single block for each chrominance component.  The combination of the
- * full-resolution luminance block(s) and the (possibly subsampled) chrominance
- * blocks corresponding to the same pixels is called a "Minimum Coded Unit"
- * (MCU.)  In a non-interleaved JPEG image, each component is stored in a
- * separate scan, and an MCU is a single DCT block, so we use the term "iMCU"
- * (interleaved MCU) to refer to the equivalent of an MCU in an interleaved
- * JPEG image.  For the common case of interleaved JPEG images, an iMCU is the
- * same as an MCU.
+ * a single block for each chrominance component.  The minimum set of
+ * full-resolution luminance block(s) and corresponding (possibly subsampled)
+ * chrominance blocks necessary to represent at least one DCT block per
+ * component is called a "Minimum Coded Unit" or "MCU".  (For example, an MCU
+ * in an interleaved JPEG image that uses 4:2:2 subsampling consists of two
+ * luminance blocks followed by one block for each chrominance component.)  In
+ * a non-interleaved JPEG image, each component is stored in a separate scan,
+ * and an MCU is a single DCT block, so we use the term "iMCU" (interleaved
+ * MCU) to refer to the equivalent of an MCU in an interleaved JPEG image.  For
+ * the common case of interleaved JPEG images, an iMCU is the same as an MCU.
  *
  * iMCU sizes:
  * - 8x8 for no subsampling or grayscale
@@ -174,14 +176,16 @@ static const int tjMCUWidth[TJ_NUMSAMP]  = { 8, 16, 16, 8, 8, 32 };
  * In a typical JPEG image, 8x8 blocks of DCT coefficients for each component
  * are interleaved in a single scan.  If the image uses chrominance
  * subsampling, then multiple luminance blocks are stored together, followed by
- * a single block for each chrominance component.  The combination of the
- * full-resolution luminance block(s) and the (possibly subsampled) chrominance
- * blocks corresponding to the same pixels is called a "Minimum Coded Unit"
- * (MCU.)  In a non-interleaved JPEG image, each component is stored in a
- * separate scan, and an MCU is a single DCT block, so we use the term "iMCU"
- * (interleaved MCU) to refer to the equivalent of an MCU in an interleaved
- * JPEG image.  For the common case of interleaved JPEG images, an iMCU is the
- * same as an MCU.
+ * a single block for each chrominance component.  The minimum set of
+ * full-resolution luminance block(s) and corresponding (possibly subsampled)
+ * chrominance blocks necessary to represent at least one DCT block per
+ * component is called a "Minimum Coded Unit" or "MCU".  (For example, an MCU
+ * in an interleaved JPEG image that uses 4:2:2 subsampling consists of two
+ * luminance blocks followed by one block for each chrominance component.)  In
+ * a non-interleaved JPEG image, each component is stored in a separate scan,
+ * and an MCU is a single DCT block, so we use the term "iMCU" (interleaved
+ * MCU) to refer to the equivalent of an MCU in an interleaved JPEG image.  For
+ * the common case of interleaved JPEG images, an iMCU is the same as an MCU.
  *
  * iMCU sizes:
  * - 8x8 for no subsampling or grayscale
