@@ -554,6 +554,8 @@ final class TJBench {
     tjt.set(TJ.PARAM_FASTUPSAMPLE, fastUpsample ? 1 : 0);
     tjt.set(TJ.PARAM_FASTDCT, fastDCT ? 1 : 0);
     tjt.set(TJ.PARAM_SCANLIMIT, maxScans);
+    tjt.set(TJ.PARAM_RESTARTBLOCKS, restartIntervalBlocks);
+    tjt.set(TJ.PARAM_RESTARTROWS, restartIntervalRows);
     tjt.set(TJ.PARAM_MAXMEMORY, maxMemory);
     tjt.set(TJ.PARAM_MAXPIXELS, maxPixels);
 
@@ -808,7 +810,7 @@ final class TJBench {
     System.out.println("-quiet");
     System.out.println("    Output results in tabular rather than verbose format");
     System.out.println("-restart N");
-    System.out.println("    When compressing, add a restart marker every N MCU rows");
+    System.out.println("    When compressing or transforming, add a restart marker every N MCU rows");
     System.out.println("    [default = 0 (no restart markers)].  Append 'B' to specify the restart");
     System.out.println("    marker interval in MCUs (lossy only.)");
     System.out.println("-strict");

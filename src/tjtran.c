@@ -32,7 +32,6 @@
  * functionality of the IJG's jpegtran program.  jpegtran features that are not
  * covered:
  *
- * - Adding restart markers to the output image
  * - Scan scripts
  * - Expanding the input image when cropping
  * - Wiping a region of the input image
@@ -136,6 +135,9 @@ static void usage(char *programName)
   printf("    Create a progressive output image instead of a single-scan output image\n");
   printf("    (can be combined with -arithmetic; implies -optimize unless -arithmetic is\n");
   printf("    also specified)\n");
+  printf("-restart N\n");
+  printf("    Add a restart marker every N MCU rows [default = 0 (no restart markers)].\n");
+  printf("    Append 'B' to specify the restart marker interval in MCUs.\n");
   printf("-strict\n");
   printf("    Treat all warnings as fatal; abort immediately if incomplete or corrupt\n");
   printf("    data is encountered in the input image, rather than trying to salvage the\n");
@@ -152,7 +154,8 @@ int main(int argc, char **argv)
 {
   int i, retval = 0;
   int arithmetic = 0, maxMemory = -1, maxScans = -1, optimize = -1,
-    progressive = 0, stopOnWarning = -1, subsamp;
+    progressive = 0, restartIntervalBlocks = -1, restartIntervalRows = -1,
+    stopOnWarning = -1, subsamp;
   tjtransform xform;
   tjhandle tjInstance = NULL;
   FILE *jpegFile = NULL;
@@ -208,7 +211,7 @@ int main(int argc, char **argv)
       xform.options |= TJXOPT_PERFECT;
     else if (MATCH_ARG(argv[i], "-progressive", 2))
       progressive = 1;
-    else if (MATCH_ARG(argv[i], "-rotate", 2) && i < argc - 1) {
+    else if (MATCH_ARG(argv[i], "-rotate", 3) && i < argc - 1) {
       i++;
       if (MATCH_ARG(argv[i], "90", 2))
         xform.op = TJXOP_ROT90;
@@ -218,6 +221,18 @@ int main(int argc, char **argv)
         xform.op = TJXOP_ROT270;
       else
         usage(argv[0]);
+    } else if (MATCH_ARG(argv[i], "-restart", 2) && i < argc - 1) {
+      int tempi = -1, nscan;  char tempc = 0;
+
+      if ((nscan = sscanf(argv[++i], "%d%c", &tempi, &tempc)) < 1 ||
+          tempi < 0 || tempi > 65535 ||
+          (nscan == 2 && tempc != 'B' && tempc != 'b'))
+        usage(argv[0]);
+
+      if (tempc == 'B' || tempc == 'b')
+        restartIntervalBlocks = tempi;
+      else
+        restartIntervalRows = tempi;
     } else if (MATCH_ARG(argv[i], "-strict", 2))
       stopOnWarning = 1;
     else if (MATCH_ARG(argv[i], "-transverse", 7))
@@ -242,6 +257,12 @@ int main(int argc, char **argv)
     THROW_TJ("setting TJPARAM_OPTIMIZE");
   if (maxScans >= 0 && tj3Set(tjInstance, TJPARAM_SCANLIMIT, maxScans) < 0)
     THROW_TJ("setting TJPARAM_SCANLIMIT");
+  if (restartIntervalBlocks >= 0 &&
+      tj3Set(tjInstance, TJPARAM_RESTARTBLOCKS, restartIntervalBlocks) < 0)
+    THROW_TJ("setting TJPARAM_RESTARTBLOCKS");
+  if (restartIntervalRows >= 0 &&
+      tj3Set(tjInstance, TJPARAM_RESTARTROWS, restartIntervalRows) < 0)
+    THROW_TJ("setting TJPARAM_RESTARTROWS");
   if (maxMemory >= 0 && tj3Set(tjInstance, TJPARAM_MAXMEMORY, maxMemory) < 0)
     THROW_TJ("setting TJPARAM_MAXMEMORY");
 

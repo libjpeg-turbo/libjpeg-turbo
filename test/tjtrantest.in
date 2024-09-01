@@ -70,6 +70,8 @@ for precision in 8 12; do
 			EXTRA_ARGS=-a
 		elif [ $sampi = 3 ]; then
 			EXTRA_ARGS=-o
+		elif [ $sampi = 5 ]; then
+			EXTRA_ARGS="-r 1"
 		fi
 		runme $EXEDIR/cjpeg -pre $precision -sa ${SAMPOPT[$sampi]} $EXTRA_ARGS \
 			-outf $OUTDIR/`basename $RGBIMG .ppm`-${SUBSAMPOPT[$sampi]}.jpg $RGBIMG
@@ -120,31 +122,36 @@ for precision in 8 12; do
 									if [[ "$progarg" = "-p" && "$optarg" = "-o" ]]; then
 										continue
 									fi
-									for trimarg in "" "-tri"; do
-										if [ "$trimarg" = "-tri" ]; then
-											if [[ "$xformarg" = "-t" || "$xformarg" = "" ]]; then
-												continue
-											fi
-											if [ "$croparg" != "" ]; then
-												continue
-											fi
+									for restartarg in "" "-r 1" "-r 1b"; do
+										if [[ "$restartarg" = "-r 1b" && "$croparg" != "" ]]; then
+											continue
 										fi
-										runme $TJTRAN $ariarg $copyarg $croparg $xformarg \
-											$grayarg $optarg $progarg $trimarg \
-											$OUTDIR/${basename}-$subsamp.jpg \
-											$OUTDIR/${basename}-tjtran.jpg
-										runme $EXEDIR/jpegtran $ariarg $copyarg $croparg \
-											$xformarg $grayarg $optarg $progarg $trimarg \
-											-outf $OUTDIR/${basename}-jpegtran.jpg \
-											$OUTDIR/${basename}-$subsamp.jpg
-										$EXEDIR/test/md5sum $OUTDIR/${basename}-tjtran.jpg \
-											$OUTDIR/${basename}-jpegtran.jpg |
-											sed "s@$OUTDIR@\$OUTDIR@g"
-										cmp $OUTDIR/${basename}-tjtran.jpg \
-											$OUTDIR/${basename}-jpegtran.jpg
-										rm $OUTDIR/${basename}-tjtran.jpg \
-											$OUTDIR/${basename}-jpegtran.jpg
-										echo
+										for trimarg in "" "-tri"; do
+											if [ "$trimarg" = "-tri" ]; then
+												if [[ "$xformarg" = "-t" || "$xformarg" = "" ]]; then
+													continue
+												fi
+												if [ "$croparg" != "" ]; then
+													continue
+												fi
+											fi
+											runme $TJTRAN $ariarg $copyarg $croparg $xformarg \
+												$grayarg $optarg $progarg $restartarg $trimarg \
+												$OUTDIR/${basename}-$subsamp.jpg \
+												$OUTDIR/${basename}-tjtran.jpg
+											runme $EXEDIR/jpegtran $ariarg $copyarg $croparg \
+												$xformarg $grayarg $optarg $progarg $restartarg \
+												$trimarg -outf $OUTDIR/${basename}-jpegtran.jpg \
+												$OUTDIR/${basename}-$subsamp.jpg
+											$EXEDIR/test/md5sum $OUTDIR/${basename}-tjtran.jpg \
+												$OUTDIR/${basename}-jpegtran.jpg |
+												sed "s@$OUTDIR@\$OUTDIR@g"
+											cmp $OUTDIR/${basename}-tjtran.jpg \
+												$OUTDIR/${basename}-jpegtran.jpg
+											rm $OUTDIR/${basename}-tjtran.jpg \
+												$OUTDIR/${basename}-jpegtran.jpg
+											echo
+										done
 									done
 								done
 							done

@@ -670,6 +670,10 @@ static int decompTest(char *fileName)
     THROW_TJ();
   if (tj3Set(handle, TJPARAM_SCANLIMIT, maxScans) == -1)
     THROW_TJ();
+  if (tj3Set(handle, TJPARAM_RESTARTBLOCKS, restartIntervalBlocks) == -1)
+    THROW_TJ();
+  if (tj3Set(handle, TJPARAM_RESTARTROWS, restartIntervalRows) == -1)
+    THROW_TJ();
   if (tj3Set(handle, TJPARAM_MAXMEMORY, maxMemory) == -1)
     THROW_TJ();
   if (tj3Set(handle, TJPARAM_MAXPIXELS, maxPixels) == -1)
@@ -949,7 +953,7 @@ static void usage(char *progName)
   printf("-quiet\n");
   printf("    Output results in tabular rather than verbose format\n");
   printf("-restart N\n");
-  printf("    When compressing, add a restart marker every N MCU rows\n");
+  printf("    When compressing or transforming, add a restart marker every N MCU rows\n");
   printf("    [default = 0 (no restart markers)].  Append 'B' to specify the restart\n");
   printf("    marker interval in MCUs (lossy only.)\n");
   printf("-strict\n");

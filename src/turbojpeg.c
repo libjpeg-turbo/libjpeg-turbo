@@ -2791,6 +2791,8 @@ DLLEXPORT int tj3Transform(tjhandle handle, const unsigned char *jpegBuf,
       cinfo->arith_code = TRUE;
       cinfo->optimize_coding = FALSE;
     }
+    cinfo->restart_interval = this->restartIntervalBlocks;
+    cinfo->restart_in_rows = this->restartIntervalRows;
     if (!(t[i].options & TJXOPT_NOOUTPUT)) {
       jpeg_write_coefficients(cinfo, dstcoefs);
       jcopy_markers_execute(dinfo, cinfo, t[i].options & TJXOPT_COPYNONE ?

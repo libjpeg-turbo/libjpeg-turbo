@@ -60,6 +60,10 @@ djpeg, and jpegtran.)
 `TJDecompressor.saveImage()`) have been added to the Java API.  These methods
 work similarly to the `tj3LoadImage*()` and `tj3SaveImage*()` functions in the
 C API.
+     - The TurboJPEG lossless transformation function and methods now add
+restart markers to all destination images if
+`TJPARAM_RESTARTBLOCKS`/`TJ.PARAM_RESTARTBLOCKS` or
+`TJPARAM_RESTARTROWS`/`TJ.PARAM_RESTARTROWS` is set.
 
 8. TJExample has been replaced with three programs (TJComp, TJDecomp, and
 TJTran) that demonstrate how to approximate the functionality of cjpeg, djpeg,

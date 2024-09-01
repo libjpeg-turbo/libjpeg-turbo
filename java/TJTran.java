@@ -32,7 +32,6 @@
  * functionality of the IJG's jpegtran program.  jpegtran features that are not
  * covered:
  *
- * - Adding restart markers to the output image
  * - Scan scripts
  * - Expanding the input image when cropping
  * - Wiping a region of the input image
@@ -113,6 +112,9 @@ final class TJTran {
     System.out.println("    Create a progressive output image instead of a single-scan output image");
     System.out.println("    (can be combined with -arithmetic; implies -optimize unless -arithmetic is");
     System.out.println("    also specified)");
+    System.out.println("-restart N");
+    System.out.println("    Add a restart marker every N MCU rows [default = 0 (no restart markers)].");
+    System.out.println("    Append 'B' to specify the restart marker interval in MCUs.");
     System.out.println("-trim");
     System.out.println("    If necessary, trim the partial iMCUs at the right or bottom edge of the");
     System.out.println("    image to make the requested transform perfect\n");
@@ -142,7 +144,8 @@ final class TJTran {
 
       int i;
       int arithmetic = 0, maxMemory = -1, maxScans = -1, optimize = -1,
-        progressive = 0, subsamp;
+        progressive = 0, restartIntervalBlocks = -1, restartIntervalRows = -1,
+        subsamp;
       TJTransform[] xform = new TJTransform[1];
       xform[0] = new TJTransform();
       byte[] srcBuf;
@@ -212,7 +215,7 @@ final class TJTran {
           xform[0].options |= TJTransform.OPT_PERFECT;
         else if (matchArg(argv[i], "-progressive", 2))
           progressive = 1;
-        else if (matchArg(argv[i], "-rotate", 2) && i < argv.length - 1) {
+        else if (matchArg(argv[i], "-rotate", 3) && i < argv.length - 1) {
           i++;
           if (matchArg(argv[i], "90", 2))
             xform[0].op = TJTransform.OP_ROT90;
@@ -222,6 +225,21 @@ final class TJTran {
             xform[0].op = TJTransform.OP_ROT270;
           else
             usage();
+        } else if (matchArg(argv[i], "-restart", 2) && i < argv.length - 1) {
+          int temp = -1;
+          String arg = argv[++i];
+          Scanner scanner = new Scanner(arg).useDelimiter("b|B");
+
+          try {
+            temp = scanner.nextInt();
+          } catch (Exception e) {}
+
+          if (temp < 0 || temp > 65535 || scanner.hasNext())
+            usage();
+          if (arg.endsWith("B") || arg.endsWith("b"))
+            restartIntervalBlocks = temp;
+          else
+            restartIntervalRows = temp;
         } else if (matchArg(argv[i], "-transverse", 7))
           xform[0].op = TJTransform.OP_TRANSVERSE;
         else if (matchArg(argv[i], "-trim", 4))
@@ -240,6 +258,10 @@ final class TJTran {
         tjt.set(TJ.PARAM_OPTIMIZE, optimize);
       if (maxScans >= 0)
         tjt.set(TJ.PARAM_SCANLIMIT, maxScans);
+      if (restartIntervalBlocks >= 0)
+        tjt.set(TJ.PARAM_RESTARTBLOCKS, restartIntervalBlocks);
+      if (restartIntervalRows >= 0)
+        tjt.set(TJ.PARAM_RESTARTROWS, restartIntervalRows);
       if (maxMemory >= 0)
         tjt.set(TJ.PARAM_MAXMEMORY, maxMemory);
 

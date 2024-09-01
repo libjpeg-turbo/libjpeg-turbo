@@ -793,7 +793,8 @@ enum TJPARAM {
    */
   TJPARAM_LOSSLESSPT,
   /**
-   * JPEG restart marker interval in MCUs [lossy compression only]
+   * JPEG restart marker interval in MCUs [lossy compression,
+   * lossless transformation]
    *
    * The nature of entropy coding is such that a corrupt JPEG image cannot
    * be decompressed beyond the point of corruption unless it contains restart
@@ -819,7 +820,8 @@ enum TJPARAM {
    */
   TJPARAM_RESTARTBLOCKS,
   /**
-   * JPEG restart marker interval in MCU rows [compression only]
+   * JPEG restart marker interval in MCU rows [compression,
+   * lossless transformation]
    *
    * See #TJPARAM_RESTARTBLOCKS for a description of restart markers and MCUs.
    * An MCU row is a row of MCUs spanning the entire width of the image.
