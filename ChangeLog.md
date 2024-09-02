@@ -34,8 +34,8 @@ API documentation for more details.
 5. All deprecated constants and methods in the TurboJPEG Java API have been
 removed.
 
-6. TJBench command-line arguments have been made more consistent with those of
-cjpeg, djpeg, and jpegtran.  More specifically:
+6. TJBench command-line arguments are now more consistent with those of cjpeg,
+djpeg, and jpegtran.  More specifically:
 
      - `-fastdct` has been replaced with `-dct fast`.
      - `-fastupsample` has been replaced with `-nosmooth`.
