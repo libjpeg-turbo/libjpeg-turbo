@@ -43,7 +43,7 @@ while [ $# -gt 0 ]; do
 	shift
 done
 
-exec >$EXEDIR/tjtrantest$JAVAARG.log
+exec >$EXEDIR/test/tjtrantest$JAVAARG.log
 
 echo "EXEDIR: $EXEDIR"
 echo "IMGDIR: $IMGDIR"

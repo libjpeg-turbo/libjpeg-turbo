@@ -31,7 +31,7 @@ if [ -d $OUTDIR ]; then
 fi
 mkdir -p $OUTDIR
 
-exec >$EXEDIR/croptest.log
+exec >$EXEDIR/test/croptest.log
 
 echo "============================================================"
 echo "$IMAGE ($WIDTH x $HEIGHT)"

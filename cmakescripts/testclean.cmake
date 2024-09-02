@@ -38,11 +38,11 @@ file(GLOB FILES
   *_LOSSL*S_*.bmp
   *_LOSSL*S_*.ppm
   *_LOSSL*S_*.jpg
-  croptest.log
-  tjbenchtest*.log
-  tjcomptest*.log
-  tjdecomptest*.log
-  tjtrantest*.log)
+  test/croptest.log
+  test/tjbenchtest*.log
+  test/tjcomptest*.log
+  test/tjdecomptest*.log
+  test/tjtrantest*.log)
 
 if(NOT FILES STREQUAL "")
   message(STATUS "Removing test files")
