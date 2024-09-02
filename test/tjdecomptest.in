@@ -103,7 +103,7 @@ for precision in 8 12; do
 							runme $EXEDIR/djpeg $croparg $dctarg $nsarg $scalearg \
 								-outf $OUTDIR/${basename}-djpeg.pgm \
 								$OUTDIR/${basename}-$subsamp.jpg
-							$EXEDIR/src/md5/md5sum $OUTDIR/${basename}-tjdecomp.pgm \
+							$EXEDIR/test/md5sum $OUTDIR/${basename}-tjdecomp.pgm \
 								$OUTDIR/${basename}-djpeg.pgm | sed "s@$OUTDIR@\$OUTDIR@g"
 							cmp $OUTDIR/${basename}-tjdecomp.pgm \
 								$OUTDIR/${basename}-djpeg.pgm
@@ -116,7 +116,7 @@ for precision in 8 12; do
 							runme $EXEDIR/djpeg $croparg $dctarg $nsarg $scalearg \
 								-rg -outf $OUTDIR/${basename}-djpeg.ppm \
 								$OUTDIR/${basename}-$subsamp.jpg
-							$EXEDIR/src/md5/md5sum $OUTDIR/${basename}-tjdecomp.ppm \
+							$EXEDIR/test/md5sum $OUTDIR/${basename}-tjdecomp.ppm \
 								$OUTDIR/${basename}-djpeg.ppm | sed "s@$OUTDIR@\$OUTDIR@g"
 							cmp $OUTDIR/${basename}-tjdecomp.ppm \
 								$OUTDIR/${basename}-djpeg.ppm
@@ -130,7 +130,7 @@ for precision in 8 12; do
 							runme $EXEDIR/djpeg $croparg $dctarg $nsarg $scalearg \
 								-outf $OUTDIR/${basename}-djpeg.ppm \
 								$OUTDIR/${basename}-$subsamp.jpg
-							$EXEDIR/src/md5/md5sum $OUTDIR/${basename}-tjdecomp.ppm \
+							$EXEDIR/test/md5sum $OUTDIR/${basename}-tjdecomp.ppm \
 								$OUTDIR/${basename}-djpeg.ppm | sed "s@$OUTDIR@\$OUTDIR@g"
 							cmp $OUTDIR/${basename}-tjdecomp.ppm \
 								$OUTDIR/${basename}-djpeg.ppm
@@ -144,7 +144,7 @@ for precision in 8 12; do
 								runme $EXEDIR/djpeg $croparg $dctarg $nsarg $scalearg \
 									-gr -outf $OUTDIR/${basename}-djpeg.pgm \
 									$OUTDIR/${basename}-$subsamp.jpg
-								$EXEDIR/src/md5/md5sum $OUTDIR/${basename}-tjdecomp.pgm \
+								$EXEDIR/test/md5sum $OUTDIR/${basename}-tjdecomp.pgm \
 									$OUTDIR/${basename}-djpeg.pgm | sed "s@$OUTDIR@\$OUTDIR@g"
 								cmp $OUTDIR/${basename}-tjdecomp.pgm \
 									$OUTDIR/${basename}-djpeg.pgm
@@ -179,7 +179,7 @@ for precision in {2..16}; do
 		$OUTDIR/${basename}-tjdecomp.ppm
 	runme $EXEDIR/djpeg -outf $OUTDIR/${basename}-djpeg.ppm \
 		$OUTDIR/${basename}-rgb.jpg
-	$EXEDIR/src/md5/md5sum $OUTDIR/${basename}-tjdecomp.ppm \
+	$EXEDIR/test/md5sum $OUTDIR/${basename}-tjdecomp.ppm \
 		$OUTDIR/${basename}-djpeg.ppm | sed "s@$OUTDIR@\$OUTDIR@g"
 	cmp $OUTDIR/${basename}-tjdecomp.ppm $OUTDIR/${basename}-djpeg.ppm
 	rm $OUTDIR/${basename}-tjdecomp.ppm $OUTDIR/${basename}-djpeg.ppm
@@ -195,7 +195,7 @@ for precision in {2..16}; do
 		$OUTDIR/${basename}-tjdecomp.pgm
 	runme $EXEDIR/djpeg -outf $OUTDIR/${basename}-djpeg.pgm \
 		$OUTDIR/${basename}-gray.jpg
-	$EXEDIR/src/md5/md5sum $OUTDIR/${basename}-tjdecomp.pgm \
+	$EXEDIR/test/md5sum $OUTDIR/${basename}-tjdecomp.pgm \
 		$OUTDIR/${basename}-djpeg.pgm | sed "s@$OUTDIR@\$OUTDIR@g"
 	cmp $OUTDIR/${basename}-tjdecomp.pgm $OUTDIR/${basename}-djpeg.pgm
 	rm $OUTDIR/${basename}-tjdecomp.pgm $OUTDIR/${basename}-djpeg.pgm
