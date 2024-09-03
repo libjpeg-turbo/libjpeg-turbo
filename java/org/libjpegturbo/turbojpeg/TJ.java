@@ -951,6 +951,38 @@ public final class TJ {
    * </ul>
    */
   public static final int PARAM_MAXPIXELS = 24;
+  /**
+   * Marker copying behavior [decompression, lossless transformation]
+   *
+   * <p><b>Value [lossless transformation]</b>
+   * <ul>
+   * <li> <code>0</code> Do not copy any extra markers (including comments,
+   * JFIF thumbnails, Exif data, and ICC profile data) from the source image to
+   * the destination image.
+   * <li> <code>1</code> Do not copy any extra markers, except comment (COM)
+   * markers, from the source image to the destination image.
+   * <li> <code>2</code> <i>[default]</i> Copy all extra markers from the
+   * source image to the destination image.
+   * <li> <code>3</code> Copy all extra markers, except ICC profile data (APP2
+   * markers), from the source image to the destination image.
+   * <li> <code>4</code> Do not copy any extra markers, except ICC profile data
+   * (APP2 markers), from the source image to the destination image.
+   * </ul>
+   *
+   * <p>{@link TJTransform#OPT_COPYNONE} overrides this parameter for a
+   * particular transform.  This parameter overrides any ICC profile that was
+   * previously associated with a compressor instance using
+   * {@link TJCompressor#setICCProfile TJCompressor.setICCProfile()} or with a
+   * transformer instance using {@link TJTransformer#setICCProfile
+   * TJTransformer.setICCProfile()}.
+   *
+   * <p>When decompressing, associating a JPEG source image with the
+   * decompressor instance extracts the ICC profile from the source image if
+   * this parameter is set to <code>2</code> or <code>4</code>.
+   * {@link TJDecompressor#getICCProfile} can then be used to retrieve the
+   * profile.
+   */
+  public static final int PARAM_SAVEMARKERS = 25;
 
 
   /**

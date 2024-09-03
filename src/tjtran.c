@@ -103,9 +103,15 @@ static void usage(char *programName)
   printf("    entropy coding (can be combined with -progressive)\n");
   printf("-copy all\n");
   printf("    Copy all extra markers (including comments, JFIF thumbnails, Exif data, and\n");
-  printf("    ICC profile data) from the input image to the output image [default]\n");
+  printf("    ICC profile data) from the input image to the output image\n");
+  printf("-copy comments\n");
+  printf("    Do not copy any extra markers, except comment markers, from the input\n");
+  printf("    image to the output image [default]\n");
+  printf("-copy icc\n");
+  printf("    Do not copy any extra markers, except ICC profile data, from the input\n");
+  printf("    image to the output image\n");
   printf("-copy none\n");
-  printf("    Copy no extra markers from the input image to the output image\n");
+  printf("    Do not copy any extra markers from the input image to the output image\n");
   printf("-crop WxH+X+Y\n");
   printf("    Include only the specified region of the input image.  (W, H, X, and Y are\n");
   printf("    the width, height, left boundary, and upper boundary of the region, all\n");
@@ -117,6 +123,9 @@ static void usage(char *programName)
   printf("    mutually exclusive)\n");
   printf("-grayscale\n");
   printf("    Create a grayscale output image from a full-color input image\n");
+  printf("-icc FILE\n");
+  printf("    Embed the ICC (International Color Consortium) color management profile\n");
+  printf("    from the specified file into the output image\n");
   printf("-maxmemory N\n");
   printf("    Memory limit (in megabytes) for intermediate buffers used with progressive\n");
   printf("    JPEG compression, Huffman table optimization, and lossless transformation\n");
@@ -155,13 +164,14 @@ int main(int argc, char **argv)
   int i, retval = 0;
   int arithmetic = 0, maxMemory = -1, maxScans = -1, optimize = -1,
     progressive = 0, restartIntervalBlocks = -1, restartIntervalRows = -1,
-    stopOnWarning = -1, subsamp;
+    saveMarkers = 1, stopOnWarning = -1, subsamp;
   tjtransform xform;
+  char *iccFilename = NULL;
   tjhandle tjInstance = NULL;
-  FILE *jpegFile = NULL;
+  FILE *iccFile = NULL, *jpegFile = NULL;
   long size = 0;
-  size_t srcSize, dstSize;
-  unsigned char *srcBuf = NULL, *dstBuf = NULL;
+  size_t srcSize, iccSize, dstSize;
+  unsigned char *srcBuf = NULL, *iccBuf = NULL, *dstBuf = NULL;
 
   memset(&xform, 0, sizeof(tjtransform));
 
@@ -179,9 +189,13 @@ int main(int argc, char **argv)
       xform.options |= TJXOPT_CROP;
     } else if (MATCH_ARG(argv[i], "-copy", 2) && i < argc - 1) {
       i++;
-      if (MATCH_ARG(argv[i], "none", 1))
-        xform.options |= TJXOPT_COPYNONE;
-      else if (!MATCH_ARG(argv[i], "all", 1))
+      if (MATCH_ARG(argv[i], "all", 1))
+        saveMarkers = 2;
+      else if (MATCH_ARG(argv[i], "icc", 1))
+        saveMarkers = 4;
+      else if (MATCH_ARG(argv[i], "none", 1))
+        saveMarkers = 0;
+      else if (!MATCH_ARG(argv[i], "comments", 1))
         usage(argv[0]);
     } else if (MATCH_ARG(argv[i], "-flip", 2) && i < argc - 1) {
       i++;
@@ -194,6 +208,8 @@ int main(int argc, char **argv)
     } else if (MATCH_ARG(argv[i], "-grayscale", 2) ||
                MATCH_ARG(argv[i], "-greyscale", 2))
       xform.options |= TJXOPT_GRAY;
+    else if (MATCH_ARG(argv[i], "-icc", 2) && i < argc - 1)
+      iccFilename = argv[++i];
     else if (MATCH_ARG(argv[i], "-maxscans", 5) && i < argc - 1) {
       int tempi = atoi(argv[++i]);
 
@@ -247,6 +263,11 @@ int main(int argc, char **argv)
   if (i != argc - 2)
     usage(argv[0]);
 
+  if (iccFilename) {
+    if (saveMarkers == 2) saveMarkers = 3;
+    else if (saveMarkers == 4) saveMarkers = 0;
+  }
+
   if ((tjInstance = tj3Init(TJINIT_TRANSFORM)) == NULL)
     THROW_TJ("creating TurboJPEG instance");
 
@@ -265,6 +286,8 @@ int main(int argc, char **argv)
     THROW_TJ("setting TJPARAM_RESTARTROWS");
   if (maxMemory >= 0 && tj3Set(tjInstance, TJPARAM_MAXMEMORY, maxMemory) < 0)
     THROW_TJ("setting TJPARAM_MAXMEMORY");
+  if (tj3Set(tjInstance, TJPARAM_SAVEMARKERS, saveMarkers) < 0)
+    THROW_TJ("setting TJPARAM_SAVEMARKERS");
 
   if ((jpegFile = fopen(argv[i++], "rb")) == NULL)
     THROW_UNIX("opening input file");
@@ -312,6 +335,25 @@ int main(int argc, char **argv)
     xform.r.h += yAdjust;
   }
 
+  if (iccFilename) {
+    if ((iccFile = fopen(iccFilename, "rb")) == NULL)
+      THROW_UNIX("opening ICC profile");
+    if (fseek(iccFile, 0, SEEK_END) < 0 || ((size = ftell(iccFile)) < 0) ||
+        fseek(iccFile, 0, SEEK_SET) < 0)
+      THROW_UNIX("determining ICC profile size");
+    if (size == 0)
+      THROW("determining ICC profile size", "ICC profile contains no data");
+    iccSize = size;
+    if ((iccBuf = (unsigned char *)malloc(iccSize)) == NULL)
+      THROW_UNIX("allocating ICC profile buffer");
+    if (fread(iccBuf, iccSize, 1, iccFile) < 1)
+      THROW_UNIX("reading ICC profile");
+    fclose(iccFile);  iccFile = NULL;
+    if (tj3SetICCProfile(tjInstance, iccBuf, iccSize) < 0)
+      THROW_TJ("setting ICC profile");
+    free(iccBuf);  iccBuf = NULL;
+  }
+
   if (tj3Transform(tjInstance, srcBuf, srcSize, 1, &dstBuf, &dstSize,
                    &xform) < 0)
     THROW_TJ("transforming input image");
@@ -325,6 +367,8 @@ int main(int argc, char **argv)
 bailout:
   tj3Destroy(tjInstance);
   tj3Free(srcBuf);
+  if (iccFile) fclose(iccFile);
+  free(iccBuf);
   if (jpegFile) fclose(jpegFile);
   tj3Free(dstBuf);
   return retval;

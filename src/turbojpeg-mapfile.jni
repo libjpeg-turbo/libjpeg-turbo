@@ -126,7 +126,6 @@ TURBOJPEG_3
     Java_org_libjpegturbo_turbojpeg_TJCompressor_encodeYUV8___3BIIIIII_3_3B_3I_3I;
     Java_org_libjpegturbo_turbojpeg_TJCompressor_encodeYUV8___3IIIIIII_3_3B_3I_3I;
     Java_org_libjpegturbo_turbojpeg_TJCompressor_get;
-    Java_org_libjpegturbo_turbojpeg_TJCompressor_loadSourceImage;
     Java_org_libjpegturbo_turbojpeg_TJCompressor_set;
     Java_org_libjpegturbo_turbojpeg_TJDecompressor_decodeYUV8___3_3B_3I_3I_3BIIIIII;
     Java_org_libjpegturbo_turbojpeg_TJDecompressor_decodeYUV8___3_3B_3I_3I_3IIIIIII;
@@ -136,7 +135,18 @@ TURBOJPEG_3
     Java_org_libjpegturbo_turbojpeg_TJDecompressor_decompress16;
     Java_org_libjpegturbo_turbojpeg_TJDecompressor_decompressToYUV8;
     Java_org_libjpegturbo_turbojpeg_TJDecompressor_get;
-    Java_org_libjpegturbo_turbojpeg_TJDecompressor_saveImage;
     Java_org_libjpegturbo_turbojpeg_TJDecompressor_set;
     Java_org_libjpegturbo_turbojpeg_TJDecompressor_setCroppingRegion;
 } TURBOJPEG_2.0;
+
+TURBOJPEG_3.1
+{
+    tj3GetICCProfile;
+    tj3SetICCProfile;
+    Java_org_libjpegturbo_turbojpeg_TJCompressor_loadSourceImage;
+    Java_org_libjpegturbo_turbojpeg_TJCompressor_setICCProfile;
+    Java_org_libjpegturbo_turbojpeg_TJDecompressor_getICCProfile;
+    Java_org_libjpegturbo_turbojpeg_TJDecompressor_getICCSize;
+    Java_org_libjpegturbo_turbojpeg_TJDecompressor_saveImage;
+    Java_org_libjpegturbo_turbojpeg_TJTransformer_setICCProfile;
+} TURBOJPEG_3;

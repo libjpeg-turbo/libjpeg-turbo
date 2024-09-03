@@ -75,6 +75,14 @@ C API.
 restart markers to all destination images if
 `TJPARAM_RESTARTBLOCKS`/`TJ.PARAM_RESTARTBLOCKS` or
 `TJPARAM_RESTARTROWS`/`TJ.PARAM_RESTARTROWS` is set.
+     - New functions/methods (`tj3SetICCProfile()` /
+`TJCompressor.setICCProfile()` / `TJTransformer.setICCProfile()` and
+`tj3GetICCProfile()` / `TJDecompressor.getICCProfile()`) can be used to embed
+and retrieve ICC profiles.
+     - A new parameter (`TJPARAM_SAVEMARKERS`/`TJ.PARAM_SAVEMARKERS`) can be
+used to specify the types of markers that will be copied from the source image
+to the destination image during lossless transformation if
+`TJXOPT_COPYNONE`/`TJTransform.OPT_COPYNONE` is not specified.
 
 9. TJExample has been replaced with three programs (TJComp, TJDecomp, and
 TJTran) that demonstrate how to approximate the functionality of cjpeg, djpeg,

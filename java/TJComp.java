@@ -35,7 +35,6 @@
  * - GIF and Targa input file formats [legacy feature]
  * - Separate quality settings for luminance and chrominance
  * - The floating-point DCT method [legacy feature]
- * - Embedding an ICC color management profile
  * - Input image smoothing
  * - Progress reporting
  * - Debug output
@@ -75,6 +74,9 @@ final class TJComp {
 
     System.out.println("GENERAL OPTIONS (CAN BE ABBREVIATED)");
     System.out.println("------------------------------------");
+    System.out.println("-icc FILE");
+    System.out.println("    Embed the ICC (International Color Consortium) color management profile");
+    System.out.println("    from the specified file into the JPEG image");
     System.out.println("-lossless PSV[,Pt]");
     System.out.println("    Create a lossless JPEG image (implies -subsamp 444) using predictor");
     System.out.println("    selection value PSV (1-7) and optional point transform Pt (0 through");
@@ -136,6 +138,7 @@ final class TJComp {
   public static void main(String[] argv) {
     int exitStatus = 0;
     TJCompressor tjc = null;
+    FileInputStream fis = null;
     FileOutputStream fos = null;
 
     try {
@@ -145,7 +148,8 @@ final class TJComp {
         pixelFormat = TJ.PF_UNKNOWN, precision = -1, progressive = -1,
         quality = DEFAULT_QUALITY, restartIntervalBlocks = -1,
         restartIntervalRows = -1, subsamp = DEFAULT_SUBSAMP;
-      byte[] jpegBuf;
+      String iccFilename = null;
+      byte[] iccBuf, jpegBuf;
 
       for (i = 0; i < argv.length; i++) {
         if (matchArg(argv[i], "-arithmetic", 2))
@@ -159,6 +163,8 @@ final class TJComp {
         } else if (matchArg(argv[i], "-grayscale", 2) ||
                    matchArg(argv[i], "-greyscale", 2))
           colorspace = TJ.CS_GRAY;
+        else if (matchArg(argv[i], "-icc", 2) && i < argv.length - 1)
+          iccFilename = argv[++i];
         else if (matchArg(argv[i], "-lossless", 2) && i < argv.length - 1) {
           Scanner scanner = new Scanner(argv[++i]).useDelimiter(",");
 
@@ -280,6 +286,18 @@ final class TJComp {
       if (colorspace >= 0)
         tjc.set(TJ.PARAM_COLORSPACE, colorspace);
 
+      if (iccFilename != null) {
+        File iccFile = new File(iccFilename);
+        fis = new FileInputStream(iccFile);
+        int iccSize = fis.available();
+        if (iccSize < 1)
+          throw new Exception("ICC profile contains no data");
+        iccBuf = new byte[iccSize];
+        fis.read(iccBuf);
+        fis.close();  fis = null;
+        tjc.setICCProfile(iccBuf);
+      }
+
       jpegBuf = tjc.compress();
 
       File outFile = new File(argv[++i]);
@@ -291,6 +309,7 @@ final class TJComp {
     }
 
     try {
+      if (fis != null) fis.close();
       if (fos != null) fos.close();
       if (tjc != null) tjc.close();
     } catch (Exception e) {}

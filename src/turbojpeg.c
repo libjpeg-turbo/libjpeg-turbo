@@ -138,6 +138,9 @@ typedef struct _tjinstance {
   tjregion croppingRegion;
   int maxMemory;
   int maxPixels;
+  int saveMarkers;
+  unsigned char *iccBuf, *tempICCBuf;
+  size_t iccSize, tempICCSize;
 } tjinstance;
 
 static tjhandle _tjInitCompress(tjinstance *this);
@@ -532,7 +535,7 @@ static void processFlags(tjhandle handle, int flags, int operation)
 
 /*************************** General API functions ***************************/
 
-/* TurboJPEG 3+ */
+/* TurboJPEG 3.0+ */
 DLLEXPORT tjhandle tj3Init(int initType)
 {
   static const char FUNCTION_NAME[] = "tj3Init";
@@ -557,6 +560,7 @@ DLLEXPORT tjhandle tj3Init(int initType)
   this->xDensity = 1;
   this->yDensity = 1;
   this->scalingFactor = TJUNSCALED;
+  this->saveMarkers = 2;
 
   switch (initType) {
   case TJINIT_COMPRESS:  return _tjInitCompress(this);
@@ -573,7 +577,7 @@ bailout:
 }
 
 
-/* TurboJPEG 3+ */
+/* TurboJPEG 3.0+ */
 DLLEXPORT void tj3Destroy(tjhandle handle)
 {
   tjinstance *this = (tjinstance *)handle;
@@ -589,6 +593,8 @@ DLLEXPORT void tj3Destroy(tjhandle handle)
   if (setjmp(this->jerr.setjmp_buffer)) return;
   if (this->init & COMPRESS) jpeg_destroy_compress(cinfo);
   if (this->init & DECOMPRESS) jpeg_destroy_decompress(dinfo);
+  free(this->iccBuf);
+  free(this->tempICCBuf);
   free(this);
 }
 
@@ -609,7 +615,7 @@ bailout:
 }
 
 
-/* TurboJPEG 3+ */
+/* TurboJPEG 3.0+ */
 DLLEXPORT char *tj3GetErrorStr(tjhandle handle)
 {
   tjinstance *this = (tjinstance *)handle;
@@ -634,7 +640,7 @@ DLLEXPORT char *tjGetErrorStr(void)
 }
 
 
-/* TurboJPEG 3+ */
+/* TurboJPEG 3.0+ */
 DLLEXPORT int tj3GetErrorCode(tjhandle handle)
 {
   tjinstance *this = (tjinstance *)handle;
@@ -662,7 +668,7 @@ DLLEXPORT int tjGetErrorCode(tjhandle handle)
   this->field = (boolean)value; \
 }
 
-/* TurboJPEG 3+ */
+/* TurboJPEG 3.0+ */
 DLLEXPORT int tj3Set(tjhandle handle, int param, int value)
 {
   static const char FUNCTION_NAME[] = "tj3Set";
@@ -784,6 +790,11 @@ DLLEXPORT int tj3Set(tjhandle handle, int param, int value)
   case TJPARAM_MAXPIXELS:
     SET_PARAM(maxPixels, 0, -1);
     break;
+  case TJPARAM_SAVEMARKERS:
+    if (!(this->init & DECOMPRESS))
+      THROW("TJPARAM_SAVEMARKERS is not applicable to compression instances.");
+    SET_PARAM(saveMarkers, 0, 4);
+    break;
   default:
     THROW("Invalid parameter");
   }
@@ -793,7 +804,7 @@ bailout:
 }
 
 
-/* TurboJPEG 3+ */
+/* TurboJPEG 3.0+ */
 DLLEXPORT int tj3Get(tjhandle handle, int param)
 {
   tjinstance *this = (tjinstance *)handle;
@@ -850,6 +861,8 @@ DLLEXPORT int tj3Get(tjhandle handle, int param)
     return this->maxMemory;
   case TJPARAM_MAXPIXELS:
     return this->maxPixels;
+  case TJPARAM_SAVEMARKERS:
+    return this->saveMarkers;
   }
 
   return -1;
@@ -861,7 +874,7 @@ DLLEXPORT int tj3Get(tjhandle handle, int param)
    with turbojpeg.dll for compatibility reasons.  However, these functions
    can potentially be used for other purposes by different implementations. */
 
-/* TurboJPEG 3+ */
+/* TurboJPEG 3.0+ */
 DLLEXPORT void *tj3Alloc(size_t bytes)
 {
   return MALLOC(bytes);
@@ -874,7 +887,7 @@ DLLEXPORT unsigned char *tjAlloc(int bytes)
 }
 
 
-/* TurboJPEG 3+ */
+/* TurboJPEG 3.0+ */
 DLLEXPORT void tj3Free(void *buf)
 {
   free(buf);
@@ -887,7 +900,7 @@ DLLEXPORT void tjFree(unsigned char *buf)
 }
 
 
-/* TurboJPEG 3+ */
+/* TurboJPEG 3.0+ */
 DLLEXPORT size_t tj3JPEGBufSize(int width, int height, int jpegSubsamp)
 {
   static const char FUNCTION_NAME[] = "tj3JPEGBufSize";
@@ -955,7 +968,7 @@ bailout:
 }
 
 
-/* TurboJPEG 3+ */
+/* TurboJPEG 3.0+ */
 DLLEXPORT size_t tj3YUVBufSize(int width, int align, int height, int subsamp)
 {
   static const char FUNCTION_NAME[] = "tj3YUVBufSize";
@@ -1004,7 +1017,7 @@ DLLEXPORT unsigned long TJBUFSIZEYUV(int width, int height, int subsamp)
 }
 
 
-/* TurboJPEG 3+ */
+/* TurboJPEG 3.0+ */
 DLLEXPORT size_t tj3YUVPlaneSize(int componentID, int width, int stride,
                                  int height, int subsamp)
 {
@@ -1041,7 +1054,7 @@ DLLEXPORT unsigned long tjPlaneSizeYUV(int componentID, int width, int stride,
 }
 
 
-/* TurboJPEG 3+ */
+/* TurboJPEG 3.0+ */
 DLLEXPORT int tj3YUVPlaneWidth(int componentID, int width, int subsamp)
 {
   static const char FUNCTION_NAME[] = "tj3YUVPlaneWidth";
@@ -1075,7 +1088,7 @@ DLLEXPORT int tjPlaneWidth(int componentID, int width, int subsamp)
 }
 
 
-/* TurboJPEG 3+ */
+/* TurboJPEG 3.0+ */
 DLLEXPORT int tj3YUVPlaneHeight(int componentID, int height, int subsamp)
 {
   static const char FUNCTION_NAME[] = "tj3YUVPlaneHeight";
@@ -1148,6 +1161,35 @@ DLLEXPORT tjhandle tjInitCompress(void)
 }
 
 
+/* TurboJPEG 3.1+ */
+DLLEXPORT int tj3SetICCProfile(tjhandle handle, unsigned char *iccBuf,
+                               size_t iccSize)
+{
+  static const char FUNCTION_NAME[] = "tj3SetICCProfile";
+  int retval = 0;
+
+  GET_TJINSTANCE(handle, -1)
+  if ((this->init & COMPRESS) == 0)
+    THROW("Instance has not been initialized for compression");
+
+  if (iccBuf == this->iccBuf && iccSize == this->iccSize)
+    return 0;
+
+  free(this->iccBuf);
+  this->iccBuf = NULL;
+  this->iccSize = 0;
+  if (iccBuf && iccSize) {
+    if ((this->iccBuf = (unsigned char *)malloc(iccSize)) == NULL)
+      THROW("Memory allocation failure");
+    memcpy(this->iccBuf, iccBuf, iccSize);
+    this->iccSize = iccSize;
+  }
+
+bailout:
+  return retval;
+}
+
+
 /* tj3Compress*() is implemented in turbojpeg-mp.c */
 #define BITS_IN_JSAMPLE  8
 #include "turbojpeg-mp.c"
@@ -1214,7 +1256,7 @@ DLLEXPORT int tjCompress(tjhandle handle, unsigned char *srcBuf, int width,
 }
 
 
-/* TurboJPEG 3+ */
+/* TurboJPEG 3.0+ */
 DLLEXPORT int tj3CompressFromYUVPlanes8(tjhandle handle,
                                         const unsigned char * const *srcPlanes,
                                         int width, const int *strides,
@@ -1264,6 +1306,8 @@ DLLEXPORT int tj3CompressFromYUVPlanes8(tjhandle handle,
   cinfo->raw_data_in = TRUE;
 
   jpeg_start_compress(cinfo, TRUE);
+  if (this->iccBuf != NULL && this->iccSize != 0)
+    jpeg_write_icc_profile(cinfo, this->iccBuf, (unsigned int)this->iccSize);
   for (i = 0; i < cinfo->num_components; i++) {
     jpeg_component_info *compptr = &cinfo->comp_info[i];
     int ih;
@@ -1382,7 +1426,7 @@ bailout:
 }
 
 
-/* TurboJPEG 3+ */
+/* TurboJPEG 3.0+ */
 DLLEXPORT int tj3CompressFromYUV8(tjhandle handle,
                                   const unsigned char *srcBuf, int width,
                                   int align, int height,
@@ -1461,7 +1505,7 @@ bailout:
 }
 
 
-/* TurboJPEG 3+ */
+/* TurboJPEG 3.0+ */
 DLLEXPORT int tj3EncodeYUVPlanes8(tjhandle handle, const unsigned char *srcBuf,
                                   int width, int pitch, int height,
                                   int pixelFormat, unsigned char **dstPlanes,
@@ -1641,7 +1685,7 @@ bailout:
 }
 
 
-/* TurboJPEG 3+ */
+/* TurboJPEG 3.0+ */
 DLLEXPORT int tj3EncodeYUV8(tjhandle handle, const unsigned char *srcBuf,
                             int width, int pitch, int height, int pixelFormat,
                             unsigned char *dstBuf, int align)
@@ -1768,13 +1812,15 @@ DLLEXPORT tjhandle tjInitDecompress(void)
 }
 
 
-/* TurboJPEG 3+ */
+/* TurboJPEG 3.0+ */
 DLLEXPORT int tj3DecompressHeader(tjhandle handle,
                                   const unsigned char *jpegBuf,
                                   size_t jpegSize)
 {
   static const char FUNCTION_NAME[] = "tj3DecompressHeader";
   int retval = 0;
+  unsigned char *iccPtr = NULL;
+  unsigned int iccLen = 0;
 
   GET_DINSTANCE(handle);
   if ((this->init & DECOMPRESS) == 0)
@@ -1790,6 +1836,12 @@ DLLEXPORT int tj3DecompressHeader(tjhandle handle,
 
   jpeg_mem_src_tj(dinfo, jpegBuf, jpegSize);
 
+  /* Extract ICC profile if TJPARAM_SAVEMARKERS is 2 or 4.  (We could
+     eventually reuse this mechanism to save other markers, if needed.)
+     Because ICC profiles can be large, we extract them by default but allow
+     the user to override that behavior. */
+  if (this->saveMarkers == 2 || this->saveMarkers == 4)
+    jpeg_save_markers(dinfo, JPEG_APP0 + 2, 0xFFFF);
   /* jpeg_read_header() calls jpeg_abort() and returns JPEG_HEADER_TABLES_ONLY
      if the datastream is a tables-only datastream.  Since we aren't using a
      suspending data source, the only other value it can return is
@@ -1798,6 +1850,14 @@ DLLEXPORT int tj3DecompressHeader(tjhandle handle,
     return 0;
 
   setDecompParameters(this);
+
+  if (this->saveMarkers == 2 || this->saveMarkers == 4) {
+    if (jpeg_read_icc_profile(dinfo, &iccPtr, &iccLen)) {
+      free(this->tempICCBuf);
+      this->tempICCBuf = iccPtr;
+      this->tempICCSize = (size_t)iccLen;
+    }
+  }
 
   jpeg_abort_decompress(dinfo);
 
@@ -1863,7 +1923,40 @@ DLLEXPORT int tjDecompressHeader(tjhandle handle, unsigned char *jpegBuf,
 }
 
 
-/* TurboJPEG 3+ */
+/* TurboJPEG 3.1+ */
+DLLEXPORT int tj3GetICCProfile(tjhandle handle, unsigned char **iccBuf,
+                               size_t *iccSize)
+{
+  static const char FUNCTION_NAME[] = "tj3GetICCProfile";
+  int retval = 0;
+
+  GET_TJINSTANCE(handle, -1);
+  if ((this->init & DECOMPRESS) == 0)
+    THROW("Instance has not been initialized for decompression");
+
+  if (iccSize == NULL)
+    THROW("Invalid argument");
+
+  if (!this->tempICCBuf || !this->tempICCSize) {
+    if (iccBuf) *iccBuf = NULL;
+    *iccSize = 0;
+    this->jerr.warning = TRUE;
+    THROW("No ICC profile data has been extracted");
+  }
+
+  *iccSize = this->tempICCSize;
+  if (iccBuf == NULL)
+    return 0;
+  *iccBuf = this->tempICCBuf;
+  this->tempICCBuf = NULL;
+  this->tempICCSize = 0;
+
+bailout:
+  return retval;
+}
+
+
+/* TurboJPEG 3.0+ */
 DLLEXPORT tjscalingfactor *tj3GetScalingFactors(int *numScalingFactors)
 {
   static const char FUNCTION_NAME[] = "tj3GetScalingFactors";
@@ -1885,7 +1978,7 @@ DLLEXPORT tjscalingfactor *tjGetScalingFactors(int *numScalingFactors)
 }
 
 
-/* TurboJPEG 3+ */
+/* TurboJPEG 3.0+ */
 DLLEXPORT int tj3SetScalingFactor(tjhandle handle,
                                   tjscalingfactor scalingFactor)
 {
@@ -1910,7 +2003,7 @@ bailout:
 }
 
 
-/* TurboJPEG 3+ */
+/* TurboJPEG 3.0+ */
 DLLEXPORT int tj3SetCroppingRegion(tjhandle handle, tjregion croppingRegion)
 {
   static const char FUNCTION_NAME[] = "tj3SetCroppingRegion";
@@ -2026,7 +2119,7 @@ DLLEXPORT int tjDecompress(tjhandle handle, unsigned char *jpegBuf,
 }
 
 
-/* TurboJPEG 3+ */
+/* TurboJPEG 3.0+ */
 DLLEXPORT int tj3DecompressToYUVPlanes8(tjhandle handle,
                                         const unsigned char *jpegBuf,
                                         size_t jpegSize,
@@ -2242,7 +2335,7 @@ bailout:
 }
 
 
-/* TurboJPEG 3+ */
+/* TurboJPEG 3.0+ */
 DLLEXPORT int tj3DecompressToYUV8(tjhandle handle,
                                   const unsigned char *jpegBuf,
                                   size_t jpegSize,
@@ -2412,7 +2505,7 @@ static void my_reset_marker_reader(j_decompress_ptr dinfo)
 {
 }
 
-/* TurboJPEG 3+ */
+/* TurboJPEG 3.0+ */
 DLLEXPORT int tj3DecodeYUVPlanes8(tjhandle handle,
                                   const unsigned char * const *srcPlanes,
                                   const int *strides, unsigned char *dstBuf,
@@ -2579,7 +2672,7 @@ bailout:
 }
 
 
-/* TurboJPEG 3+ */
+/* TurboJPEG 3.0+ */
 DLLEXPORT int tj3DecodeYUV8(tjhandle handle, const unsigned char *srcBuf,
                             int align, unsigned char *dstBuf, int width,
                             int pitch, int height, int pixelFormat)
@@ -2659,7 +2752,7 @@ DLLEXPORT tjhandle tjInitTransform(void)
 }
 
 
-/* TurboJPEG 3+ */
+/* TurboJPEG 3.0+ */
 DLLEXPORT int tj3Transform(tjhandle handle, const unsigned char *jpegBuf,
                            size_t jpegSize, int n, unsigned char **dstBufs,
                            size_t *dstSizes, const tjtransform *t)
@@ -2730,7 +2823,8 @@ DLLEXPORT int tj3Transform(tjhandle handle, const unsigned char *jpegBuf,
     if (!(t[i].options & TJXOPT_COPYNONE)) saveMarkers = 1;
   }
 
-  jcopy_markers_setup(dinfo, saveMarkers ? JCOPYOPT_ALL : JCOPYOPT_NONE);
+  jcopy_markers_setup(dinfo, saveMarkers ?
+                             (JCOPY_OPTION)this->saveMarkers : JCOPYOPT_NONE);
   if (dinfo->global_state <= DSTATE_INHEADER)
     jpeg_read_header(dinfo, TRUE);
   if (this->maxPixels &&
@@ -2787,7 +2881,11 @@ DLLEXPORT int tj3Transform(tjhandle handle, const unsigned char *jpegBuf,
     if (!(t[i].options & TJXOPT_NOOUTPUT)) {
       jpeg_write_coefficients(cinfo, dstcoefs);
       jcopy_markers_execute(dinfo, cinfo, t[i].options & TJXOPT_COPYNONE ?
-                                          JCOPYOPT_NONE : JCOPYOPT_ALL);
+                                          JCOPYOPT_NONE :
+                                          (JCOPY_OPTION)this->saveMarkers);
+      if (this->iccBuf != NULL && this->iccSize != 0)
+        jpeg_write_icc_profile(cinfo, this->iccBuf,
+                               (unsigned int)this->iccSize);
     } else
       jinit_c_master_control(cinfo, TRUE);
     jtransform_execute_transformation(dinfo, cinfo, srccoefs, &xinfo[i]);

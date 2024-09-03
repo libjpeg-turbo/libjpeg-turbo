@@ -61,7 +61,7 @@ for precision in 8 12; do
 		RGBIMG=$IMGDIR/monkey16.ppm
 		GRAYIMG=$IMGDIR/monkey16.pgm
 	fi
-	for restartarg in "" "-r 1" "-r 1b"; do
+	for restartarg in "" "-r 1 -icc $IMGDIR/test3.icc" "-r 1b"; do
 		for ariarg in "" "-a"; do
 			for dctarg in "" "-dc fa"; do
 				for optarg in "" "-o"; do
@@ -159,7 +159,7 @@ for precision in {2..16}; do
 			if [ $pt -ge $precision ]; then
 				continue
 			fi
-			for restartarg in "" "-r 1"; do
+			for restartarg in "" "-r 1 -icc $IMGDIR/test3.icc"; do
 				basename=`basename $RGBIMG .ppm`
 				runme $TJCOMP -pre $precision -l $psv,$pt $restartarg \
 					$RGBIMG $OUTDIR/${basename}-tjcomp.jpg

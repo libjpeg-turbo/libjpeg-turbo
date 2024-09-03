@@ -113,6 +113,8 @@ extern "C" {
 #define org_libjpegturbo_turbojpeg_TJ_PARAM_MAXMEMORY 23L
 #undef org_libjpegturbo_turbojpeg_TJ_PARAM_MAXPIXELS
 #define org_libjpegturbo_turbojpeg_TJ_PARAM_MAXPIXELS 24L
+#undef org_libjpegturbo_turbojpeg_TJ_PARAM_SAVEMARKERS
+#define org_libjpegturbo_turbojpeg_TJ_PARAM_SAVEMARKERS 25L
 #undef org_libjpegturbo_turbojpeg_TJ_NUMERR
 #define org_libjpegturbo_turbojpeg_TJ_NUMERR 2L
 #undef org_libjpegturbo_turbojpeg_TJ_ERR_WARNING

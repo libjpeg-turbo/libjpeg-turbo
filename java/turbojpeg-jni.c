@@ -179,7 +179,7 @@ bailout:
   return;
 }
 
-/* TurboJPEG 3: TJCompressor.set() */
+/* TurboJPEG 3.0.x: TJCompressor.set() */
 JNIEXPORT void JNICALL Java_org_libjpegturbo_turbojpeg_TJCompressor_set
   (JNIEnv *env, jobject obj, jint param, jint value)
 {
@@ -194,7 +194,7 @@ bailout:
   return;
 }
 
-/* TurboJPEG 3: TJCompressor.get() */
+/* TurboJPEG 3.0.x: TJCompressor.get() */
 JNIEXPORT jint JNICALL Java_org_libjpegturbo_turbojpeg_TJCompressor_get
   (JNIEnv *env, jobject obj, jint param)
 {
@@ -206,6 +206,38 @@ JNIEXPORT jint JNICALL Java_org_libjpegturbo_turbojpeg_TJCompressor_get
 
 bailout:
   return -1;
+}
+
+/* TurboJPEG 3.1.x: TJCompressor.setICCProfile() */
+JNIEXPORT void JNICALL Java_org_libjpegturbo_turbojpeg_TJCompressor_setICCProfile
+  (JNIEnv *env, jobject obj, jbyteArray icc)
+{
+  jclass cls;
+  jfieldID fid;
+  tjhandle handle = 0;
+  unsigned char *iccBuf = NULL;
+  size_t iccSize = 0;
+
+  GET_HANDLE();
+
+  if (icc != NULL) {
+    BAILIF0NOEC(iccBuf = (*env)->GetPrimitiveArrayCritical(env, icc, 0));
+    iccSize = (size_t)(*env)->GetArrayLength(env, icc);
+  }
+
+  BAILIF0(cls = (*env)->GetObjectClass(env, obj));
+  BAILIF0(fid = (*env)->GetFieldID(env, cls, "iccSize", "I"));
+
+  if (tj3SetICCProfile(handle, iccBuf, iccSize) == -1) {
+    (*env)->SetIntField(env, obj, fid, 0);
+    SAFE_RELEASE(icc, iccBuf);
+    THROW_TJ();
+  }
+
+  (*env)->SetIntField(env, obj, fid, (int)iccSize);
+
+bailout:
+  SAFE_RELEASE(icc, iccBuf);
 }
 
 static jint TJCompressor_compress
@@ -277,7 +309,7 @@ bailout:
   return (jint)jpegSize;
 }
 
-/* TurboJPEG 3: TJCompressor.compress8() byte source */
+/* TurboJPEG 3.0.x: TJCompressor.compress8() byte source */
 JNIEXPORT jint JNICALL Java_org_libjpegturbo_turbojpeg_TJCompressor_compress8___3BIIIIII_3B
   (JNIEnv *env, jobject obj, jbyteArray src, jint x, jint y, jint width,
    jint pitch, jint height, jint pf, jbyteArray dst)
@@ -286,7 +318,7 @@ JNIEXPORT jint JNICALL Java_org_libjpegturbo_turbojpeg_TJCompressor_compress8___
                                pf, dst);
 }
 
-/* TurboJPEG 3: TJCompressor.compress12() */
+/* TurboJPEG 3.0.x: TJCompressor.compress12() */
 JNIEXPORT jint JNICALL Java_org_libjpegturbo_turbojpeg_TJCompressor_compress12
   (JNIEnv *env, jobject obj, jshortArray src, jint x, jint y, jint width,
    jint pitch, jint height, jint pf, jbyteArray dst)
@@ -295,7 +327,7 @@ JNIEXPORT jint JNICALL Java_org_libjpegturbo_turbojpeg_TJCompressor_compress12
                                height, pf, dst);
 }
 
-/* TurboJPEG 3: TJCompressor.compress16() */
+/* TurboJPEG 3.0.x: TJCompressor.compress16() */
 JNIEXPORT jint JNICALL Java_org_libjpegturbo_turbojpeg_TJCompressor_compress16
   (JNIEnv *env, jobject obj, jshortArray src, jint x, jint y, jint width,
    jint pitch, jint height, jint pf, jbyteArray dst)
@@ -304,7 +336,7 @@ JNIEXPORT jint JNICALL Java_org_libjpegturbo_turbojpeg_TJCompressor_compress16
                                height, pf, dst);
 }
 
-/* TurboJPEG 3: TJCompressor.compress8() int source */
+/* TurboJPEG 3.0.x: TJCompressor.compress8() int source */
 JNIEXPORT jint JNICALL Java_org_libjpegturbo_turbojpeg_TJCompressor_compress8___3IIIIIII_3B
   (JNIEnv *env, jobject obj, jintArray src, jint x, jint y, jint width,
    jint stride, jint height, jint pf, jbyteArray dst)
@@ -321,7 +353,7 @@ bailout:
   return 0;
 }
 
-/* TurboJPEG 3: TJCompressor.compressFromYUV8() */
+/* TurboJPEG 3.0.x: TJCompressor.compressFromYUV8() */
 JNIEXPORT jint JNICALL Java_org_libjpegturbo_turbojpeg_TJCompressor_compressFromYUV8
   (JNIEnv *env, jobject obj, jobjectArray srcobjs, jintArray jSrcOffsets,
    jint width, jintArray jSrcStrides, jint height, jbyteArray dst)
@@ -499,7 +531,7 @@ bailout:
     SAFE_RELEASE(jDstPlanes[i], dstPlanesTmp[i]);
 }
 
-/* TurboJPEG 3: TJCompressor.encodeYUV8() byte source */
+/* TurboJPEG 3.0.x: TJCompressor.encodeYUV8() byte source */
 JNIEXPORT void JNICALL Java_org_libjpegturbo_turbojpeg_TJCompressor_encodeYUV8___3BIIIIII_3_3B_3I_3I
   (JNIEnv *env, jobject obj, jbyteArray src, jint x, jint y, jint width,
    jint pitch, jint height, jint pf, jobjectArray dstobjs,
@@ -509,7 +541,7 @@ JNIEXPORT void JNICALL Java_org_libjpegturbo_turbojpeg_TJCompressor_encodeYUV8__
                           dstobjs, jDstOffsets, jDstStrides);
 }
 
-/* TurboJPEG 3: TJCompressor.encodeYUV8() int source */
+/* TurboJPEG 3.0.x: TJCompressor.encodeYUV8() int source */
 JNIEXPORT void JNICALL Java_org_libjpegturbo_turbojpeg_TJCompressor_encodeYUV8___3IIIIIII_3_3B_3I_3I
   (JNIEnv *env, jobject obj, jintArray src, jint x, jint y, jint width,
    jint stride, jint height, jint pf, jobjectArray dstobjs,
@@ -562,14 +594,14 @@ bailout:
   return;
 }
 
-/* TurboJPEG 3: TJDecompressor.set() */
+/* TurboJPEG 3.0.x: TJDecompressor.set() */
 JNIEXPORT void JNICALL Java_org_libjpegturbo_turbojpeg_TJDecompressor_set
   (JNIEnv *env, jobject obj, jint param, jint value)
 {
   Java_org_libjpegturbo_turbojpeg_TJCompressor_set(env, obj, param, value);
 }
 
-/* TurboJPEG 3: TJDecompressor.get() */
+/* TurboJPEG 3.0.x: TJDecompressor.get() */
 JNIEXPORT jint JNICALL Java_org_libjpegturbo_turbojpeg_TJDecompressor_get
   (JNIEnv *env, jobject obj, jint param)
 {
@@ -630,7 +662,46 @@ bailout:
   SAFE_RELEASE(src, jpegBuf);
 }
 
-/* TurboJPEG 3: TJDecompressor.setCroppingRegion() */
+/* TurboJPEG 3.1.x: TJDecompressor.getICCProfile() */
+JNIEXPORT jbyteArray JNICALL Java_org_libjpegturbo_turbojpeg_TJDecompressor_getICCProfile
+  (JNIEnv *env, jobject obj)
+{
+  tjhandle handle = 0;
+  unsigned char *iccBuf = NULL, *jICCBuf = NULL;
+  size_t iccSize = 0;
+  jbyteArray icc = NULL;
+
+  GET_HANDLE();
+
+  if (tj3GetICCProfile(handle, &iccBuf, &iccSize) == -1)
+    THROW_TJ();
+
+  BAILIF0(icc = (*env)->NewByteArray(env, iccSize));
+  BAILIF0NOEC(jICCBuf = (*env)->GetPrimitiveArrayCritical(env, icc, 0));
+  memcpy(jICCBuf, iccBuf, iccSize);
+
+bailout:
+  SAFE_RELEASE(icc, jICCBuf);
+  tj3Free(iccBuf);
+  return icc;
+}
+
+/* TurboJPEG 3.1.x: TJDecompressor.getICCSize() */
+JNIEXPORT jint JNICALL Java_org_libjpegturbo_turbojpeg_TJDecompressor_getICCSize
+  (JNIEnv *env, jobject obj)
+{
+  tjhandle handle = 0;
+  size_t iccSize = 0;
+
+  GET_HANDLE();
+
+  tj3GetICCProfile(handle, NULL, &iccSize);
+
+bailout:
+  return iccSize;
+}
+
+/* TurboJPEG 3.0.x: TJDecompressor.setCroppingRegion() */
 JNIEXPORT void JNICALL Java_org_libjpegturbo_turbojpeg_TJDecompressor_setCroppingRegion
   (JNIEnv *env, jobject obj)
 {
@@ -780,7 +851,7 @@ bailout:
   SAFE_RELEASE(src, jpegBuf);
 }
 
-/* TurboJPEG 3: TJDecompressor.decompress8() byte destination */
+/* TurboJPEG 3.0.x: TJDecompressor.decompress8() byte destination */
 JNIEXPORT void JNICALL Java_org_libjpegturbo_turbojpeg_TJDecompressor_decompress8___3BI_3BIIII
   (JNIEnv *env, jobject obj, jbyteArray src, jint jpegSize, jbyteArray dst,
    jint x, jint y, jint pitch, jint pf)
@@ -789,7 +860,7 @@ JNIEXPORT void JNICALL Java_org_libjpegturbo_turbojpeg_TJDecompressor_decompress
                             pf);
 }
 
-/* TurboJPEG 3: TJDecompressor.decompress12() */
+/* TurboJPEG 3.0.x: TJDecompressor.decompress12() */
 JNIEXPORT void JNICALL Java_org_libjpegturbo_turbojpeg_TJDecompressor_decompress12
   (JNIEnv *env, jobject obj, jbyteArray src, jint jpegSize, jshortArray dst,
    jint x, jint y, jint pitch, jint pf)
@@ -798,7 +869,7 @@ JNIEXPORT void JNICALL Java_org_libjpegturbo_turbojpeg_TJDecompressor_decompress
                             pf);
 }
 
-/* TurboJPEG 3: TJDecompressor.decompress16() */
+/* TurboJPEG 3.0.x: TJDecompressor.decompress16() */
 JNIEXPORT void JNICALL Java_org_libjpegturbo_turbojpeg_TJDecompressor_decompress16
   (JNIEnv *env, jobject obj, jbyteArray src, jint jpegSize, jshortArray dst,
    jint x, jint y, jint pitch, jint pf)
@@ -807,7 +878,7 @@ JNIEXPORT void JNICALL Java_org_libjpegturbo_turbojpeg_TJDecompressor_decompress
                             pf);
 }
 
-/* TurboJPEG 3: TJDecompressor.decompress8() int destination */
+/* TurboJPEG 3.0.x: TJDecompressor.decompress8() int destination */
 JNIEXPORT void JNICALL Java_org_libjpegturbo_turbojpeg_TJDecompressor_decompress8___3BI_3IIIII
   (JNIEnv *env, jobject obj, jbyteArray src, jint jpegSize, jintArray dst,
    jint x, jint y, jint stride, jint pf)
@@ -824,7 +895,7 @@ bailout:
   return;
 }
 
-/* TurboJPEG 3: TJDecompressor.decompressToYUV8() */
+/* TurboJPEG 3.0.x: TJDecompressor.decompressToYUV8() */
 JNIEXPORT void JNICALL Java_org_libjpegturbo_turbojpeg_TJDecompressor_decompressToYUV8
   (JNIEnv *env, jobject obj, jbyteArray src, jint jpegSize,
    jobjectArray dstobjs, jintArray jDstOffsets, jintArray jDstStrides)
@@ -1012,7 +1083,7 @@ bailout:
     SAFE_RELEASE(jSrcPlanes[i], srcPlanesTmp[i]);
 }
 
-/* TurboJPEG 3: TJDecompressor.decodeYUV8() byte destination */
+/* TurboJPEG 3.0.x: TJDecompressor.decodeYUV8() byte destination */
 JNIEXPORT void JNICALL Java_org_libjpegturbo_turbojpeg_TJDecompressor_decodeYUV8___3_3B_3I_3I_3BIIIIII
   (JNIEnv *env, jobject obj, jobjectArray srcobjs, jintArray jSrcOffsets,
    jintArray jSrcStrides, jbyteArray dst, jint x, jint y, jint width,
@@ -1022,7 +1093,7 @@ JNIEXPORT void JNICALL Java_org_libjpegturbo_turbojpeg_TJDecompressor_decodeYUV8
                             1, x, y, width, pitch, height, pf);
 }
 
-/* TurboJPEG 3: TJDecompressor.decodeYUV8() int destination */
+/* TurboJPEG 3.0.x: TJDecompressor.decodeYUV8() int destination */
 JNIEXPORT void JNICALL Java_org_libjpegturbo_turbojpeg_TJDecompressor_decodeYUV8___3_3B_3I_3I_3IIIIIII
   (JNIEnv *env, jobject obj, jobjectArray srcobjs, jintArray jSrcOffsets,
    jintArray jSrcStrides, jintArray dst, jint x, jint y, jint width,
@@ -1058,6 +1129,13 @@ JNIEXPORT void JNICALL Java_org_libjpegturbo_turbojpeg_TJTransformer_init
 
 bailout:
   return;
+}
+
+/* TurboJPEG 3.1.x: TJTransformer.setICCProfile() */
+JNIEXPORT void JNICALL Java_org_libjpegturbo_turbojpeg_TJTransformer_setICCProfile
+  (JNIEnv *env, jobject obj, jbyteArray icc)
+{
+  Java_org_libjpegturbo_turbojpeg_TJCompressor_setICCProfile(env, obj, icc);
 }
 
 typedef struct _JNICustomFilterParams {

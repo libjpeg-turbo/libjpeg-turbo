@@ -35,7 +35,6 @@
  * - GIF and Targa input file formats [legacy feature]
  * - Separate quality settings for luminance and chrominance
  * - The floating-point DCT method [legacy feature]
- * - Embedding an ICC color management profile
  * - Input image smoothing
  * - Progress reporting
  * - Debug output
@@ -97,6 +96,9 @@ static void usage(char *programName)
 
   printf("GENERAL OPTIONS (CAN BE ABBREVIATED)\n");
   printf("------------------------------------\n");
+  printf("-icc FILE\n");
+  printf("    Embed the ICC (International Color Consortium) color management profile\n");
+  printf("    from the specified file into the JPEG image\n");
   printf("-lossless PSV[,Pt]\n");
   printf("    Create a lossless JPEG image (implies -subsamp 444) using predictor\n");
   printf("    selection value PSV (1-7) and optional point transform Pt (0 through\n");
@@ -152,12 +154,14 @@ int main(int argc, char **argv)
     precision = -1, progressive = -1, quality = DEFAULT_QUALITY,
     restartIntervalBlocks = -1, restartIntervalRows = -1,
     subsamp = DEFAULT_SUBSAMP;
+  char *iccFilename = NULL;
   tjhandle tjInstance = NULL;
   void *srcBuf = NULL;
   int width, height;
-  unsigned char *jpegBuf = NULL;
-  size_t jpegSize = 0;
-  FILE *jpegFile = NULL;
+  long size;
+  unsigned char *iccBuf = NULL, *jpegBuf = NULL;
+  size_t iccSize = 0, jpegSize = 0;
+  FILE *iccFile = NULL, *jpegFile = NULL;
 
   for (i = 1; i < argc; i++) {
     if (MATCH_ARG(argv[i], "-arithmetic", 2))
@@ -171,6 +175,8 @@ int main(int argc, char **argv)
     } else if (MATCH_ARG(argv[i], "-grayscale", 2) ||
                MATCH_ARG(argv[i], "-greyscale", 2))
       colorspace = TJCS_GRAY;
+    else if (MATCH_ARG(argv[i], "-icc", 2) && i < argc - 1)
+      iccFilename = argv[++i];
     else if (MATCH_ARG(argv[i], "-lossless", 2) && i < argc - 1) {
       if (sscanf(argv[++i], "%d,%d", &losslessPSV, &losslessPt) < 1 ||
           losslessPSV < 1 || losslessPSV > 7)
@@ -293,6 +299,25 @@ int main(int argc, char **argv)
       tj3Set(tjInstance, TJPARAM_COLORSPACE, colorspace) < 0)
     THROW_TJ("setting TJPARAM_COLORSPACE");
 
+  if (iccFilename) {
+    if ((iccFile = fopen(iccFilename, "rb")) == NULL)
+      THROW_UNIX("opening ICC profile");
+    if (fseek(iccFile, 0, SEEK_END) < 0 || ((size = ftell(iccFile)) < 0) ||
+        fseek(iccFile, 0, SEEK_SET) < 0)
+      THROW_UNIX("determining ICC profile size");
+    if (size == 0)
+      THROW("determining ICC profile size", "ICC profile contains no data");
+    iccSize = size;
+    if ((iccBuf = (unsigned char *)malloc(iccSize)) == NULL)
+      THROW_UNIX("allocating ICC profile buffer");
+    if (fread(iccBuf, iccSize, 1, iccFile) < 1)
+      THROW_UNIX("reading ICC profile");
+    fclose(iccFile);  iccFile = NULL;
+    if (tj3SetICCProfile(tjInstance, iccBuf, iccSize) < 0)
+      THROW_TJ("setting ICC profile");
+    free(iccBuf);  iccBuf = NULL;
+  }
+
   if (precision <= 8) {
     if (tj3Compress8(tjInstance, srcBuf, width, 0, height, pixelFormat,
                      &jpegBuf, &jpegSize) < 0)
@@ -315,6 +340,8 @@ int main(int argc, char **argv)
 bailout:
   tj3Destroy(tjInstance);
   tj3Free(srcBuf);
+  if (iccFile) fclose(iccFile);
+  free(iccBuf);
   tj3Free(jpegBuf);
   if (jpegFile) fclose(jpegFile);
   return retval;

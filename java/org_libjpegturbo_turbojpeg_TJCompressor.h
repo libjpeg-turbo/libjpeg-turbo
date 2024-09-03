@@ -25,6 +25,14 @@ JNIEXPORT jint JNICALL Java_org_libjpegturbo_turbojpeg_TJCompressor_get
 
 /*
  * Class:     org_libjpegturbo_turbojpeg_TJCompressor
+ * Method:    setICCProfile
+ * Signature: ([B)V
+ */
+JNIEXPORT void JNICALL Java_org_libjpegturbo_turbojpeg_TJCompressor_setICCProfile
+  (JNIEnv *, jobject, jbyteArray);
+
+/*
+ * Class:     org_libjpegturbo_turbojpeg_TJCompressor
  * Method:    init
  * Signature: ()V
  */

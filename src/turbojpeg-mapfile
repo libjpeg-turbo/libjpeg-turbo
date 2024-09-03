@@ -106,3 +106,9 @@ TURBOJPEG_3
     tj3YUVPlaneSize;
     tj3YUVPlaneWidth;
 } TURBOJPEG_2.0;
+
+TURBOJPEG_3.1
+{
+    tj3GetICCProfile;
+    tj3SetICCProfile;
+} TURBOJPEG_3;

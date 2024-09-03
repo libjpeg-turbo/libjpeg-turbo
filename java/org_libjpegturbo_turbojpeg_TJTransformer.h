@@ -9,6 +9,14 @@ extern "C" {
 #endif
 /*
  * Class:     org_libjpegturbo_turbojpeg_TJTransformer
+ * Method:    setICCProfile
+ * Signature: ([B)V
+ */
+JNIEXPORT void JNICALL Java_org_libjpegturbo_turbojpeg_TJTransformer_setICCProfile
+  (JNIEnv *, jobject, jbyteArray);
+
+/*
+ * Class:     org_libjpegturbo_turbojpeg_TJTransformer
  * Method:    init
  * Signature: ()V
  */

@@ -637,16 +637,21 @@ static int decompTest(char *fileName)
   FILE *file = NULL;
   tjhandle handle = NULL;
   unsigned char **jpegBufs = NULL, *srcBuf = NULL;
-  size_t *jpegBufSizes = NULL, *jpegSizes = NULL, srcSize, totalJpegSize;
+  size_t iccSize = 0, *jpegBufSizes = NULL, *jpegSizes = NULL, srcSize,
+    totalJpegSize;
   tjtransform *t = NULL;
   double start, elapsed;
-  int ps = tjPixelSize[pf], tile, row, col, i, iter, retval = 0, decompsrc = 0;
+  int ps = tjPixelSize[pf], tile, row, col, i, iter, retval = 0, decompsrc = 0,
+    doTransform = 0;
   char *temp = NULL, tempStr[80], tempStr2[80];
   /* Original image */
   int w = 0, h = 0, minTile = 16, tilew, tileh, ntilesw = 1, ntilesh = 1,
     subsamp = -1, cs = -1;
   /* Transformed image */
   int tw, th, ttilew, ttileh, tntilesw, tntilesh, tsubsamp;
+
+  if (doTile || xformOp != TJXOP_NONE || xformOpt != 0 || customFilter)
+    doTransform = 1;
 
   if ((file = fopen(fileName, "rb")) == NULL)
     THROW_UNIX("opening file");
@@ -697,6 +702,8 @@ static int decompTest(char *fileName)
     printf("JPEG image is progressive\n\n");
   if (tj3Get(handle, TJPARAM_ARITHMETIC) == 1)
     printf("JPEG image uses arithmetic entropy coding\n\n");
+  if (!(xformOpt & TJXOPT_COPYNONE))
+    tj3GetICCProfile(handle, NULL, &iccSize);
   if (tj3Set(handle, TJPARAM_PROGRESSIVE, progressive) == -1)
     THROW_TJ();
   if (tj3Set(handle, TJPARAM_ARITHMETIC, arithmetic) == -1)
@@ -762,8 +769,7 @@ static int decompTest(char *fileName)
       else if (tsubsamp == TJSAMP_441) tsubsamp = TJSAMP_411;
     }
 
-    if (noRealloc &&
-        (doTile || xformOp != TJXOP_NONE || xformOpt != 0 || customFilter)) {
+    if (noRealloc && doTransform) {
       if ((jpegBufSizes = (size_t *)malloc(sizeof(size_t) * ntilesw *
                                            ntilesh)) == NULL)
         THROW_UNIX("allocating JPEG buffer size array");
@@ -781,7 +787,7 @@ static int decompTest(char *fileName)
       printf("%-5d  %-5d   ", CROPPED_WIDTH(tilew), CROPPED_HEIGHT(tileh));
     }
 
-    if (doTile || xformOp != TJXOP_NONE || xformOpt != 0 || customFilter) {
+    if (doTransform) {
       if ((t = (tjtransform *)malloc(sizeof(tjtransform) * ntilesw *
                                      ntilesh)) == NULL)
         THROW_UNIX("allocating image transform array");
@@ -818,6 +824,7 @@ static int decompTest(char *fileName)
               tj3JPEGBufSize(t[tile].r.w, t[tile].r.h, tsubsamp);
             if (jpegBufSize == 0)
               THROW_TJG();
+            jpegBufSize += iccSize;
             if ((jpegBufs[tile] = tj3Alloc(jpegBufSize)) == NULL)
               THROW_UNIX("allocating JPEG tiles");
             jpegBufSizes[tile] = jpegBufSize;

@@ -378,8 +378,9 @@ set(TURBOJPEG_SO_MAJOR_VERSION 0)
 #    function so that it accepts "abbreviated table specification" (AKA
 #    "tables-only") datastreams as well as JPEG images, but that did not affect
 #    forward API/ABI compatibility.
-# 3: TurboJPEG 3 API
-set(TURBOJPEG_SO_AGE 3)
+# 3: TurboJPEG 3.0.x API
+# 4: TurboJPEG 3.1.x API
+set(TURBOJPEG_SO_AGE 4)
 set(TURBOJPEG_SO_VERSION 0.${TURBOJPEG_SO_AGE}.0)
 
 

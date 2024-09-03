@@ -110,7 +110,11 @@ public class TJDecompressor implements Closeable {
    * when decompressing video streams in which all frames share the same
    * quantization and Huffman tables.  If a JPEG image is passed to this
    * method, then the {@link TJ#PARAM_STOPONWARNING parameters} that describe
-   * the JPEG image will be set when the method returns.
+   * the JPEG image will be set when the method returns.  If a JPEG image is
+   * passed to this method and {@link TJ#PARAM_SAVEMARKERS} is set to
+   * <code>2</code> or <code>4</code>, then the ICC profile (if any) will be
+   * extracted from the JPEG image.  ({@link #getICCProfile()} can then be used
+   * to retrieve the profile.)
    *
    * @param jpegImage buffer containing a JPEG source image or tables-only
    * datastream.  This buffer is not modified.
@@ -207,6 +211,30 @@ public class TJDecompressor implements Closeable {
    * value is unknown.
    */
   public native int get(int param);
+
+  /**
+   * Retrieve the ICC (International Color Consortium) color management profile
+   * (if any) that was previously extracted from the JPEG image associated with
+   * this decompressor instance (see {@link #setSourceImage(byte[], int)}), and
+   * return a buffer containing the ICC profile.  Once the ICC profile is
+   * retrieved, it must be re-extracted before it can be retrieved again.
+   *
+   * @return a buffer containing the ICC profile
+   */
+  public native byte[] getICCProfile() throws TJException;
+
+  /**
+   * Returns the size of the ICC profile (if any) that was previously extracted
+   * from the JPEG image associated with this decompressor instance
+   * (see {@link #setSourceImage(byte[], int)}), or 0 if there is no ICC
+   * profile to retrieve.
+   *
+   * @return the size of the ICC profile (if any) that was previously extracted
+   * from the JPEG image associated with this decompressor instance
+   * (see {@link #setSourceImage(byte[], int)}), or 0 if there is no ICC
+   * profile to retrieve.
+   */
+  public native int getICCSize();
 
   /**
    * Set the scaling factor for subsequent lossy decompression operations.

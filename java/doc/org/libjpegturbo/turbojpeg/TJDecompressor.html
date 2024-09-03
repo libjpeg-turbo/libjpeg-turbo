@@ -27,7 +27,7 @@
     catch(err) {
     }
 //-->
-var data = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10,"i14":10,"i15":10,"i16":10,"i17":10,"i18":10,"i19":10,"i20":10,"i21":10,"i22":10,"i23":10,"i24":10};
+var data = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10,"i14":10,"i15":10,"i16":10,"i17":10,"i18":10,"i19":10,"i20":10,"i21":10,"i22":10,"i23":10,"i24":10,"i25":10,"i26":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -375,12 +375,32 @@ implements java.io.Closeable</pre>
 </tr>
 <tr id="i16" class="altColor">
 <td class="colFirst"><code>byte[]</code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getICCProfile()">getICCProfile</a></span>()</code></th>
+<td class="colLast">
+<div class="block">Retrieve the ICC (International Color Consortium) color management profile
+ (if any) that was previously extracted from the JPEG image associated with
+ this decompressor instance (see <a href="#setSourceImage(byte%5B%5D,int)"><code>setSourceImage(byte[], int)</code></a>), and
+ return a buffer containing the ICC profile.</div>
+</td>
+</tr>
+<tr id="i17" class="rowColor">
+<td class="colFirst"><code>int</code></td>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getICCSize()">getICCSize</a></span>()</code></th>
+<td class="colLast">
+<div class="block">Returns the size of the ICC profile (if any) that was previously extracted
+ from the JPEG image associated with this decompressor instance
+ (see <a href="#setSourceImage(byte%5B%5D,int)"><code>setSourceImage(byte[], int)</code></a>), or 0 if there is no ICC
+ profile to retrieve.</div>
+</td>
+</tr>
+<tr id="i18" class="altColor">
+<td class="colFirst"><code>byte[]</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getJPEGBuf()">getJPEGBuf</a></span>()</code></th>
 <td class="colLast">
 <div class="block">Returns the JPEG buffer associated with this decompressor instance.</div>
 </td>
 </tr>
-<tr id="i17" class="rowColor">
+<tr id="i19" class="rowColor">
 <td class="colFirst"><code>int</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getJPEGSize()">getJPEGSize</a></span>()</code></th>
 <td class="colLast">
@@ -388,7 +408,7 @@ implements java.io.Closeable</pre>
  decompressor instance.</div>
 </td>
 </tr>
-<tr id="i18" class="altColor">
+<tr id="i20" class="altColor">
 <td class="colFirst"><code>int</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#getWidth()">getWidth</a></span>()</code></th>
 <td class="colLast">
@@ -396,7 +416,7 @@ implements java.io.Closeable</pre>
  decompressor instance.</div>
 </td>
 </tr>
-<tr id="i19" class="rowColor">
+<tr id="i21" class="rowColor">
 <td class="colFirst"><code>void</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#saveImage(java.lang.String,java.lang.Object,int,int,int,int,int,int)">saveImage</a></span>&#8203;(java.lang.String&nbsp;fileName,
          java.lang.Object&nbsp;image,
@@ -411,7 +431,7 @@ implements java.io.Closeable</pre>
  from memory to disk.</div>
 </td>
 </tr>
-<tr id="i20" class="altColor">
+<tr id="i22" class="altColor">
 <td class="colFirst"><code>void</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#set(int,int)">set</a></span>&#8203;(int&nbsp;param,
    int&nbsp;value)</code></th>
@@ -419,7 +439,7 @@ implements java.io.Closeable</pre>
 <div class="block">Set the value of a decompression parameter.</div>
 </td>
 </tr>
-<tr id="i21" class="rowColor">
+<tr id="i23" class="rowColor">
 <td class="colFirst"><code>void</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#setCroppingRegion(java.awt.Rectangle)">setCroppingRegion</a></span>&#8203;(java.awt.Rectangle&nbsp;croppingRegion)</code></th>
 <td class="colLast">
@@ -427,14 +447,14 @@ implements java.io.Closeable</pre>
  into a packed-pixel image.</div>
 </td>
 </tr>
-<tr id="i22" class="altColor">
+<tr id="i24" class="altColor">
 <td class="colFirst"><code>void</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#setScalingFactor(org.libjpegturbo.turbojpeg.TJScalingFactor)">setScalingFactor</a></span>&#8203;(<a href="TJScalingFactor.html" title="class in org.libjpegturbo.turbojpeg">TJScalingFactor</a>&nbsp;scalingFactor)</code></th>
 <td class="colLast">
 <div class="block">Set the scaling factor for subsequent lossy decompression operations.</div>
 </td>
 </tr>
-<tr id="i23" class="rowColor">
+<tr id="i25" class="rowColor">
 <td class="colFirst"><code>void</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#setSourceImage(byte%5B%5D,int)">setSourceImage</a></span>&#8203;(byte[]&nbsp;jpegImage,
               int&nbsp;imageSize)</code></th>
@@ -444,7 +464,7 @@ implements java.io.Closeable</pre>
  <code>jpegImage</code> with this decompressor instance.</div>
 </td>
 </tr>
-<tr id="i24" class="altColor">
+<tr id="i26" class="altColor">
 <td class="colFirst"><code>void</code></td>
 <th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#setSourceImage(org.libjpegturbo.turbojpeg.YUVImage)">setSourceImage</a></span>&#8203;(<a href="YUVImage.html" title="class in org.libjpegturbo.turbojpeg">YUVImage</a>&nbsp;srcImage)</code></th>
 <td class="colLast">
@@ -589,7 +609,11 @@ implements java.io.Closeable</pre>
  when decompressing video streams in which all frames share the same
  quantization and Huffman tables.  If a JPEG image is passed to this
  method, then the <a href="TJ.html#PARAM_STOPONWARNING"><code>parameters</code></a> that describe
- the JPEG image will be set when the method returns.</div>
+ the JPEG image will be set when the method returns.  If a JPEG image is
+ passed to this method and <a href="TJ.html#PARAM_SAVEMARKERS"><code>TJ.PARAM_SAVEMARKERS</code></a> is set to
+ <code>2</code> or <code>4</code>, then the ICC profile (if any) will be
+ extracted from the JPEG image.  (<a href="#getICCProfile()"><code>getICCProfile()</code></a> can then be used
+ to retrieve the profile.)</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>jpegImage</code> - buffer containing a JPEG source image or tables-only
@@ -683,6 +707,47 @@ implements java.io.Closeable</pre>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>the value of the specified decompression parameter, or -1 if the
  value is unknown.</dd>
+</dl>
+</li>
+</ul>
+<a id="getICCProfile()">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getICCProfile</h4>
+<pre class="methodSignature">public&nbsp;byte[]&nbsp;getICCProfile()
+                     throws <a href="TJException.html" title="class in org.libjpegturbo.turbojpeg">TJException</a></pre>
+<div class="block">Retrieve the ICC (International Color Consortium) color management profile
+ (if any) that was previously extracted from the JPEG image associated with
+ this decompressor instance (see <a href="#setSourceImage(byte%5B%5D,int)"><code>setSourceImage(byte[], int)</code></a>), and
+ return a buffer containing the ICC profile.  Once the ICC profile is
+ retrieved, it must be re-extracted before it can be retrieved again.</div>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>a buffer containing the ICC profile</dd>
+<dt><span class="throwsLabel">Throws:</span></dt>
+<dd><code><a href="TJException.html" title="class in org.libjpegturbo.turbojpeg">TJException</a></code></dd>
+</dl>
+</li>
+</ul>
+<a id="getICCSize()">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getICCSize</h4>
+<pre class="methodSignature">public&nbsp;int&nbsp;getICCSize()</pre>
+<div class="block">Returns the size of the ICC profile (if any) that was previously extracted
+ from the JPEG image associated with this decompressor instance
+ (see <a href="#setSourceImage(byte%5B%5D,int)"><code>setSourceImage(byte[], int)</code></a>), or 0 if there is no ICC
+ profile to retrieve.</div>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>the size of the ICC profile (if any) that was previously extracted
+ from the JPEG image associated with this decompressor instance
+ (see <a href="#setSourceImage(byte%5B%5D,int)"><code>setSourceImage(byte[], int)</code></a>), or 0 if there is no ICC
+ profile to retrieve.</dd>
 </dl>
 </li>
 </ul>

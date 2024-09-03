@@ -362,9 +362,11 @@ for image in $IMAGES; do
 
 	# Transforms
 	if [ "$LOSSLSARG" != "-l" ]; then
+		runme $EXEDIR/jpegtran -icc $IMGDIR/test1.icc -outf $OUTDIR/temp.jpg $OUTDIR/${basename}_444_Q95.jpg
+		runme mv $OUTDIR/temp.jpg $OUTDIR/${basename}_444_Q95.jpg
 		for samp in $ALLSUBSAMP; do
 			for xform in {0..6}; do
-				runme $EXEDIR/jpegtran ${XFORMARGS[$xform]} -tri -outf $OUTDIR/${basename}_${samp}_${XFORMNAME[$xform]}_jpegtran.jpg $OUTDIR/${basename}_${samp}_Q95.jpg
+				runme $EXEDIR/jpegtran -c a ${XFORMARGS[$xform]} -tri -outf $OUTDIR/${basename}_${samp}_${XFORMNAME[$xform]}_jpegtran.jpg $OUTDIR/${basename}_${samp}_Q95.jpg
 			done
 		done
 		for xform in {0..6}; do

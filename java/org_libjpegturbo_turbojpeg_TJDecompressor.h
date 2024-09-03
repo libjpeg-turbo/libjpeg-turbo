@@ -25,6 +25,22 @@ JNIEXPORT jint JNICALL Java_org_libjpegturbo_turbojpeg_TJDecompressor_get
 
 /*
  * Class:     org_libjpegturbo_turbojpeg_TJDecompressor
+ * Method:    getICCProfile
+ * Signature: ()[B
+ */
+JNIEXPORT jbyteArray JNICALL Java_org_libjpegturbo_turbojpeg_TJDecompressor_getICCProfile
+  (JNIEnv *, jobject);
+
+/*
+ * Class:     org_libjpegturbo_turbojpeg_TJDecompressor
+ * Method:    getICCSize
+ * Signature: ()I
+ */
+JNIEXPORT jint JNICALL Java_org_libjpegturbo_turbojpeg_TJDecompressor_getICCSize
+  (JNIEnv *, jobject);
+
+/*
+ * Class:     org_libjpegturbo_turbojpeg_TJDecompressor
  * Method:    init
  * Signature: ()V
  */

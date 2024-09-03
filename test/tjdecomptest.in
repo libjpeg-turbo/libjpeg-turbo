@@ -63,7 +63,11 @@ for precision in 8 12; do
 	fi
 
 	for sampi in {0..6}; do
-		runme $EXEDIR/cjpeg -pre $precision -sa ${SAMPOPT[$sampi]} \
+		iccarg=
+		if [ $sampi = 3 ]; then
+			iccarg="-icc $IMGDIR/test1.icc"
+		fi
+		runme $EXEDIR/cjpeg -pre $precision -sa ${SAMPOPT[$sampi]} $iccarg \
 			-outf $OUTDIR/`basename $RGBIMG .ppm`-${SUBSAMPOPT[$sampi]}.jpg $RGBIMG
 	done
 	runme $EXEDIR/cjpeg -pre $precision \
@@ -124,12 +128,26 @@ for precision in 8 12; do
 							echo
 						else
 							basename=`basename $RGBIMG .ppm`
-							runme $TJDECOMP $croparg $dctarg $nsarg $scalearg \
+							iccarg=
+							if [ "$subsamp" = "420" ]; then
+								iccarg="-icc $OUTDIR/${basename}-tjdecomp.icc"
+							fi
+							runme $TJDECOMP $croparg $dctarg $nsarg $scalearg $iccarg \
 								$OUTDIR/${basename}-$subsamp.jpg \
 								$OUTDIR/${basename}-tjdecomp.ppm
-							runme $EXEDIR/djpeg $croparg $dctarg $nsarg $scalearg \
+							if [ "$subsamp" = "420" ]; then
+								iccarg="-icc $OUTDIR/${basename}-djpeg.icc"
+							fi
+							runme $EXEDIR/djpeg $croparg $dctarg $nsarg $scalearg $iccarg \
 								-outf $OUTDIR/${basename}-djpeg.ppm \
 								$OUTDIR/${basename}-$subsamp.jpg
+							if [ "$subsamp" = "420" ]; then
+								$EXEDIR/test/md5sum $OUTDIR/${basename}-tjdecomp.icc \
+									$OUTDIR/${basename}-djpeg.icc | sed "s@$OUTDIR@\$OUTDIR@g"
+								cmp $OUTDIR/${basename}-tjdecomp.icc \
+									$OUTDIR/${basename}-djpeg.icc
+								rm $OUTDIR/${basename}-tjdecomp.icc $OUTDIR/${basename}-djpeg.icc
+							fi
 							$EXEDIR/test/md5sum $OUTDIR/${basename}-tjdecomp.ppm \
 								$OUTDIR/${basename}-djpeg.ppm | sed "s@$OUTDIR@\$OUTDIR@g"
 							cmp $OUTDIR/${basename}-tjdecomp.ppm \

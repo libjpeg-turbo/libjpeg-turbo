@@ -80,9 +80,15 @@ final class TJTran {
     System.out.println("    entropy coding (can be combined with -progressive)");
     System.out.println("-copy all");
     System.out.println("    Copy all extra markers (including comments, JFIF thumbnails, Exif data, and");
-    System.out.println("    ICC profile data) from the input image to the output image [default]");
+    System.out.println("    ICC profile data) from the input image to the output image");
+    System.out.println("-copy comments");
+    System.out.println("    Do not copy any extra markers, except comment markers, from the input");
+    System.out.println("    image to the output image [default]");
+    System.out.println("-copy icc");
+    System.out.println("    Do not copy any extra markers, except ICC profile data, from the input");
+    System.out.println("    image to the output image");
     System.out.println("-copy none");
-    System.out.println("    Copy no extra markers from the input image to the output image");
+    System.out.println("    Do not copy any extra markers from the input image to the output image");
     System.out.println("-crop WxH+X+Y");
     System.out.println("    Include only the specified region of the input image.  (W, H, X, and Y are");
     System.out.println("    the width, height, left boundary, and upper boundary of the region, all");
@@ -94,6 +100,9 @@ final class TJTran {
     System.out.println("    mutually exclusive)");
     System.out.println("-grayscale");
     System.out.println("    Create a grayscale output image from a full-color input image");
+    System.out.println("-icc FILE");
+    System.out.println("    Embed the ICC (International Color Consortium) color management profile");
+    System.out.println("    from the specified file into the output image");
     System.out.println("-maxmemory N");
     System.out.println("    Memory limit (in megabytes) for intermediate buffers used with progressive");
     System.out.println("    JPEG compression, Huffman table optimization, and lossless transformation");
@@ -145,11 +154,12 @@ final class TJTran {
       int i;
       int arithmetic = 0, maxMemory = -1, maxScans = -1, optimize = -1,
         progressive = 0, restartIntervalBlocks = -1, restartIntervalRows = -1,
-        subsamp;
+        saveMarkers = 1, subsamp;
       TJTransform[] xform = new TJTransform[1];
       xform[0] = new TJTransform();
-      byte[] srcBuf;
-      int width, height;
+      String iccFilename = null;
+      byte[] srcBuf, iccBuf;
+      int width, height, iccSize = 0;
       byte[][] dstBuf;
 
       for (i = 0; i < argv.length; i++) {
@@ -175,9 +185,13 @@ final class TJTran {
           xform[0].y = tempY;
         } else if (matchArg(argv[i], "-copy", 2) && i < argv.length - 1) {
           i++;
-          if (matchArg(argv[i], "none", 1))
-            xform[0].options |= TJTransform.OPT_COPYNONE;
-          else if (!matchArg(argv[i], "all", 1))
+          if (matchArg(argv[i], "all", 1))
+            saveMarkers = 2;
+          else if (matchArg(argv[i], "icc", 1))
+            saveMarkers = 4;
+          else if (matchArg(argv[i], "none", 1))
+            saveMarkers = 0;
+          else if (!matchArg(argv[i], "comments", 1))
             usage();
         } else if (matchArg(argv[i], "-flip", 2) && i < argv.length - 1) {
           i++;
@@ -190,6 +204,8 @@ final class TJTran {
         } else if (matchArg(argv[i], "-grayscale", 2) ||
                    matchArg(argv[i], "-greyscale", 2))
           xform[0].options |= TJTransform.OPT_GRAY;
+        else if (matchArg(argv[i], "-icc", 2) && i < argv.length - 1)
+          iccFilename = argv[++i];
         else if (matchArg(argv[i], "-maxscans", 5) && i < argv.length - 1) {
           int temp = -1;
 
@@ -252,6 +268,11 @@ final class TJTran {
       if (i != argv.length - 2)
         usage();
 
+      if (iccFilename != null) {
+        if (saveMarkers == 2) saveMarkers = 3;
+        else if (saveMarkers == 4) saveMarkers = 0;
+      }
+
       tjt = new TJTransformer();
 
       if (optimize >= 0)
@@ -264,6 +285,7 @@ final class TJTran {
         tjt.set(TJ.PARAM_RESTARTROWS, restartIntervalRows);
       if (maxMemory >= 0)
         tjt.set(TJ.PARAM_MAXMEMORY, maxMemory);
+      tjt.set(TJ.PARAM_SAVEMARKERS, saveMarkers);
 
       File inFile = new File(argv[i++]);
       fis = new FileInputStream(inFile);
@@ -315,13 +337,23 @@ final class TJTran {
         xform[0].height += yAdjust;
       }
 
-      dstBuf = new byte[1][TJ.bufSize(width, height, subsamp)];
+      if (iccFilename != null) {
+        File iccFile = new File(iccFilename);
+        fis = new FileInputStream(iccFile);
+        iccSize = fis.available();
+        if (iccSize < 1)
+          throw new Exception("ICC profile contains no data");
+        iccBuf = new byte[iccSize];
+        fis.read(iccBuf);
+        fis.close();  fis = null;
+        tjt.setICCProfile(iccBuf);
+      }
 
-      tjt.transform(dstBuf, xform);
+      TJDecompressor[] tjd = tjt.transform(xform);
 
       File outFile = new File(argv[i]);
       fos = new FileOutputStream(outFile);
-      fos.write(dstBuf[0], 0, tjt.getTransformedSizes()[0]);
+      fos.write(tjd[0].getJPEGBuf(), 0, tjd[0].getJPEGSize());
     } catch (Exception e) {
       e.printStackTrace();
       exitStatus = -1;

@@ -102,6 +102,9 @@ static void usage(char *programName)
 
   printf("GENERAL OPTIONS (CAN BE ABBREVBIATED)\n");
   printf("-------------------------------------\n");
+  printf("-icc FILE\n");
+  printf("    Extract the ICC (International Color Consortium) color profile from the\n");
+  printf("    JPEG image to the specified file\n");
   printf("-strict\n");
   printf("    Treat all warnings as fatal; abort immediately if incomplete or corrupt\n");
   printf("    data is encountered in the JPEG image, rather than trying to salvage the\n");
@@ -159,12 +162,13 @@ int main(int argc, char **argv)
     subsamp;
   tjregion croppingRegion = TJUNCROPPED;
   tjscalingfactor scalingFactor = TJUNSCALED;
+  char *iccFilename = NULL;
   tjhandle tjInstance = NULL;
-  FILE *jpegFile = NULL;
+  FILE *jpegFile = NULL, *iccFile = NULL;
   long size = 0;
-  size_t jpegSize, sampleSize;
+  size_t jpegSize, sampleSize, iccSize;
   int width, height;
-  unsigned char *jpegBuf = NULL;
+  unsigned char *jpegBuf = NULL, *iccBuf = NULL;
   void *dstBuf = NULL;
 
   if ((scalingFactors = tj3GetScalingFactors(&numScalingFactors)) == NULL)
@@ -190,6 +194,8 @@ int main(int argc, char **argv)
     } else if (MATCH_ARG(argv[i], "-grayscale", 2) ||
                MATCH_ARG(argv[i], "-greyscale", 2))
       pixelFormat = TJPF_GRAY;
+    else if (MATCH_ARG(argv[i], "-icc", 2) && i < argc - 1)
+      iccFilename = argv[++i];
     else if (MATCH_ARG(argv[i], "-maxscans", 5) && i < argc - 1) {
       int tempi = atoi(argv[++i]);
 
@@ -268,6 +274,19 @@ int main(int argc, char **argv)
   sampleSize = (precision <= 8 ? sizeof(unsigned char) : sizeof(short));
   colorspace = tj3Get(tjInstance, TJPARAM_COLORSPACE);
 
+  if (iccFilename) {
+    if (tj3GetICCProfile(tjInstance, &iccBuf, &iccSize) < 0) {
+      THROW_TJ("getting ICC profile");
+    } else {
+      if ((iccFile = fopen(iccFilename, "wb")) == NULL)
+        THROW_UNIX("opening ICC file");
+      if (fwrite(iccBuf, iccSize, 1, iccFile) < 1)
+        THROW_UNIX("writing ICC profile");
+      tj3Free(iccBuf);  iccBuf = NULL;
+      fclose(iccFile);  iccFile = NULL;
+    }
+  }
+
   if (pixelFormat == TJPF_UNKNOWN) {
     if (colorspace == TJCS_GRAY)
       pixelFormat = TJPF_GRAY;
@@ -343,6 +362,8 @@ bailout:
   tj3Destroy(tjInstance);
   if (jpegFile) fclose(jpegFile);
   tj3Free(jpegBuf);
+  tj3Free(iccBuf);
+  if (iccFile) fclose(iccFile);
   free(dstBuf);
   return retval;
 }

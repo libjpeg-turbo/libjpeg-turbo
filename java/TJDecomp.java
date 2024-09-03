@@ -93,6 +93,9 @@ final class TJDecomp {
 
     System.out.println("GENERAL OPTIONS (CAN BE ABBREVBIATED)");
     System.out.println("-------------------------------------");
+    System.out.println("-icc FILE");
+    System.out.println("    Extract the ICC (International Color Consortium) color profile from the");
+    System.out.println("    JPEG image to the specified file");
     System.out.println("-strict");
     System.out.println("    Treat all warnings as fatal; abort immediately if incomplete or corrupt");
     System.out.println("    data is encountered in the JPEG image, rather than trying to salvage the");
@@ -158,6 +161,7 @@ final class TJDecomp {
     int exitStatus = 0;
     TJDecompressor tjd = null;
     FileInputStream fis = null;
+    FileOutputStream fos = null;
 
     try {
 
@@ -166,9 +170,10 @@ final class TJDecomp {
         maxScans = -1, pixelFormat = TJ.PF_UNKNOWN, precision,
         stopOnWarning = -1, subsamp;
       java.awt.Rectangle croppingRegion = TJ.UNCROPPED;
+      String iccFilename = null;
       TJScalingFactor scalingFactor = TJ.UNSCALED;
       int width, height;
-      byte[] jpegBuf;
+      byte[] jpegBuf, iccBuf = null;
       Object dstBuf = null;
 
       for (i = 0; i < argv.length; i++) {
@@ -198,6 +203,8 @@ final class TJDecomp {
         } else if (matchArg(argv[i], "-grayscale", 2) ||
                    matchArg(argv[i], "-greyscale", 2))
           pixelFormat = TJ.PF_GRAY;
+        else if (matchArg(argv[i], "-icc", 2) && i < argv.length - 1)
+          iccFilename = argv[++i];
         else if (matchArg(argv[i], "-maxscans", 5) && i < argv.length - 1) {
           int temp = -1;
 
@@ -282,6 +289,17 @@ final class TJDecomp {
       precision = tjd.get(TJ.PARAM_PRECISION);
       colorspace = tjd.get(TJ.PARAM_COLORSPACE);
 
+      if (iccFilename != null) {
+        try {
+          iccBuf = tjd.getICCProfile();
+        } catch (TJException e) { handleTJException(e, stopOnWarning); }
+        if (iccBuf != null) {
+          File iccFile = new File(iccFilename);
+          fos = new FileOutputStream(iccFile);
+          fos.write(iccBuf, 0, iccBuf.length);
+        }
+      }
+
       if (pixelFormat == TJ.PF_UNKNOWN) {
         if (colorspace == TJ.CS_GRAY)
           pixelFormat = TJ.PF_GRAY;
@@ -332,8 +350,9 @@ final class TJDecomp {
     }
 
     try {
-      if (fis != null) fis.close();
       if (tjd != null) tjd.close();
+      if (fis != null) fis.close();
+      if (fos != null) fos.close();
     } catch (Exception e) {}
     System.exit(exitStatus);
   }
