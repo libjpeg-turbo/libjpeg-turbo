@@ -179,11 +179,11 @@ for image in $IMAGES; do
 		if [ "${dct}" = "fast" ]; then
 			dctarg="-d f"
 		fi
-		runme $TJBENCH $OUTDIR/$image $TJQUAL -pre $PRECISION -rgb -q -be 0.01 -w 0 ${dctarg} $YUVARG $ALLOCARG $ENTROPYARG $LOSSLSARG
+		runme $TJBENCH $OUTDIR/$image $TJQUAL -pre $PRECISION -pi rgb -q -be 0.01 -w 0 ${dctarg} $YUVARG $ALLOCARG $ENTROPYARG $LOSSLSARG
 		if [ "$LOSSLSARG" != "-l" ]; then
-			runme $TJBENCH $OUTDIR/$image $TJQUAL -pre $PRECISION -su 440 -r 1b -rgb -q -be 0.01 -w 0 ${dctarg} $YUVARG $ALLOCARG $ENTROPYARG $LOSSLSARG
-			runme $TJBENCH $OUTDIR/$image $TJQUAL -pre $PRECISION -su 411 -r 1 -rgb -q -be 0.01 -w 0 ${dctarg} $YUVARG $ALLOCARG $ENTROPYARG $LOSSLSARG
-			runme $TJBENCH $OUTDIR/$image $TJQUAL -pre $PRECISION -su 441 -r 2 -rgb -q -be 0.01 -w 0 ${dctarg} $YUVARG $ALLOCARG $ENTROPYARG $LOSSLSARG
+			runme $TJBENCH $OUTDIR/$image $TJQUAL -pre $PRECISION -su 440 -r 1b -pi rgb -q -be 0.01 -w 0 ${dctarg} $YUVARG $ALLOCARG $ENTROPYARG $LOSSLSARG
+			runme $TJBENCH $OUTDIR/$image $TJQUAL -pre $PRECISION -su 411 -r 1 -pi rgb -q -be 0.01 -w 0 ${dctarg} $YUVARG $ALLOCARG $ENTROPYARG $LOSSLSARG
+			runme $TJBENCH $OUTDIR/$image $TJQUAL -pre $PRECISION -su 441 -r 2 -pi rgb -q -be 0.01 -w 0 ${dctarg} $YUVARG $ALLOCARG $ENTROPYARG $LOSSLSARG
 		fi
 		for samp in $ALLSUBSAMP; do
 			if [ "$LOSSLSARG" = "-l" ]; then
@@ -201,7 +201,7 @@ for image in $IMAGES; do
 		fi
 
 		# Tiled compression & decompression
-		runme $TJBENCH $OUTDIR/$image $TJQUAL -pre $PRECISION -rgb -ti -q -be 0.01 -w 0 ${dctarg} $YUVARG $ALLOCARG $ENTROPYARG $LOSSLSARG
+		runme $TJBENCH $OUTDIR/$image $TJQUAL -pre $PRECISION -pi rgb -ti -q -be 0.01 -w 0 ${dctarg} $YUVARG $ALLOCARG $ENTROPYARG $LOSSLSARG
 		for samp in $x1SUBSAMP; do
 			if [ $ALLOC = 1 ]; then
 				if [ "$LOSSLSARG" = "-l" ]; then
@@ -227,11 +227,11 @@ for image in $IMAGES; do
 				fi
 			fi
 		done
-		runme $TJBENCH $OUTDIR/$image $TJQUAL -pre $PRECISION -rgb -ti -q -be 0.01 -w 0 -nos ${dctarg} $YUVARG $ALLOCARG $ENTROPYARG $LOSSLSARG
+		runme $TJBENCH $OUTDIR/$image $TJQUAL -pre $PRECISION -pi rgb -ti -q -be 0.01 -w 0 -nos ${dctarg} $YUVARG $ALLOCARG $ENTROPYARG $LOSSLSARG
 		if [ "$LOSSLSARG" != "-l" ]; then
-			runme $TJBENCH $OUTDIR/$image $TJQUAL -pre $PRECISION -su 440 -rgb -ti -q -be 0.01 -w 0 -nos ${dctarg} $YUVARG $ALLOCARG $ENTROPYARG $LOSSLSARG
-			runme $TJBENCH $OUTDIR/$image $TJQUAL -pre $PRECISION -su 411 -rgb -ti -q -be 0.01 -w 0 -nos ${dctarg} $YUVARG $ALLOCARG $ENTROPYARG $LOSSLSARG
-			runme $TJBENCH $OUTDIR/$image $TJQUAL -pre $PRECISION -su 441 -rgb -ti -q -be 0.01 -w 0 -nos ${dctarg} $YUVARG $ALLOCARG $ENTROPYARG $LOSSLSARG
+			runme $TJBENCH $OUTDIR/$image $TJQUAL -pre $PRECISION -su 440 -pi rgb -ti -q -be 0.01 -w 0 -nos ${dctarg} $YUVARG $ALLOCARG $ENTROPYARG $LOSSLSARG
+			runme $TJBENCH $OUTDIR/$image $TJQUAL -pre $PRECISION -su 411 -pi rgb -ti -q -be 0.01 -w 0 -nos ${dctarg} $YUVARG $ALLOCARG $ENTROPYARG $LOSSLSARG
+			runme $TJBENCH $OUTDIR/$image $TJQUAL -pre $PRECISION -su 441 -pi rgb -ti -q -be 0.01 -w 0 -nos ${dctarg} $YUVARG $ALLOCARG $ENTROPYARG $LOSSLSARG
 		fi
 		for samp in $x24SUBSAMP; do
 			if [ $ALLOC = 1 ]; then
@@ -409,7 +409,7 @@ for image in $IMAGES; do
 		# Grayscale transform
 		for xform in {0..6}; do
 			for samp in $ALLSUBSAMP; do
-				runme $TJBENCH $OUTDIR/${basename}_${samp}_Q95.jpg $BMPARG ${XFORMARGS[$xform]} -ti -q -be 0.01 -w 0 -grays $YUVARG $ALLOCARG $ENTROPYARG
+				runme $TJBENCH $OUTDIR/${basename}_${samp}_Q95.jpg $BMPARG ${XFORMARGS[$xform]} -ti -q -be 0.01 -w 0 -g $YUVARG $ALLOCARG $ENTROPYARG
 				if [ $ALLOC = 1 ]; then
 					runme cmp $OUTDIR/${basename}_${samp}_Q95_full.${EXT} $OUTDIR/${basename}_GRAY_${XFORMNAME[$xform]}_jpegtran.${EXT}
 					rm $OUTDIR/${basename}_${samp}_Q95_full.${EXT}

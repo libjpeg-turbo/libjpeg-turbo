@@ -10,16 +10,12 @@ moved into the **doc/** subdirectory, all C source code and headers have been
 moved into a new **src/** subdirectory, and test scripts have been moved into a
 new **test/** subdirectory.
 
-2. Added a new TJBench option (`-gray`) that can be used to test the
-performance of compressing/decompressing a grayscale JPEG image from/to a
-packed-pixel grayscale image.
-
-3. cjpeg no longer allows GIF input files to be converted into
+2. cjpeg no longer allows GIF input files to be converted into
 12-bit-per-sample JPEG files.  That was never a useful feature, since GIF
 images have at most 256 colors referenced from a palette of 8-bit-per-component
 RGB values.
 
-4. Added support for lossless JPEG images with 2 to 15 bits per sample to the
+3. Added support for lossless JPEG images with 2 to 15 bits per sample to the
 libjpeg and TurboJPEG APIs.  When creating or decompressing a lossless JPEG
 image and when loading or saving a PBMPLUS image, functions/methods specific to
 8-bit samples now handle 8-bit samples with 2 to 8 bits of data precision
@@ -31,20 +27,23 @@ now handle 16-bit samples with 13 to 16 bits of data precision.  Refer to
 [libjpeg.txt](doc/libjpeg.txt), [usage.txt](doc/usage.txt), and the TurboJPEG
 API documentation for more details.
 
-5. All deprecated constants and methods in the TurboJPEG Java API have been
+4. All deprecated constants and methods in the TurboJPEG Java API have been
 removed.
 
-6. TJBench command-line arguments are now more consistent with those of cjpeg,
+5. TJBench command-line arguments are now more consistent with those of cjpeg,
 djpeg, and jpegtran.  More specifically:
 
+     - `-copynone` has been replaced with `-copy none`.
      - `-fastdct` has been replaced with `-dct fast`.
      - `-fastupsample` has been replaced with `-nosmooth`.
-     - `-hflip` and `-vflip` have been replaced with `-flip horizontal` and
-`-flip vertical`.
+     - `-hflip` and `-vflip` have been replaced with
+`-flip {horizontal|vertical}`.
      - `-limitscans` has been replaced with `-maxscans`, which allows the scan
 limit to be specified.
+     - `-rgb`, `-bgr`, `-rgbx`, `-bgrx`, `-xbgr`, `-xrgb`, and `-cmyk` have
+been replaced with `-pixelformat {rgb|bgr|rgbx|bgrx|xbgr|xrgb|cmyk}`.
      - `-rot90`, `-rot180`, and `-rot270` have been replaced with
-`-rotate 90`, `-rotate 180`, and `-rotate 270`.
+`-rotate {90|180|270}`.
      - `-stoponwarning` has been replaced with `-strict`.
      - British spellings for `gray` (`grey`) and `optimize` (`optimise`) are
 now allowed.
@@ -53,6 +52,10 @@ now allowed.
 future release.  TJBench command-line arguments can now be abbreviated as well.
 (Where possible, the abbreviations are the same as those supported by cjpeg,
 djpeg, and jpegtran.)
+
+6. Added a new TJBench option (`-pixelformat gray`) that can be used to test
+the performance of compressing/decompressing a grayscale JPEG image from/to a
+packed-pixel grayscale image.
 
 7. The TurboJPEG C and Java APIs have been improved in the following ways:
 
