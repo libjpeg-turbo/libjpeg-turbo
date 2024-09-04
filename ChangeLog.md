@@ -80,6 +80,10 @@ cropping regions to be unduly rejected when performing 90-degree rotation,
 270-degree rotation, transposition, transverse transposition, or grayscale
 conversion.
 
+11. Fixed an issue whereby the TurboJPEG lossless transformation function and
+methods did not honor `TJXOPT_COPYNONE`/`TJTransform.OPT_COPYNONE` unless it
+was specified for all lossless transforms.
+
 
 2.1.5.1
 =======
