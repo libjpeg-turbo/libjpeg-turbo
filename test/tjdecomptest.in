@@ -58,8 +58,8 @@ for precision in 8 12; do
 		RGBIMG=$IMGDIR/testorig.ppm
 		GRAYIMG=$IMGDIR/testorig.pgm
 	else
-		RGBIMG=$IMGDIR/big_building16.ppm
-		GRAYIMG=$IMGDIR/big_building16.pgm
+		RGBIMG=$IMGDIR/monkey16.ppm
+		GRAYIMG=$IMGDIR/monkey16.pgm
 	fi
 
 	for sampi in {0..6}; do
@@ -166,8 +166,8 @@ for precision in {2..16}; do
 		RGBIMG=$IMGDIR/testorig.ppm
 		GRAYIMG=$IMGDIR/testorig.pgm
 	else
-		RGBIMG=$IMGDIR/big_building16.ppm
-		GRAYIMG=$IMGDIR/big_building16.pgm
+		RGBIMG=$IMGDIR/monkey16.ppm
+		GRAYIMG=$IMGDIR/monkey16.pgm
 	fi
 
 	basename=`basename $RGBIMG .ppm`

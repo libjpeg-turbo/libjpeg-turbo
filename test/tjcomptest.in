@@ -58,8 +58,8 @@ for precision in 8 12; do
 		RGBIMG=$IMGDIR/testorig.ppm
 		GRAYIMG=$IMGDIR/testorig.pgm
 	else
-		RGBIMG=$IMGDIR/big_building16.ppm
-		GRAYIMG=$IMGDIR/big_building16.pgm
+		RGBIMG=$IMGDIR/monkey16.ppm
+		GRAYIMG=$IMGDIR/monkey16.pgm
 	fi
 	for restartarg in "" "-r 1" "-r 1b"; do
 		for ariarg in "" "-a"; do
@@ -151,8 +151,8 @@ for precision in {2..16}; do
 		RGBIMG=$IMGDIR/testorig.ppm
 		GRAYIMG=$IMGDIR/testorig.pgm
 	else
-		RGBIMG=$IMGDIR/big_building16.ppm
-		GRAYIMG=$IMGDIR/big_building16.pgm
+		RGBIMG=$IMGDIR/monkey16.ppm
+		GRAYIMG=$IMGDIR/monkey16.pgm
 	fi
 	for psv in {1..7}; do
 		for pt in {0..15}; do
