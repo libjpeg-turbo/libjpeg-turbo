@@ -107,6 +107,10 @@ color conversion routine.  Both bounds checks now use 64-bit integers to guard
 against overflow, and djpeg now checks for negative numbers when it parses the
 crop specification from the command line.
 
+16. Fixed an issue whereby the TurboJPEG lossless transformation function and
+methods did not honor `TJXOPT_COPYNONE`/`TJTransform.OPT_COPYNONE` unless it
+was specified for all lossless transforms.
+
 
 2.0.8 ESR
 =========
