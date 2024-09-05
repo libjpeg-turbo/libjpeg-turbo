@@ -57,7 +57,15 @@ djpeg, and jpegtran.)
 the performance of compressing/decompressing a grayscale JPEG image from/to a
 packed-pixel grayscale image.
 
-7. The TurboJPEG C and Java APIs have been improved in the following ways:
+7. Fixed an issue whereby, if `TJPARAM_NOREALLOC` was set, TurboJPEG
+compression and lossless transformation functions ignored the JPEG buffer
+size(s) passed to them and assumed that the JPEG buffer(s) had been allocated
+to a worst-case size returned by `tj3JPEGBufSize()`.  This behavior was never
+documented, although the documentation was unclear regarding whether the JPEG
+buffer size should be specified if a JPEG buffer is pre-allocated to a
+worst-case size.
+
+8. The TurboJPEG C and Java APIs have been improved in the following ways:
 
      - New image I/O methods (`TJCompressor.loadSourceImage()` and
 `TJDecompressor.saveImage()`) have been added to the Java API.  These methods
@@ -68,7 +76,7 @@ restart markers to all destination images if
 `TJPARAM_RESTARTBLOCKS`/`TJ.PARAM_RESTARTBLOCKS` or
 `TJPARAM_RESTARTROWS`/`TJ.PARAM_RESTARTROWS` is set.
 
-8. TJExample has been replaced with three programs (TJComp, TJDecomp, and
+9. TJExample has been replaced with three programs (TJComp, TJDecomp, and
 TJTran) that demonstrate how to approximate the functionality of cjpeg, djpeg,
 and jpegtran using the TurboJPEG C and Java APIs.
 

@@ -237,15 +237,13 @@ static jint TJCompressor_compress
     jpegSubsamp = TJSAMP_444;
   else if (jpegSubsamp == TJSAMP_UNKNOWN)
     THROW_ARG("TJPARAM_SUBSAMP must be specified");
-  jpegSize = tj3JPEGBufSize(width, height, jpegSubsamp);
-  if ((*env)->GetArrayLength(env, dst) < (jsize)jpegSize)
-    THROW_ARG("Destination buffer is not large enough");
 
   if (tj3Set(handle, TJPARAM_NOREALLOC, 1) == -1)
     THROW_TJ();
 
   BAILIF0NOEC(srcBuf = (*env)->GetPrimitiveArrayCritical(env, src, 0));
   BAILIF0NOEC(jpegBuf = (*env)->GetPrimitiveArrayCritical(env, dst, 0));
+  jpegSize = (*env)->GetArrayLength(env, dst);
 
   if (precision == 8) {
     if (tj3Compress8(handle, &((unsigned char *)srcBuf)[y * actualPitch +
@@ -353,10 +351,6 @@ JNIEXPORT jint JNICALL Java_org_libjpegturbo_turbojpeg_TJCompressor_compressFrom
   if ((*env)->GetArrayLength(env, jSrcStrides) < nc)
     THROW_ARG("Strides array is too small for the subsampling type");
 
-  jpegSize = tj3JPEGBufSize(width, height, subsamp);
-  if ((*env)->GetArrayLength(env, dst) < (jsize)jpegSize)
-    THROW_ARG("Destination buffer is not large enough");
-
   if (tj3Set(handle, TJPARAM_NOREALLOC, 1) == -1)
     THROW_TJ();
 
@@ -396,6 +390,7 @@ JNIEXPORT jint JNICALL Java_org_libjpegturbo_turbojpeg_TJCompressor_compressFrom
     srcPlanes[i] = &srcPlanesTmp[i][srcOffsets[i]];
   }
   BAILIF0NOEC(jpegBuf = (*env)->GetPrimitiveArrayCritical(env, dst, 0));
+  jpegSize = (*env)->GetArrayLength(env, dst);
 
   if (tj3CompressFromYUVPlanes8(handle, srcPlanes, width, srcStrides, height,
                                 &jpegBuf, &jpegSize) == -1) {
@@ -1141,7 +1136,7 @@ JNIEXPORT jintArray JNICALL Java_org_libjpegturbo_turbojpeg_TJTransformer_transf
   size_t *dstSizes = NULL;
   tjtransform *t = NULL;
   jbyteArray *jdstBufs = NULL;
-  int i, jpegWidth = 0, jpegHeight = 0, srcSubsamp;
+  int i, jpegWidth = 0, jpegHeight = 0;
   jintArray jdstSizes = 0;
   jint *dstSizesi = NULL;
   JNICustomFilterParams *params = NULL;
@@ -1154,7 +1149,6 @@ JNIEXPORT jintArray JNICALL Java_org_libjpegturbo_turbojpeg_TJTransformer_transf
     THROW_ARG("JPEG header has not yet been read");
   if ((jpegHeight = tj3Get(handle, TJPARAM_JPEGHEIGHT)) == -1)
     THROW_ARG("JPEG header has not yet been read");
-  srcSubsamp = tj3Get(handle, TJPARAM_SUBSAMP);
 
   n = (*env)->GetArrayLength(env, dstobjs);
   if (n != (*env)->GetArrayLength(env, tobjs))
@@ -1211,29 +1205,13 @@ JNIEXPORT jintArray JNICALL Java_org_libjpegturbo_turbojpeg_TJTransformer_transf
   if (tj3Set(handle, TJPARAM_NOREALLOC, 1) == -1)
     THROW_TJ();
 
-  for (i = 0; i < n; i++) {
-    int w = jpegWidth, h = jpegHeight;
-    int dstSubsamp = (t[i].options & TJXOPT_GRAY) ? TJSAMP_GRAY : srcSubsamp;
-
-    if (t[i].op == TJXOP_TRANSPOSE || t[i].op == TJXOP_TRANSVERSE ||
-        t[i].op == TJXOP_ROT90 || t[i].op == TJXOP_ROT270) {
-      w = jpegHeight;  h = jpegWidth;
-      if (dstSubsamp == TJSAMP_422) dstSubsamp = TJSAMP_440;
-      else if (dstSubsamp == TJSAMP_440) dstSubsamp = TJSAMP_422;
-      else if (dstSubsamp == TJSAMP_411) dstSubsamp = TJSAMP_441;
-      else if (dstSubsamp == TJSAMP_441) dstSubsamp = TJSAMP_411;
-    }
-    if (t[i].r.w != 0) w = t[i].r.w;
-    if (t[i].r.h != 0) h = t[i].r.h;
-    BAILIF0(jdstBufs[i] = (*env)->GetObjectArrayElement(env, dstobjs, i));
-    if ((size_t)(*env)->GetArrayLength(env, jdstBufs[i]) <
-        tj3JPEGBufSize(w, h, dstSubsamp))
-      THROW_ARG("Destination buffer is not large enough");
-  }
   BAILIF0NOEC(jpegBuf = (*env)->GetPrimitiveArrayCritical(env, jsrcBuf, 0));
-  for (i = 0; i < n; i++)
+  for (i = 0; i < n; i++) {
+    BAILIF0(jdstBufs[i] = (*env)->GetObjectArrayElement(env, dstobjs, i));
     BAILIF0NOEC(dstBufs[i] =
                 (*env)->GetPrimitiveArrayCritical(env, jdstBufs[i], 0));
+    dstSizes[i] = (*env)->GetArrayLength(env, jdstBufs[i]);
+  }
 
   if (tj3Transform(handle, jpegBuf, jpegSize, n, dstBufs, dstSizes, t) == -1) {
     for (i = 0; i < n; i++)

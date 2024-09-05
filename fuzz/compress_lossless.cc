@@ -83,9 +83,9 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
                                 &pf)) == NULL)
       continue;
 
-    maxBufSize = tj3JPEGBufSize(width, height, TJSAMP_444);
+    dstSize = maxBufSize = tj3JPEGBufSize(width, height, TJSAMP_444);
     if (tj3Get(handle, TJPARAM_NOREALLOC)) {
-      if ((dstBuf = (unsigned char *)tj3Alloc(maxBufSize)) == NULL)
+      if ((dstBuf = (unsigned char *)tj3Alloc(dstSize)) == NULL)
         goto bailout;
     } else
       dstBuf = NULL;

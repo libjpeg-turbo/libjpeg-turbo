@@ -69,12 +69,10 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 
   transforms[0].op = TJXOP_NONE;
   transforms[0].options = TJXOPT_PROGRESSIVE | TJXOPT_COPYNONE;
-  dstBufs[0] =
-    (unsigned char *)tj3Alloc(tj3JPEGBufSize(width, height, jpegSubsamp));
+  dstSizes[0] = maxBufSize = tj3JPEGBufSize(width, height, jpegSubsamp);
+  dstBufs[0] = (unsigned char *)tj3Alloc(dstSizes[0]);
   if (!dstBufs[0])
     goto bailout;
-
-  maxBufSize = tj3JPEGBufSize(width, height, jpegSubsamp);
 
   tj3Set(handle, TJPARAM_NOREALLOC, 1);
   if (tj3Transform(handle, data, size, 1, dstBufs, dstSizes,
@@ -100,13 +98,11 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
   transforms[0].op = TJXOP_TRANSPOSE;
   transforms[0].options = TJXOPT_GRAY | TJXOPT_CROP | TJXOPT_COPYNONE |
                           TJXOPT_OPTIMIZE;
-  dstBufs[0] =
-    (unsigned char *)tj3Alloc(tj3JPEGBufSize((height + 1) / 2, (width + 1) / 2,
-                                             TJSAMP_GRAY));
+  dstSizes[0] = maxBufSize =
+    tj3JPEGBufSize((height + 1) / 2, (width + 1) / 2, TJSAMP_GRAY);
+  dstBufs[0] = (unsigned char *)tj3Alloc(dstSizes[0]);
   if (!dstBufs[0])
     goto bailout;
-
-  maxBufSize = tj3JPEGBufSize((height + 1) / 2, (width + 1) / 2, TJSAMP_GRAY);
 
   if (tj3Transform(handle, data, size, 1, dstBufs, dstSizes,
                    transforms) == 0) {
@@ -124,12 +120,10 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 
   transforms[0].op = TJXOP_ROT90;
   transforms[0].options = TJXOPT_TRIM | TJXOPT_ARITHMETIC;
-  dstBufs[0] =
-    (unsigned char *)tj3Alloc(tj3JPEGBufSize(height, width, jpegSubsamp));
+  dstSizes[0] = maxBufSize = tj3JPEGBufSize(height, width, jpegSubsamp);
+  dstBufs[0] = (unsigned char *)tj3Alloc(dstSizes[0]);
   if (!dstBufs[0])
     goto bailout;
-
-  maxBufSize = tj3JPEGBufSize(height, width, jpegSubsamp);
 
   if (tj3Transform(handle, data, size, 1, dstBufs, dstSizes,
                    transforms) == 0) {

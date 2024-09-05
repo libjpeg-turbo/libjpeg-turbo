@@ -1436,10 +1436,10 @@ DLLEXPORT int tj3YUVPlaneHeight(int componentID, int height, int subsamp);
  * #tj3JPEGBufSize().  This should ensure that the buffer never has to be
  * re-allocated.  (Setting #TJPARAM_NOREALLOC guarantees that it won't be.)
  * .
- * If you choose option 1, then `*jpegSize` should be set to the size of your
- * pre-allocated buffer.  In any case, unless you have set #TJPARAM_NOREALLOC,
- * you should always check `*jpegBuf` upon return from this function, as it may
- * have changed.
+ * If you choose option 1 or 3, then `*jpegSize` should be set to the size of
+ * your pre-allocated buffer.  In any case, unless you have set
+ * #TJPARAM_NOREALLOC, you should always check `*jpegBuf` upon return from this
+ * function, as it may have changed.
  *
  * @param jpegSize pointer to a size_t variable that holds the size of the JPEG
  * buffer.  If `*jpegBuf` points to a pre-allocated buffer, then `*jpegSize`
@@ -1495,10 +1495,10 @@ DLLEXPORT int tj3Compress8(tjhandle handle, const unsigned char *srcBuf,
  * #tj3JPEGBufSize().  This should ensure that the buffer never has to be
  * re-allocated.  (Setting #TJPARAM_NOREALLOC guarantees that it won't be.)
  * .
- * If you choose option 1, then `*jpegSize` should be set to the size of your
- * pre-allocated buffer.  In any case, unless you have set #TJPARAM_NOREALLOC,
- * you should always check `*jpegBuf` upon return from this function, as it may
- * have changed.
+ * If you choose option 1 or 3, then `*jpegSize` should be set to the size of
+ * your pre-allocated buffer.  In any case, unless you have set
+ * #TJPARAM_NOREALLOC, you should always check `*jpegBuf` upon return from this
+ * function, as it may have changed.
  *
  * @param jpegSize pointer to a size_t variable that holds the size of the JPEG
  * buffer.  If `*jpegBuf` points to a pre-allocated buffer, then `*jpegSize`
@@ -1555,10 +1555,10 @@ DLLEXPORT int tj3Compress12(tjhandle handle, const short *srcBuf, int width,
  * #tj3JPEGBufSize().  This should ensure that the buffer never has to be
  * re-allocated.  (Setting #TJPARAM_NOREALLOC guarantees that it won't be.)
  * .
- * If you choose option 1, then `*jpegSize` should be set to the size of your
- * pre-allocated buffer.  In any case, unless you have set #TJPARAM_NOREALLOC,
- * you should always check `*jpegBuf` upon return from this function, as it may
- * have changed.
+ * If you choose option 1 or 3, then `*jpegSize` should be set to the size of
+ * your pre-allocated buffer.  In any case, unless you have set
+ * #TJPARAM_NOREALLOC, you should always check `*jpegBuf` upon return from this
+ * function, as it may have changed.
  *
  * @param jpegSize pointer to a size_t variable that holds the size of the JPEG
  * buffer.  If `*jpegBuf` points to a pre-allocated buffer, then `*jpegSize`
@@ -1618,10 +1618,10 @@ DLLEXPORT int tj3Compress16(tjhandle handle, const unsigned short *srcBuf,
  * #tj3JPEGBufSize().  This should ensure that the buffer never has to be
  * re-allocated.  (Setting #TJPARAM_NOREALLOC guarantees that it won't be.)
  * .
- * If you choose option 1, then `*jpegSize` should be set to the size of your
- * pre-allocated buffer.  In any case, unless you have set #TJPARAM_NOREALLOC,
- * you should always check `*jpegBuf` upon return from this function, as it may
- * have changed.
+ * If you choose option 1 or 3, then `*jpegSize` should be set to the size of
+ * your pre-allocated buffer.  In any case, unless you have set
+ * #TJPARAM_NOREALLOC, you should always check `*jpegBuf` upon return from this
+ * function, as it may have changed.
  *
  * @param jpegSize pointer to a size_t variable that holds the size of the JPEG
  * buffer.  If `*jpegBuf` points to a pre-allocated buffer, then `*jpegSize`
@@ -1678,10 +1678,10 @@ DLLEXPORT int tj3CompressFromYUVPlanes8(tjhandle handle,
  * #tj3JPEGBufSize().  This should ensure that the buffer never has to be
  * re-allocated.  (Setting #TJPARAM_NOREALLOC guarantees that it won't be.)
  * .
- * If you choose option 1, then `*jpegSize` should be set to the size of your
- * pre-allocated buffer.  In any case, unless you have set #TJPARAM_NOREALLOC,
- * you should always check `*jpegBuf` upon return from this function, as it may
- * have changed.
+ * If you choose option 1 or 3, then `*jpegSize` should be set to the size of
+ * your pre-allocated buffer.  In any case, unless you have set
+ * #TJPARAM_NOREALLOC, you should always check `*jpegBuf` upon return from this
+ * function, as it may have changed.
  *
  * @param jpegSize pointer to a size_t variable that holds the size of the JPEG
  * buffer.  If `*jpegBuf` points to a pre-allocated buffer, then `*jpegSize`
@@ -2191,10 +2191,10 @@ DLLEXPORT int tj3DecodeYUV8(tjhandle handle, const unsigned char *srcBuf,
  * #TJPARAM_NOREALLOC cannot be used in those cases unless the embedded data is
  * discarded using #TJXOPT_COPYNONE.
  * .
- * If you choose option 1, then `dstSizes[i]` should be set to the size of your
- * pre-allocated buffer.  In any case, unless you have set #TJPARAM_NOREALLOC,
- * you should always check `dstBufs[i]` upon return from this function, as it
- * may have changed.
+ * If you choose option 1 or 3, then `dstSizes[i]` should be set to the size of
+ * your pre-allocated buffer.  In any case, unless you have set
+ * #TJPARAM_NOREALLOC, you should always check `dstBufs[i]` upon return from
+ * this function, as it may have changed.
  *
  * @param dstSizes pointer to an array of n size_t variables that will receive
  * the actual sizes (in bytes) of each transformed JPEG image.  If `dstBufs[i]`

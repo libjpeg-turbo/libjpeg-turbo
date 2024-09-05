@@ -114,10 +114,7 @@ DLLEXPORT int GET_NAME(tj3Compress, BITS_IN_JSAMPLE)
     cinfo->data_precision = this->precision;
 
   setCompDefaults(this, pixelFormat);
-  if (this->noRealloc) {
-    alloc = FALSE;
-    *jpegSize = tj3JPEGBufSize(width, height, this->subsamp);
-  }
+  if (this->noRealloc) alloc = FALSE;
   jpeg_mem_dest_tj(cinfo, jpegBuf, jpegSize, alloc);
 
   jpeg_start_compress(cinfo, TRUE);

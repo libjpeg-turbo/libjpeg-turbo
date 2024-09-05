@@ -385,7 +385,8 @@ static int fullTest(tjhandle handle, void *srcBuf, int w, int h, int subsamp,
   double start, elapsed, elapsedEncode;
   int row, col, i, tilew = w, tileh = h, retval = 0;
   int iter;
-  size_t totalJpegSize = 0, *jpegSizes = NULL, yuvSize = 0;
+  size_t totalJpegSize = 0, *jpegBufSizes = NULL, *jpegSizes = NULL,
+    yuvSize = 0;
   int ps = tjPixelSize[pf];
   int ntilesw = 1, ntilesh = 1, pitch = w * ps;
   const char *pfStr = pixFormatStr[pf];
@@ -421,6 +422,9 @@ static int fullTest(tjhandle handle, void *srcBuf, int w, int h, int subsamp,
     memset(jpegSizes, 0, sizeof(size_t) * ntilesw * ntilesh);
 
     if (noRealloc) {
+      if ((jpegBufSizes = (size_t *)malloc(sizeof(size_t) * ntilesw *
+                                           ntilesh)) == NULL)
+        THROW_UNIX("allocating JPEG buffer size array");
       for (i = 0; i < ntilesw * ntilesh; i++) {
         size_t jpegBufSize = tj3JPEGBufSize(tilew, tileh, subsamp);
 
@@ -428,6 +432,7 @@ static int fullTest(tjhandle handle, void *srcBuf, int w, int h, int subsamp,
           THROW_TJG();
         if ((jpegBufs[i] = tj3Alloc(jpegBufSize)) == NULL)
           THROW_UNIX("allocating JPEG tiles");
+        jpegBufSizes[i] = jpegBufSize;
       }
     }
 
@@ -497,6 +502,7 @@ static int fullTest(tjhandle handle, void *srcBuf, int w, int h, int subsamp,
           int width = min(tilew, w - col * tilew);
           int height = min(tileh, h - row * tileh);
 
+          if (noRealloc) jpegSizes[tile] = jpegBufSizes[tile];
           if (doYUV) {
             double startEncode = getTime();
 
@@ -602,6 +608,7 @@ static int fullTest(tjhandle handle, void *srcBuf, int w, int h, int subsamp,
       jpegBufs[i] = NULL;
     }
     free(jpegBufs);  jpegBufs = NULL;
+    free(jpegBufSizes);  jpegBufSizes = NULL;
     free(jpegSizes);  jpegSizes = NULL;
     if (doYUV) {
       free(yuvBuf);  yuvBuf = NULL;
@@ -618,6 +625,7 @@ bailout:
   }
   free(jpegBufs);
   free(yuvBuf);
+  free(jpegBufSizes);
   free(jpegSizes);
   free(tmpBuf);
   return retval;
@@ -629,7 +637,7 @@ static int decompTest(char *fileName)
   FILE *file = NULL;
   tjhandle handle = NULL;
   unsigned char **jpegBufs = NULL, *srcBuf = NULL;
-  size_t *jpegSizes = NULL, srcSize, totalJpegSize;
+  size_t *jpegBufSizes = NULL, *jpegSizes = NULL, srcSize, totalJpegSize;
   tjtransform *t = NULL;
   double start, elapsed;
   int ps = tjPixelSize[pf], tile, row, col, i, iter, retval = 0, decompsrc = 0;
@@ -756,19 +764,9 @@ static int decompTest(char *fileName)
 
     if (noRealloc &&
         (doTile || xformOp != TJXOP_NONE || xformOpt != 0 || customFilter)) {
-      for (i = 0; i < ntilesw * ntilesh; i++) {
-        size_t jpegBufSize;
-
-        if (xformOp == TJXOP_TRANSPOSE || xformOp == TJXOP_TRANSVERSE ||
-            xformOp == TJXOP_ROT90 || xformOp == TJXOP_ROT270)
-          jpegBufSize = tj3JPEGBufSize(tileh, tilew, tsubsamp);
-        else
-          jpegBufSize = tj3JPEGBufSize(tilew, tileh, tsubsamp);
-        if (jpegBufSize == 0)
-          THROW_TJG();
-        if ((jpegBufs[i] = tj3Alloc(jpegBufSize)) == NULL)
-          THROW_UNIX("allocating JPEG tiles");
-      }
+      if ((jpegBufSizes = (size_t *)malloc(sizeof(size_t) * ntilesw *
+                                           ntilesh)) == NULL)
+        THROW_UNIX("allocating JPEG buffer size array");
     }
 
     tw = w;  th = h;  ttilew = tilew;  ttileh = tileh;
@@ -815,8 +813,14 @@ static int decompTest(char *fileName)
           t[tile].op = xformOp;
           t[tile].options = xformOpt | TJXOPT_TRIM;
           t[tile].customFilter = customFilter;
-          if (t[tile].options & TJXOPT_NOOUTPUT && jpegBufs[tile]) {
-            tj3Free(jpegBufs[tile]);  jpegBufs[tile] = NULL;
+          if (!(t[tile].options & TJXOPT_NOOUTPUT) && noRealloc) {
+            size_t jpegBufSize =
+              tj3JPEGBufSize(t[tile].r.w, t[tile].r.h, tsubsamp);
+            if (jpegBufSize == 0)
+              THROW_TJG();
+            if ((jpegBufs[tile] = tj3Alloc(jpegBufSize)) == NULL)
+              THROW_UNIX("allocating JPEG tiles");
+            jpegBufSizes[tile] = jpegBufSize;
           }
         }
       }
@@ -825,6 +829,11 @@ static int decompTest(char *fileName)
       elapsed = 0.;
       while (1) {
         start = getTime();
+        if (noRealloc && (doTile || xformOp != TJXOP_NONE || xformOpt != 0 ||
+                          customFilter)) {
+          for (tile = 0; tile < tntilesw * tntilesh; tile++)
+            jpegSizes[tile] = jpegBufSizes[tile];
+        }
         if (tj3Transform(handle, srcBuf, srcSize, tntilesw * tntilesh,
                          jpegBufs, jpegSizes, t) == -1)
           THROW_TJ();
@@ -883,6 +892,7 @@ static int decompTest(char *fileName)
       jpegBufs[i] = NULL;
     }
     free(jpegBufs);  jpegBufs = NULL;
+    free(jpegBufSizes);  jpegBufSizes = NULL;
     free(jpegSizes);  jpegSizes = NULL;
 
     if (tilew == w && tileh == h) break;
@@ -895,6 +905,7 @@ bailout:
       tj3Free(jpegBufs[i]);
   }
   free(jpegBufs);
+  free(jpegBufSizes);
   free(jpegSizes);
   free(srcBuf);
   free(t);

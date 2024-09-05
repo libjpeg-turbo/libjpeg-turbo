@@ -673,8 +673,7 @@ final class TJBench {
         tntilesh = (th + ttileh - 1) / ttileh;
 
         TJTransform[] t = new TJTransform[tntilesw * tntilesh];
-        jpegBufs =
-          new byte[tntilesw * tntilesh][TJ.bufSize(ttilew, ttileh, tsubsamp)];
+        jpegBufs = new byte[tntilesw * tntilesh][];
 
         for (y = 0, tile = 0; y < th; y += ttileh) {
           for (x = 0; x < tw; x += ttilew, tile++) {
@@ -686,9 +685,9 @@ final class TJBench {
             t[tile].op = xformOp;
             t[tile].options = xformOpt | TJTransform.OPT_TRIM;
             t[tile].cf = customFilter;
-            if ((t[tile].options & TJTransform.OPT_NOOUTPUT) != 0 &&
-                jpegBufs[tile] != null)
-              jpegBufs[tile] = null;
+            if ((t[tile].options & TJTransform.OPT_NOOUTPUT) == 0)
+              jpegBufs[tile] =
+                new byte[TJ.bufSize(t[tile].width, t[tile].height, tsubsamp)];
           }
         }
 
