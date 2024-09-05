@@ -53,7 +53,7 @@ while [ $# -gt 0 ]; do
 # there is no easy way around it, so for now, we just test the only image that
 # works.  (NOTE: nightshot_iso_100 does not suffer from the above issue, but
 # it suffers from an unrelated problem whereby the combination of
-# tjDecompressToYUV*() and tjDecodeYUV*() do not produce bitwise-identical
+# tjDecompressToYUV*() and tjDecodeYUV*() does not produce bitwise-identical
 # results to tjDecompress*() if decompression scaling is enabled.  This latter
 # phenomenon is not yet fully understood but is also believed to be some sort
 # of round-off error.)
