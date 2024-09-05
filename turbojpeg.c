@@ -2035,6 +2035,8 @@ DLLEXPORT int tjTransform(tjhandle handle, const unsigned char *jpegBuf,
     else xinfo[i].slow_hflip = 0;
 
     if (xinfo[i].crop) {
+      if (t[i].r.x < 0 || t[i].r.y < 0 || t[i].r.w < 0 || t[i].r.h < 0)
+        THROW("Invalid cropping region");
       xinfo[i].crop_xoffset = t[i].r.x;  xinfo[i].crop_xoffset_set = JCROP_POS;
       xinfo[i].crop_yoffset = t[i].r.y;  xinfo[i].crop_yoffset_set = JCROP_POS;
       if (t[i].r.w != 0) {
@@ -2090,20 +2092,22 @@ DLLEXPORT int tjTransform(tjhandle handle, const unsigned char *jpegBuf,
   srccoefs = jpeg_read_coefficients(dinfo);
 
   for (i = 0; i < n; i++) {
-    int w, h;
+    int dstWidth = dinfo->image_width, dstHeight = dinfo->image_height;
     int dstSubsamp = (t[i].options & TJXOPT_GRAY) ? TJSAMP_GRAY : srcSubsamp;
 
-    if (!xinfo[i].crop) {
-      w = dinfo->image_width;  h = dinfo->image_height;
-      if (t[i].op == TJXOP_TRANSPOSE || t[i].op == TJXOP_TRANSVERSE ||
-          t[i].op == TJXOP_ROT90 || t[i].op == TJXOP_ROT270) {
-        w = dinfo->image_height;  h = dinfo->image_width;
-      }
-    } else {
-      w = xinfo[i].crop_width;  h = xinfo[i].crop_height;
+    if (t[i].op == TJXOP_TRANSPOSE || t[i].op == TJXOP_TRANSVERSE ||
+        t[i].op == TJXOP_ROT90 || t[i].op == TJXOP_ROT270) {
+      dstWidth = dinfo->image_height;  dstHeight = dinfo->image_width;
+    }
+
+    if (xinfo[i].crop) {
+      if (t[i].r.x >= dstWidth || t[i].r.x + xinfo[i].crop_width > dstWidth ||
+          t[i].r.y >= dstHeight || t[i].r.y + xinfo[i].crop_height > dstHeight)
+        THROW("The cropping region exceeds the destination image dimensions");
+      dstWidth = xinfo[i].crop_width;  dstHeight = xinfo[i].crop_height;
     }
     if (flags & TJFLAG_NOREALLOC) {
-      alloc = FALSE;  dstSizes[i] = tjBufSize(w, h, dstSubsamp);
+      alloc = FALSE;  dstSizes[i] = tjBufSize(dstWidth, dstHeight, dstSubsamp);
     }
     if (!(t[i].options & TJXOPT_NOOUTPUT))
       jpeg_mem_dest_tj(cinfo, &dstBufs[i], &dstSizes[i], alloc);
