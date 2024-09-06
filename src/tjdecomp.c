@@ -86,9 +86,6 @@
 
 #define THROW_UNIX(action)  THROW(action, strerror(errno))
 
-#define DEFAULT_SUBSAMP  TJSAMP_444
-#define DEFAULT_QUALITY  95
-
 
 static tjscalingfactor *scalingFactors = NULL;
 static int numScalingFactors = 0;
