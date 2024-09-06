@@ -1,5 +1,6 @@
 /*
- * Copyright (C)2011, 2013-2015, 2023 D. R. Commander.  All Rights Reserved.
+ * Copyright (C)2011, 2013-2015, 2023-2024 D. R. Commander.
+ *                                         All Rights Reserved.
  * Copyright (C)2015 Viktor Szathmáry.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -89,7 +90,7 @@ public class TJTransformer extends TJDecompressor {
    * transformed using the parameters in <code>transforms[i]</code>.  Use
    * {@link TJ#bufSize} to determine the maximum size for each buffer based on
    * the transformed or cropped width and height and the level of subsampling
-   * used in the source image.
+   * used in the destination image.
    *
    * @param transforms an array of {@link TJTransform} instances, each of
    * which specifies the transform parameters and/or cropping region for the

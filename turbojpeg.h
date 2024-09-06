@@ -1593,8 +1593,8 @@ DLLEXPORT tjhandle tjInitTransform(void);
  * you, or
  * -# pre-allocate the buffer to a "worst case" size determined by calling
  * #tjBufSize() with the transformed or cropped width and height and the level
- * of subsampling used in the source image.  Under normal circumstances, this
- * should ensure that the buffer never has to be re-allocated.  (Setting
+ * of subsampling used in the destination image.  Under normal circumstances,
+ * this should ensure that the buffer never has to be re-allocated.  (Setting
  * #TJFLAG_NOREALLOC guarantees that it won't be.)  Note, however, that there
  * are some rare cases (such as transforming images with a large amount of
  * embedded Exif or ICC profile data) in which the transformed JPEG image will
