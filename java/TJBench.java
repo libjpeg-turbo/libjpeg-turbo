@@ -567,6 +567,18 @@ final class TJBench {
       }
 
       tsubsamp = subsamp;
+      if ((xformOpt & TJTransform.OPT_GRAY) != 0)
+        tsubsamp = TJ.SAMP_GRAY;
+      if (xformOp == TJTransform.OP_TRANSPOSE ||
+          xformOp == TJTransform.OP_TRANSVERSE ||
+          xformOp == TJTransform.OP_ROT90 ||
+          xformOp == TJTransform.OP_ROT270) {
+        if (tsubsamp == TJ.SAMP_422)
+          tsubsamp = TJ.SAMP_440;
+        else if (tsubsamp == TJ.SAMP_440)
+          tsubsamp = TJ.SAMP_422;
+      }
+
       if (doTile || xformOp != TJTransform.OP_NONE || xformOpt != 0) {
         if (xformOp == TJTransform.OP_TRANSPOSE ||
             xformOp == TJTransform.OP_TRANSVERSE ||
@@ -575,36 +587,22 @@ final class TJBench {
           tw = h;  th = w;  ttilew = tileh;  ttileh = tilew;
         }
 
-        if ((xformOpt & TJTransform.OPT_GRAY) != 0)
-          tsubsamp = TJ.SAMP_GRAY;
         if (xformOp == TJTransform.OP_HFLIP ||
+            xformOp == TJTransform.OP_TRANSVERSE ||
+            xformOp == TJTransform.OP_ROT90 ||
             xformOp == TJTransform.OP_ROT180)
           tw = tw - (tw % TJ.getMCUWidth(tsubsamp));
         if (xformOp == TJTransform.OP_VFLIP ||
-            xformOp == TJTransform.OP_ROT180)
-          th = th - (th % TJ.getMCUHeight(tsubsamp));
-        if (xformOp == TJTransform.OP_TRANSVERSE ||
-            xformOp == TJTransform.OP_ROT90)
-          tw = tw - (tw % TJ.getMCUHeight(tsubsamp));
-        if (xformOp == TJTransform.OP_TRANSVERSE ||
+            xformOp == TJTransform.OP_TRANSVERSE ||
+            xformOp == TJTransform.OP_ROT180 ||
             xformOp == TJTransform.OP_ROT270)
-          th = th - (th % TJ.getMCUWidth(tsubsamp));
+          th = th - (th % TJ.getMCUHeight(tsubsamp));
         tntilesw = (tw + ttilew - 1) / ttilew;
         tntilesh = (th + ttileh - 1) / ttileh;
 
-        if (xformOp == TJTransform.OP_TRANSPOSE ||
-            xformOp == TJTransform.OP_TRANSVERSE ||
-            xformOp == TJTransform.OP_ROT90 ||
-            xformOp == TJTransform.OP_ROT270) {
-          if (tsubsamp == TJ.SAMP_422)
-            tsubsamp = TJ.SAMP_440;
-          else if (tsubsamp == TJ.SAMP_440)
-            tsubsamp = TJ.SAMP_422;
-        }
-
         TJTransform[] t = new TJTransform[tntilesw * tntilesh];
         jpegBuf =
-          new byte[tntilesw * tntilesh][TJ.bufSize(ttilew, ttileh, subsamp)];
+          new byte[tntilesw * tntilesh][TJ.bufSize(ttilew, ttileh, tsubsamp)];
 
         for (y = 0, tile = 0; y < th; y += ttileh) {
           for (x = 0; x < tw; x += ttilew, tile++) {
@@ -666,7 +664,7 @@ final class TJBench {
       } else {
         if (quiet == 1)
           System.out.print("N/A     N/A     ");
-        jpegBuf = new byte[1][TJ.bufSize(ttilew, ttileh, subsamp)];
+        jpegBuf = new byte[1][TJ.bufSize(ttilew, ttileh, tsubsamp)];
         jpegSize = new int[1];
         jpegBuf[0] = srcBuf;
         jpegSize[0] = srcSize;

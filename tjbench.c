@@ -605,6 +605,13 @@ static int decompTest(char *fileName)
       THROW_UNIX("allocating JPEG size array");
     memset(jpegSize, 0, sizeof(unsigned long) * ntilesw * ntilesh);
 
+    tsubsamp = (xformOpt & TJXOPT_GRAY) ? TJSAMP_GRAY : subsamp;
+    if (xformOp == TJXOP_TRANSPOSE || xformOp == TJXOP_TRANSVERSE ||
+        xformOp == TJXOP_ROT90 || xformOp == TJXOP_ROT270) {
+      if (tsubsamp == TJSAMP_422) tsubsamp = TJSAMP_440;
+      else if (tsubsamp == TJSAMP_440) tsubsamp = TJSAMP_422;
+    }
+
     if ((flags & TJFLAG_NOREALLOC) != 0 &&
         (doTile || xformOp != TJXOP_NONE || xformOpt != 0 || customFilter))
       for (i = 0; i < ntilesw * ntilesh; i++) {
@@ -612,9 +619,9 @@ static int decompTest(char *fileName)
 
         if (xformOp == TJXOP_TRANSPOSE || xformOp == TJXOP_TRANSVERSE ||
             xformOp == TJXOP_ROT90 || xformOp == TJXOP_ROT270)
-          jpegBufSize = tjBufSize(tileh, tilew, subsamp);
+          jpegBufSize = tjBufSize(tileh, tilew, tsubsamp);
         else
-          jpegBufSize = tjBufSize(tilew, tileh, subsamp);
+          jpegBufSize = tjBufSize(tilew, tileh, tsubsamp);
         if (jpegBufSize > (unsigned long)INT_MAX)
           THROW("getting buffer size", "Image is too large");
         if ((jpegBuf[i] = (unsigned char *)tjAlloc(jpegBufSize)) == NULL)
@@ -634,7 +641,6 @@ static int decompTest(char *fileName)
       printf("%-5d  %-5d   ", tilew, tileh);
     }
 
-    tsubsamp = subsamp;
     if (doTile || xformOp != TJXOP_NONE || xformOpt != 0 || customFilter) {
       if ((t = (tjtransform *)malloc(sizeof(tjtransform) * ntilesw *
                                      ntilesh)) == NULL)
@@ -645,23 +651,14 @@ static int decompTest(char *fileName)
         tw = h;  th = w;  ttilew = tileh;  ttileh = tilew;
       }
 
-      if (xformOpt & TJXOPT_GRAY) tsubsamp = TJSAMP_GRAY;
-      if (xformOp == TJXOP_HFLIP || xformOp == TJXOP_ROT180)
+      if (xformOp == TJXOP_HFLIP || xformOp == TJXOP_TRANSVERSE ||
+          xformOp == TJXOP_ROT90 || xformOp == TJXOP_ROT180)
         tw = tw - (tw % tjMCUWidth[tsubsamp]);
-      if (xformOp == TJXOP_VFLIP || xformOp == TJXOP_ROT180)
+      if (xformOp == TJXOP_VFLIP || xformOp == TJXOP_TRANSVERSE ||
+          xformOp == TJXOP_ROT180 || xformOp == TJXOP_ROT270)
         th = th - (th % tjMCUHeight[tsubsamp]);
-      if (xformOp == TJXOP_TRANSVERSE || xformOp == TJXOP_ROT90)
-        tw = tw - (tw % tjMCUHeight[tsubsamp]);
-      if (xformOp == TJXOP_TRANSVERSE || xformOp == TJXOP_ROT270)
-        th = th - (th % tjMCUWidth[tsubsamp]);
       tntilesw = (tw + ttilew - 1) / ttilew;
       tntilesh = (th + ttileh - 1) / ttileh;
-
-      if (xformOp == TJXOP_TRANSPOSE || xformOp == TJXOP_TRANSVERSE ||
-          xformOp == TJXOP_ROT90 || xformOp == TJXOP_ROT270) {
-        if (tsubsamp == TJSAMP_422) tsubsamp = TJSAMP_440;
-        else if (tsubsamp == TJSAMP_440) tsubsamp = TJSAMP_422;
-      }
 
       for (row = 0, tile = 0; row < tntilesh; row++) {
         for (col = 0; col < tntilesw; col++, tile++) {

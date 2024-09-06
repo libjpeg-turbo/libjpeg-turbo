@@ -91,11 +91,11 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
   transforms[0].options = TJXOPT_GRAY | TJXOPT_CROP | TJXOPT_COPYNONE;
   dstBufs[0] =
     (unsigned char *)tjAlloc(tjBufSize((height + 1) / 2, (width + 1) / 2,
-                                       jpegSubsamp));
+                                       TJSAMP_GRAY));
   if (!dstBufs[0])
     goto bailout;
 
-  maxBufSize = tjBufSize((height + 1) / 2, (width + 1) / 2, jpegSubsamp);
+  maxBufSize = tjBufSize((height + 1) / 2, (width + 1) / 2, TJSAMP_GRAY);
 
   if (tjTransform(handle, data, size, 1, dstBufs, dstSizes, transforms,
                   TJFLAG_LIMITSCANS | TJFLAG_NOREALLOC) == 0) {

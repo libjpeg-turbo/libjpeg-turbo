@@ -90,7 +90,8 @@ public class TJTransformer extends TJDecompressor {
    * transformed using the parameters in <code>transforms[i]</code>.  Use
    * {@link TJ#bufSize} to determine the maximum size for each buffer based on
    * the transformed or cropped width and height and the level of subsampling
-   * used in the destination image.
+   * used in the destination image (taking into account grayscale conversion
+   * and transposition of the width and height.)
    *
    * @param transforms an array of {@link TJTransform} instances, each of
    * which specifies the transform parameters and/or cropping region for the
@@ -129,11 +130,26 @@ public class TJTransformer extends TJDecompressor {
       throw new IllegalStateException("JPEG buffer not initialized");
     for (int i = 0; i < transforms.length; i++) {
       int w = jpegWidth, h = jpegHeight;
+      int dstSubsamp = jpegSubsamp;
+
+      if ((transforms[i].options & TJTransform.OPT_GRAY) != 0)
+        dstSubsamp = TJ.SAMP_GRAY;
+      if (transforms[i].op == TJTransform.OP_TRANSPOSE ||
+          transforms[i].op == TJTransform.OP_TRANSVERSE ||
+          transforms[i].op == TJTransform.OP_ROT90 ||
+          transforms[i].op == TJTransform.OP_ROT270) {
+        w = jpegWidth;  h = jpegHeight;
+        if (dstSubsamp == TJ.SAMP_422)
+          dstSubsamp = TJ.SAMP_440;
+        else if (dstSubsamp == TJ.SAMP_440)
+          dstSubsamp = TJ.SAMP_422;
+      }
+
       if ((transforms[i].options & TJTransform.OPT_CROP) != 0) {
         if (transforms[i].width != 0) w = transforms[i].width;
         if (transforms[i].height != 0) h = transforms[i].height;
       }
-      dstBufs[i] = new byte[TJ.bufSize(w, h, jpegSubsamp)];
+      dstBufs[i] = new byte[TJ.bufSize(w, h, dstSubsamp)];
     }
     TJDecompressor[] tjd = new TJDecompressor[transforms.length];
     transform(dstBufs, transforms, flags);
