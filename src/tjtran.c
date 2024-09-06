@@ -285,6 +285,13 @@ int main(int argc, char **argv)
   subsamp = tj3Get(tjInstance, TJPARAM_SUBSAMP);
   if (xform.options & TJXOPT_GRAY)
     subsamp = TJSAMP_GRAY;
+  if (xform.op == TJXOP_TRANSPOSE || xform.op == TJXOP_TRANSVERSE ||
+      xform.op == TJXOP_ROT90 || xform.op == TJXOP_ROT270) {
+    if (subsamp == TJSAMP_422) subsamp = TJSAMP_440;
+    else if (subsamp == TJSAMP_440) subsamp = TJSAMP_422;
+    else if (subsamp == TJSAMP_411) subsamp = TJSAMP_441;
+    else if (subsamp == TJSAMP_441) subsamp = TJSAMP_411;
+  }
 
   if (tj3Set(tjInstance, TJPARAM_PROGRESSIVE, progressive) < 0)
     THROW_TJ("setting TJPARAM_PROGRESSIVE");
@@ -297,14 +304,8 @@ int main(int argc, char **argv)
     if (subsamp == TJSAMP_UNKNOWN)
       THROW("adjusting cropping region",
             "Could not determine subsampling level of input image");
-    if (xform.op == TJXOP_TRANSPOSE || xform.op == TJXOP_TRANSVERSE ||
-        xform.op == TJXOP_ROT90 || xform.op == TJXOP_ROT270) {
-      xAdjust = xform.r.x % tjMCUHeight[subsamp];
-      yAdjust = xform.r.y % tjMCUWidth[subsamp];
-    } else {
-      xAdjust = xform.r.x % tjMCUWidth[subsamp];
-      yAdjust = xform.r.y % tjMCUHeight[subsamp];
-    }
+    xAdjust = xform.r.x % tjMCUWidth[subsamp];
+    yAdjust = xform.r.y % tjMCUHeight[subsamp];
     xform.r.x -= xAdjust;
     xform.r.w += xAdjust;
     xform.r.y -= yAdjust;

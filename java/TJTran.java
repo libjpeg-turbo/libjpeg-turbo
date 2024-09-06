@@ -276,18 +276,26 @@ final class TJTran {
 
       tjt.setSourceImage(srcBuf, srcSize);
       subsamp = tjt.get(TJ.PARAM_SUBSAMP);
+      if ((xform[0].options & TJTransform.OPT_GRAY) != 0)
+        subsamp = TJ.SAMP_GRAY;
       if (xform[0].op == TJTransform.OP_TRANSPOSE ||
           xform[0].op == TJTransform.OP_TRANSVERSE ||
           xform[0].op == TJTransform.OP_ROT90 ||
           xform[0].op == TJTransform.OP_ROT270) {
         width = tjt.get(TJ.PARAM_JPEGHEIGHT);
         height = tjt.get(TJ.PARAM_JPEGWIDTH);
+        if (subsamp == TJ.SAMP_422)
+          subsamp = TJ.SAMP_440;
+        else if (subsamp == TJ.SAMP_440)
+          subsamp = TJ.SAMP_422;
+        else if (subsamp == TJ.SAMP_411)
+          subsamp = TJ.SAMP_441;
+        else if (subsamp == TJ.SAMP_441)
+          subsamp = TJ.SAMP_411;
       } else {
         width = tjt.get(TJ.PARAM_JPEGWIDTH);
         height = tjt.get(TJ.PARAM_JPEGHEIGHT);
       }
-      if ((xform[0].options & TJTransform.OPT_GRAY) != 0)
-        subsamp = TJ.SAMP_GRAY;
 
       if (progressive >= 0)
         tjt.set(TJ.PARAM_PROGRESSIVE, progressive);
@@ -299,16 +307,8 @@ final class TJTran {
 
         if (subsamp == TJ.SAMP_UNKNOWN)
           throw new Exception("Could not determine subsampling level of input image");
-        if (xform[0].op == TJTransform.OP_TRANSPOSE ||
-            xform[0].op == TJTransform.OP_TRANSVERSE ||
-            xform[0].op == TJTransform.OP_ROT90 ||
-            xform[0].op == TJTransform.OP_ROT270) {
-          xAdjust = xform[0].x % TJ.getMCUHeight(subsamp);
-          yAdjust = xform[0].y % TJ.getMCUWidth(subsamp);
-        } else {
-          xAdjust = xform[0].x % TJ.getMCUWidth(subsamp);
-          yAdjust = xform[0].y % TJ.getMCUHeight(subsamp);
-        }
+        xAdjust = xform[0].x % TJ.getMCUWidth(subsamp);
+        yAdjust = xform[0].y % TJ.getMCUHeight(subsamp);
         xform[0].x -= xAdjust;
         xform[0].width += xAdjust;
         xform[0].y -= yAdjust;
