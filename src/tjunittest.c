@@ -596,17 +596,19 @@ static void doTest(int w, int h, const int *formats, int nformats, int subsamp,
 {
   tjhandle chandle = NULL, dhandle = NULL;
   unsigned char *dstBuf = NULL;
-  size_t size = 0;
+  size_t size = 0, bufSize = 0;
   int pfi, pf, i;
 
   if (lossless && subsamp != TJSAMP_GRAY)
     subsamp = TJSAMP_444;
 
-  if (!alloc)
-    size = tj3JPEGBufSize(w, h, subsamp);
-  if (size != 0)
+  if (!alloc) {
+    size = bufSize = tj3JPEGBufSize(w, h, subsamp);
+    if (size == 0)
+      THROW_TJ(NULL);
     if ((dstBuf = (unsigned char *)tj3Alloc(size)) == NULL)
       THROW("Memory allocation failure.");
+  }
 
   if ((chandle = tj3Init(TJINIT_COMPRESS)) == NULL ||
       (dhandle = tj3Init(TJINIT_DECOMPRESS)) == NULL)
@@ -631,6 +633,7 @@ static void doTest(int w, int h, const int *formats, int nformats, int subsamp,
       TRY_TJ(chandle, tj3Set(chandle, TJPARAM_BOTTOMUP, i == 1));
       TRY_TJ(dhandle, tj3Set(dhandle, TJPARAM_BOTTOMUP, i == 1));
       pf = formats[pfi];
+      if (!alloc) size = bufSize;
       compTest(chandle, &dstBuf, &size, w, h, pf, basename);
       decompTest(dhandle, dstBuf, size, w, h, pf, basename, subsamp);
       if (pf >= TJPF_RGBX && pf <= TJPF_XRGB) {
