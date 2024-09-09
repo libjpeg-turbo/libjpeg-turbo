@@ -676,7 +676,7 @@ JNIEXPORT jbyteArray JNICALL Java_org_libjpegturbo_turbojpeg_TJDecompressor_getI
   if (tj3GetICCProfile(handle, &iccBuf, &iccSize) == -1)
     THROW_TJ();
 
-  BAILIF0(icc = (*env)->NewByteArray(env, iccSize));
+  BAILIF0(icc = (*env)->NewByteArray(env, (jsize)iccSize));
   BAILIF0NOEC(jICCBuf = (*env)->GetPrimitiveArrayCritical(env, icc, 0));
   memcpy(jICCBuf, iccBuf, iccSize);
 
@@ -698,7 +698,7 @@ JNIEXPORT jint JNICALL Java_org_libjpegturbo_turbojpeg_TJDecompressor_getICCSize
   tj3GetICCProfile(handle, NULL, &iccSize);
 
 bailout:
-  return iccSize;
+  return (jint)iccSize;
 }
 
 /* TurboJPEG 3.0.x: TJDecompressor.setCroppingRegion() */
