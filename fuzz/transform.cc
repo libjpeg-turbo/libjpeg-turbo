@@ -37,7 +37,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
   tjhandle handle = NULL;
   unsigned char *dstBufs[1] = { NULL };
   unsigned long dstSizes[1] = { 0 }, maxBufSize;
-  int width = 0, height = 0, jpegSubsamp, jpegColorspace, i;
+  int width = 0, height = 0, jpegSubsamp, dstSubsamp, jpegColorspace, i;
   tjtransform transforms[1];
 
   if ((handle = tjInitTransform()) == NULL)
@@ -113,11 +113,14 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 
   transforms[0].op = TJXOP_ROT90;
   transforms[0].options = TJXOPT_TRIM;
-  dstBufs[0] = (unsigned char *)tjAlloc(tjBufSize(height, width, jpegSubsamp));
+  dstSubsamp = jpegSubsamp;
+  if (dstSubsamp == TJSAMP_422) dstSubsamp = TJSAMP_440;
+  else if (dstSubsamp == TJSAMP_440) dstSubsamp = TJSAMP_422;
+  dstBufs[0] = (unsigned char *)tjAlloc(tjBufSize(height, width, dstSubsamp));
   if (!dstBufs[0])
     goto bailout;
 
-  maxBufSize = tjBufSize(height, width, jpegSubsamp);
+  maxBufSize = tjBufSize(height, width, dstSubsamp);
 
   if (tjTransform(handle, data, size, 1, dstBufs, dstSizes, transforms,
                   TJFLAG_LIMITSCANS | TJFLAG_NOREALLOC) == 0) {

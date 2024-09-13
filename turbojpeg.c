@@ -2063,13 +2063,13 @@ DLLEXPORT int tjTransform(tjhandle handle, const unsigned char *jpegBuf,
       if (dstSubsamp == TJSAMP_422) dstSubsamp = TJSAMP_440;
       else if (dstSubsamp == TJSAMP_440) dstSubsamp = TJSAMP_422;
     }
+    if (dstSubsamp < 0)
+      THROW("tjTransform(): Could not determine subsampling type for JPEG image");
 
     if (!jtransform_request_workspace(dinfo, &xinfo[i]))
       THROW("tjTransform(): Transform is not perfect");
 
     if (xinfo[i].crop) {
-      if (dstSubsamp < 0)
-        THROW("tjTransform(): Could not determine subsampling type for JPEG image");
       if ((t[i].r.x % tjMCUWidth[dstSubsamp]) != 0 ||
           (t[i].r.y % tjMCUHeight[dstSubsamp]) != 0) {
         SNPRINTF(this->errStr, JMSG_LENGTH_MAX,
