@@ -36,8 +36,6 @@
  * - Expanding the input image when cropping
  * - Wiping a region of the input image
  * - Dropping another JPEG image into the input image
- * - Copying only comment markers or ICC profile markers
- * - Embedding an ICC color management profile
  * - Progress reporting
  * - Treating warnings as non-fatal [limitation of the TurboJPEG Java API]
  * - Debug output
