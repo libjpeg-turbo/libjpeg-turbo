@@ -2834,22 +2834,21 @@ DLLEXPORT int tj3Transform(tjhandle handle, const unsigned char *jpegBuf,
   srcSubsamp = getSubsamp(&this->dinfo);
 
   for (i = 0; i < n; i++) {
-    int dstSubsamp = (t[i].options & TJXOPT_GRAY) ? TJSAMP_GRAY : srcSubsamp;
-
-    if (t[i].op == TJXOP_TRANSPOSE || t[i].op == TJXOP_TRANSVERSE ||
-        t[i].op == TJXOP_ROT90 || t[i].op == TJXOP_ROT270) {
-      if (dstSubsamp == TJSAMP_422) dstSubsamp = TJSAMP_440;
-      else if (dstSubsamp == TJSAMP_440) dstSubsamp = TJSAMP_422;
-      else if (dstSubsamp == TJSAMP_411) dstSubsamp = TJSAMP_441;
-      else if (dstSubsamp == TJSAMP_441) dstSubsamp = TJSAMP_411;
-    }
-
     if (!jtransform_request_workspace(dinfo, &xinfo[i]))
       THROW("Transform is not perfect");
 
     if (xinfo[i].crop) {
+      int dstSubsamp = (t[i].options & TJXOPT_GRAY) ? TJSAMP_GRAY : srcSubsamp;
+
+      if (t[i].op == TJXOP_TRANSPOSE || t[i].op == TJXOP_TRANSVERSE ||
+          t[i].op == TJXOP_ROT90 || t[i].op == TJXOP_ROT270) {
+        if (dstSubsamp == TJSAMP_422) dstSubsamp = TJSAMP_440;
+        else if (dstSubsamp == TJSAMP_440) dstSubsamp = TJSAMP_422;
+        else if (dstSubsamp == TJSAMP_411) dstSubsamp = TJSAMP_441;
+        else if (dstSubsamp == TJSAMP_441) dstSubsamp = TJSAMP_411;
+      }
       if (dstSubsamp == TJSAMP_UNKNOWN)
-        THROW("Could not determine subsampling level of JPEG image");
+        THROW("Could not determine subsampling level of destination image");
       if ((t[i].r.x % tjMCUWidth[dstSubsamp]) != 0 ||
           (t[i].r.y % tjMCUHeight[dstSubsamp]) != 0)
         THROWI("To crop this JPEG image, x must be a multiple of %d\n"
@@ -2987,7 +2986,7 @@ DLLEXPORT int tjTransform(tjhandle handle, const unsigned char *jpegBuf,
         if (t[i].r.x < 0 || t[i].r.y < 0 || t[i].r.w < 0 || t[i].r.h < 0)
           THROW("Invalid cropping region");
         if (dstSubsamp == TJSAMP_UNKNOWN)
-          THROW("Could not determine subsampling level of JPEG image");
+          THROW("Could not determine subsampling level of destination image");
         if ((t[i].r.x % tjMCUWidth[dstSubsamp]) != 0 ||
             (t[i].r.y % tjMCUHeight[dstSubsamp]) != 0)
           THROWI("To crop this JPEG image, x must be a multiple of %d\n"
