@@ -138,7 +138,7 @@ public class TJTransformer extends TJDecompressor {
           transforms[i].op == TJTransform.OP_TRANSVERSE ||
           transforms[i].op == TJTransform.OP_ROT90 ||
           transforms[i].op == TJTransform.OP_ROT270) {
-        w = jpegWidth;  h = jpegHeight;
+        w = jpegHeight;  h = jpegWidth;
         if (dstSubsamp == TJ.SAMP_422)
           dstSubsamp = TJ.SAMP_440;
         else if (dstSubsamp == TJ.SAMP_440)
