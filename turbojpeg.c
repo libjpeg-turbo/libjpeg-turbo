@@ -2056,20 +2056,20 @@ DLLEXPORT int tjTransform(tjhandle handle, const unsigned char *jpegBuf,
   srcSubsamp = getSubsamp(dinfo);
 
   for (i = 0; i < n; i++) {
-    int dstSubsamp = (t[i].options & TJXOPT_GRAY) ? TJSAMP_GRAY : srcSubsamp;
-
-    if (t[i].op == TJXOP_TRANSPOSE || t[i].op == TJXOP_TRANSVERSE ||
-        t[i].op == TJXOP_ROT90 || t[i].op == TJXOP_ROT270) {
-      if (dstSubsamp == TJSAMP_422) dstSubsamp = TJSAMP_440;
-      else if (dstSubsamp == TJSAMP_440) dstSubsamp = TJSAMP_422;
-    }
-    if (dstSubsamp < 0)
-      THROW("tjTransform(): Could not determine subsampling type for JPEG image");
-
     if (!jtransform_request_workspace(dinfo, &xinfo[i]))
       THROW("tjTransform(): Transform is not perfect");
 
     if (xinfo[i].crop) {
+      int dstSubsamp = (t[i].options & TJXOPT_GRAY) ? TJSAMP_GRAY : srcSubsamp;
+
+      if (t[i].op == TJXOP_TRANSPOSE || t[i].op == TJXOP_TRANSVERSE ||
+          t[i].op == TJXOP_ROT90 || t[i].op == TJXOP_ROT270) {
+        if (dstSubsamp == TJSAMP_422) dstSubsamp = TJSAMP_440;
+        else if (dstSubsamp == TJSAMP_440) dstSubsamp = TJSAMP_422;
+        else if (dstSubsamp == TJSAMP_411) dstSubsamp = -1;
+      }
+      if (dstSubsamp < 0)
+        THROW("tjTransform(): Could not determine subsampling type for destination image");
       if ((t[i].r.x % tjMCUWidth[dstSubsamp]) != 0 ||
           (t[i].r.y % tjMCUHeight[dstSubsamp]) != 0) {
         SNPRINTF(this->errStr, JMSG_LENGTH_MAX,
@@ -2086,14 +2086,6 @@ DLLEXPORT int tjTransform(tjhandle handle, const unsigned char *jpegBuf,
 
   for (i = 0; i < n; i++) {
     JDIMENSION dstWidth = dinfo->image_width, dstHeight = dinfo->image_height;
-    int dstSubsamp = (t[i].options & TJXOPT_GRAY) ? TJSAMP_GRAY : srcSubsamp;
-
-    if (t[i].op == TJXOP_TRANSPOSE || t[i].op == TJXOP_TRANSVERSE ||
-        t[i].op == TJXOP_ROT90 || t[i].op == TJXOP_ROT270) {
-      dstWidth = dinfo->image_height;  dstHeight = dinfo->image_width;
-      if (dstSubsamp == TJSAMP_422) dstSubsamp = TJSAMP_440;
-      else if (dstSubsamp == TJSAMP_440) dstSubsamp = TJSAMP_422;
-    }
 
     if (xinfo[i].crop) {
       if ((JDIMENSION)t[i].r.x >= dstWidth ||
@@ -2103,7 +2095,19 @@ DLLEXPORT int tjTransform(tjhandle handle, const unsigned char *jpegBuf,
         THROW("The cropping region exceeds the destination image dimensions");
       dstWidth = xinfo[i].crop_width;  dstHeight = xinfo[i].crop_height;
     }
+
     if (flags & TJFLAG_NOREALLOC) {
+      int dstSubsamp = (t[i].options & TJXOPT_GRAY) ? TJSAMP_GRAY : srcSubsamp;
+
+      if (t[i].op == TJXOP_TRANSPOSE || t[i].op == TJXOP_TRANSVERSE ||
+          t[i].op == TJXOP_ROT90 || t[i].op == TJXOP_ROT270) {
+        dstWidth = dinfo->image_height;  dstHeight = dinfo->image_width;
+        if (dstSubsamp == TJSAMP_422) dstSubsamp = TJSAMP_440;
+        else if (dstSubsamp == TJSAMP_440) dstSubsamp = TJSAMP_422;
+        else if (dstSubsamp == TJSAMP_411) dstSubsamp = -1;
+      }
+      if (dstSubsamp < 0)
+        THROW("tjTransform(): Could not determine subsampling type for destination image");
       alloc = FALSE;  dstSizes[i] = tjBufSize(dstWidth, dstHeight, dstSubsamp);
     }
     if (!(t[i].options & TJXOPT_NOOUTPUT))
