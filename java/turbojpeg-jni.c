@@ -675,6 +675,8 @@ JNIEXPORT jbyteArray JNICALL Java_org_libjpegturbo_turbojpeg_TJDecompressor_getI
 
   if (tj3GetICCProfile(handle, &iccBuf, &iccSize) == -1)
     THROW_TJ();
+  if (iccSize > (size_t)INT_MAX)
+    THROW_ARG("ICC profile is too large");
 
   BAILIF0(icc = (*env)->NewByteArray(env, (jsize)iccSize));
   BAILIF0NOEC(jICCBuf = (*env)->GetPrimitiveArrayCritical(env, icc, 0));
@@ -696,6 +698,8 @@ JNIEXPORT jint JNICALL Java_org_libjpegturbo_turbojpeg_TJDecompressor_getICCSize
   GET_HANDLE();
 
   tj3GetICCProfile(handle, NULL, &iccSize);
+  if (iccSize > (size_t)INT_MAX)
+    THROW_ARG("ICC profile is too large");
 
 bailout:
   return (jint)iccSize;
