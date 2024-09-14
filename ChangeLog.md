@@ -1,5 +1,5 @@
-3.1 pre-beta
-============
+3.1 beta1
+=========
 
 ### Significant changes relative to 3.0.4:
 
