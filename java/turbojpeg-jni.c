@@ -1203,6 +1203,42 @@ bailout:
   return -1;
 }
 
+/* TurboJPEG 3.1.x: TJTransformed.bufSize() */
+JNIEXPORT jint JNICALL Java_org_libjpegturbo_turbojpeg_TJTransformer_bufSize
+  (JNIEnv *env, jobject obj, jobject tobj)
+{
+  tjhandle handle = 0;
+  tjtransform transform;
+  size_t retval = 0;
+
+  GET_HANDLE();
+
+  memset(&transform, 0, sizeof(tjtransform));
+
+  BAILIF0(_cls = (*env)->GetObjectClass(env, tobj));
+  BAILIF0(_fid = (*env)->GetFieldID(env, _cls, "op", "I"));
+  transform.op = (*env)->GetIntField(env, tobj, _fid);
+  BAILIF0(_fid = (*env)->GetFieldID(env, _cls, "options", "I"));
+  transform.options = (*env)->GetIntField(env, tobj, _fid);
+  BAILIF0(_fid = (*env)->GetFieldID(env, _cls, "x", "I"));
+  transform.r.x = (*env)->GetIntField(env, tobj, _fid);
+  BAILIF0(_fid = (*env)->GetFieldID(env, _cls, "y", "I"));
+  transform.r.y = (*env)->GetIntField(env, tobj, _fid);
+  BAILIF0(_fid = (*env)->GetFieldID(env, _cls, "width", "I"));
+  transform.r.w = (*env)->GetIntField(env, tobj, _fid);
+  BAILIF0(_fid = (*env)->GetFieldID(env, _cls, "height", "I"));
+  transform.r.h = (*env)->GetIntField(env, tobj, _fid);
+
+  retval = tj3TransformBufSize(handle, &transform);
+
+  if (retval == 0) THROW_ARG(tj3GetErrorStr(NULL));
+  if (retval > (size_t)INT_MAX)
+    THROW_ARG("Image is too large");
+
+bailout:
+  return (jint)retval;
+}
+
 /* TurboJPEG 1.2.x: TJTransformer.transform() */
 JNIEXPORT jintArray JNICALL Java_org_libjpegturbo_turbojpeg_TJTransformer_transform
   (JNIEnv *env, jobject obj, jbyteArray jsrcBuf, jint jpegSize,

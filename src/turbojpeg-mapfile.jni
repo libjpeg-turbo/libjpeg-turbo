@@ -143,10 +143,12 @@ TURBOJPEG_3.1
 {
     tj3GetICCProfile;
     tj3SetICCProfile;
+    tj3TransformBufSize;
     Java_org_libjpegturbo_turbojpeg_TJCompressor_loadSourceImage;
     Java_org_libjpegturbo_turbojpeg_TJCompressor_setICCProfile;
     Java_org_libjpegturbo_turbojpeg_TJDecompressor_getICCProfile;
     Java_org_libjpegturbo_turbojpeg_TJDecompressor_getICCSize;
     Java_org_libjpegturbo_turbojpeg_TJDecompressor_saveImage;
+    Java_org_libjpegturbo_turbojpeg_TJTransformer_bufSize;
     Java_org_libjpegturbo_turbojpeg_TJTransformer_setICCProfile;
 } TURBOJPEG_3;

@@ -250,10 +250,11 @@ static int cs2pf[JPEG_NUMCS] = {
   retval = -1;  goto bailout; \
 }
 #endif
-#define THROW(m) { \
+#define THROWRV(m, rv) { \
   SNPRINTF(this->errStr, JMSG_LENGTH_MAX, "%s(): %s", FUNCTION_NAME, m); \
-  this->isInstanceError = TRUE;  THROWG(m, -1) \
+  this->isInstanceError = TRUE;  THROWG(m, rv) \
 }
+#define THROW(m)  THROWRV(m, -1)
 #define THROWI(format, val1, val2) { \
   SNPRINTF(this->errStr, JMSG_LENGTH_MAX, "%s(): " format, FUNCTION_NAME, \
            val1, val2); \
@@ -2752,6 +2753,118 @@ DLLEXPORT tjhandle tjInitTransform(void)
 }
 
 
+static int getDstSubsamp(int srcSubsamp, const tjtransform *transform)
+{
+  int dstSubsamp;
+
+  if (!transform)
+    return srcSubsamp;
+
+  dstSubsamp = (transform->options & TJXOPT_GRAY) ? TJSAMP_GRAY : srcSubsamp;
+
+  if (transform->op == TJXOP_TRANSPOSE || transform->op == TJXOP_TRANSVERSE ||
+      transform->op == TJXOP_ROT90 || transform->op == TJXOP_ROT270) {
+    if (dstSubsamp == TJSAMP_422) dstSubsamp = TJSAMP_440;
+    else if (dstSubsamp == TJSAMP_440) dstSubsamp = TJSAMP_422;
+    else if (dstSubsamp == TJSAMP_411) dstSubsamp = TJSAMP_441;
+    else if (dstSubsamp == TJSAMP_441) dstSubsamp = TJSAMP_411;
+  }
+
+  return dstSubsamp;
+}
+
+static int getTransformedSpecs(tjhandle handle, int *width, int *height,
+                               int *subsamp, const tjtransform *transform,
+                               const char *FUNCTION_NAME)
+{
+  int retval = 0, dstWidth, dstHeight, dstSubsamp;
+
+  GET_TJINSTANCE(handle, -1);
+  if ((this->init & COMPRESS) == 0 || (this->init & DECOMPRESS) == 0)
+    THROW("Instance has not been initialized for transformation");
+
+  if (!width || !height || !subsamp || !transform || *width < 1 ||
+      *height < 1 || *subsamp < TJSAMP_UNKNOWN || *subsamp >= TJ_NUMSAMP)
+    THROW("Invalid argument");
+
+  dstWidth = *width;  dstHeight = *height;
+  if (transform->op == TJXOP_TRANSPOSE || transform->op == TJXOP_TRANSVERSE ||
+      transform->op == TJXOP_ROT90 || transform->op == TJXOP_ROT270) {
+    dstWidth = *height;  dstHeight = *width;
+  }
+  dstSubsamp = getDstSubsamp(*subsamp, transform);
+
+  if (transform->options & TJXOPT_CROP) {
+    int croppedWidth, croppedHeight;
+
+    if (transform->r.x < 0 || transform->r.y < 0 || transform->r.w < 0 ||
+        transform->r.h < 0)
+      THROW("Invalid cropping region");
+    if (dstSubsamp == TJSAMP_UNKNOWN)
+      THROW("Could not determine subsampling level of JPEG image");
+    if ((transform->r.x % tjMCUWidth[dstSubsamp]) != 0 ||
+        (transform->r.y % tjMCUHeight[dstSubsamp]) != 0)
+      THROWI("To crop this JPEG image, x must be a multiple of %d\n"
+             "and y must be a multiple of %d.", tjMCUWidth[dstSubsamp],
+             tjMCUHeight[dstSubsamp]);
+    if (transform->r.x >= dstWidth || transform->r.y >= dstHeight)
+      THROW("The cropping region exceeds the destination image dimensions");
+    croppedWidth = transform->r.w == 0 ? dstWidth - transform->r.x :
+                                         transform->r.w;
+    croppedHeight = transform->r.h == 0 ? dstHeight - transform->r.y :
+                                          transform->r.h;
+    if (transform->r.x + croppedWidth > dstWidth ||
+        transform->r.y + croppedHeight > dstHeight)
+      THROW("The cropping region exceeds the destination image dimensions");
+    dstWidth = croppedWidth;  dstHeight = croppedHeight;
+  }
+
+  *width = dstWidth;  *height = dstHeight;  *subsamp = dstSubsamp;
+
+bailout:
+  return retval;
+}
+
+
+/* TurboJPEG 3.1+ */
+DLLEXPORT size_t tj3TransformBufSize(tjhandle handle,
+                                     const tjtransform *transform)
+{
+  static const char FUNCTION_NAME[] = "tj3TransformBufSize";
+  size_t retval = 0;
+  int dstWidth, dstHeight, dstSubsamp;
+
+  GET_TJINSTANCE(handle, 0);
+  if ((this->init & COMPRESS) == 0 || (this->init & DECOMPRESS) == 0)
+    THROWRV("Instance has not been initialized for transformation", 0);
+
+  if (transform == NULL)
+    THROWRV("Invalid argument", 0)
+
+  if (this->jpegWidth < 0 || this->jpegHeight < 0)
+    THROWRV("JPEG header has not yet been read", 0);
+
+  dstWidth = this->jpegWidth;
+  dstHeight = this->jpegHeight;
+  dstSubsamp = this->subsamp;
+  if (getTransformedSpecs(handle, &dstWidth, &dstHeight, &dstSubsamp,
+                          transform, FUNCTION_NAME) == -1) {
+    retval = 0;
+    goto bailout;
+  }
+
+  retval = tj3JPEGBufSize(dstWidth, dstHeight, dstSubsamp);
+  if ((this->saveMarkers == 2 || this->saveMarkers == 4) &&
+      !(transform->options & TJXOPT_COPYNONE))
+    retval += this->tempICCSize;
+  else
+    retval += this->iccSize;
+
+bailout:
+  return retval;
+}
+
+
 /* TurboJPEG 3.0+ */
 DLLEXPORT int tj3Transform(tjhandle handle, const unsigned char *jpegBuf,
                            size_t jpegSize, int n, unsigned char **dstBufs,
@@ -2838,15 +2951,8 @@ DLLEXPORT int tj3Transform(tjhandle handle, const unsigned char *jpegBuf,
       THROW("Transform is not perfect");
 
     if (xinfo[i].crop) {
-      int dstSubsamp = (t[i].options & TJXOPT_GRAY) ? TJSAMP_GRAY : srcSubsamp;
+      int dstSubsamp = getDstSubsamp(srcSubsamp, &t[i]);
 
-      if (t[i].op == TJXOP_TRANSPOSE || t[i].op == TJXOP_TRANSVERSE ||
-          t[i].op == TJXOP_ROT90 || t[i].op == TJXOP_ROT270) {
-        if (dstSubsamp == TJSAMP_422) dstSubsamp = TJSAMP_440;
-        else if (dstSubsamp == TJSAMP_440) dstSubsamp = TJSAMP_422;
-        else if (dstSubsamp == TJSAMP_411) dstSubsamp = TJSAMP_441;
-        else if (dstSubsamp == TJSAMP_441) dstSubsamp = TJSAMP_411;
-      }
       if (dstSubsamp == TJSAMP_UNKNOWN)
         THROW("Could not determine subsampling level of destination image");
       if ((t[i].r.x % tjMCUWidth[dstSubsamp]) != 0 ||
@@ -2969,37 +3075,12 @@ DLLEXPORT int tjTransform(tjhandle handle, const unsigned char *jpegBuf,
     sizes[i] = (size_t)dstSizes[i];
     if (this->noRealloc) {
       int dstWidth = dinfo->image_width, dstHeight = dinfo->image_height;
-      int dstSubsamp = (t[i].options & TJXOPT_GRAY) ? TJSAMP_GRAY : srcSubsamp;
+      int dstSubsamp = srcSubsamp;
 
-      if (t[i].op == TJXOP_TRANSPOSE || t[i].op == TJXOP_TRANSVERSE ||
-          t[i].op == TJXOP_ROT90 || t[i].op == TJXOP_ROT270) {
-        dstWidth = dinfo->image_height;  dstHeight = dinfo->image_width;
-        if (dstSubsamp == TJSAMP_422) dstSubsamp = TJSAMP_440;
-        else if (dstSubsamp == TJSAMP_440) dstSubsamp = TJSAMP_422;
-        else if (dstSubsamp == TJSAMP_411) dstSubsamp = TJSAMP_441;
-        else if (dstSubsamp == TJSAMP_441) dstSubsamp = TJSAMP_411;
-      }
-
-      if (t[i].options & TJXOPT_CROP) {
-        int croppedWidth, croppedHeight;
-
-        if (t[i].r.x < 0 || t[i].r.y < 0 || t[i].r.w < 0 || t[i].r.h < 0)
-          THROW("Invalid cropping region");
-        if (dstSubsamp == TJSAMP_UNKNOWN)
-          THROW("Could not determine subsampling level of destination image");
-        if ((t[i].r.x % tjMCUWidth[dstSubsamp]) != 0 ||
-            (t[i].r.y % tjMCUHeight[dstSubsamp]) != 0)
-          THROWI("To crop this JPEG image, x must be a multiple of %d\n"
-                 "and y must be a multiple of %d.", tjMCUWidth[dstSubsamp],
-                 tjMCUHeight[dstSubsamp]);
-        if (t[i].r.x >= dstWidth || t[i].r.y >= dstHeight)
-          THROW("The cropping region exceeds the destination image dimensions");
-        croppedWidth = t[i].r.w == 0 ? dstWidth - t[i].r.x : t[i].r.w;
-        croppedHeight = t[i].r.h == 0 ? dstHeight - t[i].r.y : t[i].r.h;
-        if (t[i].r.x + croppedWidth > dstWidth ||
-            t[i].r.y + croppedHeight > dstHeight)
-          THROW("The cropping region exceeds the destination image dimensions");
-        dstWidth = croppedWidth;  dstHeight = croppedHeight;
+      if (getTransformedSpecs(handle, &dstWidth, &dstHeight, &dstSubsamp,
+                              &t[i], FUNCTION_NAME) == -1) {
+        retval = -1;
+        goto bailout;
       }
       sizes[i] = tj3JPEGBufSize(dstWidth, dstHeight, dstSubsamp);
     }

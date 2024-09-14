@@ -2241,6 +2241,32 @@ DLLEXPORT int tj3DecodeYUV8(tjhandle handle, const unsigned char *srcBuf,
 
 
 /**
+ * The maximum size of the buffer (in bytes) required to hold a JPEG image
+ * transformed with the given transform parameters and/or cropping region.
+ * This function is a wrapper for #tj3JPEGBufSize() that takes into account
+ * cropping, transposition of the width and height (which affects the
+ * destination image dimensions and level of chrominance subsampling),
+ * grayscale conversion, and the ICC profile (if any) that was previously
+ * associated with the TurboJPEG instance (see #tj3SetICCProfile()) or
+ * extracted from the source image (see #tj3GetICCProfile() and
+ * #TJPARAM_SAVEMARKERS.)  The JPEG header must be read (see
+ * tj3DecompressHeader()) prior to calling this function.
+ *
+ * @param handle handle to a TurboJPEG instance that has been initialized for
+ * lossless transformation
+ *
+ * @param transform pointer to a #tjtransform structure that specifies the
+ * transform parameters and/or cropping region for the JPEG image.
+ *
+ * @return the maximum size of the buffer (in bytes) required to hold the
+ * transformed image, or 0 if an error occurred (see #tj3GetErrorStr() and
+ * #tj3GetErrorCode().)
+ */
+DLLEXPORT size_t tj3TransformBufSize(tjhandle handle,
+                                     const tjtransform *transform);
+
+
+/**
  * Losslessly transform a JPEG image into another JPEG image.  Lossless
  * transforms work by moving the raw DCT coefficients from one JPEG image
  * structure to another without altering the values of the coefficients.  While
@@ -2273,13 +2299,7 @@ DLLEXPORT int tj3DecodeYUV8(tjhandle handle, const unsigned char *srcBuf,
  * -# set `dstBufs[i]` to NULL to tell TurboJPEG to allocate the buffer for
  * you, or
  * -# pre-allocate the buffer to a "worst case" size determined by calling
- * #tj3JPEGBufSize() with the transformed or cropped width and height and the
- * level of subsampling used in the destination image (taking into account
- * grayscale conversion and transposition of the width and height), then adding
- * the return value to the size of the ICC profile (if any) that was previously
- * associated with the TurboJPEG instance (see #tj3SetICCProfile()) or
- * extracted from the source image (see #tj3GetICCProfile() and
- * #TJPARAM_SAVEMARKERS.)  Under normal circumstances, this should ensure that
+ * #tj3TransformBufSize().  Under normal circumstances, this should ensure that
  * the buffer never has to be re-allocated.  (Setting #TJPARAM_NOREALLOC
  * guarantees that it won't be.)  Note, however, that there are some rare cases
  * (such as transforming images with a large amount of embedded Exif data) in

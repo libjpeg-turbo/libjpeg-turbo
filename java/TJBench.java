@@ -528,7 +528,7 @@ final class TJBench {
     byte[][] jpegBufs = null;
     byte[] srcBuf;
     int[] jpegSizes = null;
-    int iccSize = 0, totalJpegSize;
+    int totalJpegSize;
     double start, elapsed;
     int ps = TJ.getPixelSize(pf), tile, x, y, iter;
     // Original image
@@ -571,8 +571,6 @@ final class TJBench {
       System.out.println("JPEG image is progressive\n");
     if (tjt.get(TJ.PARAM_ARITHMETIC) == 1)
       System.out.println("JPEG image uses arithmetic entropy coding\n");
-    if ((xformOpt & TJTransform.OPT_COPYNONE) == 0)
-      iccSize = tjt.getICCSize();
     tjt.set(TJ.PARAM_PROGRESSIVE, progressive ? 1 : 0);
     tjt.set(TJ.PARAM_ARITHMETIC, arithmetic ? 1 : 0);
 
@@ -688,9 +686,7 @@ final class TJBench {
             t[tile].options = xformOpt | TJTransform.OPT_TRIM;
             t[tile].cf = customFilter;
             if ((t[tile].options & TJTransform.OPT_NOOUTPUT) == 0)
-              jpegBufs[tile] =
-                new byte[TJ.bufSize(t[tile].width, t[tile].height, tsubsamp) +
-                         iccSize];
+              jpegBufs[tile] = new byte[tjt.bufSize(t[tile])];
           }
         }
 
@@ -739,7 +735,7 @@ final class TJBench {
       } else {
         if (quiet == 1)
           System.out.print("N/A     N/A     ");
-        jpegBufs = new byte[1][TJ.bufSize(ttilew, ttileh, tsubsamp) + iccSize];
+        jpegBufs = new byte[1][];
         jpegSizes = new int[1];
         jpegBufs[0] = srcBuf;
         jpegSizes[0] = srcSize;

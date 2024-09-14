@@ -83,6 +83,11 @@ and retrieve ICC profiles.
 used to specify the types of markers that will be copied from the source image
 to the destination image during lossless transformation if
 `TJXOPT_COPYNONE`/`TJTransform.OPT_COPYNONE` is not specified.
+     - A new convenience function/method (`tj3TransformBufSize()` /
+`TJTransformer.bufSize()`) can be used to compute the worst-case destination
+buffer size for a given lossless transform, taking into account cropping,
+transposition of the width and height, grayscale conversion, and the embedded
+or extracted ICC profile.
 
 9. TJExample has been replaced with three programs (TJComp, TJDecomp, and
 TJTran) that demonstrate how to approximate the functionality of cjpeg, djpeg,

@@ -83,6 +83,29 @@ public class TJTransformer extends TJDecompressor {
   public native void setICCProfile(byte[] iccBuf) throws TJException;
 
   /**
+   * Returns the maximum size of the buffer (in bytes) required to hold a JPEG
+   * image transformed, with the given transform parameters and/or cropping
+   * region, from the JPEG source image associated with this transformer
+   * instance.  This function is a wrapper for {@link TJ#bufSize TJ.bufSize()}
+   * that takes into account cropping, transposition of the width and height
+   * (which affects the destination image dimensions and level of chrominance
+   * subsampling), grayscale conversion, and the ICC profile (if any) that was
+   * previously associated with this transformer instance (see
+   * {@link #setICCProfile setICCProfile()}) or extracted from the source image
+   * (see {@link #getICCProfile} and {@link TJ#PARAM_SAVEMARKERS}.)
+   *
+   * @param transform a {@link TJTransform} instance that specifies the
+   * transform parameters and/or cropping region for the transformed JPEG
+   * image.
+   *
+   * @return the maximum size of the buffer (in bytes) required to hold a JPEG
+   * image transformed, with the given transform parameters and/or cropping
+   * region, from the JPEG source image associated with this transformer
+   * instance
+   */
+  public native int bufSize(TJTransform transform) throws TJException;
+
+  /**
    * Losslessly transform the JPEG source image associated with this
    * transformer instance into one or more JPEG images stored in the given
    * destination buffers.  Lossless transforms work by moving the raw
@@ -99,14 +122,7 @@ public class TJTransformer extends TJDecompressor {
    * @param dstBufs an array of JPEG destination buffers.
    * <code>dstbufs[i]</code> will receive a JPEG image that has been
    * transformed using the parameters in <code>transforms[i]</code>.  Use
-   * {@link TJ#bufSize TJ.bufSize()} to determine the maximum size for each
-   * buffer based on the transformed or cropped width and height and the level
-   * of subsampling used in the destination image (taking into account
-   * grayscale conversion and transposition of the width and height), then add
-   * the size of the ICC profile (if any) that was previously associated with
-   * this transformer instance (see {@link #setICCProfile setICCProfile()}) or
-   * extracted from the source image (see
-   * {@link TJDecompressor#getICCProfile()} and {@link TJ#PARAM_SAVEMARKERS}.)
+   * {@link #bufSize bufSize()} to determine the maximum size for each buffer.
    *
    * @param transforms an array of {@link TJTransform} instances, each of
    * which specifies the transform parameters and/or cropping region for the
@@ -133,41 +149,8 @@ public class TJTransformer extends TJDecompressor {
   public TJDecompressor[] transform(TJTransform[] transforms)
                                     throws TJException {
     byte[][] dstBufs = new byte[transforms.length][];
-    if (getWidth() < 1 || getHeight() < 1)
-      throw new IllegalStateException("JPEG buffer not initialized");
-    int srcSubsamp = get(TJ.PARAM_SUBSAMP);
-    int saveMarkers = get(TJ.PARAM_SAVEMARKERS);
-    int extractedICCSize = getICCSize();
-    for (int i = 0; i < transforms.length; i++) {
-      int w = getWidth(), h = getHeight();
-      int dstSubsamp = srcSubsamp, iccLen = iccSize;
-
-      if ((transforms[i].options & TJTransform.OPT_GRAY) != 0)
-        dstSubsamp = TJ.SAMP_GRAY;
-      if (transforms[i].op == TJTransform.OP_TRANSPOSE ||
-          transforms[i].op == TJTransform.OP_TRANSVERSE ||
-          transforms[i].op == TJTransform.OP_ROT90 ||
-          transforms[i].op == TJTransform.OP_ROT270) {
-        w = getHeight();  h = getWidth();
-        if (dstSubsamp == TJ.SAMP_422)
-          dstSubsamp = TJ.SAMP_440;
-        else if (dstSubsamp == TJ.SAMP_440)
-          dstSubsamp = TJ.SAMP_422;
-        else if (dstSubsamp == TJ.SAMP_411)
-          dstSubsamp = TJ.SAMP_441;
-        else if (dstSubsamp == TJ.SAMP_441)
-          dstSubsamp = TJ.SAMP_411;
-      }
-
-      if ((transforms[i].options & TJTransform.OPT_CROP) != 0) {
-        if (transforms[i].width != 0) w = transforms[i].width;
-        if (transforms[i].height != 0) h = transforms[i].height;
-      }
-      if ((saveMarkers == 2 || saveMarkers == 4) &&
-          (transforms[i].options & TJTransform.OPT_COPYNONE) == 0)
-        iccLen = extractedICCSize;
-      dstBufs[i] = new byte[TJ.bufSize(w, h, dstSubsamp) + iccLen];
-    }
+    for (int i = 0; i < transforms.length; i++)
+      dstBufs[i] = new byte[bufSize(transforms[i])];
     TJDecompressor[] tjd = new TJDecompressor[transforms.length];
     transform(dstBufs, transforms);
     for (int i = 0; i < transforms.length; i++)

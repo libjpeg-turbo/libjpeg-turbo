@@ -637,8 +637,7 @@ static int decompTest(char *fileName)
   FILE *file = NULL;
   tjhandle handle = NULL;
   unsigned char **jpegBufs = NULL, *srcBuf = NULL;
-  size_t iccSize = 0, *jpegBufSizes = NULL, *jpegSizes = NULL, srcSize,
-    totalJpegSize;
+  size_t *jpegBufSizes = NULL, *jpegSizes = NULL, srcSize, totalJpegSize;
   tjtransform *t = NULL;
   double start, elapsed;
   int ps = tjPixelSize[pf], tile, row, col, i, iter, retval = 0, decompsrc = 0,
@@ -702,8 +701,6 @@ static int decompTest(char *fileName)
     printf("JPEG image is progressive\n\n");
   if (tj3Get(handle, TJPARAM_ARITHMETIC) == 1)
     printf("JPEG image uses arithmetic entropy coding\n\n");
-  if (!(xformOpt & TJXOPT_COPYNONE))
-    tj3GetICCProfile(handle, NULL, &iccSize);
   if (tj3Set(handle, TJPARAM_PROGRESSIVE, progressive) == -1)
     THROW_TJ();
   if (tj3Set(handle, TJPARAM_ARITHMETIC, arithmetic) == -1)
@@ -820,11 +817,9 @@ static int decompTest(char *fileName)
           t[tile].options = xformOpt | TJXOPT_TRIM;
           t[tile].customFilter = customFilter;
           if (!(t[tile].options & TJXOPT_NOOUTPUT) && noRealloc) {
-            size_t jpegBufSize =
-              tj3JPEGBufSize(t[tile].r.w, t[tile].r.h, tsubsamp);
+            size_t jpegBufSize = tj3TransformBufSize(handle, &t[tile]);
             if (jpegBufSize == 0)
-              THROW_TJG();
-            jpegBufSize += iccSize;
+              THROW_TJ();
             if ((jpegBufs[tile] = tj3Alloc(jpegBufSize)) == NULL)
               THROW_UNIX("allocating JPEG tiles");
             jpegBufSizes[tile] = jpegBufSize;
