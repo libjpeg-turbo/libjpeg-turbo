@@ -151,7 +151,7 @@ int main(int argc, char **argv)
   int i, retval = 0;
   int arithmetic = -1, colorspace = -1, fastDCT = -1, losslessPSV = -1,
     losslessPt = -1, maxMemory = -1, optimize = -1, pixelFormat = TJPF_UNKNOWN,
-    precision = -1, progressive = -1, quality = DEFAULT_QUALITY,
+    precision = 8, progressive = -1, quality = DEFAULT_QUALITY,
     restartIntervalBlocks = -1, restartIntervalRows = -1,
     subsamp = DEFAULT_SUBSAMP;
   char *iccFilename = NULL;
@@ -238,8 +238,7 @@ int main(int argc, char **argv)
 
   if (i != argc - 2)
     usage(argv[0]);
-  if (losslessPSV == -1 && precision != -1 && precision != 8 &&
-      precision != 12)
+  if (losslessPSV == -1 && precision != 8 && precision != 12)
     usage(argv[0]);
 
   if ((tjInstance = tj3Init(TJINIT_COMPRESS)) == NULL)
@@ -249,7 +248,7 @@ int main(int argc, char **argv)
     THROW_TJ("setting TJPARAM_QUALITY");
   if (tj3Set(tjInstance, TJPARAM_SUBSAMP, subsamp) < 0)
     THROW_TJ("setting TJPARAM_SUBSAMP");
-  if (precision >= 0 && tj3Set(tjInstance, TJPARAM_PRECISION, precision) < 0)
+  if (tj3Set(tjInstance, TJPARAM_PRECISION, precision) < 0)
     THROW_TJ("setting TJPARAM_PRECISION");
   if (fastDCT >= 0 && tj3Set(tjInstance, TJPARAM_FASTDCT, fastDCT) < 0)
     THROW_TJ("setting TJPARAM_FASTDCT");

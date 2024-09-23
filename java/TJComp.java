@@ -145,7 +145,7 @@ final class TJComp {
       int i;
       int arithmetic = -1, colorspace = -1, fastDCT = -1, losslessPSV = -1,
         losslessPt = -1, maxMemory = -1, optimize = -1,
-        pixelFormat = TJ.PF_UNKNOWN, precision = -1, progressive = -1,
+        pixelFormat = TJ.PF_UNKNOWN, precision = 8, progressive = -1,
         quality = DEFAULT_QUALITY, restartIntervalBlocks = -1,
         restartIntervalRows = -1, subsamp = DEFAULT_SUBSAMP;
       String iccFilename = null;
@@ -247,16 +247,14 @@ final class TJComp {
 
       if (i != argv.length - 2)
         usage();
-      if (losslessPSV == -1 && precision != -1 && precision != 8 &&
-          precision != 12)
+      if (losslessPSV == -1 && precision != 8 && precision != 12)
         usage();
 
       tjc = new TJCompressor();
 
       tjc.set(TJ.PARAM_QUALITY, quality);
       tjc.set(TJ.PARAM_SUBSAMP, subsamp);
-      if (precision >= 0)
-        tjc.set(TJ.PARAM_PRECISION, precision);
+      tjc.set(TJ.PARAM_PRECISION, precision);
       if (fastDCT >= 0)
         tjc.set(TJ.PARAM_FASTDCT, fastDCT);
       if (optimize >= 0)

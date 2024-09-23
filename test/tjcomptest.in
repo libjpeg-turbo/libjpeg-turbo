@@ -61,6 +61,11 @@ for precision in 8 12; do
 		RGBIMG=$IMGDIR/monkey16.ppm
 		GRAYIMG=$IMGDIR/monkey16.pgm
 	fi
+	if [ $precision -eq 8 ]; then
+		prearg=
+	else
+		prearg="-pre $precision"
+	fi
 	for restartarg in "" "-r 1 -icc $IMGDIR/test3.icc" "-r 1b"; do
 		for ariarg in "" "-a"; do
 			for dctarg in "" "-dc fa"; do
@@ -81,12 +86,11 @@ for precision in 8 12; do
 							fi
 							for sampi in {0..5}; do
 								basename=`basename $RGBIMG .ppm`
-								runme $TJCOMP -pre $precision $restartarg $ariarg $dctarg \
+								runme $TJCOMP $prearg $restartarg $ariarg $dctarg \
 									$optarg $progarg $qualarg -s ${SUBSAMPOPT[$sampi]} \
 									$RGBIMG $OUTDIR/${basename}-tjcomp.jpg
-								runme $EXEDIR/cjpeg -pre $precision $restartarg $ariarg \
-									$dctarg $optarg $progarg $qualarg $blarg \
-									-sa ${SAMPOPT[$sampi]} \
+								runme $EXEDIR/cjpeg $prearg $restartarg $ariarg $dctarg \
+									$optarg $progarg $qualarg $blarg -sa ${SAMPOPT[$sampi]} \
 									-outf $OUTDIR/${basename}-cjpeg.jpg $RGBIMG
 								$EXEDIR/test/md5sum $OUTDIR/${basename}-tjcomp.jpg \
 									$OUTDIR/${basename}-cjpeg.jpg | sed "s@$OUTDIR@\$OUTDIR@g"
@@ -95,12 +99,11 @@ for precision in 8 12; do
 								rm $OUTDIR/${basename}-tjcomp.jpg $OUTDIR/${basename}-cjpeg.jpg
 								echo
 
-								runme $TJCOMP -pre $precision $restartarg $ariarg $dctarg \
+								runme $TJCOMP $prearg $restartarg $ariarg $dctarg \
 									$optarg $progarg $qualarg -s ${SUBSAMPOPT[$sampi]} \
 									-g $RGBIMG $OUTDIR/${basename}-tjcomp.jpg
-								runme $EXEDIR/cjpeg -pre $precision $restartarg $ariarg \
-									$dctarg $optarg $progarg $qualarg $blarg \
-									-sa ${SAMPOPT[$sampi]} \
+								runme $EXEDIR/cjpeg $prearg $restartarg $ariarg $dctarg \
+									$optarg $progarg $qualarg $blarg -sa ${SAMPOPT[$sampi]} \
 									-gr -outf $OUTDIR/${basename}-cjpeg.jpg $RGBIMG
 								$EXEDIR/test/md5sum $OUTDIR/${basename}-tjcomp.jpg \
 									$OUTDIR/${basename}-cjpeg.jpg | sed "s@$OUTDIR@\$OUTDIR@g"
@@ -109,12 +112,11 @@ for precision in 8 12; do
 								rm $OUTDIR/${basename}-tjcomp.jpg $OUTDIR/${basename}-cjpeg.jpg
 								echo
 
-								runme $TJCOMP -pre $precision $restartarg $ariarg $dctarg \
+								runme $TJCOMP $prearg $restartarg $ariarg $dctarg \
 									$optarg $progarg $qualarg -s ${SUBSAMPOPT[$sampi]} \
 									-rg $RGBIMG $OUTDIR/${basename}-tjcomp.jpg
-								runme $EXEDIR/cjpeg -pre $precision $restartarg $ariarg \
-									$dctarg $optarg $progarg $qualarg $blarg \
-									-sa ${SAMPOPT[$sampi]} \
+								runme $EXEDIR/cjpeg $prearg $restartarg $ariarg $dctarg \
+									$optarg $progarg $qualarg $blarg -sa ${SAMPOPT[$sampi]} \
 									-rgb -outf $OUTDIR/${basename}-cjpeg.jpg $RGBIMG
 								$EXEDIR/test/md5sum $OUTDIR/${basename}-tjcomp.jpg \
 									$OUTDIR/${basename}-cjpeg.jpg | sed "s@$OUTDIR@\$OUTDIR@g"
@@ -124,12 +126,11 @@ for precision in 8 12; do
 								echo
 
 								basename=`basename $GRAYIMG .pgm`
-								runme $TJCOMP -pre $precision $restartarg $ariarg $dctarg \
+								runme $TJCOMP $prearg $restartarg $ariarg $dctarg \
 									$optarg $progarg $qualarg -s ${SUBSAMPOPT[$sampi]} \
 									$GRAYIMG $OUTDIR/${basename}-tjcomp.jpg
-								runme $EXEDIR/cjpeg -pre $precision $restartarg $ariarg \
-									$dctarg $optarg $progarg $qualarg $blarg \
-									-sa ${SAMPOPT[$sampi]} \
+								runme $EXEDIR/cjpeg $prearg $restartarg $ariarg $dctarg \
+									$optarg $progarg $qualarg $blarg -sa ${SAMPOPT[$sampi]} \
 									-outf $OUTDIR/${basename}-cjpeg.jpg $GRAYIMG
 								$EXEDIR/test/md5sum $OUTDIR/${basename}-tjcomp.jpg \
 									$OUTDIR/${basename}-cjpeg.jpg | sed "s@$OUTDIR@\$OUTDIR@g"
@@ -154,6 +155,11 @@ for precision in {2..16}; do
 		RGBIMG=$IMGDIR/monkey16.ppm
 		GRAYIMG=$IMGDIR/monkey16.pgm
 	fi
+	if [ $precision -eq 8 ]; then
+		prearg=
+	else
+		prearg="-pre $precision"
+	fi
 	for psv in {1..7}; do
 		for pt in {0..15}; do
 			if [ $pt -ge $precision ]; then
@@ -161,9 +167,9 @@ for precision in {2..16}; do
 			fi
 			for restartarg in "" "-r 1 -icc $IMGDIR/test3.icc"; do
 				basename=`basename $RGBIMG .ppm`
-				runme $TJCOMP -pre $precision -l $psv,$pt $restartarg \
+				runme $TJCOMP $prearg -l $psv,$pt $restartarg \
 					$RGBIMG $OUTDIR/${basename}-tjcomp.jpg
-				runme $EXEDIR/cjpeg -pre $precision -l $psv,$pt $restartarg \
+				runme $EXEDIR/cjpeg $prearg -l $psv,$pt $restartarg \
 					-outf $OUTDIR/${basename}-cjpeg.jpg $RGBIMG
 				$EXEDIR/test/md5sum $OUTDIR/${basename}-tjcomp.jpg \
 					$OUTDIR/${basename}-cjpeg.jpg | sed "s@$OUTDIR@\$OUTDIR@g"
@@ -172,9 +178,9 @@ for precision in {2..16}; do
 				echo
 
 				basename=`basename $GRAYIMG .pgm`
-				runme $TJCOMP -pre $precision -l $psv,$pt $restartarg \
+				runme $TJCOMP $prearg -l $psv,$pt $restartarg \
 					$GRAYIMG $OUTDIR/${basename}-tjcomp.jpg
-				runme $EXEDIR/cjpeg -pre $precision -l $psv,$pt $restartarg \
+				runme $EXEDIR/cjpeg $prearg -l $psv,$pt $restartarg \
 					-outf $OUTDIR/${basename}-cjpeg.jpg $GRAYIMG
 				$EXEDIR/test/md5sum $OUTDIR/${basename}-tjcomp.jpg \
 					$OUTDIR/${basename}-cjpeg.jpg | sed "s@$OUTDIR@\$OUTDIR@g"
