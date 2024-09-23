@@ -1,3 +1,15 @@
+3.1 post-beta
+=============
+
+### Significant changes relative to 3.1 beta1:
+
+1. Fixed an issue in the TurboJPEG API whereby, when generating a
+lossless JPEG image with more than 8 bits per sample, specifying a point
+transform value greater than 7 resulted in an error ("Parameter value out of
+range") unless `TJPARAM_PRECISION`/`TJ.PARAM_PRECISION` was specified before
+`TJPARAM_LOSSLESSPT`/`TJ.PARAM_LOSSLESSPT`.
+
+
 3.1 beta1
 =========
 
