@@ -19,6 +19,7 @@
 #include "jpeglib.h"
 #include "jsimd.h"
 #include "jsamplecomp.h"
+#include "cmyk.h"
 
 
 #if BITS_IN_JSAMPLE != 16 || defined(D_LOSSLESS_SUPPORTED)
@@ -534,6 +535,72 @@ rgb_rgb_convert(j_decompress_ptr cinfo, _JSAMPIMAGE input_buf,
 
 
 /*
+ * Convert plain CMYK to extended RGB
+ */
+
+METHODDEF(void)
+cmyk_rgb_convert(j_decompress_ptr cinfo, JSAMPIMAGE input_buf,
+                JDIMENSION input_row, JSAMPARRAY output_buf, int num_rows) 
+{
+  register JSAMPROW inptr0, inptr1, inptr2, inptr3;
+  register JSAMPROW outptr;
+  register JDIMENSION col, pixel_size;
+  JDIMENSION num_cols = cinfo->output_width;
+
+  while (--num_rows >= 0) {
+    inptr0 = input_buf[0][input_row];
+    inptr1 = input_buf[1][input_row];
+    inptr2 = input_buf[2][input_row];
+    inptr3 = input_buf[3][input_row];
+    input_row++;
+    outptr = *output_buf++;
+
+    for (col = num_cols; col > 0; col--) {
+      JSAMPLE c = inptr0[col], m = inptr1[col], y = inptr2[col], k = inptr3[col];
+      switch (cinfo->out_color_space)
+      {
+      case JCS_RGB:
+      case JCS_EXT_RGB:
+        cmyk_to_rgb(c, m, y, k, outptr, outptr + 1, outptr + 2);
+        pixel_size = EXT_RGB_PIXELSIZE;
+        break;
+      case JCS_EXT_RGBA:
+      case JCS_EXT_RGBX:
+        cmyk_to_rgb(c, m, y, k, outptr, outptr + 1, outptr + 2);
+        pixel_size = EXT_RGBX_PIXELSIZE;
+        break;
+      case JCS_EXT_BGR:
+        cmyk_to_rgb(c, m, y, k, outptr + 2, outptr + 1, outptr);
+        pixel_size = EXT_BGR_PIXELSIZE;
+        break;
+      case JCS_EXT_BGRA:
+      case JCS_EXT_BGRX:
+        cmyk_to_rgb(c, m, y, k, outptr + 2, outptr + 1, outptr);
+        pixel_size = EXT_BGRX_PIXELSIZE;
+        break;
+      case JCS_EXT_ARGB:
+      case JCS_EXT_XRGB:
+        cmyk_to_rgb(c, m, y, k, outptr + 1, outptr + 2, outptr + 3);
+        pixel_size = EXT_XRGB_PIXELSIZE;
+        break;
+      case JCS_EXT_ABGR:
+      case JCS_EXT_XBGR:
+        cmyk_to_rgb(c, m, y, k, outptr + 3, outptr + 2, outptr + 1);
+        pixel_size = EXT_XBGR_PIXELSIZE;
+        break;
+      default:
+        break;
+      }
+#ifdef RGB_ALPHA
+        outptr[RGB_ALPHA] = 0xFF;
+#endif
+      outptr += pixel_size;
+    }
+  }
+}
+
+
+/*
  * Adobe-style YCCK->CMYK conversion.
  * We convert YCbCr to R=1-C, G=1-M, and B=1-Y using the same
  * conversion as above, while passing K (black) unchanged.
@@ -828,6 +895,8 @@ _jinit_color_deconverter(j_decompress_ptr cinfo)
     } else if (cinfo->jpeg_color_space == JCS_RGB) {
       cconvert->pub._color_convert = rgb_gray_convert;
       build_rgb_y_table(cinfo);
+    } else if(cinfo->jpeg_color_space == JCS_CMYK) {
+      cconvert->pub.color_convert = cmyk_rgb_convert;
     } else
       ERREXIT(cinfo, JERR_CONVERSION_NOTIMPL);
     break;
