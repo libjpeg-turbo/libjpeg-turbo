@@ -9,6 +9,17 @@ transform value greater than 7 resulted in an error ("Parameter value out of
 range") unless `TJPARAM_PRECISION`/`TJ.PARAM_PRECISION` was specified before
 `TJPARAM_LOSSLESSPT`/`TJ.PARAM_LOSSLESSPT`.
 
+2. Fixed a regression introduced by 1.4 beta1[3] that prevented
+`jpeg_set_defaults()` from resetting the Huffman tables to default (baseline)
+values if Huffman table optimization or progressive mode was previously enabled
+in the same libjpeg instance.
+
+3. Fixed an issue whereby lossless JPEG compression could not be disabled if it
+was previously enabled in a libjpeg or TurboJPEG instance.
+`jpeg_set_defaults()` now disables lossless JPEG compression in a libjpeg
+instance, and setting `TJPARAM_LOSSLESS`/`TJ.PARAM_LOSSLESS` to `0` now
+disables lossless JPEG compression in a TurboJPEG instance.
+
 
 3.1 beta1
 =========
