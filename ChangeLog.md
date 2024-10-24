@@ -84,6 +84,11 @@ conversion.
 methods did not honor `TJXOPT_COPYNONE`/`TJTransform.OPT_COPYNONE` unless it
 was specified for all lossless transforms.
 
+12. Fixed a regression introduced by 1.4 beta1[3] that prevented
+`jpeg_set_defaults()` from resetting the Huffman tables to default (baseline)
+values if Huffman table optimization or progressive mode was previously enabled
+in the same libjpeg instance.
+
 
 2.1.5.1
 =======
