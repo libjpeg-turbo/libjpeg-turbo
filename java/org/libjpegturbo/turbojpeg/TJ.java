@@ -873,6 +873,9 @@ public final class TJ {
    * {@link TJDecompressor#saveImage TJDecompressor.saveImage()} if the value
    * of {@link #PARAM_DENSITYUNITS} is <code>2</code>.
    *
+   * <p>This parameter has no effect unless the JPEG colorspace (see
+   * {@link #PARAM_COLORSPACE}) is {@link #CS_YCbCr} or {@link #CS_GRAY}.
+   *
    * @see #PARAM_DENSITYUNITS
    */
   public static final int PARAM_XDENSITY = 20;
@@ -893,6 +896,9 @@ public final class TJ {
    * the value of this parameter is stored to a Windows BMP file by
    * {@link TJDecompressor#saveImage TJDecompressor.saveImage()} if the value
    * of {@link #PARAM_DENSITYUNITS} is <code>2</code>.
+   *
+   * <p>This parameter has no effect unless the JPEG colorspace (see
+   * {@link #PARAM_COLORSPACE}) is {@link #CS_YCbCr} or {@link #CS_GRAY}.
    *
    * @see #PARAM_DENSITYUNITS
    */
@@ -919,6 +925,9 @@ public final class TJ {
    * the value of this parameter is stored to a Windows BMP file by
    * {@link TJDecompressor#saveImage TJDecompressor.saveImage()} if the value
    * is <code>2</code>.
+   *
+   * <p>This parameter has no effect unless the JPEG colorspace (see
+   * {@link #PARAM_COLORSPACE}) is {@link #CS_YCbCr} or {@link #CS_GRAY}.
    *
    * @see #PARAM_XDENSITY
    * @see #PARAM_YDENSITY
