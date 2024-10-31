@@ -73,7 +73,8 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
     if ((dstBuf = (unsigned char *)tjAlloc(w * h * tjPixelSize[pf])) == NULL)
       goto bailout;
     if ((yuvBuf =
-         (unsigned char *)malloc(tjBufSizeYUV2(w, 1, h, jpegSubsamp))) == NULL)
+         (unsigned char *)tjAlloc(tjBufSizeYUV2(w, 1, h,
+                                                jpegSubsamp))) == NULL)
       goto bailout;
 
     if (tjDecompressToYUV2(handle, data, size, yuvBuf, w, 1, h, flags) == 0 &&
