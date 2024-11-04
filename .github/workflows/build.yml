@@ -45,6 +45,7 @@ jobs:
       - name: Set global environment variables
         run: |
           echo "BRANCH=${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}}" >$GITHUB_ENV
+          echo "JAVA_HOME=${JAVA_HOME_8_X64}" >>$GITHUB_ENV
       - name: Check out code
         uses: actions/checkout@v4
       - name: Set up build
