@@ -28,6 +28,7 @@
 #include "../../src/jdct.h"
 #include "../../src/jsimddct.h"
 #include "../jsimd.h"
+#include "neon-compat.h"
 
 #include <arm_neon.h>
 
