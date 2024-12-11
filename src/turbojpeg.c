@@ -3048,7 +3048,7 @@ DLLEXPORT int tjTransform(tjhandle handle, const unsigned char *jpegBuf,
                           tjtransform *t, int flags)
 {
   static const char FUNCTION_NAME[] = "tjTransform";
-  int i, retval = 0, srcSubsamp;
+  int i, retval = 0, srcSubsamp = -1;
   size_t *sizes = NULL;
 
   GET_DINSTANCE(handle);
