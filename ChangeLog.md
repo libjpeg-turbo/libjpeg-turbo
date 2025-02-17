@@ -1,5 +1,5 @@
-2.1.6
-=====
+2.1.6 ESR
+=========
 
 ### Significant changes relative to 2.1.5.1:
 
