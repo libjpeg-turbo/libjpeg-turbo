@@ -113,7 +113,7 @@ jobs:
         uses: actions/checkout@v4
       - name: Set up build
         run: |
-          sudo apt -y install nasm
+          sudo apt -y install gcc-11 nasm
       - name: Build
         env:
           CTEST_OUTPUT_ON_FAILURE: 1
@@ -122,6 +122,7 @@ jobs:
           pushd build
           cmake -G"Unix Makefiles" -DWITH_JPEG7=1 \
             -DCMAKE_C_FLAGS='--std=gnu90 -Wall -Werror -Wextra -Wpedantic -pedantic-errors -Wdouble-promotion -Wformat-overflow=2 -Wformat-security -Wformat-signedness -Wformat-truncation=2 -Wformat-y2k -Wmissing-include-dirs -Wshift-overflow=2 -Wswitch-bool -Wno-unused-parameter -Wuninitialized -Wstrict-overflow=2 -Wstringop-overflow=4 -Wstringop-truncation -Wduplicated-branches -Wduplicated-cond -Wdeclaration-after-statement -Wshadow -Wunsafe-loop-optimizations -Wundef -Wcast-align -Wno-clobbered -Wjump-misses-init -Wno-sign-compare -Wlogical-op -Waggregate-return -Wstrict-prototypes -Wold-style-definition -Wmissing-prototypes -Wmissing-declarations -Wpacked -Wredundant-decls -Wnested-externs -Winline -Wno-long-long -Wdisabled-optimization -Wno-overlength-strings' \
+            -DCMAKE_C_COMPILER=gcc-11 \
             ..
           export NUMCPUS=`grep -c '^processor' /proc/cpuinfo`
           make -j$NUMCPUS --load-average=$NUMCPUS
