@@ -114,46 +114,18 @@ install_secondarybuild()
 	pushd $BUILDDIR
 	DESTDIR=$TMPDIR/dist.secondary @CMAKE_MAKE_PROGRAM@ install
 	popd
-	$LIPO -create \
-		$PKGROOT/$LIBDIR/$LIBJPEG_DSO_NAME \
-		$TMPDIR/dist.secondary/$LIBDIR/$LIBJPEG_DSO_NAME \
-		-output $PKGROOT/$LIBDIR/$LIBJPEG_DSO_NAME
-	$LIPO -create \
-		$PKGROOT/$LIBDIR/libjpeg.a \
-		$TMPDIR/dist.secondary/$LIBDIR/libjpeg.a \
-		-output $PKGROOT/$LIBDIR/libjpeg.a
-	$LIPO -create \
-		$PKGROOT/$LIBDIR/$TURBOJPEG_DSO_NAME \
-		$TMPDIR/dist.secondary/$LIBDIR/$TURBOJPEG_DSO_NAME \
-		-output $PKGROOT/$LIBDIR/$TURBOJPEG_DSO_NAME
-	$LIPO -create \
-		$PKGROOT/$LIBDIR/libturbojpeg.a \
-		$TMPDIR/dist.secondary/$LIBDIR/libturbojpeg.a \
-		-output $PKGROOT/$LIBDIR/libturbojpeg.a
-	$LIPO -create \
-		$PKGROOT/$BINDIR/cjpeg \
-		$TMPDIR/dist.secondary/$BINDIR/cjpeg \
-		-output $PKGROOT/$BINDIR/cjpeg
-	$LIPO -create \
-		$PKGROOT/$BINDIR/djpeg \
-		$TMPDIR/dist.secondary/$BINDIR/djpeg \
-		-output $PKGROOT/$BINDIR/djpeg
-	$LIPO -create \
-		$PKGROOT/$BINDIR/jpegtran \
-		$TMPDIR/dist.secondary/$BINDIR/jpegtran \
-		-output $PKGROOT/$BINDIR/jpegtran
-	$LIPO -create \
-		$PKGROOT/$BINDIR/tjbench \
-		$TMPDIR/dist.secondary/$BINDIR/tjbench \
-		-output $PKGROOT/$BINDIR/tjbench
-	$LIPO -create \
-		$PKGROOT/$BINDIR/rdjpgcom \
-		$TMPDIR/dist.secondary/$BINDIR/rdjpgcom \
-		-output $PKGROOT/$BINDIR/rdjpgcom
-	$LIPO -create \
-		$PKGROOT/$BINDIR/wrjpgcom \
-		$TMPDIR/dist.secondary/$BINDIR/wrjpgcom \
-		-output $PKGROOT/$BINDIR/wrjpgcom
+	for file in $LIBJPEG_DSO_NAME libjpeg.a $TURBOJPEG_DSO_NAME libturbojpeg.a; do
+		$LIPO -create \
+			$PKGROOT/$LIBDIR/$file \
+			$TMPDIR/dist.secondary/$LIBDIR/$file \
+			-output $PKGROOT/$LIBDIR/$file
+	done
+	for file in cjpeg djpeg jpegtran tjbench rdjpgcom wrjpgcom; do
+		$LIPO -create \
+			$PKGROOT/$BINDIR/$file \
+			$TMPDIR/dist.secondary/$BINDIR/$file \
+			-output $PKGROOT/$BINDIR/$file
+	done
 }
 
 if [ "$BUILDDIRSECONDARY" != "" ]; then
@@ -170,6 +142,19 @@ if [ "$PREFIX" = "@CMAKE_INSTALL_DEFAULT_PREFIX@" -a "$LIBDIR" = "@CMAKE_INSTALL
 fi
 
 mkdir -p $TMPDIR/pkg
+
+if [ "$MACOS_APP_CERT_NAME" != "" ]; then
+	for file in $LIBJPEG_DSO_NAME $TURBOJPEG_DSO_NAME; do
+		codesign -s "$MACOS_APP_CERT_NAME" --options=runtime \
+			--timestamp $PKGROOT/$LIBDIR/$file
+		codesign --verify --strict -v $PKGROOT/$LIBDIR/$file
+	done
+	for file in cjpeg djpeg jpegtran tjbench rdjpgcom wrjpgcom; do
+		codesign -s "$MACOS_APP_CERT_NAME" --options=runtime \
+			--timestamp $PKGROOT/$BINDIR/$file
+		codesign --verify --strict -v $PKGROOT/$BINDIR/$file
+	done
+fi
 
 install -m 755 pkgscripts/uninstall $PKGROOT/$BINDIR/
 
