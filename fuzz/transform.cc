@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2021, 2023-2024 D. R. Commander.  All Rights Reserved.
+ * Copyright (C)2021, 2023-2025 D. R. Commander.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -36,8 +36,8 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 {
   tjhandle handle = NULL;
   unsigned char *dstBufs[1] = { NULL };
-  unsigned long dstSizes[1] = { 0 }, maxBufSize;
-  int width = 0, height = 0, jpegSubsamp, dstSubsamp, jpegColorspace, i;
+  unsigned long dstSizes[1] = { 0 }, maxBufSize, i;
+  int width = 0, height = 0, jpegSubsamp, dstSubsamp, jpegColorspace;
   tjtransform transforms[1];
 
   if ((handle = tjInitTransform()) == NULL)
@@ -71,7 +71,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
                   TJFLAG_LIMITSCANS | TJFLAG_NOREALLOC) == 0) {
     /* Touch all of the output pixels in order to catch uninitialized reads
        when using MemorySanitizer. */
-    int sum = 0;
+    unsigned long sum = 0;
 
     for (i = 0; i < dstSizes[0]; i++)
       sum += dstBufs[0][i];
@@ -99,7 +99,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 
   if (tjTransform(handle, data, size, 1, dstBufs, dstSizes, transforms,
                   TJFLAG_LIMITSCANS | TJFLAG_NOREALLOC) == 0) {
-    int sum = 0;
+    unsigned long sum = 0;
 
     for (i = 0; i < dstSizes[0]; i++)
       sum += dstBufs[0][i];
@@ -124,7 +124,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 
   if (tjTransform(handle, data, size, 1, dstBufs, dstSizes, transforms,
                   TJFLAG_LIMITSCANS | TJFLAG_NOREALLOC) == 0) {
-    int sum = 0;
+    unsigned long sum = 0;
 
     for (i = 0; i < dstSizes[0]; i++)
       sum += dstBufs[0][i];
@@ -142,7 +142,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 
   if (tjTransform(handle, data, size, 1, dstBufs, dstSizes, transforms,
                   TJFLAG_LIMITSCANS) == 0) {
-    int sum = 0;
+    unsigned long sum = 0;
 
     for (i = 0; i < dstSizes[0]; i++)
       sum += dstBufs[0][i];
