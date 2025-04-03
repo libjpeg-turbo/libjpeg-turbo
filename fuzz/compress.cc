@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2021, 2023-2024 D. R. Commander.  All Rights Reserved.
+ * Copyright (C)2021, 2023-2025 D. R. Commander.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -48,7 +48,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 {
   tjhandle handle = NULL;
   unsigned char *srcBuf = NULL, *dstBuf = NULL;
-  int width = 0, height = 0, fd = -1, i, ti;
+  int width = 0, height = 0, fd = -1, ti;
   char filename[FILENAME_MAX] = { 0 };
   struct test tests[NUMTESTS] = {
     { TJPF_RGB, TJSAMP_444, 100 },
@@ -68,8 +68,8 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
     goto bailout;
 
   for (ti = 0; ti < NUMTESTS; ti++) {
-    int sum = 0, pf = tests[ti].pf;
-    size_t dstSize = 0, maxBufSize;
+    int pf = tests[ti].pf;
+    size_t dstSize = 0, maxBufSize, i, sum = 0;
 
     /* Test non-default compression options on specific iterations. */
     tj3Set(handle, TJPARAM_BOTTOMUP, ti == 0);

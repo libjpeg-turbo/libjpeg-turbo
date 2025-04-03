@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2021-2024 D. R. Commander.  All Rights Reserved.
+ * Copyright (C)2021-2025 D. R. Commander.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -36,8 +36,8 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 {
   tjhandle handle = NULL;
   unsigned char *dstBufs[1] = { NULL };
-  size_t dstSizes[1] = { 0 }, maxBufSize;
-  int width = 0, height = 0, jpegSubsamp, i;
+  size_t dstSizes[1] = { 0 }, maxBufSize, i;
+  int width = 0, height = 0, jpegSubsamp;
   tjtransform transforms[1];
 
   if ((handle = tj3Init(TJINIT_TRANSFORM)) == NULL)
@@ -79,7 +79,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
                    transforms) == 0) {
     /* Touch all of the output pixels in order to catch uninitialized reads
        when using MemorySanitizer. */
-    int sum = 0;
+    size_t sum = 0;
 
     for (i = 0; i < dstSizes[0]; i++)
       sum += dstBufs[0][i];
@@ -105,7 +105,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 
   if (tj3Transform(handle, data, size, 1, dstBufs, dstSizes,
                    transforms) == 0) {
-    int sum = 0;
+    size_t sum = 0;
 
     for (i = 0; i < dstSizes[0]; i++)
       sum += dstBufs[0][i];
@@ -126,7 +126,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 
   if (tj3Transform(handle, data, size, 1, dstBufs, dstSizes,
                    transforms) == 0) {
-    int sum = 0;
+    size_t sum = 0;
 
     for (i = 0; i < dstSizes[0]; i++)
       sum += dstBufs[0][i];
@@ -145,7 +145,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
   tj3Set(handle, TJPARAM_NOREALLOC, 0);
   if (tj3Transform(handle, data, size, 1, dstBufs, dstSizes,
                    transforms) == 0) {
-    int sum = 0;
+    size_t sum = 0;
 
     for (i = 0; i < dstSizes[0]; i++)
       sum += dstBufs[0][i];
