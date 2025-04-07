@@ -1,0 +1,84 @@
+name: Build Release Packages For SigmaStar
+
+on:
+  push:
+    branches: [ master ]
+    tags: [ 'v*.*.*' ]
+
+env:
+  REGISTRY: ${{ secrets.HARBOR_US_REGISTRY }}
+  PROJECT_ID: sigmastar
+  IMAGE: sigmastar
+  BUILDER_VERSION: 0.0.3
+  IMAGE_CACHE: ~/image-cache
+  RELEASE_FILE: libjpeg-turbo-sigmastar-${{ github.ref_name }}.tar.gz
+  LIBJPEG_TURBO_VERSION: 0.0.1
+
+jobs:
+  build:
+    name: Build and Publish
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Prepare Folders
+        run: mkdir -p ${{ env.IMAGE_CACHE }}
+
+      - name: Image Cache
+        id: image-cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.IMAGE_CACHE }}
+          key: ${{ runner.os }}-builder-${{ env.IMAGE }}-${{ env.BUILDER_VERSION }}
+          restore-keys: |
+            ${{ runner.os }}-builder
+
+      - name: Login to Harbor
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.HARBOR_US_CI_USERNAME }}
+          password: ${{ secrets.HARBOR_US_CI_PASSWORD }}
+
+      - name: Pull Builder
+        if: steps.image-cache.outputs.cache-hit != 'true'
+        run: |
+          docker pull ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.IMAGE }}:${{ env.BUILDER_VERSION }}
+          docker save -o ${{ env.IMAGE_CACHE }}/builder.tar ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.IMAGE }}:${{ env.BUILDER_VERSION }}
+
+      - name: Restore Builder Cache
+        if: steps.image-cache.outputs.cache-hit == 'true'
+        run: |
+          docker load -i  ${{ env.IMAGE_CACHE }}/builder.tar
+
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Build
+        run: |
+          docker run -v ${{ github.workspace }}:/host --rm \
+            -e RELEASE_FILE=${{ env.RELEASE_FILE }} \
+            -e CC="/opt/gcc-sigmastar-9.1.0-2019.11-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-gcc" \
+            -e CXX="/opt/gcc-sigmastar-9.1.0-2019.11-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-g++" \
+            ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.IMAGE }}:${{ env.BUILDER_VERSION }} \
+            /bin/sh -c 'cd /host && apt install -y flex bison && \
+            mkdir build && \
+            cd build && \
+            cmake -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX=./ \
+            -DCMAKE_C_COMPILER=${CC} \
+            -DCMAKE_CXX_COMPILER=${CXX} \
+            -DENABLE_STATIC=ON \
+            -DENABLE_SHARED=OFF \
+            -DWITH_JPEG8=ON \
+            .. && \
+            make && \
+            make install && \
+            ls -l && \
+            tar czf /host/${RELEASE_FILE} include lib'
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            ${{ github.workspace }}/${{ env.RELEASE_FILE }}
