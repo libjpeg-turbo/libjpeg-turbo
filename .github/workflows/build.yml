@@ -2,15 +2,12 @@ name: Build
 
 on:
   push:
-    branches:
-      - '**'
-    tags-ignore:
-      - '**'
   pull_request:
   workflow_dispatch:
 
 jobs:
   linux:
+    if: ${{!contains(github.ref, 'refs/tags/')}}
     runs-on: ubuntu-latest
     steps:
       - name: Set global environment variables
@@ -40,6 +37,7 @@ jobs:
           sudo chown -R runner:runner $HOME/src/ljt.nightly
           mv $HOME/src/ljt.nightly/latest/log-${{github.job}}.txt $HOME/src/ljt.nightly/latest/files/
   macos:
+    if: ${{!contains(github.ref, 'refs/tags/')}}
     runs-on: macos-13
     steps:
       - name: Set global environment variables
@@ -64,7 +62,98 @@ jobs:
         run: |
           $HOME/src/buildscripts/buildljt -d $GITHUB_WORKSPACE -v
           mv $HOME/src/ljt.nightly/latest/log-${{github.job}}.txt $HOME/src/ljt.nightly/latest/files/
+  windows:
+    runs-on: windows-2025
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set global environment variables
+        shell: bash
+        run: |
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            RAWBRANCH=$(git branch -r --contains $GITHUB_REF)
+            echo "BRANCH=${RAWBRANCH##*/}" >$GITHUB_ENV
+          else
+            echo "BRANCH=${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}}" >$GITHUB_ENV
+          fi
+      - name: Cache installers
+        uses: actions/cache@v4
+        with:
+          path: c:/installers
+          key: installers-${{github.job}}-${{env.BRANCH}}
+      - name: Set up build
+        shell: bash
+        run: |
+          set -x
+          choco install -y nsis
+          mkdir -p c:/installers
+          if [ ! -f c:/installers/nasm-2.10.01-win32.zip ]; then
+            curl -fSL -o c:/installers/nasm-2.10.01-win32.zip https://nasm.us/pub/nasm/releasebuilds/2.10.01/win32/nasm-2.10.01-win32.zip
+          fi
+          7z x c:/installers/nasm-2.10.01-win32.zip -oc:/ > c:/installers/nasm.install.log
+          if [ ! -f c:/installers/i686-6.4.0-release-posix-dwarf-rt_v5-rev0.7z ]; then
+            curl -fSL -o c:/installers/i686-6.4.0-release-posix-dwarf-rt_v5-rev0.7z https://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win32/Personal%20Builds/mingw-builds/6.4.0/threads-posix/dwarf/i686-6.4.0-release-posix-dwarf-rt_v5-rev0.7z
+          fi
+          mkdir -p "c:/Program Files (x86)/mingw-w64/i686-6.4.0-posix-dwarf-rt_v5-rev0"
+          7z x c:/installers/i686-6.4.0-release-posix-dwarf-rt_v5-rev0.7z -o"c:/Program Files (x86)/mingw-w64/i686-6.4.0-posix-dwarf-rt_v5-rev0" > c:/installers/mingw32.install.log
+          if [ ! -f c:/installers/x86_64-6.4.0-release-posix-seh-rt_v5-rev0.7z ]; then
+            curl -fSL -o c:/installers/x86_64-6.4.0-release-posix-seh-rt_v5-rev0.7z https://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win64/Personal%20Builds/mingw-builds/6.4.0/threads-posix/seh/x86_64-6.4.0-release-posix-seh-rt_v5-rev0.7z
+          fi
+          mkdir -p "c:/Program Files/mingw-w64/x86_64-6.4.0-posix-seh-rt_v5-rev0"
+          7z x c:/installers/x86_64-6.4.0-release-posix-seh-rt_v5-rev0.7z -o"c:/Program Files/mingw-w64/x86_64-6.4.0-posix-seh-rt_v5-rev0" > c:/installers/mingw64.install.log
+          if [ ! -f c:/installers/OpenJDK8U-jdk_x86-32_windows_hotspot_8u452b09.zip ]; then
+            curl -fSL -o c:/installers/OpenJDK8U-jdk_x86-32_windows_hotspot_8u452b09.zip https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u452-b09/OpenJDK8U-jdk_x86-32_windows_hotspot_8u452b09.zip
+          fi
+          7z x c:/installers/OpenJDK8U-jdk_x86-32_windows_hotspot_8u452b09.zip -o$ProgramData/Oracle > c:/installers/openjdk-x86.install.log
+          mv $ProgramData/Oracle/jdk8u452-b09 $ProgramData/Oracle/Java32
+          mkdir $ProgramData/Oracle/Java
+          ln -fs "$(cygpath "$JAVA_HOME_8_X64")" $ProgramData/Oracle/Java/javapath
+          git clone --depth=1 https://github.com/nathan818fr/vcvars-bash.git c:/vcvars-bash
+          git clone --depth=1 https://github.com/libjpeg-turbo/buildscripts.git -b $BRANCH c:/buildscripts
+      - name: Configure GPG signing
+        if: ${{github.event_name != 'pull_request'}}
+        shell: bash
+        run: |
+          printf "${{secrets.GPG_KEY}}" | base64 --decode | gpg --batch --import -
+          echo "GPG_KEY_NAME=\"${{secrets.GPG_KEY_NAME}}\"" >c:/buildscripts/gpgsign
+          echo "GPG_KEY_ID=${{secrets.GPG_KEY_ID}}" >>c:/buildscripts/gpgsign
+          echo "GPG_KEY_PASS=${{secrets.GPG_KEY_PASS}}" >>c:/buildscripts/gpgsign
+      - name: Build
+        shell: bash
+        run: |
+          export PATH="/c/nasm-2.10.01:/c/Program Files (x86)/NSIS/:$PATH"
+          export VSINSTALLDIR='C:\Program Files\Microsoft Visual Studio\2022\Enterprise\'
+          eval "$(c:/vcvars-bash/vcvarsall.sh amd64)"
+          echo INCLUDE=$INCLUDE
+          echo LIB=$LIB
+          echo PATH=$PATH
+          c:/buildscripts/buildljt -d $GITHUB_WORKSPACE -b /c/ljt.nightly -v
+          cmake --build . --target clean
+          mkdir win64
+          cd win64
+          c:/buildscripts/setupscripts/win64 -DCMAKE_C_FLAGS='-DWIN32 -D_WINDOWS -W4 -wd4100 -wd4127 -wd4245 -wd4324 -wd4701 -wd4702 -wd4706 -WX'
+          cd ..
+          ninja
+      - name: Upload unsigned artifact
+        if: ${{github.event_name == 'push' && contains(github.ref, 'refs/tags/')}}
+        id: upload-unsigned-artifact
+        uses: actions/upload-artifact@v4
+        with:
+          path: c:/ljt.nightly/files/libjpeg-turbo-*.exe
+      - name: Sign artifact
+        if: ${{github.event_name == 'push' && contains(github.ref, 'refs/tags/')}}
+        uses: signpath/github-action-submit-signing-request@v1.1
+        with:
+          api-token: ${{secrets.SIGNPATH_API_TOKEN}}
+          organization-id: 3bc964ce-257b-4362-829f-1df1f087f5a0
+          project-slug: libjpeg-turbo
+          signing-policy-slug: release-signing
+          github-artifact-id: ${{steps.upload-unsigned-artifact.outputs.artifact-id}}
+          wait-for-completion: true
   linux-asan-ubsan:
+    if: ${{!contains(github.ref, 'refs/tags/')}}
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
@@ -107,6 +196,7 @@ jobs:
           ctest -j$NUMCPUS
           popd
   linux-jpeg7:
+    if: ${{!contains(github.ref, 'refs/tags/')}}
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
@@ -132,6 +222,7 @@ jobs:
           JSIMD_FORCENONE=1 ctest -j$NUMCPUS
           popd
   linux-jpeg8:
+    if: ${{!contains(github.ref, 'refs/tags/')}}
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
@@ -157,6 +248,7 @@ jobs:
           JSIMD_FORCENONE=1 ctest -j$NUMCPUS
           popd
   linux-msan:
+    if: ${{!contains(github.ref, 'refs/tags/')}}
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
