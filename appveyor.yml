@@ -1,3 +1,5 @@
+image: Visual Studio 2022
+
 install:
   - cmd: >-
       if not exist c:\installers mkdir c:\installers
@@ -8,13 +10,13 @@ install:
 
       7z x c:\installers\nasm-2.10.01-win32.zip -oc:\ > c:\installers\nasm.install.log
 
-      if not exist c:\installers\i686-6.4.0-release-posix-dwarf-rt_v5-rev0.7z curl -fSL -o c:\installers\i686-6.4.0-release-posix-dwarf-rt_v5-rev0.7z "https://sourceforge.net/projects/mingw-w64/files/Toolchains targetting Win32/Personal Builds/mingw-builds/6.4.0/threads-posix/dwarf/i686-6.4.0-release-posix-dwarf-rt_v5-rev0.7z"
+      if not exist c:\installers\i686-6.4.0-release-posix-dwarf-rt_v5-rev0.7z curl -fSL -o c:\installers\i686-6.4.0-release-posix-dwarf-rt_v5-rev0.7z "https://sourceforge.net/projects/mingw-w64/files/Toolchains%%20targetting%%20Win32/Personal%%20Builds/mingw-builds/6.4.0/threads-posix/dwarf/i686-6.4.0-release-posix-dwarf-rt_v5-rev0.7z"
 
       md "c:\Program Files (x86)\mingw-w64\i686-6.4.0-posix-dwarf-rt_v5-rev0"
 
       7z x c:\installers\i686-6.4.0-release-posix-dwarf-rt_v5-rev0.7z -o"c:\Program Files (x86)\mingw-w64\i686-6.4.0-posix-dwarf-rt_v5-rev0" > c:\installers\mingw32.install.log
 
-      if not exist c:\installers\x86_64-6.4.0-release-posix-seh-rt_v5-rev0.7z curl -fSL -o c:\installers\x86_64-6.4.0-release-posix-seh-rt_v5-rev0.7z "https://sourceforge.net/projects/mingw-w64/files/Toolchains targetting Win64/Personal Builds/mingw-builds/6.4.0/threads-posix/seh/x86_64-6.4.0-release-posix-seh-rt_v5-rev0.7z"
+      if not exist c:\installers\x86_64-6.4.0-release-posix-seh-rt_v5-rev0.7z curl -fSL -o c:\installers\x86_64-6.4.0-release-posix-seh-rt_v5-rev0.7z "https://sourceforge.net/projects/mingw-w64/files/Toolchains%%20targetting%%20Win64/Personal%%20Builds/mingw-builds/6.4.0/threads-posix/seh/x86_64-6.4.0-release-posix-seh-rt_v5-rev0.7z"
 
       md "c:\Program Files\mingw-w64\x86_64-6.4.0-posix-seh-rt_v5-rev0"
 
@@ -22,7 +24,13 @@ install:
 
       set PATH=c:\nasm-2.10.01;c:\Program Files (x86)\NSIS;c:\msys64\usr\bin;%PATH%
 
-      "c:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\amd64\vcvars64.bat"
+      "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat" amd64
+
+      if not exist c:\installers\OpenJDK21U-jdk_aarch64_windows_hotspot_21.0.7_6.zip curl -fSL -o c:\installers\OpenJDK21U-jdk_aarch64_windows_hotspot_21.0.7_6.zip https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.7%%2B6/OpenJDK21U-jdk_aarch64_windows_hotspot_21.0.7_6.zip
+
+      7z x c:\installers\OpenJDK21U-jdk_aarch64_windows_hotspot_21.0.7_6.zip -o%ProgramData%\Oracle > c:\installers\openjdk-arm64.install.log
+
+      move "%ProgramData%\Oracle\jdk-21.0.7+6" %ProgramData%\Oracle\JavaArm64
 
       set INCLUDE
 
@@ -34,7 +42,9 @@ install:
 
       bash -c "pacman --noconfirm -S zip"
 
-      mklink /d "%ProgramData%\Oracle\Java32" "c:\Program Files (x86)\Java\jdk1.8.0"
+      mklink /d %ProgramData%\Oracle\Java32 "c:\Program Files (x86)\Java\jdk1.8.0"
+
+      mklink /d %ProgramData%\Oracle\Java\javapath "c:\Program Files\Java\jdk1.8.0"
 
       git clone --depth=1 https://github.com/libjpeg-turbo/buildscripts.git -b %APPVEYOR_REPO_BRANCH% c:/buildscripts
 
@@ -42,6 +52,7 @@ cache:
   - c:\installers\nasm-2.10.01-win32.zip -> appveyor.yml
   - c:\installers\i686-6.4.0-release-posix-dwarf-rt_v5-rev0.7z -> appveyor.yml
   - c:\installers\x86_64-6.4.0-release-posix-seh-rt_v5-rev0.7z -> appveyor.yml
+  - c:\installers\OpenJDK21U-jdk_aarch64_windows_hotspot_21.0.7_6.zip -> appveyor.yml
 
 build_script:
   - cmd: >-
