@@ -153,12 +153,6 @@ jobs:
           echo LIB=$LIB
           echo PATH=$PATH
           c:/buildscripts/buildljt -d $GITHUB_WORKSPACE -b /c/ljt.nightly -v
-          cmake --build . --target clean
-          mkdir win64
-          cd win64
-          c:/buildscripts/setupscripts/win64 -DCMAKE_C_FLAGS='-DWIN32 -D_WINDOWS -W4 -wd4100 -wd4127 -wd4245 -wd4324 -wd4701 -wd4702 -wd4706 -WX'
-          cd ..
-          ninja
           c:/msys64/usr/bin/zip -j c:/ljt.nightly/files/libjpeg-turbo-installers.zip c:/ljt.nightly/files/libjpeg-turbo-*.exe
       - name: Configure AWS
         if: ${{github.event_name != 'pull_request' && !contains(github.ref, 'refs/tags/')}}
