@@ -2,13 +2,12 @@ name: Build
 
 on:
   push:
-    branches:
-      - '**'
   pull_request:
   workflow_dispatch:
 
 jobs:
   linux:
+    if: ${{!contains(github.ref, 'refs/tags/')}}
     runs-on: ubuntu-latest
     steps:
       - name: Set global environment variables
@@ -49,6 +48,7 @@ jobs:
         run: |
           aws s3 sync --acl public-read --delete $HOME/src/ljt.nightly/latest/files/ s3://libjpeg-turbo-pr/${{env.BRANCH}}/${{github.job}}/
   macos:
+    if: ${{!contains(github.ref, 'refs/tags/')}}
     runs-on: macos-13
     steps:
       - name: Set global environment variables
@@ -87,12 +87,19 @@ jobs:
   windows:
     runs-on: windows-2025
     steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Set global environment variables
         shell: bash
         run: |
-          echo "BRANCH=${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}}" >$GITHUB_ENV
-      - name: Check out code
-        uses: actions/checkout@v4
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            RAWBRANCH=$(git branch -r --contains $GITHUB_REF)
+            echo "BRANCH=${RAWBRANCH##*/}" >$GITHUB_ENV
+          else
+            echo "BRANCH=${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}}" >$GITHUB_ENV
+          fi
       - name: Set up build
         shell: bash
         run: |
@@ -181,6 +188,7 @@ jobs:
           github-artifact-id: ${{steps.upload-unsigned-artifact.outputs.artifact-id}}
           wait-for-completion: true
   linux-asan-ubsan:
+    if: ${{!contains(github.ref, 'refs/tags/')}}
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
@@ -205,6 +213,7 @@ jobs:
           JSIMD_FORCENONE=1 ctest -j$NUMCPUS
           popd
   linux-jpeg7:
+    if: ${{!contains(github.ref, 'refs/tags/')}}
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
@@ -230,6 +239,7 @@ jobs:
           JSIMD_FORCENONE=1 ctest -j$NUMCPUS
           popd
   linux-jpeg8:
+    if: ${{!contains(github.ref, 'refs/tags/')}}
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
@@ -255,6 +265,7 @@ jobs:
           JSIMD_FORCENONE=1 ctest -j$NUMCPUS
           popd
   linux-msan:
+    if: ${{!contains(github.ref, 'refs/tags/')}}
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
