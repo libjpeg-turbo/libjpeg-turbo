@@ -100,6 +100,11 @@ jobs:
           else
             echo "BRANCH=${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}}" >$GITHUB_ENV
           fi
+      - name: Cache installers
+        uses: actions/cache@v4
+        with:
+          path: c:/installers
+          key: installers-${{github.job}}-${{env.BRANCH}}
       - name: Set up build
         shell: bash
         run: |
@@ -143,11 +148,6 @@ jobs:
           echo "GPG_KEY_NAME=\"${{secrets.GPG_KEY_NAME}}\"" >c:/buildscripts/gpgsign
           echo "GPG_KEY_ID=${{secrets.GPG_KEY_ID}}" >>c:/buildscripts/gpgsign
           echo "GPG_KEY_PASS=${{secrets.GPG_KEY_PASS}}" >>c:/buildscripts/gpgsign
-      - name: Cache installers
-        uses: actions/cache@v4
-        with:
-          path: c:/installers
-          key: installers-${{github.job}}-${{env.BRANCH}}
       - name: Build
         shell: bash
         run: |
