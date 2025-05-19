@@ -160,14 +160,14 @@ jobs:
           c:/buildscripts/buildljt -d $GITHUB_WORKSPACE -b /c/ljt.nightly -v
           c:/msys64/usr/bin/zip -j c:/ljt.nightly/files/libjpeg-turbo-installers.zip c:/ljt.nightly/files/libjpeg-turbo-*.exe
       - name: Configure AWS
-        if: ${{github.event_name != 'pull_request'}}
+        if: ${{github.event_name != 'pull_request' && !contains(github.ref, 'refs/tags/')}}
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{secrets.AWS_ACCESS_KEY_ID}}
           aws-secret-access-key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
           aws-region: ${{secrets.AWS_REGION}}
       - name: Deploy
-        if: ${{github.event_name != 'pull_request'}}
+        if: ${{github.event_name != 'pull_request' && !contains(github.ref, 'refs/tags/')}}
         shell: bash
         run: |
           aws s3 sync --acl public-read --delete c:/ljt.nightly/files s3://libjpeg-turbo-pr/${{env.BRANCH}}/${{github.job}}/
