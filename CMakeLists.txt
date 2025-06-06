@@ -4,6 +4,15 @@ if(CMAKE_EXECUTABLE_SUFFIX)
   set(CMAKE_EXECUTABLE_SUFFIX_TMP ${CMAKE_EXECUTABLE_SUFFIX})
 endif()
 
+set(CMAKE_C_FLAGS_RELEASE_INITIALIZED_TO_DEFAULT 1)
+if(CMAKE_C_FLAGS_RELEASE)
+  set(CMAKE_C_FLAGS_RELEASE_INITIALIZED_TO_DEFAULT 0)
+endif()
+set(CMAKE_C_FLAGS_RELWITHDEBINFO_INITIALIZED_TO_DEFAULT 1)
+if(CMAKE_C_FLAGS_RELWITHDEBINFO)
+  set(CMAKE_C_FLAGS_RELWITHDEBINFO_INITIALIZED_TO_DEFAULT 0)
+endif()
+
 project(libjpeg-turbo C)
 set(VERSION 3.1.1)
 set(COPYRIGHT_YEAR "1991-2024")
@@ -428,9 +437,11 @@ endif()
 
 if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID MATCHES "Clang")
   # Use the maximum optimization level for release builds
-  foreach(var CMAKE_C_FLAGS_RELEASE CMAKE_C_FLAGS_RELWITHDEBINFO)
-    if(${var} MATCHES "-O2")
-      string(REGEX REPLACE "-O2" "-O3" ${var} "${${var}}")
+  foreach(build_type RELEASE RELWITHDEBINFO)
+    if(CMAKE_C_FLAGS_${build_type} MATCHES "-O2" AND
+      CMAKE_C_FLAGS_${build_type}_INITIALIZED_TO_DEFAULT)
+      string(REGEX REPLACE "-O2" "-O3" CMAKE_C_FLAGS_${build_type}
+        "${CMAKE_C_FLAGS_${build_type}}")
     endif()
   endforeach()
 endif()
@@ -438,12 +449,16 @@ endif()
 if(CMAKE_SYSTEM_NAME STREQUAL "SunOS")
   if(CMAKE_C_COMPILER_ID MATCHES "SunPro")
     # Use the maximum optimization level for release builds
-    foreach(var CMAKE_C_FLAGS_RELEASE CMAKE_C_FLAGS_RELWITHDEBINFO)
-      if(${var} MATCHES "-xO3")
-        string(REGEX REPLACE "-xO3" "-xO5" ${var} "${${var}}")
+    foreach(build_type RELEASE RELWITHDEBINFO)
+      if(CMAKE_C_FLAGS_${build_type} MATCHES "-xO3" AND
+        CMAKE_C_FLAGS_${build_type}_INITIALIZED_TO_DEFAULT)
+        string(REGEX REPLACE "-xO3" "-xO5" CMAKE_C_FLAGS_${build_type}
+          "${CMAKE_C_FLAGS_${build_type}}")
       endif()
-      if(${var} MATCHES "-xO2")
-        string(REGEX REPLACE "-xO2" "-xO5" ${var} "${${var}}")
+      if(CMAKE_C_FLAGS_${build_type} MATCHES "-xO2" AND
+        CMAKE_C_FLAGS_${build_type}_INITIALIZED_TO_DEFAULT)
+        string(REGEX REPLACE "-xO2" "-xO5" CMAKE_C_FLAGS_${build_type}
+          "${CMAKE_C_FLAGS_${build_type}}")
       endif()
     endforeach()
   endif()
