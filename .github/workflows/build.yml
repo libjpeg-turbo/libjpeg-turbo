@@ -157,6 +157,7 @@ jobs:
           echo LIB=$LIB
           echo PATH=$PATH
           c:/buildscripts/buildljt -d $GITHUB_WORKSPACE -b /c/ljt.nightly -v
+          mv /c/ljt.nightly/log-${{github.job}}.txt /c/ljt.nightly/files/
       - name: Configure AWS
         if: ${{github.event_name != 'pull_request' && !contains(github.ref, 'refs/tags/')}}
         uses: aws-actions/configure-aws-credentials@v4
