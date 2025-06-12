@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2009-2014, 2016-2019, 2021-2024 D. R. Commander.
+ * Copyright (C)2009-2014, 2016-2019, 2021-2025 D. R. Commander.
  *                                              All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -989,7 +989,7 @@ final class TJBench {
             cr.width = temp1;  cr.height = temp2;  cr.x = temp3;  cr.y = temp4;
           } else if (matchArg(argv[i], "-custom", 3))
             customFilter = new DummyDCTFilter();
-          else if (matchArg(argv[i], "-copy", 2)) {
+          else if (matchArg(argv[i], "-copy", 2) && i < argv.length - 1) {
             i++;
             if (matchArg(argv[i], "none", 1))
               xformOpt |= TJTransform.OPT_COPYNONE;

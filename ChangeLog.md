@@ -1,3 +1,12 @@
+3.1.2
+=====
+
+### Significant changes relative to 3.1.1:
+
+1. Fixed a regression introduced by 3.1 beta1[5] that caused a segfault in
+TJBench if `-copy` or `-c` was passed as the last command-line argument.
+
+
 3.1.1
 =====
 
