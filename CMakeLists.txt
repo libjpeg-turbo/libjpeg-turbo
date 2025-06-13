@@ -617,20 +617,48 @@ if(CMAKE_EXECUTABLE_SUFFIX_TMP)
 endif()
 message(STATUS "CMAKE_EXECUTABLE_SUFFIX = ${CMAKE_EXECUTABLE_SUFFIX}")
 
-set(JPEG16_SOURCES src/jcapistd.c src/jccolor.c src/jcdiffct.c src/jclossls.c
-  src/jcmainct.c src/jcprepct.c src/jcsample.c src/jdapistd.c src/jdcolor.c
-  src/jddiffct.c src/jdlossls.c src/jdmainct.c src/jdpostct.c src/jdsample.c
-  src/jutils.c)
-set(JPEG12_SOURCES ${JPEG16_SOURCES} src/jccoefct.c src/jcdctmgr.c
-  src/jdcoefct.c src/jddctmgr.c src/jdmerge.c src/jfdctfst.c src/jfdctint.c
-  src/jidctflt.c src/jidctfst.c src/jidctint.c src/jidctred.c src/jquant1.c
-  src/jquant2.c)
-set(JPEG_SOURCES ${JPEG12_SOURCES} src/jcapimin.c src/jchuff.c src/jcicc.c
-  src/jcinit.c src/jclhuff.c src/jcmarker.c src/jcmaster.c src/jcomapi.c
-  src/jcparam.c src/jcphuff.c src/jctrans.c src/jdapimin.c src/jdatadst.c
-  src/jdatasrc.c src/jdhuff.c src/jdicc.c src/jdinput.c src/jdlhuff.c
-  src/jdmarker.c src/jdmaster.c src/jdphuff.c src/jdtrans.c src/jerror.c
-  src/jfdctflt.c src/jmemmgr.c src/jmemnobs.c src/jpeg_nbits.c)
+add_custom_target(wrappers COMMAND ${CMAKE_COMMAND}
+ -DSOURCE_DIR=${CMAKE_SOURCE_DIR}/src/wrapper
+ -P ${CMAKE_CURRENT_SOURCE_DIR}/cmakescripts/GenerateWrappers.cmake)
+
+set(JPEG_SOURCES src/jcapimin.c
+  src/wrapper/jcapistd-8.c src/wrapper/jcapistd-12.c src/wrapper/jcapistd-16.c
+  src/wrapper/jccoefct-8.c src/wrapper/jccoefct-12.c
+  src/wrapper/jccolor-8.c src/wrapper/jccolor-12.c src/wrapper/jccolor-16.c
+  src/wrapper/jcdctmgr-8.c src/wrapper/jcdctmgr-12.c
+  src/wrapper/jcdiffct-8.c src/wrapper/jcdiffct-12.c src/wrapper/jcdiffct-16.c
+  src/jchuff.c src/jcicc.c src/jcinit.c src/jclhuff.c
+  src/wrapper/jclossls-8.c src/wrapper/jclossls-12.c src/wrapper/jclossls-16.c
+  src/wrapper/jcmainct-8.c src/wrapper/jcmainct-12.c src/wrapper/jcmainct-16.c
+  src/jcmarker.c src/jcmaster.c src/jcomapi.c src/jcparam.c src/jcphuff.c
+  src/wrapper/jcprepct-8.c src/wrapper/jcprepct-12.c src/wrapper/jcprepct-16.c
+  src/wrapper/jcsample-8.c src/wrapper/jcsample-12.c src/wrapper/jcsample-16.c
+  src/jctrans.c src/jdapimin.c
+  src/wrapper/jdapistd-8.c src/wrapper/jdapistd-12.c src/wrapper/jdapistd-16.c
+  src/jdatadst.c src/jdatasrc.c
+  src/wrapper/jdcoefct-8.c src/wrapper/jdcoefct-12.c
+  src/wrapper/jdcolor-8.c src/wrapper/jdcolor-12.c src/wrapper/jdcolor-16.c
+  src/wrapper/jddctmgr-8.c src/wrapper/jddctmgr-12.c
+  src/wrapper/jddiffct-8.c src/wrapper/jddiffct-12.c src/wrapper/jddiffct-16.c
+  src/jdhuff.c src/jdicc.c src/jdinput.c src/jdlhuff.c
+  src/wrapper/jdlossls-8.c src/wrapper/jdlossls-12.c src/wrapper/jdlossls-16.c
+  src/wrapper/jdmainct-8.c src/wrapper/jdmainct-12.c src/wrapper/jdmainct-16.c
+  src/jdmarker.c src/jdmaster.c
+  src/wrapper/jdmerge-8.c src/wrapper/jdmerge-12.c
+  src/jdphuff.c
+  src/wrapper/jdpostct-8.c src/wrapper/jdpostct-12.c src/wrapper/jdpostct-16.c
+  src/wrapper/jdsample-8.c src/wrapper/jdsample-12.c src/wrapper/jdsample-16.c
+  src/jdtrans.c src/jerror.c src/jfdctflt.c
+  src/wrapper/jfdctfst-8.c src/wrapper/jfdctfst-12.c
+  src/wrapper/jfdctint-8.c src/wrapper/jfdctint-12.c
+  src/wrapper/jidctflt-8.c src/wrapper/jidctflt-12.c
+  src/wrapper/jidctfst-8.c src/wrapper/jidctfst-12.c
+  src/wrapper/jidctint-8.c src/wrapper/jidctint-12.c
+  src/wrapper/jidctred-8.c src/wrapper/jidctred-12.c
+  src/jmemmgr.c src/jmemnobs.c src/jpeg_nbits.c
+  src/wrapper/jquant1-8.c src/wrapper/jquant1-12.c
+  src/wrapper/jquant2-8.c src/wrapper/jquant2-12.c
+  src/wrapper/jutils-8.c src/wrapper/jutils-12.c src/wrapper/jutils-16.c)
 
 if(WITH_ARITH_ENC OR WITH_ARITH_DEC)
   set(JPEG_SOURCES ${JPEG_SOURCES} src/jaricom.c)
@@ -671,40 +699,25 @@ if(WITH_JAVA)
 endif()
 
 if(ENABLE_SHARED)
-  # Compile a separate version of these source files with 12-bit and 16-bit
-  # data precision.
-  add_library(jpeg12 OBJECT ${JPEG12_SOURCES})
-  set_property(TARGET jpeg12 PROPERTY COMPILE_FLAGS "-DBITS_IN_JSAMPLE=12")
-  set_target_properties(jpeg12 PROPERTIES POSITION_INDEPENDENT_CODE 1)
-  add_library(jpeg16 OBJECT ${JPEG16_SOURCES})
-  set_property(TARGET jpeg16 PROPERTY COMPILE_FLAGS "-DBITS_IN_JSAMPLE=16")
-  set_target_properties(jpeg16 PROPERTIES POSITION_INDEPENDENT_CODE 1)
   add_subdirectory(sharedlib)
 endif()
 
 if(ENABLE_STATIC)
-  # Compile a separate version of these source files with 12-bit and 16-bit
-  # data precision.
-  add_library(jpeg12-static OBJECT ${JPEG12_SOURCES})
-  set_property(TARGET jpeg12-static PROPERTY COMPILE_FLAGS
-    "-DBITS_IN_JSAMPLE=12")
-  add_library(jpeg16-static OBJECT ${JPEG16_SOURCES})
-  set_property(TARGET jpeg16-static PROPERTY COMPILE_FLAGS
-    "-DBITS_IN_JSAMPLE=16")
   add_library(jpeg-static STATIC ${JPEG_SOURCES} ${SIMD_TARGET_OBJECTS}
-    ${SIMD_OBJS} $<TARGET_OBJECTS:jpeg12-static>
-    $<TARGET_OBJECTS:jpeg16-static>)
+    ${SIMD_OBJS})
   if(NOT MSVC_LIKE)
     set_target_properties(jpeg-static PROPERTIES OUTPUT_NAME jpeg)
   endif()
 endif()
 
 if(WITH_TURBOJPEG)
+  set(TURBOJPEG_SOURCES ${JPEG_SOURCES} ${SIMD_TARGET_OBJECTS} ${SIMD_OBJS}
+    src/turbojpeg.c src/transupp.c src/jdatadst-tj.c src/jdatasrc-tj.c
+    src/rdbmp.c
+    src/wrapper/rdppm-8.c src/wrapper/rdppm-12.c src/wrapper/rdppm-16.c
+    src/wrbmp.c
+    src/wrapper/wrppm-8.c src/wrapper/wrppm-12.c src/wrapper/wrppm-16.c)
   if(ENABLE_SHARED)
-    set(TURBOJPEG_SOURCES ${JPEG_SOURCES} ${SIMD_TARGET_OBJECTS} ${SIMD_OBJS}
-      src/turbojpeg.c src/transupp.c src/jdatadst-tj.c src/jdatasrc-tj.c
-      src/rdbmp.c src/rdppm.c src/wrbmp.c src/wrppm.c $<TARGET_OBJECTS:jpeg12>
-      $<TARGET_OBJECTS:jpeg16>)
     set(TJMAPFILE ${CMAKE_CURRENT_SOURCE_DIR}/src/turbojpeg-mapfile)
     if(WITH_JAVA)
       set(TURBOJPEG_SOURCES ${TURBOJPEG_SOURCES} java/turbojpeg-jni.c)
@@ -717,16 +730,7 @@ if(WITH_TURBOJPEG)
       set(TURBOJPEG_SOURCES ${TURBOJPEG_SOURCES}
         ${CMAKE_BINARY_DIR}/win/turbojpeg.rc)
     endif()
-    add_library(turbojpeg12 OBJECT src/rdppm.c src/wrppm.c)
-    set_property(TARGET turbojpeg12 PROPERTY COMPILE_FLAGS
-      "-DBITS_IN_JSAMPLE=12 -DPPM_SUPPORTED")
-    set_target_properties(turbojpeg12 PROPERTIES POSITION_INDEPENDENT_CODE 1)
-    add_library(turbojpeg16 OBJECT src/rdppm.c src/wrppm.c)
-    set_property(TARGET turbojpeg16 PROPERTY COMPILE_FLAGS
-      "-DBITS_IN_JSAMPLE=16 -DPPM_SUPPORTED")
-    set_target_properties(turbojpeg16 PROPERTIES POSITION_INDEPENDENT_CODE 1)
-    add_library(turbojpeg SHARED ${TURBOJPEG_SOURCES}
-      $<TARGET_OBJECTS:turbojpeg12> $<TARGET_OBJECTS:turbojpeg16>)
+    add_library(turbojpeg SHARED ${TURBOJPEG_SOURCES})
     set_property(TARGET turbojpeg PROPERTY COMPILE_FLAGS
       "-DBMP_SUPPORTED -DPPM_SUPPORTED")
     if(WIN32)
@@ -773,18 +777,7 @@ if(WITH_TURBOJPEG)
   endif()
 
   if(ENABLE_STATIC)
-    add_library(turbojpeg12-static OBJECT src/rdppm.c src/wrppm.c)
-    set_property(TARGET turbojpeg12-static PROPERTY COMPILE_FLAGS
-      "-DBITS_IN_JSAMPLE=12 -DPPM_SUPPORTED")
-    add_library(turbojpeg16-static OBJECT src/rdppm.c src/wrppm.c)
-    set_property(TARGET turbojpeg16-static PROPERTY COMPILE_FLAGS
-      "-DBITS_IN_JSAMPLE=16 -DPPM_SUPPORTED")
-    add_library(turbojpeg-static STATIC ${JPEG_SOURCES} ${SIMD_TARGET_OBJECTS}
-      ${SIMD_OBJS} src/turbojpeg.c src/transupp.c src/jdatadst-tj.c
-      src/jdatasrc-tj.c src/rdbmp.c src/rdppm.c src/wrbmp.c src/wrppm.c
-      $<TARGET_OBJECTS:jpeg12-static> $<TARGET_OBJECTS:jpeg16-static>
-      $<TARGET_OBJECTS:turbojpeg12-static>
-      $<TARGET_OBJECTS:turbojpeg16-static>)
+    add_library(turbojpeg-static STATIC ${TURBOJPEG_SOURCES})
     set_property(TARGET turbojpeg-static PROPERTY COMPILE_FLAGS
       "-DBMP_SUPPORTED -DPPM_SUPPORTED")
     if(NOT MSVC_LIKE)
@@ -810,32 +803,19 @@ set(CDJPEG_COMPILE_FLAGS
   "-DBMP_SUPPORTED -DGIF_SUPPORTED -DPPM_SUPPORTED -DTARGA_SUPPORTED ${USE_SETMODE}")
 
 if(ENABLE_STATIC)
-  # Compile a separate version of these source files with 12-bit and 16-bit
-  # data precision.
-  add_library(cjpeg12-static OBJECT src/rdppm.c)
-  set_property(TARGET cjpeg12-static PROPERTY COMPILE_FLAGS
-    "-DBITS_IN_JSAMPLE=12 -DGIF_SUPPORTED -DPPM_SUPPORTED")
-  add_library(cjpeg16-static OBJECT src/rdppm.c)
-  set_property(TARGET cjpeg16-static PROPERTY COMPILE_FLAGS
-    "-DBITS_IN_JSAMPLE=16 -DGIF_SUPPORTED -DPPM_SUPPORTED")
   add_executable(cjpeg-static src/cjpeg.c src/cdjpeg.c src/rdbmp.c src/rdgif.c
-    src/rdppm.c src/rdswitch.c src/rdtarga.c $<TARGET_OBJECTS:cjpeg12-static>
-    $<TARGET_OBJECTS:cjpeg16-static>)
+    src/wrapper/rdppm-8.c src/wrapper/rdppm-12.c src/wrapper/rdppm-16.c
+    src/rdswitch.c src/rdtarga.c)
   set_property(TARGET cjpeg-static PROPERTY COMPILE_FLAGS
     ${CDJPEG_COMPILE_FLAGS})
   target_link_libraries(cjpeg-static jpeg-static)
 
-  # Compile a separate version of these source files with 12-bit and 16-bit
-  # data precision.
-  add_library(djpeg12-static OBJECT src/rdcolmap.c src/wrgif.c src/wrppm.c)
-  set_property(TARGET djpeg12-static PROPERTY COMPILE_FLAGS
-    "-DBITS_IN_JSAMPLE=12 -DGIF_SUPPORTED -DPPM_SUPPORTED")
-  add_library(djpeg16-static OBJECT src/wrppm.c)
-  set_property(TARGET djpeg16-static PROPERTY COMPILE_FLAGS
-    "-DBITS_IN_JSAMPLE=16 -DPPM_SUPPORTED")
-  add_executable(djpeg-static src/djpeg.c src/cdjpeg.c src/rdcolmap.c
-    src/rdswitch.c src/wrbmp.c src/wrgif.c src/wrppm.c src/wrtarga.c
-    $<TARGET_OBJECTS:djpeg12-static> $<TARGET_OBJECTS:djpeg16-static>)
+  add_executable(djpeg-static src/djpeg.c src/cdjpeg.c
+    src/wrapper/rdcolmap-8.c src/wrapper/rdcolmap-12.c
+    src/rdswitch.c src/wrbmp.c
+    src/wrapper/wrgif-8.c src/wrapper/wrgif-12.c
+    src/wrapper/wrppm-8.c src/wrapper/wrppm-12.c src/wrapper/wrppm-16.c
+    src/wrtarga.c)
   set_property(TARGET djpeg-static PROPERTY COMPILE_FLAGS
     ${CDJPEG_COMPILE_FLAGS})
   target_link_libraries(djpeg-static jpeg-static)

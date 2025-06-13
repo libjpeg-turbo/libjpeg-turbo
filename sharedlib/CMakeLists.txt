@@ -49,7 +49,7 @@ if(MSVC_LIKE)
   set(JPEG_SRCS ${JPEG_SRCS} ${CMAKE_BINARY_DIR}/win/jpeg.rc)
 endif()
 add_library(jpeg SHARED ${JPEG_SRCS} ${DEFFILE} ${SIMD_TARGET_OBJECTS}
-  ${SIMD_OBJS} $<TARGET_OBJECTS:jpeg12> $<TARGET_OBJECTS:jpeg16>)
+  ${SIMD_OBJS})
 
 set_target_properties(jpeg PROPERTIES SOVERSION ${SO_MAJOR_VERSION}
   VERSION ${SO_MAJOR_VERSION}.${SO_AGE}.${SO_MINOR_VERSION})
@@ -86,31 +86,19 @@ endif()
 set(CDJPEG_COMPILE_FLAGS
   "-DBMP_SUPPORTED -DGIF_SUPPORTED -DPPM_SUPPORTED -DTARGA_SUPPORTED ${USE_SETMODE}")
 
-# Compile a separate version of these source files with 12-bit and 16-bit data
-# precision.
-add_library(cjpeg12 OBJECT ../src/rdppm.c)
-set_property(TARGET cjpeg12 PROPERTY COMPILE_FLAGS
-  "-DBITS_IN_JSAMPLE=12 -DGIF_SUPPORTED -DPPM_SUPPORTED")
-add_library(cjpeg16 OBJECT ../src/rdppm.c)
-set_property(TARGET cjpeg16 PROPERTY COMPILE_FLAGS
-  "-DBITS_IN_JSAMPLE=16 -DGIF_SUPPORTED -DPPM_SUPPORTED")
 add_executable(cjpeg ../src/cjpeg.c ../src/cdjpeg.c ../src/rdbmp.c
-  ../src/rdgif.c ../src/rdppm.c ../src/rdswitch.c ../src/rdtarga.c
-  $<TARGET_OBJECTS:cjpeg12> $<TARGET_OBJECTS:cjpeg16>)
+  ../src/rdgif.c
+  ../src/wrapper/rdppm-8.c ../src/wrapper/rdppm-12.c ../src/wrapper/rdppm-16.c
+  ../src/rdswitch.c ../src/rdtarga.c)
 set_property(TARGET cjpeg PROPERTY COMPILE_FLAGS ${CDJPEG_COMPILE_FLAGS})
 target_link_libraries(cjpeg jpeg)
 
-# Compile a separate version of these source files with 12-bit and 16-bit data
-# precision.
-add_library(djpeg12 OBJECT ../src/rdcolmap.c ../src/wrgif.c ../src/wrppm.c)
-set_property(TARGET djpeg12 PROPERTY COMPILE_FLAGS
-  "-DBITS_IN_JSAMPLE=12 -DGIF_SUPPORTED -DPPM_SUPPORTED")
-add_library(djpeg16 OBJECT ../src/wrppm.c)
-set_property(TARGET djpeg16 PROPERTY COMPILE_FLAGS
-  "-DBITS_IN_JSAMPLE=16 -DPPM_SUPPORTED")
-add_executable(djpeg ../src/djpeg.c ../src/cdjpeg.c ../src/rdcolmap.c
-  ../src/rdswitch.c ../src/wrbmp.c ../src/wrgif.c ../src/wrppm.c
-  ../src/wrtarga.c $<TARGET_OBJECTS:djpeg12> $<TARGET_OBJECTS:djpeg16>)
+add_executable(djpeg ../src/djpeg.c ../src/cdjpeg.c
+  ../src/wrapper/rdcolmap-8.c ../src/wrapper/rdcolmap-12.c
+  ../src/rdswitch.c ../src/wrbmp.c
+  ../src/wrapper/wrgif-8.c ../src/wrapper/wrgif-12.c
+  ../src/wrapper/wrppm-8.c ../src/wrapper/wrppm-12.c ../src/wrapper/wrppm-16.c
+  ../src/wrtarga.c)
 set_property(TARGET djpeg PROPERTY COMPILE_FLAGS ${CDJPEG_COMPILE_FLAGS})
 target_link_libraries(djpeg jpeg)
 
