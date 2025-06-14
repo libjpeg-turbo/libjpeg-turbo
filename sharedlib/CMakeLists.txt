@@ -80,46 +80,54 @@ elseif(MINGW)
   set_target_properties(jpeg PROPERTIES SUFFIX -${SO_MAJOR_VERSION}.dll)
 endif()
 
-if(WIN32)
-  set(USE_SETMODE "-DUSE_SETMODE")
+if(WITH_TOOLS)
+  if(WIN32)
+    set(USE_SETMODE "-DUSE_SETMODE")
+  endif()
+  set(CDJPEG_COMPILE_FLAGS
+    "-DBMP_SUPPORTED -DGIF_SUPPORTED -DPPM_SUPPORTED -DTARGA_SUPPORTED ${USE_SETMODE}")
+
+  add_executable(cjpeg ../src/cjpeg.c ../src/cdjpeg.c ../src/rdbmp.c
+    ../src/rdgif.c
+    ../src/wrapper/rdppm-8.c ../src/wrapper/rdppm-12.c
+    ../src/wrapper/rdppm-16.c
+    ../src/rdswitch.c ../src/rdtarga.c)
+  set_property(TARGET cjpeg PROPERTY COMPILE_FLAGS ${CDJPEG_COMPILE_FLAGS})
+  target_link_libraries(cjpeg jpeg)
+
+  add_executable(djpeg ../src/djpeg.c ../src/cdjpeg.c
+    ../src/wrapper/rdcolmap-8.c ../src/wrapper/rdcolmap-12.c
+    ../src/rdswitch.c ../src/wrbmp.c
+    ../src/wrapper/wrgif-8.c ../src/wrapper/wrgif-12.c
+    ../src/wrapper/wrppm-8.c ../src/wrapper/wrppm-12.c
+    ../src/wrapper/wrppm-16.c
+    ../src/wrtarga.c)
+  set_property(TARGET djpeg PROPERTY COMPILE_FLAGS ${CDJPEG_COMPILE_FLAGS})
+  target_link_libraries(djpeg jpeg)
+
+  add_executable(jpegtran ../src/jpegtran.c ../src/cdjpeg.c ../src/rdswitch.c
+    ../src/transupp.c)
+  target_link_libraries(jpegtran jpeg)
+  set_property(TARGET jpegtran PROPERTY COMPILE_FLAGS "${USE_SETMODE}")
 endif()
-set(CDJPEG_COMPILE_FLAGS
-  "-DBMP_SUPPORTED -DGIF_SUPPORTED -DPPM_SUPPORTED -DTARGA_SUPPORTED ${USE_SETMODE}")
 
-add_executable(cjpeg ../src/cjpeg.c ../src/cdjpeg.c ../src/rdbmp.c
-  ../src/rdgif.c
-  ../src/wrapper/rdppm-8.c ../src/wrapper/rdppm-12.c ../src/wrapper/rdppm-16.c
-  ../src/rdswitch.c ../src/rdtarga.c)
-set_property(TARGET cjpeg PROPERTY COMPILE_FLAGS ${CDJPEG_COMPILE_FLAGS})
-target_link_libraries(cjpeg jpeg)
+if(WITH_TESTS)
+  add_executable(example ../src/example.c)
+  target_link_libraries(example jpeg)
 
-add_executable(djpeg ../src/djpeg.c ../src/cdjpeg.c
-  ../src/wrapper/rdcolmap-8.c ../src/wrapper/rdcolmap-12.c
-  ../src/rdswitch.c ../src/wrbmp.c
-  ../src/wrapper/wrgif-8.c ../src/wrapper/wrgif-12.c
-  ../src/wrapper/wrppm-8.c ../src/wrapper/wrppm-12.c ../src/wrapper/wrppm-16.c
-  ../src/wrtarga.c)
-set_property(TARGET djpeg PROPERTY COMPILE_FLAGS ${CDJPEG_COMPILE_FLAGS})
-target_link_libraries(djpeg jpeg)
-
-add_executable(jpegtran ../src/jpegtran.c ../src/cdjpeg.c ../src/rdswitch.c
-  ../src/transupp.c)
-target_link_libraries(jpegtran jpeg)
-set_property(TARGET jpegtran PROPERTY COMPILE_FLAGS "${USE_SETMODE}")
-
-add_executable(example ../src/example.c)
-target_link_libraries(example jpeg)
-
-add_executable(jcstest ../src/jcstest.c)
-target_link_libraries(jcstest jpeg)
+  add_executable(jcstest ../src/jcstest.c)
+  target_link_libraries(jcstest jpeg)
+endif()
 
 install(TARGETS jpeg EXPORT ${CMAKE_PROJECT_NAME}Targets
   INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT bin)
-install(TARGETS cjpeg djpeg jpegtran
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT bin)
+if(WITH_TOOLS)
+  install(TARGETS cjpeg djpeg jpegtran
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT bin)
+endif()
 if(NOT CMAKE_VERSION VERSION_LESS "3.1" AND MSVC_LIKE AND
   CMAKE_C_LINKER_SUPPORTS_PDB)
   install(FILES "$<TARGET_PDB_FILE:jpeg>"

@@ -43,6 +43,7 @@ configure_file(release/makerpm.in pkgscripts/makerpm)
 configure_file(release/rpm.spec.in pkgscripts/rpm.spec @ONLY)
 
 add_custom_target(rpm pkgscripts/makerpm
+  DEPENDS rdjpgcom wrjpgcom cjpeg djpeg jpegtran
   SOURCES pkgscripts/makerpm)
 
 configure_file(release/makesrpm.in pkgscripts/makesrpm)
