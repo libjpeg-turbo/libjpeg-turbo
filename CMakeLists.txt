@@ -271,7 +271,7 @@ boolean_number(WITH_TURBOJPEG)
 option(WITH_TOOLS
   "Build command-line tools (Disabling this disables WITH_TESTS)" TRUE)
 boolean_number(WITH_TOOLS)
-option(WITH_TESTS "Enable regression tests, and build associated test programs"
+option(WITH_TESTS "Enable regression tests, and build associated test programs (WARNING: Disable this at your own risk. If a build is not validated with the regression tests, then it is the responsibility of the builder to ensure, via other means, that the build produces mathematically correct results.)"
   TRUE)
 boolean_number(WITH_TESTS)
 if(NOT WITH_TOOLS)
