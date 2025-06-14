@@ -261,7 +261,8 @@ option(WITH_JPEG8
   "Emulate libjpeg v8 API/ABI (this makes ${CMAKE_PROJECT_NAME} backward-incompatible with libjpeg v6b)"
   FALSE)
 boolean_number(WITH_JPEG8)
-option(WITH_SIMD "Include SIMD extensions, if available for this platform" TRUE)
+option(WITH_SIMD "Include SIMD extensions, if available for this platform"
+  TRUE)
 boolean_number(WITH_SIMD)
 option(WITH_TURBOJPEG
   "Include the TurboJPEG API library and associated test programs" TRUE)
