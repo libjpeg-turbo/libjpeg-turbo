@@ -145,25 +145,24 @@ typedef struct {
   struct jpeg_color_quantizer pub; /* public fields */
 
   /* Initially allocated colormap is saved here */
-  _JSAMPARRAY sv_colormap;      /* The color map as a 2-D pixel array */
-  int sv_actual;                /* number of entries in use */
-
   _JSAMPARRAY colorindex;       /* Precomputed mapping for speed */
   /* colorindex[i][j] = index of color closest to pixel value j in component i,
    * premultiplied as described above.  Since colormap indexes must fit into
    * _JSAMPLEs, the entries of this array will too.
    */
+  _JSAMPARRAY sv_colormap;      /* The color map as a 2-D pixel array */
+  int sv_actual;                /* number of entries in use */
   boolean is_padded;            /* is the colorindex padded for odither? */
 
   int Ncolors[MAX_Q_COMPS];     /* # of values allocated to each component */
 
   /* Variables for ordered dithering */
-  int row_index;                /* cur row's vertical index in dither matrix */
   ODITHER_MATRIX_PTR odither[MAX_Q_COMPS]; /* one dither array per component */
+  int row_index;                /* cur row's vertical index in dither matrix */
 
   /* Variables for Floyd-Steinberg dithering */
-  FSERRPTR fserrors[MAX_Q_COMPS]; /* accumulated errors */
   boolean on_odd_row;           /* flag to remember which row we are on */
+  FSERRPTR fserrors[MAX_Q_COMPS]; /* accumulated errors */
 } my_cquantizer;
 
 typedef my_cquantizer *my_cquantize_ptr;

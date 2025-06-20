@@ -52,12 +52,6 @@ typedef struct {
 
   boolean is_os2;               /* saves the OS2 format request flag */
 
-  jvirt_sarray_ptr whole_image; /* needed to reverse row order */
-  JDIMENSION data_width;        /* JSAMPLEs per row */
-  JDIMENSION row_width;         /* physical width of one row in the BMP file */
-  int pad_bytes;                /* number of padding bytes needed per row */
-  JDIMENSION cur_output_row;    /* next row# to write to virtual array */
-
   boolean use_inversion_array;  /* TRUE = buffer the whole image, which is
                                    stored to disk in bottom-up order, and
                                    receive rows from the calling program in
@@ -66,6 +60,12 @@ typedef struct {
                                    FALSE = the calling program will maintain
                                    its own image buffer and write the rows in
                                    bottom-up order */
+
+  jvirt_sarray_ptr whole_image; /* needed to reverse row order */
+  JDIMENSION data_width;        /* JSAMPLEs per row */
+  JDIMENSION row_width;         /* physical width of one row in the BMP file */
+  int pad_bytes;                /* number of padding bytes needed per row */
+  JDIMENSION cur_output_row;    /* next row# to write to virtual array */
 
   JSAMPLE *iobuffer;            /* I/O buffer (used to buffer a single row to
                                    disk if use_inversion_array == FALSE) */
