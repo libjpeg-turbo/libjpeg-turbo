@@ -177,15 +177,15 @@ typedef struct {
   _JSAMPARRAY sv_colormap;      /* colormap allocated at init time */
   int desired;                  /* desired # of colors = size of colormap */
 
+  boolean needs_zeroed;         /* TRUE if next pass must zero histogram */
+
   /* Variables for accumulating image statistics */
   hist3d histogram;             /* pointer to the histogram */
 
-  boolean needs_zeroed;         /* TRUE if next pass must zero histogram */
-
   /* Variables for Floyd-Steinberg dithering */
   FSERRPTR fserrors;            /* accumulated errors */
-  boolean on_odd_row;           /* flag to remember which row we are on */
   int *error_limiter;           /* table for clamping the applied error */
+  boolean on_odd_row;           /* flag to remember which row we are on */
 } my_cquantizer;
 
 typedef my_cquantizer *my_cquantize_ptr;

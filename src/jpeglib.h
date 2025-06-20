@@ -386,6 +386,13 @@ struct jpeg_compress_struct {
   int num_components;           /* # of color components in JPEG image */
   J_COLOR_SPACE jpeg_color_space; /* colorspace of JPEG image */
 
+  int num_scans;                /* # of entries in scan_info array */
+  const jpeg_scan_info *scan_info; /* script for multi-scan file, or NULL */
+  /* The default value of scan_info is NULL, which causes a single-scan
+   * sequential JPEG file to be emitted.  To create a multi-scan file,
+   * set num_scans and scan_info to point to an array of scan definitions.
+   */
+
   jpeg_component_info *comp_info;
   /* comp_info[i] describes component that appears i'th in SOF */
 
@@ -404,13 +411,6 @@ struct jpeg_compress_struct {
   UINT8 arith_dc_L[NUM_ARITH_TBLS]; /* L values for DC arith-coding tables */
   UINT8 arith_dc_U[NUM_ARITH_TBLS]; /* U values for DC arith-coding tables */
   UINT8 arith_ac_K[NUM_ARITH_TBLS]; /* Kx values for AC arith-coding tables */
-
-  int num_scans;                /* # of entries in scan_info array */
-  const jpeg_scan_info *scan_info; /* script for multi-scan file, or NULL */
-  /* The default value of scan_info is NULL, which causes a single-scan
-   * sequential JPEG file to be emitted.  To create a multi-scan file,
-   * set num_scans and scan_info to point to an array of scan definitions.
-   */
 
   boolean raw_data_in;          /* TRUE=caller supplies downsampled data */
   boolean arith_code;           /* TRUE=arithmetic coding, FALSE=Huffman */
@@ -495,15 +495,17 @@ struct jpeg_compress_struct {
   int Ss, Se, Ah, Al;           /* progressive/lossless JPEG parameters for
                                    scan */
 
-#if JPEG_LIB_VERSION >= 80
-  int block_size;               /* the basic DCT block size: 1..16 */
-  const int *natural_order;     /* natural-order position array */
-  int lim_Se;                   /* min( Se, DCTSIZE2-1 ) */
-#endif
-
   /*
    * Links to compression subobjects (methods and private variables of modules)
    */
+  int script_space_size;
+
+#if JPEG_LIB_VERSION >= 80
+  int block_size;               /* the basic DCT block size: 1..16 */
+  int lim_Se;                   /* min( Se, DCTSIZE2-1 ) */
+  const int *natural_order;     /* natural-order position array */
+#endif
+
   struct jpeg_comp_master *master;
   struct jpeg_c_main_controller *main;
   struct jpeg_c_prep_controller *prep;
@@ -514,7 +516,6 @@ struct jpeg_compress_struct {
   struct jpeg_forward_dct *fdct;
   struct jpeg_entropy_encoder *entropy;
   jpeg_scan_info *script_space; /* workspace for jpeg_simple_progression */
-  int script_space_size;
 };
 
 
@@ -542,6 +543,15 @@ struct jpeg_decompress_struct {
   J_COLOR_SPACE out_color_space; /* colorspace for output */
 
   unsigned int scale_num, scale_denom; /* fraction by which to scale image */
+
+  /*
+   * These fields are valid during any one scan.
+   * They describe the components and MCUs actually appearing in the scan.
+   * Note that the decompressor output side must not use these fields.
+   */
+  int comps_in_scan;            /* # of JPEG components in this scan */
+  jpeg_component_info *cur_comp_info[MAX_COMPS_IN_SCAN];
+  /* *cur_comp_info[i] describes component that appears i'th in SOS */
 
   double output_gamma;          /* image gamma wanted in output */
 
@@ -617,6 +627,15 @@ struct jpeg_decompress_struct {
   int output_scan_number;       /* Nominal scan number being displayed */
   JDIMENSION output_iMCU_row;   /* Number of iMCU rows read */
 
+  /* These parameters are never carried across datastreams, since they
+   * are given in SOF/SOS markers or defined to be reset by SOI.
+   */
+
+  int data_precision;           /* bits of precision in image data */
+
+  jpeg_component_info *comp_info;
+  /* comp_info[i] describes component that appears i'th in SOF */
+
   /* Current progression status.  coef_bits[c][i] indicates the precision
    * with which component c's DCT coefficient i (in zigzag order) is known.
    * It is -1 when no data has yet been received, otherwise it is the point
@@ -642,15 +661,6 @@ struct jpeg_decompress_struct {
   JHUFF_TBL *ac_huff_tbl_ptrs[NUM_HUFF_TBLS];
   /* ptrs to Huffman coding tables, or NULL if not defined */
 
-  /* These parameters are never carried across datastreams, since they
-   * are given in SOF/SOS markers or defined to be reset by SOI.
-   */
-
-  int data_precision;           /* bits of precision in image data */
-
-  jpeg_component_info *comp_info;
-  /* comp_info[i] describes component that appears i'th in SOF */
-
 #if JPEG_LIB_VERSION >= 80
   boolean is_baseline;          /* TRUE if Baseline SOF0 encountered */
 #endif
@@ -671,10 +681,10 @@ struct jpeg_decompress_struct {
   UINT8 JFIF_major_version;     /* JFIF version number */
   UINT8 JFIF_minor_version;
   UINT8 density_unit;           /* JFIF code for pixel size units */
+  UINT8 Adobe_transform;        /* Color transform code from Adobe marker */
   UINT16 X_density;             /* Horizontal pixel density */
   UINT16 Y_density;             /* Vertical pixel density */
   boolean saw_Adobe_marker;     /* TRUE iff an Adobe APP14 marker was found */
-  UINT8 Adobe_transform;        /* Color transform code from Adobe marker */
 
   boolean CCIR601_sampling;     /* TRUE=first samples are cosited */
 
@@ -718,15 +728,6 @@ struct jpeg_decompress_struct {
                                    actually a J16SAMPLE pointer, so callers
                                    must type-cast it in order to read samples
                                    from the array. */
-
-  /*
-   * These fields are valid during any one scan.
-   * They describe the components and MCUs actually appearing in the scan.
-   * Note that the decompressor output side must not use these fields.
-   */
-  int comps_in_scan;            /* # of JPEG components in this scan */
-  jpeg_component_info *cur_comp_info[MAX_COMPS_IN_SCAN];
-  /* *cur_comp_info[i] describes component that appears i'th in SOS */
 
   JDIMENSION MCUs_per_row;      /* # of MCUs across the image */
   JDIMENSION MCU_rows_in_scan;  /* # of MCU rows in the image */

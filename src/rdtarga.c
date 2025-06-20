@@ -50,11 +50,11 @@ typedef struct _tga_source_struct {
   jvirt_sarray_ptr whole_image; /* Needed if funny input row order */
   JDIMENSION current_row;       /* Current logical row number to read */
 
-  /* Pointer to routine to extract next Targa pixel from input file */
-  void (*read_pixel) (tga_source_ptr sinfo);
-
   /* Result of read_pixel is delivered here: */
   U_CHAR tga_pixel[4];
+
+  /* Pointer to routine to extract next Targa pixel from input file */
+  void (*read_pixel) (tga_source_ptr sinfo);
 
   int pixel_size;               /* Bytes per Targa pixel (1 to 4) */
   int cmap_length;              /* colormap length */
