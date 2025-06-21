@@ -185,7 +185,7 @@ int main(int argc, char **argv)
           (tempc != 'x' && tempc != 'X') || croppingRegion.h < 1 ||
           croppingRegion.x < 0 || croppingRegion.y < 0)
         usage(argv[0]);
-    } else if (MATCH_ARG(argv[i], "-dct", 2) && i < argc - 1) {
+    } else if (i < argc - 1 && MATCH_ARG(argv[i], "-dct", 2)) {
       i++;
       if (MATCH_ARG(argv[i], "fast", 1))
         fastDCT = 1;
@@ -194,14 +194,14 @@ int main(int argc, char **argv)
     } else if (MATCH_ARG(argv[i], "-grayscale", 2) ||
                MATCH_ARG(argv[i], "-greyscale", 2))
       pixelFormat = TJPF_GRAY;
-    else if (MATCH_ARG(argv[i], "-icc", 2) && i < argc - 1)
+    else if (i < argc - 1 && MATCH_ARG(argv[i], "-icc", 2))
       iccFilename = argv[++i];
-    else if (MATCH_ARG(argv[i], "-maxscans", 5) && i < argc - 1) {
+    else if (i < argc - 1 && MATCH_ARG(argv[i], "-maxscans", 5)) {
       int tempi = atoi(argv[++i]);
 
       if (tempi < 0) usage(argv[0]);
       maxScans = tempi;
-    } else if (MATCH_ARG(argv[i], "-maxmemory", 2) && i < argc - 1) {
+    } else if (i < argc - 1 && MATCH_ARG(argv[i], "-maxmemory", 2)) {
       int tempi = atoi(argv[++i]);
 
       if (tempi < 0) usage(argv[0]);
@@ -212,7 +212,7 @@ int main(int argc, char **argv)
       pixelFormat = TJPF_RGB;
     else if (MATCH_ARG(argv[i], "-strict", 3))
       stopOnWarning = 1;
-    else if (MATCH_ARG(argv[i], "-scale", 2) && i < argc - 1) {
+    else if (i < argc - 1 && MATCH_ARG(argv[i], "-scale", 2)) {
       int match = 0, temp_num = 0, temp_denom = 0, j;
 
       if (sscanf(argv[++i], "%d/%d", &temp_num, &temp_denom) < 2)

@@ -1103,7 +1103,7 @@ int main(int argc, char *argv[])
         compOnly = 1;
       else if (MATCH_ARG(argv[i], "-copynone", 6))
         xformOpt |= TJXOPT_COPYNONE;
-      else if (MATCH_ARG(argv[i], "-crop", 3) && i < argc - 1) {
+      else if (i < argc - 1 && MATCH_ARG(argv[i], "-crop", 3)) {
         int temp1 = -1, temp2 = -1, temp3 = -1, temp4 = -1;
         char tempc;
 
@@ -1115,13 +1115,13 @@ int main(int argc, char *argv[])
         } else usage(argv[0]);
       } else if (MATCH_ARG(argv[i], "-custom", 3))
         customFilter = dummyDCTFilter;
-      else if (MATCH_ARG(argv[i], "-copy", 2) && i < argc - 1) {
+      else if (i < argc - 1 && MATCH_ARG(argv[i], "-copy", 2)) {
         i++;
         if (MATCH_ARG(argv[i], "none", 1))
           xformOpt |= TJXOPT_COPYNONE;
         else if (!MATCH_ARG(argv[i], "all", 1))
           usage(argv[0]);
-      } else if (MATCH_ARG(argv[i], "-dct", 2) && i < argc - 1) {
+      } else if (i < argc - 1 && MATCH_ARG(argv[i], "-dct", 2)) {
         i++;
         if (MATCH_ARG(argv[i], "fast", 1)) {
           printf("Using less accurate DCT/IDCT algorithm\n\n");
@@ -1134,7 +1134,7 @@ int main(int argc, char *argv[])
       } else if (MATCH_ARG(argv[i], "-fastupsample", 6)) {
         printf("Using fastest upsampling algorithm\n\n");
         fastUpsample = 1;
-      } else if (MATCH_ARG(argv[i], "-flip", 2) && i < argc - 1) {
+      } else if (i < argc - 1 && MATCH_ARG(argv[i], "-flip", 2)) {
         i++;
         if (MATCH_ARG(argv[i], "horizontal", 1))
           xformOp = TJXOP_HFLIP;
@@ -1151,17 +1151,17 @@ int main(int argc, char *argv[])
         maxScans = 500;
       else if (MATCH_ARG(argv[i], "-lossless", 2))
         lossless = 1;
-      else if (MATCH_ARG(argv[i], "-maxpixels", 5) && i < argc - 1) {
+      else if (i < argc - 1 && MATCH_ARG(argv[i], "-maxpixels", 5)) {
         int tempi = atoi(argv[++i]);
 
         if (tempi < 0) usage(argv[0]);
         maxPixels = tempi;
-      } else if (MATCH_ARG(argv[i], "-maxscans", 5) && i < argc - 1) {
+      } else if (i < argc - 1 && MATCH_ARG(argv[i], "-maxscans", 5)) {
         int tempi = atoi(argv[++i]);
 
         if (tempi < 0) usage(argv[0]);
         maxScans = tempi;
-      } else if (MATCH_ARG(argv[i], "-maxmemory", 4) && i < argc - 1) {
+      } else if (i < argc - 1 && MATCH_ARG(argv[i], "-maxmemory", 4)) {
         int tempi = atoi(argv[++i]);
 
         if (tempi < 0) usage(argv[0]);
@@ -1177,7 +1177,7 @@ int main(int argc, char *argv[])
                MATCH_ARG(argv[i], "-optimise", 2)) {
         optimize = 1;
         xformOpt |= TJXOPT_OPTIMIZE;
-      } else if (MATCH_ARG(argv[i], "-pixelformat", 3) && i < argc - 1) {
+      } else if (i < argc - 1 && MATCH_ARG(argv[i], "-pixelformat", 3)) {
         i++;
         if (!strcasecmp(argv[i], "bgr"))
           pf = TJPF_BGR;
@@ -1198,7 +1198,7 @@ int main(int argc, char *argv[])
           pf = TJPF_XRGB;
         else
           usage(argv[0]);
-      } else if (MATCH_ARG(argv[i], "-precision", 4) && i < argc - 1) {
+      } else if (i < argc - 1 && MATCH_ARG(argv[i], "-precision", 4)) {
         int tempi = atoi(argv[++i]);
 
         if (tempi < 2 || tempi > 16)
@@ -1222,7 +1222,7 @@ int main(int argc, char *argv[])
         xformOp = TJXOP_ROT180;
       else if (!strcasecmp(argv[i], "-rot270"))
         xformOp = TJXOP_ROT270;
-      else if (MATCH_ARG(argv[i], "-rotate", 3) && i < argc - 1) {
+      else if (i < argc - 1 && MATCH_ARG(argv[i], "-rotate", 3)) {
         i++;
         if (MATCH_ARG(argv[i], "90", 2))
           xformOp = TJXOP_ROT90;
@@ -1232,7 +1232,7 @@ int main(int argc, char *argv[])
           xformOp = TJXOP_ROT270;
         else
           usage(argv[0]);
-      } else if (MATCH_ARG(argv[i], "-restart", 2) && i < argc - 1) {
+      } else if (i < argc - 1 && MATCH_ARG(argv[i], "-restart", 2)) {
         int tempi = -1, nscan;  char tempc = 0;
 
         if ((nscan = sscanf(argv[++i], "%d%c", &tempi, &tempc)) < 1 ||
@@ -1247,7 +1247,7 @@ int main(int argc, char *argv[])
       } else if (MATCH_ARG(argv[i], "-strict", 3) ||
                  MATCH_ARG(argv[i], "-stoponwarning", 3))
         stopOnWarning = 1;
-      else if (MATCH_ARG(argv[i], "-subsamp", 3) && i < argc - 1) {
+      else if (i < argc - 1 && MATCH_ARG(argv[i], "-subsamp", 3)) {
         i++;
         if (MATCH_ARG(argv[i], "gray", 1) || MATCH_ARG(argv[i], "grey", 1))
           subsamp = TJSAMP_GRAY;
@@ -1265,7 +1265,7 @@ int main(int argc, char *argv[])
           subsamp = TJSAMP_441;
         else
           usage(argv[0]);
-      } else if (MATCH_ARG(argv[i], "-scale", 2) && i < argc - 1) {
+      } else if (i < argc - 1 && MATCH_ARG(argv[i], "-scale", 2)) {
         int temp1 = 0, temp2 = 0, match = 0;
 
         if (sscanf(argv[++i], "%d/%d", &temp1, &temp2) == 2) {
@@ -1287,7 +1287,7 @@ int main(int argc, char *argv[])
         xformOp = TJXOP_TRANSPOSE;
       else if (MATCH_ARG(argv[i], "-vflip", 2))
         xformOp = TJXOP_VFLIP;
-      else if (MATCH_ARG(argv[i], "-warmup", 2) && i < argc - 1) {
+      else if (i < argc - 1 && MATCH_ARG(argv[i], "-warmup", 2)) {
         double tempd = atof(argv[++i]);
 
         if (tempd >= 0.0) warmup = tempd;
@@ -1300,7 +1300,7 @@ int main(int argc, char *argv[])
       else if (!strcasecmp(argv[i], "-yuv")) {
         printf("Testing planar YUV encoding/decoding\n\n");
         doYUV = 1;
-      } else if (MATCH_ARG(argv[i], "-yuvpad", 5) && i < argc - 1) {
+      } else if (i < argc - 1 && MATCH_ARG(argv[i], "-yuvpad", 5)) {
         int tempi = atoi(argv[++i]);
 
         if (tempi >= 1 && (tempi & (tempi - 1)) == 0) yuvAlign = tempi;

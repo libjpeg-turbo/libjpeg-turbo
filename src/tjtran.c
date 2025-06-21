@@ -185,7 +185,7 @@ int main(int argc, char **argv)
           xform.r.y < 0)
         usage(argv[0]);
       xform.options |= TJXOPT_CROP;
-    } else if (MATCH_ARG(argv[i], "-copy", 2) && i < argc - 1) {
+    } else if (i < argc - 1 && MATCH_ARG(argv[i], "-copy", 2)) {
       i++;
       if (MATCH_ARG(argv[i], "all", 1))
         saveMarkers = 2;
@@ -195,7 +195,7 @@ int main(int argc, char **argv)
         saveMarkers = 0;
       else if (!MATCH_ARG(argv[i], "comments", 1))
         usage(argv[0]);
-    } else if (MATCH_ARG(argv[i], "-flip", 2) && i < argc - 1) {
+    } else if (i < argc - 1 && MATCH_ARG(argv[i], "-flip", 2)) {
       i++;
       if (MATCH_ARG(argv[i], "horizontal", 1))
         xform.op = TJXOP_HFLIP;
@@ -206,14 +206,14 @@ int main(int argc, char **argv)
     } else if (MATCH_ARG(argv[i], "-grayscale", 2) ||
                MATCH_ARG(argv[i], "-greyscale", 2))
       xform.options |= TJXOPT_GRAY;
-    else if (MATCH_ARG(argv[i], "-icc", 2) && i < argc - 1)
+    else if (i < argc - 1 && MATCH_ARG(argv[i], "-icc", 2))
       iccFilename = argv[++i];
-    else if (MATCH_ARG(argv[i], "-maxscans", 5) && i < argc - 1) {
+    else if (i < argc - 1 && MATCH_ARG(argv[i], "-maxscans", 5)) {
       int tempi = atoi(argv[++i]);
 
       if (tempi < 0) usage(argv[0]);
       maxScans = tempi;
-    } else if (MATCH_ARG(argv[i], "-maxmemory", 2) && i < argc - 1) {
+    } else if (i < argc - 1 && MATCH_ARG(argv[i], "-maxmemory", 2)) {
       int tempi = atoi(argv[++i]);
 
       if (tempi < 0) usage(argv[0]);
@@ -225,7 +225,7 @@ int main(int argc, char **argv)
       xform.options |= TJXOPT_PERFECT;
     else if (MATCH_ARG(argv[i], "-progressive", 2))
       progressive = 1;
-    else if (MATCH_ARG(argv[i], "-rotate", 3) && i < argc - 1) {
+    else if (i < argc - 1 && MATCH_ARG(argv[i], "-rotate", 3)) {
       i++;
       if (MATCH_ARG(argv[i], "90", 2))
         xform.op = TJXOP_ROT90;
@@ -235,7 +235,7 @@ int main(int argc, char **argv)
         xform.op = TJXOP_ROT270;
       else
         usage(argv[0]);
-    } else if (MATCH_ARG(argv[i], "-restart", 2) && i < argc - 1) {
+    } else if (i < argc - 1 && MATCH_ARG(argv[i], "-restart", 2)) {
       int tempi = -1, nscan;  char tempc = 0;
 
       if ((nscan = sscanf(argv[++i], "%d%c", &tempi, &tempc)) < 1 ||

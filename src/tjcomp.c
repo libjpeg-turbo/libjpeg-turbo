@@ -175,13 +175,13 @@ int main(int argc, char **argv)
     } else if (MATCH_ARG(argv[i], "-grayscale", 2) ||
                MATCH_ARG(argv[i], "-greyscale", 2))
       colorspace = TJCS_GRAY;
-    else if (MATCH_ARG(argv[i], "-icc", 2) && i < argc - 1)
+    else if (i < argc - 1 && MATCH_ARG(argv[i], "-icc", 2))
       iccFilename = argv[++i];
-    else if (MATCH_ARG(argv[i], "-lossless", 2) && i < argc - 1) {
+    else if (i < argc - 1 && MATCH_ARG(argv[i], "-lossless", 2)) {
       if (sscanf(argv[++i], "%d,%d", &losslessPSV, &losslessPt) < 1 ||
           losslessPSV < 1 || losslessPSV > 7)
         usage(argv[0]);
-    } else if (MATCH_ARG(argv[i], "-maxmemory", 2) && i < argc - 1) {
+    } else if (i < argc - 1 && MATCH_ARG(argv[i], "-maxmemory", 2)) {
       int tempi = atoi(argv[++i]);
 
       if (tempi < 0) usage(argv[0]);
@@ -189,7 +189,7 @@ int main(int argc, char **argv)
     } else if (MATCH_ARG(argv[i], "-optimize", 2) ||
                MATCH_ARG(argv[i], "-optimise", 2))
       optimize = 1;
-    else if (MATCH_ARG(argv[i], "-precision", 4) && i < argc - 1) {
+    else if (i < argc - 1 && MATCH_ARG(argv[i], "-precision", 4)) {
       int tempi = atoi(argv[++i]);
 
       if (tempi < 2 || tempi > 16)
@@ -197,7 +197,7 @@ int main(int argc, char **argv)
       precision = tempi;
     } else if (MATCH_ARG(argv[i], "-progressive", 2))
       progressive = 1;
-    else if (MATCH_ARG(argv[i], "-quality", 2) && i < argc - 1) {
+    else if (i < argc - 1 && MATCH_ARG(argv[i], "-quality", 2)) {
       int tempi = atoi(argv[++i]);
 
       if (tempi < 1 || tempi > 100)
@@ -205,7 +205,7 @@ int main(int argc, char **argv)
       quality = tempi;
     } else if (MATCH_ARG(argv[i], "-rgb", 3))
       colorspace = TJCS_RGB;
-    else if (MATCH_ARG(argv[i], "-restart", 2) && i < argc - 1) {
+    else if (i < argc - 1 && MATCH_ARG(argv[i], "-restart", 2)) {
       int tempi = -1, nscan;  char tempc = 0;
 
       if ((nscan = sscanf(argv[++i], "%d%c", &tempi, &tempc)) < 1 ||
@@ -217,7 +217,7 @@ int main(int argc, char **argv)
         restartIntervalBlocks = tempi;
       else
         restartIntervalRows = tempi;
-    } else if (MATCH_ARG(argv[i], "-subsamp", 2) && i < argc - 1) {
+    } else if (i < argc - 1 && MATCH_ARG(argv[i], "-subsamp", 2)) {
       i++;
       if (MATCH_ARG(argv[i], "444", 3))
         subsamp = TJSAMP_444;
