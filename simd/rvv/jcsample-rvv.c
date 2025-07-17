@@ -97,7 +97,7 @@ void jsimd_h2v1_downsample_rvv(JDIMENSION image_width,
 
       /* Add adjacent pixel values and add bias. */
       out_w = __riscv_vwaddu_wv_u16m4(bias_w, this, vl);
-      out_w = __riscv_vwaddu_wv_u16m4(out_w, adjct, vl);
+      out_w = __riscv_vwaddu_wv_u16m4(out_w, adjct, vl)
 
       /* Divide total by 2, narrow to 8-bit, and store. */
       out = __riscv_vnsrl_wx_u8m2(out_w, 1, vl);
