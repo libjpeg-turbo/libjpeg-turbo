@@ -84,7 +84,7 @@ void jsimd_rgb_ycc_convert_rvv(JDIMENSION img_width, JSAMPARRAY input_buf,
             y = __riscv_vnsrl_wx_u16m4(tmp0, SCALEBITS, vl);
             /* TODO: Figure out whether big-endian or little-endian would be different. */
 #if BITS_IN_JSAMPLE == 8
-            dest = __riscv_vnsrl_wx_u8m2(y, 0, vl); /* Narrowing from 16-bit to 8-bit. */
+            dest = __riscv_vncvt_x_x_w_u8m2(y, vl);  /* Narrowing from 16-bit to 8-bit. */
             __riscv_vse8_v_u8m2(outptr0, dest, vl);
 #else /* BITS_IN_JSAMPLE == 12 */
             __riscv_vse16_v_u16m4(outptr0, y, vl);
@@ -102,7 +102,7 @@ void jsimd_rgb_ycc_convert_rvv(JDIMENSION img_width, JSAMPARRAY input_buf,
             y = __riscv_vnsrl_wx_u16m4(tmp0, SCALEBITS, vl);
             /* TODO: Figure out whether big-endian or little-endian would be different. */
 #if BITS_IN_JSAMPLE == 8
-            dest = __riscv_vnsrl_wx_u8m2(y, 0, vl); /* Narrowing from 16-bit to 8-bit. */
+            dest = __riscv_vncvt_x_x_w_u8m2(y, vl); /* Narrowing from 16-bit to 8-bit. */
             __riscv_vse8_v_u8m2(outptr1, dest, vl);
 #else /* BITS_IN_JSAMPLE == 12 */
             __riscv_vse16_v_u16m4(outptr1, y, vl);
@@ -120,7 +120,7 @@ void jsimd_rgb_ycc_convert_rvv(JDIMENSION img_width, JSAMPARRAY input_buf,
             y = __riscv_vnsrl_wx_u16m4(tmp0, SCALEBITS, vl);
             /* TODO: Figure out whether big-endian or little-endian would be different. */
 #if BITS_IN_JSAMPLE == 8
-            dest = __riscv_vnsrl_wx_u8m2(y, 0, vl); /* Narrowing from 16-bit to 8-bit. */
+            dest = __riscv_vncvt_x_x_w_u8m2(y, vl); /* Narrowing from 16-bit to 8-bit. */
             __riscv_vse8_v_u8m2(outptr2, dest, vl);
 #else /* BITS_IN_JSAMPLE == 12 */
             __riscv_vse16_v_u16m4(outptr2, y, vl);

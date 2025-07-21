@@ -106,7 +106,7 @@ void jsimd_ycc_rgb_convert_rvv(JDIMENSION out_width, JSAMPIMAGE input_buf,
             r = __riscv_vadd_vv_i16m4(sy, scr, vl);
             tmp0 = __riscv_vwmul_vx_i32m8(scr, F_0_402, vl);
             tmp0 = __riscv_vadd_vx_i32m8(tmp0, ONE_HALF, vl);               /* Proper rounding. */
-            tmp = __riscv_vnsra_wx_i16m4(tmp0, SCALEBITS, vl);
+            tmp = __riscv_vnclip_wx_i16m4(tmp0, SCALEBITS, __RISCV_VXRM_RDN, vl);
             r = __riscv_vadd_vv_i16m4(r, tmp, vl);
             /* Range limit */
             mask = __riscv_vmslt_vx_i16m4_b4(r, 0, vl);

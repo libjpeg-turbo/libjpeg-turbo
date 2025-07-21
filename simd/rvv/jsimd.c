@@ -43,7 +43,7 @@ static unsigned int simd_support = ~0;
 #include <asm/hwprobe.h>
 #include <sys/auxv.h>
 #include <sys/syscall.h>
-#include <unistd.h>
+#include <asm/unistd.h>
 
 #ifndef __NR_riscv_hwprobe
 #define __NR_riscv_hwprobe 258

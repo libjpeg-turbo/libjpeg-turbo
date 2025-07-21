@@ -490,9 +490,9 @@ check_c_source_compiles("
   #include <riscv_vector.h>
   #include <asm/hwcap.h>
   #include <asm/hwprobe.h>
+  #include <asm/unistd.h>
   #include <sys/auxv.h>
   #include <sys/syscall.h>
-  #include <unistd.h>
   #ifndef __NR_riscv_hwprobe
   #define __NR_riscv_hwprobe 258
   #endif

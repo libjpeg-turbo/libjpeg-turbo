@@ -97,7 +97,7 @@ void jsimd_h2v1_downsample_rvv(JDIMENSION image_width,
 
       /* Add adjacent pixel values and add bias. */
       out_w = __riscv_vwaddu_wv_u16m4(bias_w, this, vl);
-      out_w = __riscv_vwaddu_wv_u16m4(out_w, adjct, vl)
+      out_w = __riscv_vwaddu_wv_u16m4(out_w, adjct, vl);
 
       /* Divide total by 2, narrow to 8-bit, and store. */
       out = __riscv_vnsrl_wx_u8m2(out_w, 1, vl);
@@ -158,21 +158,16 @@ void jsimd_h2v2_downsample_rvv(JDIMENSION image_width, int max_v_samp_factor,
       adjct1 = __riscv_vlse8_v_u8m2(inptr1 + 1, 2 * sizeof(JSAMPLE), vl);
 
       /* Widen samples in row 0 and bias to vuint16m4_t type. */
-      this_w = __riscv_vwaddu_vx_u16m4(this0, 0, vl);
       adjct_w = __riscv_vwaddu_vx_u16m4(adjct0, 0, vl);
       bias_w = __riscv_vle16_v_u16m4(bias, vl);
 
       /* Add adjacent pixel values in row 0 and add bias. */
-      out_w = __riscv_vadd_vv_u16m4(this_w, adjct_w, vl);
+      out_w = __riscv_vwaddu_wv_u16m4(adjct_w, this0, vl);
       out_w = __riscv_vadd_vv_u16m4(out_w, bias_w, vl);
 
       /* Widen samples of in row 1 to vuint16m4_t type. */
-      this_w = __riscv_vwaddu_vx_u16m4(this1, 0, vl);
-      adjct_w = __riscv_vwaddu_vx_u16m4(adjct1, 0, vl);
-
-      /* Add adjacent pixel values in row 1 and add accumulate. */
-      out_w = __riscv_vadd_vv_u16m4(out_w, this_w, vl);
-      out_w = __riscv_vadd_vv_u16m4(out_w, adjct_w, vl);
+      out_w = __riscv_vwaddu_wv_u16m4(out_w, this1, vl);
+      out_w = __riscv_vwaddu_wv_u16m4(out_w, adjct1, vl);
 
       /* Divide total by 4, narrow to 8-bit, and store. */
       out = __riscv_vnsrl_wx_u8m2(out_w, 2, vl);
