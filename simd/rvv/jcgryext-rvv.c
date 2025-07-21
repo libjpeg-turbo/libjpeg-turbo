@@ -79,7 +79,7 @@ void jsimd_rgb_gray_convert_rvv(JDIMENSION img_width, JSAMPARRAY input_buf,
             y = __riscv_vnsrl_wx_u16m4(tmp, SCALEBITS, vl);
             /* TODO: Figure out whether big-endian or little-endian would be different. */
 #if BITS_IN_JSAMPLE == 8
-            dest = __riscv_vnsrl_wx_u8m2(y, 0, vl); /* Narrowing from 16-bit to 8-bit. */
+            dest = __riscv_vncvt_x_x_w_u8m2(y, vl); /* Narrowing from 16-bit to 8-bit. */
             __riscv_vse8_v_u8m2(outptr, dest, vl);
 #else   /* BITS_IN_JSAMPLE == 12 */
             __riscv_vse16_v_u16m4(outptr, y, vl);

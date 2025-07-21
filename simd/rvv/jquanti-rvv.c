@@ -106,7 +106,7 @@ void jsimd_quantize_rvv(JCOEFPTR coef_block, DCTELEM *divisors,
 
         /* Mask set to 1 where elements are negative. */
         mask = __riscv_vmslt_vx_i16m4_b4(out, 0, vl);
-        out = __riscv_vneg_v_i16m4_m(mask, out, vl);
+        out = __riscv_vneg_v_i16m4_mu(mask, out, out, vl);
         temp = __riscv_vreinterpret_v_i16m4_u16m4(out);
 
         temp = __riscv_vadd_vv_u16m4(temp, corr, vl);
@@ -116,7 +116,7 @@ void jsimd_quantize_rvv(JCOEFPTR coef_block, DCTELEM *divisors,
         temp = __riscv_vnsrl_wv_u16m4(product, ushift, vl);
 
         out = __riscv_vreinterpret_v_u16m4_i16m4(temp);
-        out = __riscv_vneg_v_i16m4_m(mask, out, vl);
+        out = __riscv_vneg_v_i16m4_mu(mask, out, out, vl);
         __riscv_vse16_v_i16m4(out_ptr, out, vl);
     }
 }

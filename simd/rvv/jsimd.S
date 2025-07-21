@@ -39,18 +39,12 @@
 .globl  has_compliant_vsetvli
 
 has_compliant_vsetvli:
-    # Save original vtype to t1
-    csrr    t1, vtype
-
     .option push
     .option arch, +v
     vsetvli t0, zero, e8, m1, ta, ma
     csrr    a0, vtype
     sgtz    a0, a0                # Check VILL bit
 
-    # Restore original vtype
-    vsetvli zero, zero, e8, m1, ta, ma  # Dummy vset to ensure no vector ops pending
-    csrw    vtype, t1
     .option pop
 
     ret
