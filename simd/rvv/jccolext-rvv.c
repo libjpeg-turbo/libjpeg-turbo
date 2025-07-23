@@ -80,8 +80,7 @@ void jsimd_rgb_ycc_convert_rvv(JDIMENSION img_width, JSAMPARRAY input_buf,
             tmp0 = __riscv_vwmaccu_vx_u32m8(tmp0, F_0_587, g, vl);
             tmp0 = __riscv_vwmaccu_vx_u32m8(tmp0, F_0_114, b, vl);
             /* Proper rounding. */
-            tmp0 = __riscv_vadd_vx_u32m8(tmp0, ONE_HALF, vl);
-            y = __riscv_vnsrl_wx_u16m4(tmp0, SCALEBITS, vl);
+            y = __riscv_vnclipu_wx_u16m4(tmp0, SCALEBITS, __RISCV_VXRM_RNU, vl);
             /* TODO: Figure out whether big-endian or little-endian would be different. */
 #if BITS_IN_JSAMPLE == 8
             dest = __riscv_vncvt_x_x_w_u8m2(y, vl);  /* Narrowing from 16-bit to 8-bit. */

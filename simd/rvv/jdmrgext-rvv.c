@@ -139,8 +139,7 @@ void jsimd_h2v1_merged_upsample_rvv(JDIMENSION output_width,
         /* Calculate G-Y values */
         tmp0 = __riscv_vwmul_vx_i32m4(scb, -F_0_344, vl);
         tmp0 = __riscv_vwmacc_vx_i32m4(tmp0, F_0_285, scr, vl);
-        tmp0 = __riscv_vadd_vx_i32m4(tmp0, ONE_HALF, vl);               /* Proper rounding. */
-        g_sub_y = __riscv_vnsra_wx_i16m2(tmp0, SCALEBITS, vl);
+        g_sub_y = __riscv_vnclip_wx_i16m2(tmp0, SCALEBITS, __RISCV_VXRM_RNU, vl);
         g_sub_y = __riscv_vsub_vv_i16m2(g_sub_y, scr, vl);
 
         /* Calculate B-Y values */
