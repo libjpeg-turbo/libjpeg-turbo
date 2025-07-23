@@ -132,8 +132,7 @@ void jsimd_h2v1_merged_upsample_rvv(JDIMENSION output_width,
 
         /* Calculate R-Y values */
         tmp0 = __riscv_vwmul_vx_i32m4(scr, F_0_402, vl);
-        tmp0 = __riscv_vadd_vx_i32m4(tmp0, ONE_HALF, vl);               /* Proper rounding. */
-        r_sub_y = __riscv_vnsra_wx_i16m2(tmp0, SCALEBITS, vl);
+        r_sub_y = __riscv_vnclip_wx_i16m2(tmp0, SCALEBITS, __RISCV_VXRM_RNU, vl);
         r_sub_y = __riscv_vadd_vv_i16m2(r_sub_y, scr, vl);
 
         /* Calculate G-Y values */
@@ -151,24 +150,18 @@ void jsimd_h2v1_merged_upsample_rvv(JDIMENSION output_width,
         /* Compute R, G, B values with even-numbered indices. */
         r = __riscv_vadd_vv_i16m2(r_sub_y, sy0, vl);
         /* Range limit */
-        mask = __riscv_vmslt_vx_i16m2_b8(r, 0, vl);
-        r = __riscv_vmerge_vxm_i16m2(r, 0, mask, vl);
-        mask = __riscv_vmsgt_vx_i16m2_b8(r, MAXJSAMPLE, vl);
-        r = __riscv_vmerge_vxm_i16m2(r, MAXJSAMPLE, mask, vl);
+        r = __riscv_vmax_vx_i16m2(r, 0, vl);          // Replace negatives with 0
+        r = __riscv_vmin_vx_i16m2(r, MAXJSAMPLE, vl); // Cap values at MAXJSAMPLE
 
         g = __riscv_vadd_vv_i16m2(g_sub_y, sy0, vl);
         /* Range limit */
-        mask = __riscv_vmslt_vx_i16m2_b8(g, 0, vl);
-        g = __riscv_vmerge_vxm_i16m2(g, 0, mask, vl);
-        mask = __riscv_vmsgt_vx_i16m2_b8(g, MAXJSAMPLE, vl);
-        g = __riscv_vmerge_vxm_i16m2(g, MAXJSAMPLE, mask, vl);
+        g = __riscv_vmax_vx_i16m2(g, 0, vl);          // Replace negatives with 0
+        g = __riscv_vmin_vx_i16m2(g, MAXJSAMPLE, vl); // Cap values at MAXJSAMPLE
 
         b = __riscv_vadd_vv_i16m2(b_sub_y, sy0, vl);
         /* Range limit */
-        mask = __riscv_vmslt_vx_i16m2_b8(b, 0, vl);
-        b = __riscv_vmerge_vxm_i16m2(b, 0, mask, vl);
-        mask = __riscv_vmsgt_vx_i16m2_b8(b, MAXJSAMPLE, vl);
-        b = __riscv_vmerge_vxm_i16m2(b, MAXJSAMPLE, mask, vl);
+        b = __riscv_vmax_vx_i16m2(b, 0, vl);          // Replace negatives with 0
+        b = __riscv_vmin_vx_i16m2(b, MAXJSAMPLE, vl); // Cap values at MAXJSAMPLE
         /* Narrow to 8-bit and store to memory. */
 #if BITS_IN_JSAMPLE == 8
         dest = __riscv_vnsra_wx_i8m1(r, 0, vl);     /* Narrowing from 16-bit to 8-bit. */
@@ -194,26 +187,21 @@ void jsimd_h2v1_merged_upsample_rvv(JDIMENSION output_width,
         /* Compute R, G, B values with odd-numbered indices. */
         r = __riscv_vadd_vv_i16m2(r_sub_y, sy1, vl_odd);
         /* Range limit */
-        mask = __riscv_vmslt_vx_i16m2_b8(r, 0, vl_odd);
-        r = __riscv_vmerge_vxm_i16m2(r, 0, mask, vl_odd);
-        mask = __riscv_vmsgt_vx_i16m2_b8(r, MAXJSAMPLE, vl_odd);
-        r = __riscv_vmerge_vxm_i16m2(r, MAXJSAMPLE, mask, vl_odd);
+        r = __riscv_vmax_vx_i16m2(r, 0, vl);          // Replace negatives with 0
+        r = __riscv_vmin_vx_i16m2(r, MAXJSAMPLE, vl); // Cap values at MAXJSAMPLE
 
         g = __riscv_vadd_vv_i16m2(g_sub_y, sy1, vl_odd);
         /* Range limit */
-        mask = __riscv_vmslt_vx_i16m2_b8(g, 0, vl_odd);
-        g = __riscv_vmerge_vxm_i16m2(g, 0, mask, vl_odd);
-        mask = __riscv_vmsgt_vx_i16m2_b8(g, MAXJSAMPLE, vl_odd);
-        g = __riscv_vmerge_vxm_i16m2(g, MAXJSAMPLE, mask, vl_odd);
+        g = __riscv_vmax_vx_i16m2(g, 0, vl);          // Replace negatives with 0
+        g = __riscv_vmin_vx_i16m2(g, MAXJSAMPLE, vl); // Cap values at MAXJSAMPLE
 
         b = __riscv_vadd_vv_i16m2(b_sub_y, sy1, vl_odd);
         /* Range limit */
-        mask = __riscv_vmslt_vx_i16m2_b8(b, 0, vl_odd);
-        b = __riscv_vmerge_vxm_i16m2(b, 0, mask, vl_odd);
-        mask = __riscv_vmsgt_vx_i16m2_b8(b, MAXJSAMPLE, vl_odd);
-        b = __riscv_vmerge_vxm_i16m2(b, MAXJSAMPLE, mask, vl_odd);
+        b = __riscv_vmax_vx_i16m2(b, 0, vl);          // Replace negatives with 0
+        b = __riscv_vmin_vx_i16m2(b, MAXJSAMPLE, vl); // Cap values at MAXJSAMPLE
+
         /* Narrow to 8-bit and store to memory. */
-#if BITS_IN_JSAMPLE == 8
+ #if BITS_IN_JSAMPLE == 8
         dest = __riscv_vnsra_wx_i8m1(r, 0, vl_odd);     /* Narrowing from 16-bit to 8-bit. */
         __riscv_vsse8_v_i8m1(outptr + RGB_PIXELSIZE + RGB_RED, 2 * bstride, dest, vl_odd);
         dest = __riscv_vnsra_wx_i8m1(g, 0, vl_odd);     /* Narrowing from 16-bit to 8-bit. */

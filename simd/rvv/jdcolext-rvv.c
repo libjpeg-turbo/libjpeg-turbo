@@ -74,11 +74,11 @@ void jsimd_ycc_rgb_convert_rvv(JDIMENSION out_width, JSAMPIMAGE input_buf,
 #if BITS_IN_JSAMPLE == 8
             /* Extending to vuint16m4_t type for following multiply calculation. */
             src = __riscv_vle8_v_u8m2(inptr0, vl);
-            y = __riscv_vwaddu_vx_u16m4(src, 0, vl);                /* Widening to vuint16m4_t type */
+            y = __riscv_vzext_vf2_u16m4(src, vl);                /* Widening to vuint16m4_t type */
             src = __riscv_vle8_v_u8m2(inptr1, vl);
-            cb = __riscv_vwaddu_vx_u16m4(src, 0, vl);               /* Widening to vuint16m4_t type */
+            cb = __riscv_vzext_vf2_u16m4(src, vl);               /* Widening to vuint16m4_t type */
             src = __riscv_vle8_v_u8m2(inptr2, vl);
-            cr = __riscv_vwaddu_vx_u16m4(src, 0, vl);               /* Widening to vuint16m4_t type */
+            cr = __riscv_vzext_vf2_u16m4(src, vl);               /* Widening to vuint16m4_t type */
 #else   /* BITS_IN_JSAMPLE == 12 */
             y = __riscv_vle16_v_u16m4(inptr0, vl);
             cb = __riscv_vle16_v_u16m4(inptr1, vl);

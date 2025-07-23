@@ -43,9 +43,9 @@ void jsimd_h2v1_fancy_upsample_rvv(int max_v_samp_factor,
     int inrow, incol;
     size_t vl;
 
-    vuint8m2_t this, shift, p_odd, p_even;
+    vuint8m4_t this, shift, v0, v1;
     /* '_u16' suffix denotes 16-bit unsigned int type. */
-    vuint16m4_t p_odd_u16, p_even_u16;
+    vuint16m8_t w0, w1;
 
     for (inrow = 0; inrow < max_v_samp_factor; inrow++)
     {
@@ -54,30 +54,26 @@ void jsimd_h2v1_fancy_upsample_rvv(int max_v_samp_factor,
         /* First pixel component value in this row of the original image */
         *outptr++ = (JSAMPLE)GETJSAMPLE(*inptr);
 
+        size_t VL = __riscv_vsetvlmax_e8m4();
         for (incol = downsampled_width - 1; incol > 0;
              incol -= vl, inptr += vl, outptr += 2 * vl)
         {
-            vl = __riscv_vsetvl_e16m4(incol);
+            vl = __riscv_vsetvl_e8m4(incol < VL ? incol : VL);
 
-            /* Load smaples and samples with offset 1. */
-            this = __riscv_vle8_v_u8m2(inptr, vl);
-            shift = __riscv_vle8_v_u8m2(inptr + 1, vl);
+            this = __riscv_vle8_v_u8m4(inptr, vl);
+            shift = __riscv_vle8_v_u8m4(inptr + 1, vl);
 
-            /* p1(upsampled) = (3 * s0 + s1 + 2) / 4 */
-            p_odd_u16 = __riscv_vwmulu_vx_u16m4(this, 3, vl);
-            p_odd_u16 = __riscv_vwaddu_wv_u16m4(p_odd_u16, shift, vl);
-            p_odd_u16 = __riscv_vadd_vx_u16m4(p_odd_u16, 2, vl);        /* Add bias */
-            /* p2(upsampled) = (3 * s1 + s0 + 1) / 4 */
-            p_even_u16 = __riscv_vwmulu_vx_u16m4(shift, 3, vl);
-            p_even_u16 = __riscv_vwaddu_wv_u16m4(p_even_u16, this, vl);
-            p_even_u16 = __riscv_vadd_vx_u16m4(p_even_u16, 1, vl);      /* Add bias */
+            // Compute w0 = 3*this + shift + 2
+            w0 = __riscv_vwmaccu_vx_u16m8(__riscv_vwaddu_vx_u16m8(shift, 2, vl), 3, this, vl);
 
-            /* Right-shift by 2 (divide by 4) and narrow to 8-bit. */
-            p_odd = __riscv_vnsrl_wx_u8m2(p_odd_u16, 2, vl);
-            p_even = __riscv_vnsrl_wx_u8m2(p_even_u16, 2, vl);
-            /* Strided store to memory. */
-            __riscv_vsse8_v_u8m2(outptr, 2 * sizeof(JSAMPLE), p_odd, vl);
-            __riscv_vsse8_v_u8m2(outptr + 1, 2 * sizeof(JSAMPLE), p_even, vl);
+            // Compute w1 = 3*shift + this + 1
+            w1 = __riscv_vwmaccu_vx_u16m8(__riscv_vwaddu_vx_u16m8(this, 1, vl), 3, shift, vl);
+
+            // Truncate to 8-bit (no rounding)
+            v0 = __riscv_vnclipu_wx_u8m4(w0, 2, __RISCV_VXRM_RDN, vl); // Shift right by 2
+            v1 = __riscv_vnclipu_wx_u8m4(w1, 2, __RISCV_VXRM_RDN, vl);
+
+            __riscv_vsseg2e8_v_u8m4x2(outptr, __riscv_vcreate_v_u8m4x2(v0, v1), vl);
         }
 
         /* Last pixel component value in this row of the original image */

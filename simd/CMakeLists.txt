@@ -493,6 +493,7 @@ check_c_source_compiles("
   #include <asm/unistd.h>
   #include <sys/auxv.h>
   #include <sys/syscall.h>
+  #include <unistd.h>
   #ifndef __NR_riscv_hwprobe
   #define __NR_riscv_hwprobe 258
   #endif
