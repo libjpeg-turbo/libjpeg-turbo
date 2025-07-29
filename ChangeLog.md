@@ -24,6 +24,15 @@ erroneously change the value of the `data_precision` field in
 `jpeg_compress_struct` or `jpeg_decompress_struct` after calling
 `jpeg_start_compress()` or `jpeg_start_decompress()`.
 
+5. Fixed an issue whereby decompressing a 4:2:0 or 4:2:2 JPEG image with merged
+upsampling disabled/one-pass color quantization enabled, then reusing the same
+API instance to decompress a 4:2:0 or 4:2:2 JPEG image with merged upsampling
+enabled/color quantization disabled, caused `jpeg_skip_scanlines()` to use
+freed memory.  In practice, the freed memory was not reclaimed before it was
+used.  Thus, this issue did not cause a segfault or other user-visible errant
+behavior (it was only detectable with ASan), and it did not likely pose a
+security risk.
+
 
 3.0.4
 =====
