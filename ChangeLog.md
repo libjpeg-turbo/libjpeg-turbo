@@ -89,6 +89,15 @@ was specified for all lossless transforms.
 values if Huffman table optimization or progressive mode was previously enabled
 in the same libjpeg instance.
 
+13. Fixed an issue whereby decompressing a 4:2:0 or 4:2:2 JPEG image with
+merged upsampling disabled/one-pass color quantization enabled, then reusing
+the same API instance to decompress a 4:2:0 or 4:2:2 JPEG image with merged
+upsampling enabled/color quantization disabled, caused `jpeg_skip_scanlines()`
+to use freed memory.  In practice, the freed memory was not reclaimed before it
+was used.  Thus, this issue did not cause a segfault or other user-visible
+errant behavior (it was only detectable with ASan), and it did not likely pose
+a security risk.
+
 
 2.1.5.1
 =======
