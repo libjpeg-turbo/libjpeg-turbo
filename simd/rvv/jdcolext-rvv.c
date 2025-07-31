@@ -109,10 +109,8 @@ void jsimd_ycc_rgb_convert_rvv(JDIMENSION out_width, JSAMPIMAGE input_buf,
             tmp = __riscv_vnclip_wx_i16m4(tmp0, SCALEBITS, __RISCV_VXRM_RDN, vl);
             r = __riscv_vadd_vv_i16m4(r, tmp, vl);
             /* Range limit */
-            mask = __riscv_vmslt_vx_i16m4_b4(r, 0, vl);
-            r = __riscv_vmerge_vxm_i16m4(r, 0, mask, vl);
-            mask = __riscv_vmsgt_vx_i16m4_b4(r, MAXJSAMPLE, vl);
-            r = __riscv_vmerge_vxm_i16m4(r, MAXJSAMPLE, mask, vl);
+            r = __riscv_vmax_vx_i16m4(r, 0, vl);
+            r = __riscv_vmin_vx_i16m4(r, MAXJSAMPLE, vl);
             /* TODO: Figure out whether big-endian or little-endian would be different. */
 #if BITS_IN_JSAMPLE == 8
             dest = __riscv_vnsra_wx_i8m2(r, 0, vl);     /* Narrowing from 16-bit to 8-bit. */
@@ -128,10 +126,8 @@ void jsimd_ycc_rgb_convert_rvv(JDIMENSION out_width, JSAMPIMAGE input_buf,
             r = __riscv_vadd_vv_i16m4(r, sy, vl);
             r = __riscv_vsub_vv_i16m4(r, scr, vl);
             /* Range limit */
-            mask = __riscv_vmslt_vx_i16m4_b4(r, 0, vl);
-            r = __riscv_vmerge_vxm_i16m4(r, 0, mask, vl);
-            mask = __riscv_vmsgt_vx_i16m4_b4(r, MAXJSAMPLE, vl);
-            r = __riscv_vmerge_vxm_i16m4(r, MAXJSAMPLE, mask, vl);
+            r = __riscv_vmax_vx_i16m4(r, 0, vl);
+            r = __riscv_vmin_vx_i16m4(r, MAXJSAMPLE, vl);
             /* TODO: Figure out whether big-endian or little-endian would be different. */
 #if BITS_IN_JSAMPLE == 8
             dest = __riscv_vnsra_wx_i8m2(r, 0, vl);     /* Narrowing from 16-bit to 8-bit. */
@@ -147,10 +143,8 @@ void jsimd_ycc_rgb_convert_rvv(JDIMENSION out_width, JSAMPIMAGE input_buf,
             tmp = __riscv_vnclip_wx_i16m4(tmp0, SCALEBITS, __RISCV_VXRM_RNU, vl);
             r = __riscv_vadd_vv_i16m4(r, tmp, vl);
             /* Range limit */
-            mask = __riscv_vmslt_vx_i16m4_b4(r, 0, vl);
-            r = __riscv_vmerge_vxm_i16m4(r, 0, mask, vl);
-            mask = __riscv_vmsgt_vx_i16m4_b4(r, MAXJSAMPLE, vl);
-            r = __riscv_vmerge_vxm_i16m4(r, MAXJSAMPLE, mask, vl);
+            r = __riscv_vmax_vx_i16m4(r, 0, vl);
+            r = __riscv_vmin_vx_i16m4(r, MAXJSAMPLE, vl);
             /* TODO: Figure out whether big-endian or little-endian would be different. */
 #if BITS_IN_JSAMPLE == 8
             dest = __riscv_vnsra_wx_i8m2(r, 0, vl);     /* Narrowing from 16-bit to 8-bit. */
