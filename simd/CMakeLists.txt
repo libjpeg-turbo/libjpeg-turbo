@@ -529,6 +529,13 @@ if(CMAKE_POSITION_INDEPENDENT_CODE OR ENABLE_SHARED)
   set_target_properties(simd PROPERTIES POSITION_INDEPENDENT_CODE 1)
 endif()
 
+###############################################################################
+# sw_64 (Intrinsics)
+###############################################################################
+
+elseif(CPU_TYPE STREQUAL "sw_64")
+
+set(WITH_SIMD 0 PARENT_SCOPE)
 
 ###############################################################################
 # None
