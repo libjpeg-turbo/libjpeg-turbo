@@ -122,17 +122,6 @@ EXTERN(void) jsimd_extxrgb_ycc_convert_neon
   (JDIMENSION img_width, JSAMPARRAY input_buf, JSAMPIMAGE output_buf,
    JDIMENSION output_row, int num_rows);
 
-#ifndef NEON_INTRINSICS
-
-EXTERN(void) jsimd_extrgb_ycc_convert_neon_slowld3
-  (JDIMENSION img_width, JSAMPARRAY input_buf, JSAMPIMAGE output_buf,
-   JDIMENSION output_row, int num_rows);
-EXTERN(void) jsimd_extbgr_ycc_convert_neon_slowld3
-  (JDIMENSION img_width, JSAMPARRAY input_buf, JSAMPIMAGE output_buf,
-   JDIMENSION output_row, int num_rows);
-
-#endif
-
 EXTERN(void) jsimd_rgb_ycc_convert_dspr2
   (JDIMENSION img_width, JSAMPARRAY input_buf, JSAMPIMAGE output_buf,
    JDIMENSION output_row, int num_rows);
@@ -449,17 +438,6 @@ EXTERN(void) jsimd_ycc_extxrgb_convert_neon
 EXTERN(void) jsimd_ycc_rgb565_convert_neon
   (JDIMENSION out_width, JSAMPIMAGE input_buf, JDIMENSION input_row,
    JSAMPARRAY output_buf, int num_rows);
-
-#ifndef NEON_INTRINSICS
-
-EXTERN(void) jsimd_ycc_extrgb_convert_neon_slowst3
-  (JDIMENSION out_width, JSAMPIMAGE input_buf, JDIMENSION input_row,
-   JSAMPARRAY output_buf, int num_rows);
-EXTERN(void) jsimd_ycc_extbgr_convert_neon_slowst3
-  (JDIMENSION out_width, JSAMPIMAGE input_buf, JDIMENSION input_row,
-   JSAMPARRAY output_buf, int num_rows);
-
-#endif
 
 EXTERN(void) jsimd_ycc_rgb_convert_dspr2
   (JDIMENSION out_width, JSAMPIMAGE input_buf, JDIMENSION input_row,
@@ -1231,14 +1209,6 @@ EXTERN(JOCTET *) jsimd_huff_encode_one_block_sse2
 EXTERN(JOCTET *) jsimd_huff_encode_one_block_neon
   (void *state, JOCTET *buffer, JCOEFPTR block, int last_dc_val,
    c_derived_tbl *dctbl, c_derived_tbl *actbl);
-
-#ifndef NEON_INTRINSICS
-
-EXTERN(JOCTET *) jsimd_huff_encode_one_block_neon_slowtbl
-  (void *state, JOCTET *buffer, JCOEFPTR block, int last_dc_val,
-   c_derived_tbl *dctbl, c_derived_tbl *actbl);
-
-#endif
 
 /* Progressive Huffman encoding */
 EXTERN(void) jsimd_encode_mcu_AC_first_prepare_sse2

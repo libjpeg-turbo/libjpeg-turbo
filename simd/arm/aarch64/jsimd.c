@@ -27,47 +27,12 @@
 
 #include <ctype.h>
 
-#define JSIMD_FASTLD3  1
-#define JSIMD_FASTST3  2
-#define JSIMD_FASTTBL  4
-
 static THREAD_LOCAL unsigned int simd_support = ~0;
 static THREAD_LOCAL unsigned int simd_huffman = 1;
-static THREAD_LOCAL unsigned int simd_features = JSIMD_FASTLD3 |
-                                                 JSIMD_FASTST3 | JSIMD_FASTTBL;
 
 #if defined(__linux__) || defined(ANDROID) || defined(__ANDROID__)
 
 #define SOMEWHAT_SANE_PROC_CPUINFO_SIZE_LIMIT  (1024 * 1024)
-
-LOCAL(int)
-check_cpuinfo(char *buffer, const char *field, char *value)
-{
-  char *p;
-
-  if (*value == 0)
-    return 0;
-  if (strncmp(buffer, field, strlen(field)) != 0)
-    return 0;
-  buffer += strlen(field);
-  while (isspace(*buffer))
-    buffer++;
-
-  /* Check if 'value' is present in the buffer as a separate word */
-  while ((p = strstr(buffer, value))) {
-    if (p > buffer && !isspace(*(p - 1))) {
-      buffer++;
-      continue;
-    }
-    p += strlen(value);
-    if (*p != 0 && !isspace(*p)) {
-      buffer++;
-      continue;
-    }
-    return 1;
-  }
-  return 0;
-}
 
 LOCAL(int)
 parse_proc_cpuinfo(int bufsize)
@@ -87,17 +52,6 @@ parse_proc_cpuinfo(int bufsize)
         free(buffer);
         return 0;
       }
-      if (check_cpuinfo(buffer, "CPU part", "0xd03") ||
-          check_cpuinfo(buffer, "CPU part", "0xd07"))
-        /* The Cortex-A53 has a slow tbl implementation.  We can gain a few
-           percent speedup by disabling the use of that instruction.  The
-           speedup on Cortex-A57 is more subtle but still measurable. */
-        simd_features &= ~JSIMD_FASTTBL;
-      else if (check_cpuinfo(buffer, "CPU part", "0x0a1"))
-        /* The SIMD version of Huffman encoding is slower than the C version on
-           Cavium ThunderX.  Also, ld3 and st3 are abyssmally slow on that
-           CPU. */
-        simd_huffman = simd_features = 0;
     }
     fclose(fd);
   }
@@ -149,14 +103,6 @@ init_simd(void)
     simd_support = 0;
   if (!GETENV_S(env, 2, "JSIMD_NOHUFFENC") && !strcmp(env, "1"))
     simd_huffman = 0;
-  if (!GETENV_S(env, 2, "JSIMD_FASTLD3") && !strcmp(env, "1"))
-    simd_features |= JSIMD_FASTLD3;
-  if (!GETENV_S(env, 2, "JSIMD_FASTLD3") && !strcmp(env, "0"))
-    simd_features &= ~JSIMD_FASTLD3;
-  if (!GETENV_S(env, 2, "JSIMD_FASTST3") && !strcmp(env, "1"))
-    simd_features |= JSIMD_FASTST3;
-  if (!GETENV_S(env, 2, "JSIMD_FASTST3") && !strcmp(env, "0"))
-    simd_features &= ~JSIMD_FASTST3;
 #endif
 }
 
@@ -243,28 +189,14 @@ jsimd_rgb_ycc_convert(j_compress_ptr cinfo, JSAMPARRAY input_buf,
 
   switch (cinfo->in_color_space) {
   case JCS_EXT_RGB:
-#ifndef NEON_INTRINSICS
-    if (simd_features & JSIMD_FASTLD3)
-#endif
       neonfct = jsimd_extrgb_ycc_convert_neon;
-#ifndef NEON_INTRINSICS
-    else
-      neonfct = jsimd_extrgb_ycc_convert_neon_slowld3;
-#endif
     break;
   case JCS_EXT_RGBX:
   case JCS_EXT_RGBA:
     neonfct = jsimd_extrgbx_ycc_convert_neon;
     break;
   case JCS_EXT_BGR:
-#ifndef NEON_INTRINSICS
-    if (simd_features & JSIMD_FASTLD3)
-#endif
       neonfct = jsimd_extbgr_ycc_convert_neon;
-#ifndef NEON_INTRINSICS
-    else
-      neonfct = jsimd_extbgr_ycc_convert_neon_slowld3;
-#endif
     break;
   case JCS_EXT_BGRX:
   case JCS_EXT_BGRA:
@@ -279,14 +211,7 @@ jsimd_rgb_ycc_convert(j_compress_ptr cinfo, JSAMPARRAY input_buf,
     neonfct = jsimd_extxrgb_ycc_convert_neon;
     break;
   default:
-#ifndef NEON_INTRINSICS
-    if (simd_features & JSIMD_FASTLD3)
-#endif
       neonfct = jsimd_extrgb_ycc_convert_neon;
-#ifndef NEON_INTRINSICS
-    else
-      neonfct = jsimd_extrgb_ycc_convert_neon_slowld3;
-#endif
     break;
   }
 
@@ -340,28 +265,14 @@ jsimd_ycc_rgb_convert(j_decompress_ptr cinfo, JSAMPIMAGE input_buf,
 
   switch (cinfo->out_color_space) {
   case JCS_EXT_RGB:
-#ifndef NEON_INTRINSICS
-    if (simd_features & JSIMD_FASTST3)
-#endif
       neonfct = jsimd_ycc_extrgb_convert_neon;
-#ifndef NEON_INTRINSICS
-    else
-      neonfct = jsimd_ycc_extrgb_convert_neon_slowst3;
-#endif
     break;
   case JCS_EXT_RGBX:
   case JCS_EXT_RGBA:
     neonfct = jsimd_ycc_extrgbx_convert_neon;
     break;
   case JCS_EXT_BGR:
-#ifndef NEON_INTRINSICS
-    if (simd_features & JSIMD_FASTST3)
-#endif
       neonfct = jsimd_ycc_extbgr_convert_neon;
-#ifndef NEON_INTRINSICS
-    else
-      neonfct = jsimd_ycc_extbgr_convert_neon_slowst3;
-#endif
     break;
   case JCS_EXT_BGRX:
   case JCS_EXT_BGRA:
@@ -376,14 +287,7 @@ jsimd_ycc_rgb_convert(j_decompress_ptr cinfo, JSAMPIMAGE input_buf,
     neonfct = jsimd_ycc_extxrgb_convert_neon;
     break;
   default:
-#ifndef NEON_INTRINSICS
-    if (simd_features & JSIMD_FASTST3)
-#endif
       neonfct = jsimd_ycc_extrgb_convert_neon;
-#ifndef NEON_INTRINSICS
-    else
-      neonfct = jsimd_ycc_extrgb_convert_neon_slowst3;
-#endif
     break;
   }
 
@@ -986,16 +890,8 @@ jsimd_huff_encode_one_block(void *state, JOCTET *buffer, JCOEFPTR block,
                             int last_dc_val, c_derived_tbl *dctbl,
                             c_derived_tbl *actbl)
 {
-#ifndef NEON_INTRINSICS
-  if (simd_features & JSIMD_FASTTBL)
-#endif
     return jsimd_huff_encode_one_block_neon(state, buffer, block, last_dc_val,
                                             dctbl, actbl);
-#ifndef NEON_INTRINSICS
-  else
-    return jsimd_huff_encode_one_block_neon_slowtbl(state, buffer, block,
-                                                    last_dc_val, dctbl, actbl);
-#endif
 }
 
 GLOBAL(int)

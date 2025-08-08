@@ -220,7 +220,7 @@ endif()
 
 
 ###############################################################################
-# Arm (Intrinsics or GAS)
+# Arm (Intrinsics)
 ###############################################################################
 
 elseif(CPU_TYPE STREQUAL "arm64" OR CPU_TYPE STREQUAL "arm")
@@ -307,87 +307,21 @@ configure_file(arm/neon-compat.h.in arm/neon-compat.h @ONLY)
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/arm)
 
 # GCC 11 and earlier and some older versions of Clang do not have a full or
-# optimal set of Neon intrinsics, so for performance reasons, when using those
-# compilers, we default to using the older GAS implementation of the Neon SIMD
-# extensions for certain algorithms.  The presence or absence of the three
+# optimal set of Neon intrinsics.  The presence or absence of the three
 # intrinsics we tested above is a reasonable proxy for this, except with GCC 10
 # and 11.
-if((HAVE_VLD1_S16_X3 AND HAVE_VLD1_U16_X2 AND HAVE_VLD1Q_U8_X4 AND
-  (NOT CMAKE_COMPILER_IS_GNUCC OR
-  CMAKE_C_COMPILER_VERSION VERSION_EQUAL 12.0.0 OR
-  CMAKE_C_COMPILER_VERSION VERSION_GREATER 12.0.0)))
-  set(DEFAULT_NEON_INTRINSICS 1)
-else()
-  set(DEFAULT_NEON_INTRINSICS 0)
-endif()
-option(NEON_INTRINSICS
-  "Because GCC (as of this writing) and some older versions of Clang do not have a full or optimal set of Neon intrinsics, for performance reasons, the default when building libjpeg-turbo with those compilers is to continue using the older GAS implementation of the Neon SIMD extensions for certain algorithms.  Setting this option forces the full Neon intrinsics implementation to be used with all compilers.  Unsetting this option forces the hybrid GAS/intrinsics implementation to be used with all compilers."
-  ${DEFAULT_NEON_INTRINSICS})
-if(NOT NEON_INTRINSICS)
-  enable_language(ASM)
-
-  set(CMAKE_ASM_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_ASM_FLAGS}")
-
-  # Test whether gas-preprocessor.pl would be needed to build the GAS
-  # implementation of the Neon SIMD extensions.  If so, then automatically
-  # enable the full Neon intrinsics implementation.
-  if(CPU_TYPE STREQUAL "arm")
-    file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/gastest.S "
-      .text
-      .fpu neon
-      .arch armv7a
-      .object_arch armv4
-      .arm
-      pld [r0]
-      vmovn.u16 d0, q0")
-  else()
-    file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/gastest.S "
-      .text
-      MYVAR .req x0
-      movi v0.16b, #100
-      mov MYVAR, #100
-      .unreq MYVAR")
-  endif()
-  separate_arguments(CMAKE_ASM_FLAGS_SEP UNIX_COMMAND "${CMAKE_ASM_FLAGS}")
-  execute_process(COMMAND ${CMAKE_ASM_COMPILER} ${CMAKE_ASM_FLAGS_SEP}
-      -x assembler-with-cpp -c ${CMAKE_CURRENT_BINARY_DIR}/gastest.S
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR} RESULT_VARIABLE RESULT
-    OUTPUT_VARIABLE OUTPUT ERROR_VARIABLE ERROR)
-  if(NOT RESULT EQUAL 0)
-    message(WARNING "GAS appears to be broken.  Using the full Neon SIMD intrinsics implementation.")
-    set(NEON_INTRINSICS 1 CACHE INTERNAL "" FORCE)
-  endif()
-endif()
-boolean_number(NEON_INTRINSICS PARENT_SCOPE)
-if(NEON_INTRINSICS)
-  add_definitions(-DNEON_INTRINSICS)
-  message(STATUS "Use full Neon SIMD intrinsics implementation (NEON_INTRINSICS = ${NEON_INTRINSICS})")
-else()
-  message(STATUS "Use partial Neon SIMD intrinsics implementation (NEON_INTRINSICS = ${NEON_INTRINSICS})")
+if(NOT HAVE_VLD1_S16_X3 OR NOT HAVE_VLD1_U16_X2 OR NOT HAVE_VLD1Q_U8_X4 OR
+  (CMAKE_COMPILER_IS_GNUCC AND CMAKE_C_COMPILER_VERSION VERSION_LESS 12.0.0))
+  message(WARNING "The compiler's Arm Neon intrinsics implementation is incomplete or suboptimal.  Performance will suffer.  Use GCC 12 or later or Clang for full performance.")
 endif()
 
-set(SIMD_SOURCES arm/jcgray-neon.c arm/jcphuff-neon.c arm/jcsample-neon.c
-  arm/jdmerge-neon.c arm/jdsample-neon.c arm/jfdctfst-neon.c
+set(SIMD_SOURCES arm/jccolor-neon.c arm/jcgray-neon.c
+  arm/aarch${BITS}/jchuff-neon.c arm/jcphuff-neon.c arm/jcsample-neon.c
+  arm/jdcolor-neon.c arm/jdmerge-neon.c arm/jdsample-neon.c arm/jfdctfst-neon.c
+  arm/jfdctint-neon.c arm/jidctfst-neon.c arm/jidctint-neon.c
   arm/jidctred-neon.c arm/jquanti-neon.c)
-if(NEON_INTRINSICS)
-  set(SIMD_SOURCES ${SIMD_SOURCES} arm/jccolor-neon.c arm/jidctint-neon.c)
-endif()
-if(NEON_INTRINSICS OR BITS EQUAL 64)
-  set(SIMD_SOURCES ${SIMD_SOURCES} arm/jidctfst-neon.c)
-endif()
-if(NEON_INTRINSICS OR BITS EQUAL 32)
-  set(SIMD_SOURCES ${SIMD_SOURCES} arm/aarch${BITS}/jchuff-neon.c
-    arm/jdcolor-neon.c arm/jfdctint-neon.c)
-endif()
 if(BITS EQUAL 32)
   set_source_files_properties(${SIMD_SOURCES} COMPILE_FLAGS "-mfpu=neon ${SOFTFP_FLAG}")
-endif()
-if(NOT NEON_INTRINSICS)
-  string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE_UC)
-  set(EFFECTIVE_ASM_FLAGS "${CMAKE_ASM_FLAGS} ${CMAKE_ASM_FLAGS_${CMAKE_BUILD_TYPE_UC}}")
-  message(STATUS "CMAKE_ASM_FLAGS = ${EFFECTIVE_ASM_FLAGS}")
-
-  set(SIMD_SOURCES ${SIMD_SOURCES} arm/aarch${BITS}/jsimd_neon.S)
 endif()
 
 add_library(simd OBJECT ${SIMD_SOURCES} arm/aarch${BITS}/jsimd.c)

@@ -1,3 +1,13 @@
+3.2 Evolving
+============
+
+### Significant changes relative to 3.1.x:
+
+1. The legacy GNU Assembler (GAS) implementation of the Arm Neon SIMD
+extensions has been removed.  Arm builds of libjpeg-turbo must now use GCC 12
+or later or Clang in order to achieve full performance.
+
+
 3.1.2
 =====
 
