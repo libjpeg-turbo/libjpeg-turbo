@@ -8,6 +8,7 @@
  * Copyright (C) 2015-2016, 2018, 2022, Matthieu Darbois.
  * Copyright (C) 2016-2018, Loongson Technology Corporation Limited, BeiJing.
  * Copyright (C) 2020, Arm Limited.
+ * Copyright (C) 2025, Wang Cong.
  *
  * Based on the x86 SIMD extension for IJG JPEG library,
  * Copyright (C) 1999-2006, MIYASAKA Masaru.
@@ -27,6 +28,7 @@
 #define JSIMD_ALTIVEC  0x40
 #define JSIMD_AVX2     0x80
 #define JSIMD_MMI      0x100
+#define JSIMD_SW       0x200
 
 /* SIMD Ext: retrieve SIMD/CPU information */
 EXTERN(unsigned int) jpeg_simd_cpu_support(void);
@@ -583,6 +585,10 @@ EXTERN(void) jsimd_h2v2_downsample_mmi
    JDIMENSION width_in_blocks, JSAMPARRAY input_data, JSAMPARRAY output_data);
 
 EXTERN(void) jsimd_h2v2_downsample_altivec
+  (JDIMENSION image_width, int max_v_samp_factor, JDIMENSION v_samp_factor,
+   JDIMENSION width_in_blocks, JSAMPARRAY input_data, JSAMPARRAY output_data);
+
+EXTERN(void) jsimd_h2v2_downsample_sw
   (JDIMENSION image_width, int max_v_samp_factor, JDIMENSION v_samp_factor,
    JDIMENSION width_in_blocks, JSAMPARRAY input_data, JSAMPARRAY output_data);
 

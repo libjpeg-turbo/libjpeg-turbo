@@ -529,6 +529,39 @@ if(CMAKE_POSITION_INDEPENDENT_CODE OR ENABLE_SHARED)
   set_target_properties(simd PROPERTIES POSITION_INDEPENDENT_CODE 1)
 endif()
 
+###############################################################################
+# sw_64 (Intrinsics)
+###############################################################################
+
+elseif(CPU_TYPE STREQUAL "sw_64")
+
+set(CMAKE_REQUIRED_FLAGS -msimd)
+
+check_c_source_compiles("
+  int main(void) {
+    int c = 0, a = 0, b = 0;
+    asm (
+      \"addw %1, %2, %0\"
+      : \"=r\" (c)
+      : \"r\" (a), \"r\" (b)
+    );
+    return c;
+  }" HAVE_SW_64)
+  
+unset(CMAKE_REQUIRED_FLAGS)
+
+if(NOT HAVE_SW_64)
+  simd_fail("SIMD extensions not available for this CPU")
+  return()
+endif()
+
+set(SIMD_SOURCES sw_64/jcsample-sw.c)
+
+add_library(simd OBJECT ${SIMD_SOURCES} sw_64/jsimd.c)
+
+if(CMAKE_POSITION_INDEPENDENT_CODE OR ENABLE_SHARED)
+  set_target_properties(simd PROPERTIES POSITION_INDEPENDENT_CODE 1)
+endif()
 
 ###############################################################################
 # None
