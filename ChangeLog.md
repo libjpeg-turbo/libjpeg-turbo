@@ -20,6 +20,11 @@ used.  Thus, this issue did not cause a segfault or other user-visible errant
 behavior (it was only detectable with ASan), and it did not likely pose a
 security risk.
 
+4. The AArch64 (Arm 64-bit) Neon SIMD extensions and accelerated Huffman codec
+now support the Arm64EC ABI on Windows, which allows Windows/x64 applications
+to call native Arm64 functions when running under the Windows/x64 emulator on
+Windows/Arm.
+
 
 3.1.1
 =====
