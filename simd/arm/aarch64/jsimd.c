@@ -3,7 +3,7 @@
  *
  * Copyright 2009 Pierre Ossman <ossman@cendio.se> for Cendio AB
  * Copyright (C) 2011, Nokia Corporation and/or its subsidiary(-ies).
- * Copyright (C) 2009-2011, 2013-2014, 2016, 2018, 2020, 2022, 2024,
+ * Copyright (C) 2009-2011, 2013-2014, 2016, 2018, 2020, 2022, 2024-2025,
  *           D. R. Commander.
  * Copyright (C) 2015-2016, 2018, 2022, Matthieu Darbois.
  * Copyright (C) 2020, Arm Limited.
@@ -30,37 +30,6 @@
 static THREAD_LOCAL unsigned int simd_support = ~0;
 static THREAD_LOCAL unsigned int simd_huffman = 1;
 
-#if defined(__linux__) || defined(ANDROID) || defined(__ANDROID__)
-
-#define SOMEWHAT_SANE_PROC_CPUINFO_SIZE_LIMIT  (1024 * 1024)
-
-LOCAL(int)
-parse_proc_cpuinfo(int bufsize)
-{
-  char *buffer = (char *)malloc(bufsize);
-  FILE *fd;
-
-  if (!buffer)
-    return 0;
-
-  fd = fopen("/proc/cpuinfo", "r");
-  if (fd) {
-    while (fgets(buffer, bufsize, fd)) {
-      if (!strchr(buffer, '\n') && !feof(fd)) {
-        /* "impossible" happened - insufficient size of the buffer! */
-        fclose(fd);
-        free(buffer);
-        return 0;
-      }
-    }
-    fclose(fd);
-  }
-  free(buffer);
-  return 1;
-}
-
-#endif
-
 /*
  * Check what SIMD accelerations are supported.
  */
@@ -77,28 +46,14 @@ init_simd(void)
 #ifndef NO_GETENV
   char env[2] = { 0 };
 #endif
-#if defined(__linux__) || defined(ANDROID) || defined(__ANDROID__)
-  int bufsize = 1024; /* an initial guess for the line buffer size limit */
-#endif
 
   if (simd_support != ~0U)
     return;
 
-  simd_support = 0;
-
-  simd_support |= JSIMD_NEON;
-#if defined(__linux__) || defined(ANDROID) || defined(__ANDROID__)
-  while (!parse_proc_cpuinfo(bufsize)) {
-    bufsize *= 2;
-    if (bufsize > SOMEWHAT_SANE_PROC_CPUINFO_SIZE_LIMIT)
-      break;
-  }
-#endif
+  simd_support = JSIMD_NEON;
 
 #ifndef NO_GETENV
   /* Force different settings through environment variables */
-  if (!GETENV_S(env, 2, "JSIMD_FORCENEON") && !strcmp(env, "1"))
-    simd_support = JSIMD_NEON;
   if (!GETENV_S(env, 2, "JSIMD_FORCENONE") && !strcmp(env, "1"))
     simd_support = 0;
   if (!GETENV_S(env, 2, "JSIMD_NOHUFFENC") && !strcmp(env, "1"))
@@ -189,14 +144,14 @@ jsimd_rgb_ycc_convert(j_compress_ptr cinfo, JSAMPARRAY input_buf,
 
   switch (cinfo->in_color_space) {
   case JCS_EXT_RGB:
-      neonfct = jsimd_extrgb_ycc_convert_neon;
+    neonfct = jsimd_extrgb_ycc_convert_neon;
     break;
   case JCS_EXT_RGBX:
   case JCS_EXT_RGBA:
     neonfct = jsimd_extrgbx_ycc_convert_neon;
     break;
   case JCS_EXT_BGR:
-      neonfct = jsimd_extbgr_ycc_convert_neon;
+    neonfct = jsimd_extbgr_ycc_convert_neon;
     break;
   case JCS_EXT_BGRX:
   case JCS_EXT_BGRA:
@@ -211,7 +166,7 @@ jsimd_rgb_ycc_convert(j_compress_ptr cinfo, JSAMPARRAY input_buf,
     neonfct = jsimd_extxrgb_ycc_convert_neon;
     break;
   default:
-      neonfct = jsimd_extrgb_ycc_convert_neon;
+    neonfct = jsimd_extrgb_ycc_convert_neon;
     break;
   }
 
@@ -265,14 +220,14 @@ jsimd_ycc_rgb_convert(j_decompress_ptr cinfo, JSAMPIMAGE input_buf,
 
   switch (cinfo->out_color_space) {
   case JCS_EXT_RGB:
-      neonfct = jsimd_ycc_extrgb_convert_neon;
+    neonfct = jsimd_ycc_extrgb_convert_neon;
     break;
   case JCS_EXT_RGBX:
   case JCS_EXT_RGBA:
     neonfct = jsimd_ycc_extrgbx_convert_neon;
     break;
   case JCS_EXT_BGR:
-      neonfct = jsimd_ycc_extbgr_convert_neon;
+    neonfct = jsimd_ycc_extbgr_convert_neon;
     break;
   case JCS_EXT_BGRX:
   case JCS_EXT_BGRA:
@@ -287,7 +242,7 @@ jsimd_ycc_rgb_convert(j_decompress_ptr cinfo, JSAMPIMAGE input_buf,
     neonfct = jsimd_ycc_extxrgb_convert_neon;
     break;
   default:
-      neonfct = jsimd_ycc_extrgb_convert_neon;
+    neonfct = jsimd_ycc_extrgb_convert_neon;
     break;
   }
 
@@ -890,8 +845,8 @@ jsimd_huff_encode_one_block(void *state, JOCTET *buffer, JCOEFPTR block,
                             int last_dc_val, c_derived_tbl *dctbl,
                             c_derived_tbl *actbl)
 {
-    return jsimd_huff_encode_one_block_neon(state, buffer, block, last_dc_val,
-                                            dctbl, actbl);
+  return jsimd_huff_encode_one_block_neon(state, buffer, block, last_dc_val,
+                                          dctbl, actbl);
 }
 
 GLOBAL(int)
@@ -945,6 +900,6 @@ jsimd_encode_mcu_AC_refine_prepare(const JCOEF *block,
                                    int Al, UJCOEF *absvalues, size_t *bits)
 {
   return jsimd_encode_mcu_AC_refine_prepare_neon(block,
-                                                 jpeg_natural_order_start,
-                                                 Sl, Al, absvalues, bits);
+                                                 jpeg_natural_order_start, Sl,
+                                                 Al, absvalues, bits);
 }
