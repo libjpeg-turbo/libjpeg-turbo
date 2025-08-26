@@ -2,7 +2,7 @@
  * Accurate integer FDCT (Arm Neon)
  *
  * Copyright (C) 2020, Arm Limited.  All Rights Reserved.
- * Copyright (C) 2020, 2024, D. R. Commander.  All Rights Reserved.
+ * Copyright (C) 2020, 2024-2025, D. R. Commander.  All Rights Reserved.
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the authors be held liable for any damages
@@ -21,12 +21,6 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
-#define JPEG_INTERNALS
-#include "../../src/jinclude.h"
-#include "../../src/jpeglib.h"
-#include "../../src/jsimd.h"
-#include "../../src/jdct.h"
-#include "../../src/jsimddct.h"
 #include "../jsimd.h"
 #include "align.h"
 #include "neon-compat.h"
@@ -84,7 +78,8 @@ ALIGN(16) static const int16_t jsimd_fdct_islow_neon_consts[] = {
  -F_1_961,  F_2_053, -F_2_562,  F_3_072
 };
 
-void jsimd_fdct_islow_neon(DCTELEM *data)
+HIDDEN void
+jsimd_fdct_islow_neon(DCTELEM *data)
 {
   /* Load DCT constants. */
 #ifdef HAVE_VLD1_S16_X3

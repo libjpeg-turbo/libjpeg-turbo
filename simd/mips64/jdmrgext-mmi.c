@@ -2,7 +2,7 @@
  * Loongson MMI optimizations for libjpeg-turbo
  *
  * Copyright 2009 Pierre Ossman <ossman@cendio.se> for Cendio AB
- * Copyright (C) 2015, 2019, D. R. Commander.  All Rights Reserved.
+ * Copyright (C) 2015, 2019, 2025, D. R. Commander.  All Rights Reserved.
  * Copyright (C) 2016-2018, Loongson Technology Corporation Limited, BeiJing.
  *                          All Rights Reserved.
  * Authors:  ZhangLixia <zhanglixia-hf@loongson.cn>
@@ -87,10 +87,10 @@
 #endif
 
 
-void jsimd_h2v1_merged_upsample_mmi(JDIMENSION output_width,
-                                    JSAMPIMAGE input_buf,
-                                    JDIMENSION in_row_group_ctr,
-                                    JSAMPARRAY output_buf)
+HIDDEN void
+jsimd_h2v1_merged_upsample_mmi(JDIMENSION output_width, JSAMPIMAGE input_buf,
+                               JDIMENSION in_row_group_ctr,
+                               JSAMPARRAY output_buf)
 {
   JSAMPROW outptr, inptr0, inptr1, inptr2;
   int num_cols, col;
@@ -581,10 +581,10 @@ void jsimd_h2v1_merged_upsample_mmi(JDIMENSION output_width,
 }
 
 
-void jsimd_h2v2_merged_upsample_mmi(JDIMENSION output_width,
-                                    JSAMPIMAGE input_buf,
-                                    JDIMENSION in_row_group_ctr,
-                                    JSAMPARRAY output_buf)
+HIDDEN void
+jsimd_h2v2_merged_upsample_mmi(JDIMENSION output_width, JSAMPIMAGE input_buf,
+                               JDIMENSION in_row_group_ctr,
+                               JSAMPARRAY output_buf)
 {
   JSAMPROW inptr, outptr;
 

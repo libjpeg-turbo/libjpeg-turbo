@@ -7,6 +7,15 @@
 extensions has been removed.  Arm builds of libjpeg-turbo must now use GCC 12
 or later or Clang in order to achieve full performance.
 
+2. The SIMD dispatchers have been overhauled so that the list of supported SIMD
+instruction sets is initialized on a per-instance basis rather than a
+per-thread basis, thus eliminating the need for thread-local storage in the
+libjpeg API library.  The overhaul also streamlines and modernizes the
+dispatcher architecture, eliminates redundant and unnecessary code, and
+generally simplifies the process of adding new SIMD extensions.  A new test
+program (simdcoverage) can be used to validate the correctness of a particular
+dispatcher.
+
 
 3.1.2
 =====

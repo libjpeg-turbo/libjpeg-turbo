@@ -1,7 +1,7 @@
 /*
  * AltiVec optimizations for libjpeg-turbo
  *
- * Copyright (C) 2014, 2020, D. R. Commander.  All Rights Reserved.
+ * Copyright (C) 2014, 2020, 2025, D. R. Commander.  All Rights Reserved.
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the authors be held liable for any damages
@@ -179,7 +179,8 @@
 }
 
 
-void jsimd_fdct_islow_altivec(DCTELEM *data)
+HIDDEN void
+jsimd_fdct_islow_altivec(DCTELEM *data)
 {
   __vector short row0, row1, row2, row3, row4, row5, row6, row7,
     col0, col1, col2, col3, col4, col5, col6, col7,

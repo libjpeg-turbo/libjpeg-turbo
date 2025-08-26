@@ -6,7 +6,7 @@
  * Authors:  ZhuChen     <zhuchen@loongson.cn>
  *           CaiWanwei   <caiwanwei@loongson.cn>
  *           SunZhangzhi <sunzhangzhi-cq@loongson.cn>
- * Copyright (C) 2018-2019, D. R. Commander.  All Rights Reserved.
+ * Copyright (C) 2018-2019, 2025, D. R. Commander.  All Rights Reserved.
  *
  * Based on the x86 SIMD extension for IJG JPEG library
  * Copyright (C) 1999-2006, MIYASAKA Masaru.
@@ -108,8 +108,8 @@
 }
 
 
-void jsimd_quantize_mmi(JCOEFPTR coef_block, DCTELEM *divisors,
-                        DCTELEM *workspace)
+HIDDEN void
+jsimd_quantize_mmi(JCOEFPTR coef_block, DCTELEM *divisors, DCTELEM *workspace)
 {
   JCOEFPTR output_ptr = coef_block;
 

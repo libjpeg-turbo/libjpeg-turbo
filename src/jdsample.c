@@ -484,14 +484,14 @@ _jinit_upsampler(j_decompress_ptr cinfo)
       /* Special cases for 2h1v upsampling */
       if (do_fancy && compptr->downsampled_width > 2) {
 #ifdef WITH_SIMD
-        if (jsimd_can_h2v1_fancy_upsample())
+        if (jsimd_set_h2v1_fancy_upsample(cinfo))
           upsample->methods[ci] = jsimd_h2v1_fancy_upsample;
         else
 #endif
           upsample->methods[ci] = h2v1_fancy_upsample;
       } else {
 #ifdef WITH_SIMD
-        if (jsimd_can_h2v1_upsample())
+        if (jsimd_set_h2v1_upsample(cinfo))
           upsample->methods[ci] = jsimd_h2v1_upsample;
         else
 #endif
@@ -500,10 +500,8 @@ _jinit_upsampler(j_decompress_ptr cinfo)
     } else if (h_in_group == h_out_group &&
                v_in_group * 2 == v_out_group && do_fancy) {
       /* Non-fancy upsampling is handled by the generic method */
-#if defined(WITH_SIMD) && (defined(__arm__) || defined(__aarch64__) || \
-                           defined(_M_ARM) || defined(_M_ARM64) || \
-                           defined(_M_ARM64EC))
-      if (jsimd_can_h1v2_fancy_upsample())
+#if defined(WITH_SIMD) && (SIMD_ARCHITECTURE == ARM64 || SIMD_ARCHITECTURE == ARM)
+      if (jsimd_set_h1v2_fancy_upsample(cinfo))
         upsample->methods[ci] = jsimd_h1v2_fancy_upsample;
       else
 #endif
@@ -514,7 +512,7 @@ _jinit_upsampler(j_decompress_ptr cinfo)
       /* Special cases for 2h2v upsampling */
       if (do_fancy && compptr->downsampled_width > 2) {
 #ifdef WITH_SIMD
-        if (jsimd_can_h2v2_fancy_upsample())
+        if (jsimd_set_h2v2_fancy_upsample(cinfo))
           upsample->methods[ci] = jsimd_h2v2_fancy_upsample;
         else
 #endif
@@ -522,7 +520,7 @@ _jinit_upsampler(j_decompress_ptr cinfo)
         upsample->pub.need_context_rows = TRUE;
       } else {
 #ifdef WITH_SIMD
-        if (jsimd_can_h2v2_upsample())
+        if (jsimd_set_h2v2_upsample(cinfo))
           upsample->methods[ci] = jsimd_h2v2_upsample;
         else
 #endif
@@ -531,8 +529,8 @@ _jinit_upsampler(j_decompress_ptr cinfo)
     } else if ((h_out_group % h_in_group) == 0 &&
                (v_out_group % v_in_group) == 0) {
       /* Generic integral-factors upsampling method */
-#if defined(WITH_SIMD) && defined(__mips__)
-      if (jsimd_can_int_upsample())
+#if defined(WITH_SIMD) && SIMD_ARCHITECTURE == MIPS
+      if (jsimd_set_int_upsample(cinfo))
         upsample->methods[ci] = jsimd_int_upsample;
       else
 #endif

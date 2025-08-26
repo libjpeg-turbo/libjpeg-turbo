@@ -2,7 +2,7 @@
  * Loongson MMI optimizations for libjpeg-turbo
  *
  * Copyright 2009 Pierre Ossman <ossman@cendio.se> for Cendio AB
- * Copyright (C) 2014-2015, 2019, D. R. Commander.  All Rights Reserved.
+ * Copyright (C) 2014-2015, 2019, 2025, D. R. Commander.  All Rights Reserved.
  * Copyright (C) 2016-2018, Loongson Technology Corporation Limited, BeiJing.
  *                          All Rights Reserved.
  * Authors:  ZhuChen     <zhuchen@loongson.cn>
@@ -90,9 +90,10 @@
 #endif
 
 
-void jsimd_rgb_ycc_convert_mmi(JDIMENSION image_width, JSAMPARRAY input_buf,
-                               JSAMPIMAGE output_buf, JDIMENSION output_row,
-                               int num_rows)
+HIDDEN void
+jsimd_rgb_ycc_convert_mmi(JDIMENSION image_width, JSAMPARRAY input_buf,
+                          JSAMPIMAGE output_buf, JDIMENSION output_row,
+                          int num_rows)
 {
   JSAMPROW inptr, outptr0, outptr1, outptr2;
   int num_cols, col;

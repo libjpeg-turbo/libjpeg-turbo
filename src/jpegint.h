@@ -7,7 +7,7 @@
  * Lossless JPEG Modifications:
  * Copyright (C) 1999, Ken Murchison.
  * libjpeg-turbo Modifications:
- * Copyright (C) 2015-2017, 2019, 2021-2022, 2024, D. R. Commander.
+ * Copyright (C) 2015-2017, 2019, 2021-2022, 2024-2025, D. R. Commander.
  * Copyright (C) 2015, Google, Inc.
  * Copyright (C) 2021, Alex Richardson.
  * For conditions of distribution and use, see the accompanying README.ijg
@@ -97,6 +97,10 @@ struct jpeg_comp_master {
   boolean call_pass_startup;    /* True if pass_startup must be called */
   boolean is_last_pass;         /* True during last pass */
   boolean lossless;             /* True if lossless mode is enabled */
+
+  /* SIMD-specific variables */
+  unsigned int simd_support;
+  unsigned int simd_huffman;
 };
 
 /* Main buffer control (downsampled-data buffer) */
@@ -162,6 +166,9 @@ struct jpeg_color_converter {
                             J16SAMPIMAGE output_buf, JDIMENSION output_row,
                             int num_rows);
 #endif
+  void (*color_convert_simd) (JDIMENSION img_width, JSAMPARRAY input_buf,
+                              JSAMPIMAGE output_buf, JDIMENSION output_row,
+                              int num_rows);
 };
 
 /* Downsampling */
@@ -178,6 +185,14 @@ struct jpeg_downsampler {
                          JDIMENSION in_row_index, J16SAMPIMAGE output_buf,
                          JDIMENSION out_row_group_index);
 #endif
+  void (*h2v1_downsample_simd) (JDIMENSION image_width, int max_v_samp_factor,
+                                JDIMENSION v_samp_factor,
+                                JDIMENSION width_blocks, JSAMPARRAY input_data,
+                                JSAMPARRAY output_data);
+  void (*h2v2_downsample_simd) (JDIMENSION image_width, int max_v_samp_factor,
+                                JDIMENSION v_samp_factor,
+                                JDIMENSION width_blocks, JSAMPARRAY input_data,
+                                JSAMPARRAY output_data);
 
   boolean need_context_rows;    /* TRUE if need rows above & below */
 };
@@ -210,6 +225,9 @@ struct jpeg_entropy_encoder {
   JDIMENSION (*encode_mcus) (j_compress_ptr cinfo, JDIFFIMAGE diff_buf,
                              JDIMENSION MCU_row_num, JDIMENSION MCU_col_num,
                              JDIMENSION nMCU);
+  JOCTET *(*huff_encode_one_block_simd) (void *state, JOCTET *buffer,
+                                         JCOEFPTR block, int last_dc_val,
+                                         void *dctbl, void *actbl);
 
   void (*finish_pass) (j_compress_ptr cinfo);
 };
@@ -252,6 +270,10 @@ struct jpeg_decomp_master {
 
   /* Tail of list of saved markers */
   jpeg_saved_marker_ptr marker_list_end;
+
+  /* SIMD-specific variables */
+  unsigned int simd_support;
+  unsigned int simd_huffman;
 };
 
 /* Input control module */
@@ -388,6 +410,13 @@ struct jpeg_inverse_dct {
   /* It is useful to allow each component to have a separate IDCT method. */
   inverse_DCT_method_ptr inverse_DCT[MAX_COMPONENTS];
   inverse_DCT_12_method_ptr inverse_DCT_12[MAX_COMPONENTS];
+
+  void (*idct_simd) (void *dct_table, JCOEFPTR coef_block,
+                     JSAMPARRAY output_buf, JDIMENSION output_col);
+  void (*idct_2x2_simd) (void *dct_table, JCOEFPTR coef_block,
+                         JSAMPARRAY output_buf, JDIMENSION output_col);
+  void (*idct_4x4_simd) (void *dct_table, JCOEFPTR coef_block,
+                         JSAMPARRAY output_buf, JDIMENSION output_col);
 };
 
 /* Upsampling (note that upsampler must also call color converter) */
@@ -407,6 +436,18 @@ struct jpeg_upsampler {
                        JDIMENSION in_row_groups_avail, J16SAMPARRAY output_buf,
                        JDIMENSION *out_row_ctr, JDIMENSION out_rows_avail);
 #endif
+  void (*h2v1_upsample_simd) (int max_v_samp_factor, JDIMENSION output_width,
+                              JSAMPARRAY input_data,
+                              JSAMPARRAY *output_data_ptr);
+  void (*h2v2_upsample_simd) (int max_v_samp_factor, JDIMENSION output_width,
+                              JSAMPARRAY input_data,
+                              JSAMPARRAY *output_data_ptr);
+  void (*h1v2_upsample_simd) (int max_v_samp_factor, JDIMENSION output_width,
+                              JSAMPARRAY input_data,
+                              JSAMPARRAY *output_data_ptr);
+  void (*merged_upsample_simd) (JDIMENSION output_width, JSAMPIMAGE input_buf,
+                                JDIMENSION in_row_group_ctr,
+                                JSAMPARRAY output_buf);
 
   boolean need_context_rows;    /* TRUE if need rows above & below */
 };
@@ -425,6 +466,9 @@ struct jpeg_color_deconverter {
                             JDIMENSION input_row, J16SAMPARRAY output_buf,
                             int num_rows);
 #endif
+  void (*color_convert_simd) (JDIMENSION out_width, JSAMPIMAGE input_buf,
+                              JDIMENSION input_row, JSAMPARRAY output_buf,
+                              int num_rows);
 };
 
 /* Color quantization or color precision reduction */

@@ -3,7 +3,9 @@ macro(simd_fail message)
     message(FATAL_ERROR "${message}.")
   else()
     message(WARNING "${message}.  Performance will suffer.")
+    set(WITH_SIMD 0)
     set(WITH_SIMD 0 PARENT_SCOPE)
+    set(SIMD_ARCHITECTURE NONE PARENT_SCOPE)
   endif()
 endmacro()
 
@@ -13,6 +15,9 @@ endmacro()
 ###############################################################################
 
 if(CPU_TYPE STREQUAL "x86_64" OR CPU_TYPE STREQUAL "i386")
+
+string(TOUPPER ${CPU_TYPE} SIMD_ARCHITECTURE)
+set(SIMD_ARCHITECTURE ${SIMD_ARCHITECTURE} PARENT_SCOPE)
 
 set(CMAKE_ASM_NASM_FLAGS_DEBUG_INIT "-g")
 set(CMAKE_ASM_NASM_FLAGS_RELWITHDEBINFO_INIT "-g")
@@ -208,11 +213,11 @@ endforeach()
 
 if(MSVC_IDE OR XCODE)
   set(SIMD_OBJS ${SIMD_OBJS} PARENT_SCOPE)
-  add_library(simd OBJECT ${CPU_TYPE}/jsimd.c)
+  add_library(simd OBJECT jsimd.c)
   add_custom_target(simd-objs DEPENDS ${SIMD_OBJS})
   add_dependencies(simd simd-objs)
 else()
-  add_library(simd OBJECT ${SIMD_SOURCES} ${CPU_TYPE}/jsimd.c)
+  add_library(simd OBJECT ${SIMD_SOURCES} jsimd.c)
 endif()
 if(NOT WIN32 AND (CMAKE_POSITION_INDEPENDENT_CODE OR ENABLE_SHARED))
   set_target_properties(simd PROPERTIES POSITION_INDEPENDENT_CODE 1)
@@ -224,6 +229,9 @@ endif()
 ###############################################################################
 
 elseif(CPU_TYPE STREQUAL "arm64" OR CPU_TYPE STREQUAL "arm")
+
+string(TOUPPER ${CPU_TYPE} SIMD_ARCHITECTURE)
+set(SIMD_ARCHITECTURE ${SIMD_ARCHITECTURE} PARENT_SCOPE)
 
 # If Neon instructions are not explicitly enabled at compile time (e.g. using
 # -mfpu=neon) with an AArch32 Linux or Android build, then the AArch32 SIMD
@@ -324,7 +332,51 @@ if(BITS EQUAL 32)
   set_source_files_properties(${SIMD_SOURCES} COMPILE_FLAGS "-mfpu=neon ${SOFTFP_FLAG}")
 endif()
 
-add_library(simd OBJECT ${SIMD_SOURCES} arm/aarch${BITS}/jsimd.c)
+add_library(simd OBJECT ${SIMD_SOURCES} arm/aarch${BITS}/jsimdcpu.c jsimd.c)
+
+if(CMAKE_POSITION_INDEPENDENT_CODE OR ENABLE_SHARED)
+  set_target_properties(simd PROPERTIES POSITION_INDEPENDENT_CODE 1)
+endif()
+
+
+###############################################################################
+# PowerPC (Intrinsics)
+###############################################################################
+
+elseif(CPU_TYPE STREQUAL "powerpc")
+
+string(TOUPPER ${CPU_TYPE} SIMD_ARCHITECTURE)
+set(SIMD_ARCHITECTURE ${SIMD_ARCHITECTURE} PARENT_SCOPE)
+
+set(CMAKE_REQUIRED_FLAGS -maltivec)
+
+check_c_source_compiles("
+  #include <altivec.h>
+  int main(void) {
+    __vector int vi = { 0, 0, 0, 0 };
+    int i[4];
+    vec_st(vi, 0, i);
+    return i[0];
+  }" HAVE_ALTIVEC)
+
+unset(CMAKE_REQUIRED_FLAGS)
+
+if(NOT HAVE_ALTIVEC)
+  simd_fail("SIMD extensions not available for this CPU (PowerPC SPE)")
+  return()
+endif()
+
+set(SIMD_SOURCES powerpc/jccolor-altivec.c powerpc/jcgray-altivec.c
+  powerpc/jcsample-altivec.c powerpc/jdcolor-altivec.c
+  powerpc/jdmerge-altivec.c powerpc/jdsample-altivec.c
+  powerpc/jfdctfst-altivec.c powerpc/jfdctint-altivec.c
+  powerpc/jidctfst-altivec.c powerpc/jidctint-altivec.c
+  powerpc/jquanti-altivec.c)
+
+set_source_files_properties(${SIMD_SOURCES} PROPERTIES
+  COMPILE_FLAGS -maltivec)
+
+add_library(simd OBJECT ${SIMD_SOURCES} powerpc/jsimdcpu.c jsimd.c)
 
 if(CMAKE_POSITION_INDEPENDENT_CODE OR ENABLE_SHARED)
   set_target_properties(simd PROPERTIES POSITION_INDEPENDENT_CODE 1)
@@ -336,6 +388,8 @@ endif()
 ###############################################################################
 
 elseif(CPU_TYPE STREQUAL "mips" OR CPU_TYPE STREQUAL "mipsel")
+
+set(SIMD_ARCHITECTURE MIPS PARENT_SCOPE)
 
 enable_language(ASM)
 
@@ -366,17 +420,20 @@ if(NOT HAVE_DSPR2)
   return()
 endif()
 
-add_library(simd OBJECT mips/jsimd_dspr2.S mips/jsimd.c)
+add_library(simd OBJECT mips/jsimd_dspr2.S mips/jsimd.c jsimd.c)
 
 if(CMAKE_POSITION_INDEPENDENT_CODE OR ENABLE_SHARED)
   set_target_properties(simd PROPERTIES POSITION_INDEPENDENT_CODE 1)
 endif()
+
 
 ###############################################################################
 # MIPS64 (Intrinsics)
 ###############################################################################
 
 elseif(CPU_TYPE STREQUAL "loongson" OR CPU_TYPE MATCHES "^mips64")
+
+set(SIMD_ARCHITECTURE MIPS64 PARENT_SCOPE)
 
 set(CMAKE_REQUIRED_FLAGS -Wa,-mloongson-mmi,-mloongson-ext)
 
@@ -417,47 +474,7 @@ foreach(file ${SIMD_SOURCES})
     " -Wa,-mloongson-mmi,-mloongson-ext")
 endforeach()
 
-add_library(simd OBJECT ${SIMD_SOURCES} mips64/jsimd.c)
-
-if(CMAKE_POSITION_INDEPENDENT_CODE OR ENABLE_SHARED)
-  set_target_properties(simd PROPERTIES POSITION_INDEPENDENT_CODE 1)
-endif()
-
-###############################################################################
-# PowerPC (Intrinsics)
-###############################################################################
-
-elseif(CPU_TYPE STREQUAL "powerpc")
-
-set(CMAKE_REQUIRED_FLAGS -maltivec)
-
-check_c_source_compiles("
-  #include <altivec.h>
-  int main(void) {
-    __vector int vi = { 0, 0, 0, 0 };
-    int i[4];
-    vec_st(vi, 0, i);
-    return i[0];
-  }" HAVE_ALTIVEC)
-
-unset(CMAKE_REQUIRED_FLAGS)
-
-if(NOT HAVE_ALTIVEC)
-  simd_fail("SIMD extensions not available for this CPU (PowerPC SPE)")
-  return()
-endif()
-
-set(SIMD_SOURCES powerpc/jccolor-altivec.c powerpc/jcgray-altivec.c
-  powerpc/jcsample-altivec.c powerpc/jdcolor-altivec.c
-  powerpc/jdmerge-altivec.c powerpc/jdsample-altivec.c
-  powerpc/jfdctfst-altivec.c powerpc/jfdctint-altivec.c
-  powerpc/jidctfst-altivec.c powerpc/jidctint-altivec.c
-  powerpc/jquanti-altivec.c)
-
-set_source_files_properties(${SIMD_SOURCES} PROPERTIES
-  COMPILE_FLAGS -maltivec)
-
-add_library(simd OBJECT ${SIMD_SOURCES} powerpc/jsimd.c)
+add_library(simd OBJECT ${SIMD_SOURCES} mips64/jsimdcpu.c jsimd.c)
 
 if(CMAKE_POSITION_INDEPENDENT_CODE OR ENABLE_SHARED)
   set_target_properties(simd PROPERTIES POSITION_INDEPENDENT_CODE 1)
@@ -473,3 +490,8 @@ else()
 simd_fail("SIMD extensions not available for this CPU (${CMAKE_SYSTEM_PROCESSOR})")
 
 endif() # CPU_TYPE
+
+if(WITH_SIMD AND ENABLE_STATIC)
+  add_executable(simdcoverage simdcoverage.c)
+  target_link_libraries(simdcoverage jpeg-static)
+endif()

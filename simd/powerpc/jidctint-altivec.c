@@ -1,7 +1,8 @@
 /*
  * AltiVec optimizations for libjpeg-turbo
  *
- * Copyright (C) 2014-2015, 2020, 2024, D. R. Commander.  All Rights Reserved.
+ * Copyright (C) 2014-2015, 2020, 2024-2025, D. R. Commander.
+ *           All Rights Reserved.
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the authors be held liable for any damages
@@ -204,8 +205,9 @@
 }
 
 
-void jsimd_idct_islow_altivec(void *dct_table_, JCOEFPTR coef_block,
-                              JSAMPARRAY output_buf, JDIMENSION output_col)
+HIDDEN void
+jsimd_idct_islow_altivec(void *dct_table_, JCOEFPTR coef_block,
+                         JSAMPARRAY output_buf, JDIMENSION output_col)
 {
   short *dct_table = (short *)dct_table_;
   int *outptr;

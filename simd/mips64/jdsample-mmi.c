@@ -1,7 +1,7 @@
 /*
  * Loongson MMI optimizations for libjpeg-turbo
  *
- * Copyright (C) 2015, 2018-2019, D. R. Commander.  All Rights Reserved.
+ * Copyright (C) 2015, 2018-2019, 2025, D. R. Commander.  All Rights Reserved.
  * Copyright (C) 2016-2018, Loongson Technology Corporation Limited, BeiJing.
  *                          All Rights Reserved.
  * Authors:  ZhuChen     <zhuchen@loongson.cn>
@@ -104,10 +104,11 @@ static uint64_t const_value[] = {
   _mm_store_si64((__m64 *)outptr##row + 1, outh); \
 }
 
-void jsimd_h2v2_fancy_upsample_mmi(int max_v_samp_factor,
-                                   JDIMENSION downsampled_width,
-                                   JSAMPARRAY input_data,
-                                   JSAMPARRAY *output_data_ptr)
+HIDDEN void
+jsimd_h2v2_fancy_upsample_mmi(int max_v_samp_factor,
+                              JDIMENSION downsampled_width,
+                              JSAMPARRAY input_data,
+                              JSAMPARRAY *output_data_ptr)
 {
   JSAMPARRAY output_data = *output_data_ptr;
   JSAMPROW inptr_1, inptr0, inptr1, outptr0, outptr1;
@@ -239,10 +240,11 @@ void jsimd_h2v2_fancy_upsample_mmi(int max_v_samp_factor,
 }
 
 
-void jsimd_h2v1_fancy_upsample_mmi(int max_v_samp_factor,
-                                   JDIMENSION downsampled_width,
-                                   JSAMPARRAY input_data,
-                                   JSAMPARRAY *output_data_ptr)
+HIDDEN void
+jsimd_h2v1_fancy_upsample_mmi(int max_v_samp_factor,
+                              JDIMENSION downsampled_width,
+                              JSAMPARRAY input_data,
+                              JSAMPARRAY *output_data_ptr)
 {
   JSAMPARRAY output_data = *output_data_ptr;
   JSAMPROW inptr0, outptr0;

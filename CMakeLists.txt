@@ -689,6 +689,7 @@ if(WITH_SIMD)
   add_subdirectory(simd)
 else()
   message(STATUS "SIMD extensions: None (WITH_SIMD = ${WITH_SIMD})")
+  set(SIMD_ARCHITECTURE NONE)
 endif()
 
 # We have to generate these here, because if the build system tries and fails

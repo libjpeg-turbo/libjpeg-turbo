@@ -6,7 +6,7 @@
  * libjpeg-turbo Modifications:
  * Copyright (C) 1999-2006, MIYASAKA Masaru.
  * Copyright 2009 Pierre Ossman <ossman@cendio.se> for Cendio AB
- * Copyright (C) 2011, 2014-2015, 2022, 2024, D. R. Commander.
+ * Copyright (C) 2011, 2014-2015, 2022, 2024-2025, D. R. Commander.
  * For conditions of distribution and use, see the accompanying README.ijg
  * file.
  *
@@ -24,22 +24,6 @@
 
 
 /* Private subobject for this module */
-
-typedef void (*forward_DCT_method_ptr) (DCTELEM *data);
-typedef void (*float_DCT_method_ptr) (FAST_FLOAT *data);
-
-typedef void (*convsamp_method_ptr) (_JSAMPARRAY sample_data,
-                                     JDIMENSION start_col,
-                                     DCTELEM *workspace);
-typedef void (*float_convsamp_method_ptr) (_JSAMPARRAY sample_data,
-                                           JDIMENSION start_col,
-                                           FAST_FLOAT *workspace);
-
-typedef void (*quantize_method_ptr) (JCOEFPTR coef_block, DCTELEM *divisors,
-                                     DCTELEM *workspace);
-typedef void (*float_quantize_method_ptr) (JCOEFPTR coef_block,
-                                           FAST_FLOAT *divisors,
-                                           FAST_FLOAT *workspace);
 
 METHODDEF(void) quantize(JCOEFPTR, DCTELEM *, DCTELEM *);
 
@@ -267,7 +251,7 @@ start_pass_fdctmgr(j_compress_ptr cinfo)
 #if BITS_IN_JSAMPLE == 8
 #ifdef WITH_SIMD
         if (!compute_reciprocal(qtbl->quantval[i] << 3, &dtbl[i]) &&
-            fdct->quantize == jsimd_quantize)
+            fdct->quantize != quantize)
           fdct->quantize = quantize;
 #else
         compute_reciprocal(qtbl->quantval[i] << 3, &dtbl[i]);
@@ -314,7 +298,7 @@ start_pass_fdctmgr(j_compress_ptr cinfo)
                 DESCALE(MULTIPLY16V16((JLONG)qtbl->quantval[i],
                                       (JLONG)aanscales[i]),
                         CONST_BITS - 3), &dtbl[i]) &&
-              fdct->quantize == jsimd_quantize)
+              fdct->quantize != quantize)
             fdct->quantize = quantize;
 #else
           compute_reciprocal(
@@ -648,9 +632,7 @@ _jinit_forward_dct(j_compress_ptr cinfo)
   case JDCT_ISLOW:
     fdct->pub._forward_DCT = forward_DCT;
 #ifdef WITH_SIMD
-    if (jsimd_can_fdct_islow())
-      fdct->dct = jsimd_fdct_islow;
-    else
+    if (!jsimd_set_fdct_islow(cinfo, &fdct->dct))
 #endif
       fdct->dct = _jpeg_fdct_islow;
     break;
@@ -659,9 +641,7 @@ _jinit_forward_dct(j_compress_ptr cinfo)
   case JDCT_IFAST:
     fdct->pub._forward_DCT = forward_DCT;
 #ifdef WITH_SIMD
-    if (jsimd_can_fdct_ifast())
-      fdct->dct = jsimd_fdct_ifast;
-    else
+    if (!jsimd_set_fdct_ifast(cinfo, &fdct->dct))
 #endif
       fdct->dct = _jpeg_fdct_ifast;
     break;
@@ -670,9 +650,7 @@ _jinit_forward_dct(j_compress_ptr cinfo)
   case JDCT_FLOAT:
     fdct->pub._forward_DCT = forward_DCT_float;
 #ifdef WITH_SIMD
-    if (jsimd_can_fdct_float())
-      fdct->float_dct = jsimd_fdct_float;
-    else
+    if (!jsimd_set_fdct_float(cinfo, &fdct->float_dct))
 #endif
       fdct->float_dct = jpeg_fdct_float;
     break;
@@ -692,15 +670,11 @@ _jinit_forward_dct(j_compress_ptr cinfo)
 #endif
 #if defined(DCT_ISLOW_SUPPORTED) || defined(DCT_IFAST_SUPPORTED)
 #ifdef WITH_SIMD
-    if (jsimd_can_convsamp())
-      fdct->convsamp = jsimd_convsamp;
-    else
+    if (!jsimd_set_convsamp(cinfo, &fdct->convsamp))
 #endif
       fdct->convsamp = convsamp;
 #ifdef WITH_SIMD
-    if (jsimd_can_quantize())
-      fdct->quantize = jsimd_quantize;
-    else
+    if (!jsimd_set_quantize(cinfo, &fdct->quantize))
 #endif
       fdct->quantize = quantize;
     break;
@@ -708,15 +682,11 @@ _jinit_forward_dct(j_compress_ptr cinfo)
 #ifdef DCT_FLOAT_SUPPORTED
   case JDCT_FLOAT:
 #ifdef WITH_SIMD
-    if (jsimd_can_convsamp_float())
-      fdct->float_convsamp = jsimd_convsamp_float;
-    else
+    if (!jsimd_set_convsamp_float(cinfo, &fdct->float_convsamp))
 #endif
       fdct->float_convsamp = convsamp_float;
 #ifdef WITH_SIMD
-    if (jsimd_can_quantize_float())
-      fdct->float_quantize = jsimd_quantize_float;
-    else
+    if (!jsimd_set_quantize_float(cinfo, &fdct->float_quantize))
 #endif
       fdct->float_quantize = quantize_float;
     break;

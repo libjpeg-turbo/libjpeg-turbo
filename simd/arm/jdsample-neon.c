@@ -2,7 +2,7 @@
  * Upsampling (Arm Neon)
  *
  * Copyright (C) 2020, Arm Limited.  All Rights Reserved.
- * Copyright (C) 2020, 2024, D. R. Commander.  All Rights Reserved.
+ * Copyright (C) 2020, 2024-2025, D. R. Commander.  All Rights Reserved.
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the authors be held liable for any damages
@@ -21,12 +21,6 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
-#define JPEG_INTERNALS
-#include "../../src/jinclude.h"
-#include "../../src/jpeglib.h"
-#include "../../src/jsimd.h"
-#include "../../src/jdct.h"
-#include "../../src/jsimddct.h"
 #include "../jsimd.h"
 #include "neon-compat.h"
 
@@ -57,10 +51,11 @@
  *     p5(upsampled) = s2
  */
 
-void jsimd_h2v1_fancy_upsample_neon(int max_v_samp_factor,
-                                    JDIMENSION downsampled_width,
-                                    JSAMPARRAY input_data,
-                                    JSAMPARRAY *output_data_ptr)
+HIDDEN void
+jsimd_h2v1_fancy_upsample_neon(int max_v_samp_factor,
+                               JDIMENSION downsampled_width,
+                               JSAMPARRAY input_data,
+                               JSAMPARRAY *output_data_ptr)
 {
   JSAMPARRAY output_data = *output_data_ptr;
   JSAMPROW inptr, outptr;
@@ -202,10 +197,11 @@ void jsimd_h2v1_fancy_upsample_neon(int max_v_samp_factor,
  *     p35(upsampled) = s2C
  */
 
-void jsimd_h2v2_fancy_upsample_neon(int max_v_samp_factor,
-                                    JDIMENSION downsampled_width,
-                                    JSAMPARRAY input_data,
-                                    JSAMPARRAY *output_data_ptr)
+HIDDEN void
+jsimd_h2v2_fancy_upsample_neon(int max_v_samp_factor,
+                               JDIMENSION downsampled_width,
+                               JSAMPARRAY input_data,
+                               JSAMPARRAY *output_data_ptr)
 {
   JSAMPARRAY output_data = *output_data_ptr;
   JSAMPROW inptr0, inptr1, inptr2, outptr0, outptr1;
@@ -408,10 +404,11 @@ void jsimd_h2v2_fancy_upsample_neon(int max_v_samp_factor,
  *     p5(upsampled) = sC
  */
 
-void jsimd_h1v2_fancy_upsample_neon(int max_v_samp_factor,
-                                    JDIMENSION downsampled_width,
-                                    JSAMPARRAY input_data,
-                                    JSAMPARRAY *output_data_ptr)
+HIDDEN void
+jsimd_h1v2_fancy_upsample_neon(int max_v_samp_factor,
+                               JDIMENSION downsampled_width,
+                               JSAMPARRAY input_data,
+                               JSAMPARRAY *output_data_ptr)
 {
   JSAMPARRAY output_data = *output_data_ptr;
   JSAMPROW inptr0, inptr1, inptr2, outptr0, outptr1;
@@ -484,9 +481,9 @@ void jsimd_h1v2_fancy_upsample_neon(int max_v_samp_factor,
  *     p2(upsampled) = p3(upsampled) = s1
  */
 
-void jsimd_h2v1_upsample_neon(int max_v_samp_factor, JDIMENSION output_width,
-                              JSAMPARRAY input_data,
-                              JSAMPARRAY *output_data_ptr)
+HIDDEN void
+jsimd_h2v1_upsample_neon(int max_v_samp_factor, JDIMENSION output_width,
+                         JSAMPARRAY input_data, JSAMPARRAY *output_data_ptr)
 {
   JSAMPARRAY output_data = *output_data_ptr;
   JSAMPROW inptr, outptr;
@@ -537,9 +534,9 @@ void jsimd_h2v1_upsample_neon(int max_v_samp_factor, JDIMENSION output_width,
  *     p10(upsampled) = p11(upsampled) = p14(upsampled) = p15(upsampled) = s1B
  */
 
-void jsimd_h2v2_upsample_neon(int max_v_samp_factor, JDIMENSION output_width,
-                              JSAMPARRAY input_data,
-                              JSAMPARRAY *output_data_ptr)
+HIDDEN void
+jsimd_h2v2_upsample_neon(int max_v_samp_factor, JDIMENSION output_width,
+                         JSAMPARRAY input_data, JSAMPARRAY *output_data_ptr)
 {
   JSAMPARRAY output_data = *output_data_ptr;
   JSAMPROW inptr, outptr0, outptr1;

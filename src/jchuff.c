@@ -50,9 +50,8 @@ typedef unsigned long long bit_buf_type;
 typedef size_t bit_buf_type;
 #endif
 
-#if defined(WITH_SIMD) && !(defined(__arm__) || defined(__aarch64__) || \
-                            defined(_M_ARM) || defined(_M_ARM64) || \
-                            defined(_M_ARM64EC))
+#if defined(WITH_SIMD) && \
+    SIMD_ARCHITECTURE != ARM64 && SIMD_ARCHITECTURE != ARM
 typedef unsigned long long simd_bit_buf_type;
 #else
 typedef bit_buf_type simd_bit_buf_type;
@@ -98,7 +97,7 @@ typedef struct {
 #endif
 
 #ifdef WITH_SIMD
-  int simd;
+  unsigned int simd;
 #endif
 } huff_entropy_encoder;
 
@@ -114,7 +113,7 @@ typedef struct {
   savable_state cur;            /* Current bit buffer & DC state */
   j_compress_ptr cinfo;         /* dump_buffer needs access to this */
 #ifdef WITH_SIMD
-  int simd;
+  unsigned int simd;
 #endif
 } working_state;
 
@@ -155,7 +154,7 @@ start_pass_huff(j_compress_ptr cinfo, boolean gather_statistics)
   }
 
 #ifdef WITH_SIMD
-  entropy->simd = jsimd_can_huff_encode_one_block();
+  entropy->simd = jsimd_set_huff_encode_one_block(cinfo);
 #endif
 
   for (ci = 0; ci < cinfo->comps_in_scan; ci++) {
@@ -532,8 +531,10 @@ encode_one_block_simd(working_state *state, JCOEFPTR block, int last_dc_val,
 
   LOAD_BUFFER()
 
-  buffer = jsimd_huff_encode_one_block(state, buffer, block, last_dc_val,
-                                       dctbl, actbl);
+  buffer = state->cinfo->entropy->huff_encode_one_block_simd(state, buffer,
+                                                             block,
+                                                             last_dc_val,
+                                                             dctbl, actbl);
 
   STORE_BUFFER()
 

@@ -1,7 +1,7 @@
 /*
  * Loongson MMI optimizations for libjpeg-turbo
  *
- * Copyright (C) 2014, 2018-2019, D. R. Commander.  All Rights Reserved.
+ * Copyright (C) 2014, 2018-2019, 2025, D. R. Commander.  All Rights Reserved.
  * Copyright (C) 2016-2018, Loongson Technology Corporation Limited, BeiJing.
  *                          All Rights Reserved.
  * Authors:  LiuQingfa <liuqingfa-hf@loongson.cn>
@@ -233,7 +233,8 @@ static uint64_t const_value[] = {
   _mm_store_si64((__m64 *)&dataptr[DCTSIZE * 7], out7); \
 }
 
-void jsimd_fdct_ifast_mmi(DCTELEM *data)
+HIDDEN void
+jsimd_fdct_ifast_mmi(DCTELEM *data)
 {
   __m64 tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7;
   __m64 out0, out1, out2, out3, out4, out5, out6, out7;

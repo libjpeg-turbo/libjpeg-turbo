@@ -1,7 +1,7 @@
 /*
  * Loongson MMI optimizations for libjpeg-turbo
  *
- * Copyright (C) 2015, 2018-2019, D. R. Commander.  All Rights Reserved.
+ * Copyright (C) 2015, 2018-2019, 2025, D. R. Commander.  All Rights Reserved.
  * Copyright (C) 2016-2017, Loongson Technology Corporation Limited, BeiJing.
  *                          All Rights Reserved.
  * Authors:  ZhuChen     <zhuchen@loongson.cn>
@@ -34,10 +34,10 @@
 #include "jcsample.h"
 
 
-void jsimd_h2v2_downsample_mmi(JDIMENSION image_width, int max_v_samp_factor,
-                               JDIMENSION v_samp_factor,
-                               JDIMENSION width_in_blocks,
-                               JSAMPARRAY input_data, JSAMPARRAY output_data)
+HIDDEN void
+jsimd_h2v2_downsample_mmi(JDIMENSION image_width, int max_v_samp_factor,
+                          JDIMENSION v_samp_factor, JDIMENSION width_in_blocks,
+                          JSAMPARRAY input_data, JSAMPARRAY output_data)
 {
   int inrow, outrow, outcol;
   JDIMENSION output_cols = width_in_blocks * DCTSIZE;

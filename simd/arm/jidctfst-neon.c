@@ -2,7 +2,7 @@
  * Fast integer IDCT (Arm Neon)
  *
  * Copyright (C) 2020, Arm Limited.  All Rights Reserved.
- * Copyright (C) 2024, D. R. Commander.  All Rights Reserved.
+ * Copyright (C) 2024-2025, D. R. Commander.  All Rights Reserved.
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the authors be held liable for any damages
@@ -21,12 +21,6 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
-#define JPEG_INTERNALS
-#include "../../src/jinclude.h"
-#include "../../src/jpeglib.h"
-#include "../../src/jsimd.h"
-#include "../../src/jdct.h"
-#include "../../src/jsimddct.h"
 #include "../jsimd.h"
 #include "align.h"
 #include "neon-compat.h"
@@ -62,8 +56,9 @@ ALIGN(16) static const int16_t jsimd_idct_ifast_neon_consts[] = {
   F_0_082, F_0_414, F_0_847, F_0_613
 };
 
-void jsimd_idct_ifast_neon(void *dct_table, JCOEFPTR coef_block,
-                           JSAMPARRAY output_buf, JDIMENSION output_col)
+HIDDEN void
+jsimd_idct_ifast_neon(void *dct_table, JCOEFPTR coef_block,
+                      JSAMPARRAY output_buf, JDIMENSION output_col)
 {
   IFAST_MULT_TYPE *quantptr = dct_table;
 

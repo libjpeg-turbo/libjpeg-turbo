@@ -2,7 +2,7 @@
  * Accurate integer IDCT (Arm Neon)
  *
  * Copyright (C) 2020, Arm Limited.  All Rights Reserved.
- * Copyright (C) 2020, 2024, D. R. Commander.  All Rights Reserved.
+ * Copyright (C) 2020, 2024-2025, D. R. Commander.  All Rights Reserved.
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the authors be held liable for any damages
@@ -21,12 +21,6 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
-#define JPEG_INTERNALS
-#include "../../src/jinclude.h"
-#include "../../src/jpeglib.h"
-#include "../../src/jsimd.h"
-#include "../../src/jdct.h"
-#include "../../src/jsimddct.h"
 #include "../jsimd.h"
 #include "align.h"
 #include "neon-compat.h"
@@ -186,8 +180,9 @@ static INLINE void jsimd_idct_islow_pass2_sparse(int16_t *workspace,
  * block during the first pass becomes rows 4-7 during the second pass.)
  */
 
-void jsimd_idct_islow_neon(void *dct_table, JCOEFPTR coef_block,
-                           JSAMPARRAY output_buf, JDIMENSION output_col)
+HIDDEN void
+jsimd_idct_islow_neon(void *dct_table, JCOEFPTR coef_block,
+                      JSAMPARRAY output_buf, JDIMENSION output_col)
 {
   ISLOW_MULT_TYPE *quantptr = dct_table;
 

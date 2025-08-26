@@ -1,7 +1,7 @@
 /*
  * AltiVec optimizations for libjpeg-turbo
  *
- * Copyright (C) 2014-2015, 2024, D. R. Commander.  All Rights Reserved.
+ * Copyright (C) 2014-2015, 2024-2025, D. R. Commander.  All Rights Reserved.
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the authors be held liable for any damages
@@ -48,8 +48,9 @@
 #endif
 
 
-void jsimd_convsamp_altivec(JSAMPARRAY sample_data, JDIMENSION start_col,
-                            DCTELEM *workspace)
+HIDDEN void
+jsimd_convsamp_altivec(JSAMPARRAY sample_data, JDIMENSION start_col,
+                       DCTELEM *workspace)
 {
   JSAMPROW elemptr;
 
