@@ -1,5 +1,5 @@
 /*
- * jdcolor-neon.c - colorspace conversion (Arm Neon)
+ * Colorspace conversion (Arm Neon)
  *
  * Copyright (C) 2020, Arm Limited.  All Rights Reserved.
  *

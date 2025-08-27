@@ -1,5 +1,5 @@
 /*
- * jcphuff-neon.c - prepare data for progressive Huffman encoding (Arm Neon)
+ * Prepare data for progressive Huffman encoding (Arm Neon)
  *
  * Copyright (C) 2020-2021, Arm Limited.  All Rights Reserved.
  * Copyright (C) 2022, Matthieu Darbois.  All Rights Reserved.

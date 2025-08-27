@@ -1,6 +1,4 @@
 /*
- * jsimd_mips.c
- *
  * Copyright 2009 Pierre Ossman <ossman@cendio.se> for Cendio AB
  * Copyright (C) 2009-2011, 2014, 2016, 2018, 2020, 2022, D. R. Commander.
  * Copyright (C) 2013-2014, MIPS Technologies, Inc., California.

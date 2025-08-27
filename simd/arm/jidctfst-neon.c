@@ -1,5 +1,5 @@
 /*
- * jidctfst-neon.c - fast integer IDCT (Arm Neon)
+ * Fast integer IDCT (Arm Neon)
  *
  * Copyright (C) 2020, Arm Limited.  All Rights Reserved.
  *

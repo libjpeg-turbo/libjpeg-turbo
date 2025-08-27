@@ -1,5 +1,5 @@
 /*
- * jquanti-neon.c - sample data conversion and quantization (Arm Neon)
+ * Sample data conversion and quantization (Arm Neon)
  *
  * Copyright (C) 2020-2021, Arm Limited.  All Rights Reserved.
  *
