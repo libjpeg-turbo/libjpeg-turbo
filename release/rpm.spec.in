@@ -39,7 +39,7 @@
 %define _libdir  @CMAKE_INSTALL_FULL_LIBDIR@
 #-->%endif
 
-%define __requires_exclude_from ^%{_libdir}/cmake/@CMAKE_PROJECT_NAME@/.*$
+%define __requires_exclude_from  ^%{_libdir}/cmake/@CMAKE_PROJECT_NAME@/.*$
 
 Summary: A SIMD-accelerated JPEG codec that provides both the libjpeg and TurboJPEG APIs
 Name: @PKGNAME@
