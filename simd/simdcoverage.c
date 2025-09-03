@@ -25,6 +25,7 @@
 #include "../src/jdct.h"
 #include "../src/jsimd.h"
 #include "../src/jsimddct.h"
+#include "../src/jpegapicomp.h"
 
 static const char *instrset_name(int instrset) {
   switch (instrset) {
@@ -108,7 +109,7 @@ int main(void)
   dinfo.comp_info[1].h_samp_factor = dinfo.comp_info[1].v_samp_factor = 1;
   dinfo.comp_info[2].component_id = 2;
   dinfo.comp_info[2].h_samp_factor = dinfo.comp_info[2].v_samp_factor = 1;
-  dinfo.min_DCT_scaled_size = DCTSIZE;
+  dinfo._min_DCT_scaled_size = DCTSIZE;
   jinit_upsampler(&dinfo);
   jinit_inverse_dct(&dinfo);
 
