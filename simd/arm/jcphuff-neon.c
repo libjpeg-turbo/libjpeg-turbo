@@ -25,8 +25,6 @@
 #include "../jsimd.h"
 #include "neon-compat.h"
 
-#include <arm_neon.h>
-
 
 /* Data preparation for encode_mcu_AC_first().
  *

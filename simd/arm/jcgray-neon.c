@@ -25,8 +25,6 @@
 #include "align.h"
 #include "neon-compat.h"
 
-#include <arm_neon.h>
-
 
 /* RGB -> Grayscale conversion constants */
 

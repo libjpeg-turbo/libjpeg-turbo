@@ -24,8 +24,6 @@
 #include "../jsimd.h"
 #include "neon-compat.h"
 
-#include <arm_neon.h>
-
 
 /* The diagram below shows a row of samples produced by h2v1 downsampling.
  *

@@ -36,8 +36,6 @@
 
 #include <limits.h>
 
-#include <arm_neon.h>
-
 
 HIDDEN JOCTET *
 jsimd_huff_encode_one_block_neon(void *state, JOCTET *buffer, JCOEFPTR block,

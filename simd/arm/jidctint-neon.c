@@ -25,8 +25,6 @@
 #include "align.h"
 #include "neon-compat.h"
 
-#include <arm_neon.h>
-
 
 #define CONST_BITS  13
 #define PASS1_BITS  2

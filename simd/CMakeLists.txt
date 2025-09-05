@@ -10,11 +10,15 @@ macro(simd_fail message)
 endmacro()
 
 
+option(WITH_SIMDE "Use SIMD Everywhere to translate Arm/Neon intrinsics into SIMD intrinsics for other platforms (Experimental)"
+  FALSE)
+
+
 ###############################################################################
 # x86[-64] (NASM)
 ###############################################################################
 
-if(CPU_TYPE STREQUAL "x86_64" OR CPU_TYPE STREQUAL "i386")
+if((CPU_TYPE STREQUAL "x86_64" OR CPU_TYPE STREQUAL "i386") AND NOT WITH_SIMDE)
 
 string(TOUPPER ${CPU_TYPE} SIMD_ARCHITECTURE)
 set(SIMD_ARCHITECTURE ${SIMD_ARCHITECTURE} PARENT_SCOPE)
@@ -228,10 +232,30 @@ endif()
 # Arm (Intrinsics)
 ###############################################################################
 
-elseif(CPU_TYPE STREQUAL "arm64" OR CPU_TYPE STREQUAL "arm")
+elseif(CPU_TYPE STREQUAL "arm64" OR CPU_TYPE STREQUAL "arm" OR WITH_SIMDE)
 
 string(TOUPPER ${CPU_TYPE} SIMD_ARCHITECTURE)
 set(SIMD_ARCHITECTURE ${SIMD_ARCHITECTURE} PARENT_SCOPE)
+
+if(WITH_SIMDE)
+
+if(NOT DEFINED HAVE_VLD1_S16_X3)
+  set(HAVE_VLD1_S16_X3 1)
+endif()
+if(NOT DEFINED HAVE_VLD1_U16_X2)
+  set(HAVE_VLD1_U16_X2 1)
+endif()
+if(NOT DEFINED HAVE_VLD1Q_U8_X4)
+  set(HAVE_VLD1Q_U8_X4 0)
+endif()
+
+if(BITS EQUAL 64)
+  set(SIMD_ARCHITECTURE ARM64 PARENT_SCOPE)
+else()
+  set(SIMD_ARCHITECTURE ARM PARENT_SCOPE)
+endif()
+
+else() # WITH_SIMDE
 
 # If Neon instructions are not explicitly enabled at compile time (e.g. using
 # -mfpu=neon) with an AArch32 Linux or Android build, then the AArch32 SIMD
@@ -311,8 +335,6 @@ check_c_source_compiles("
 if(BITS EQUAL 32)
   unset(CMAKE_REQUIRED_FLAGS)
 endif()
-configure_file(arm/neon-compat.h.in arm/neon-compat.h @ONLY)
-include_directories(${CMAKE_CURRENT_BINARY_DIR}/arm)
 
 # GCC 11 and earlier and some older versions of Clang do not have a full or
 # optimal set of Neon intrinsics.  The presence or absence of the three
@@ -322,6 +344,11 @@ if(NOT HAVE_VLD1_S16_X3 OR NOT HAVE_VLD1_U16_X2 OR NOT HAVE_VLD1Q_U8_X4 OR
   (CMAKE_COMPILER_IS_GNUCC AND CMAKE_C_COMPILER_VERSION VERSION_LESS 12.0.0))
   message(WARNING "The compiler's Arm Neon intrinsics implementation is incomplete or suboptimal.  Performance will suffer.  Use GCC 12 or later or Clang for full performance.")
 endif()
+
+endif() # WITH_SIMDE
+
+configure_file(arm/neon-compat.h.in arm/neon-compat.h @ONLY)
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/arm)
 
 set(SIMD_SOURCES arm/jccolor-neon.c arm/jcgray-neon.c
   arm/aarch${BITS}/jchuff-neon.c arm/jcphuff-neon.c arm/jcsample-neon.c

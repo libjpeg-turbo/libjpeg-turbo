@@ -24,8 +24,6 @@
 #include "../jsimd.h"
 #include "neon-compat.h"
 
-#include <arm_neon.h>
-
 
 /* After downsampling, the resulting sample values are in the range [0, 255],
  * but the Discrete Cosine Transform (DCT) operates on values centered around

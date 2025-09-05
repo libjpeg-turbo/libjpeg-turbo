@@ -25,8 +25,6 @@
 #include "align.h"
 #include "neon-compat.h"
 
-#include <arm_neon.h>
-
 
 ALIGN(16) static const uint8_t jsimd_h2_downsample_consts[] = {
   0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,   /* Pad 0 */

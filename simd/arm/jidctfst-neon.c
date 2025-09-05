@@ -25,8 +25,6 @@
 #include "align.h"
 #include "neon-compat.h"
 
-#include <arm_neon.h>
-
 
 /* jsimd_idct_ifast_neon() performs dequantization and a fast, not so accurate
  * inverse DCT (Discrete Cosine Transform) on one block of coefficients.  It

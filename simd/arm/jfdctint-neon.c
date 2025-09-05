@@ -25,8 +25,6 @@
 #include "align.h"
 #include "neon-compat.h"
 
-#include <arm_neon.h>
-
 
 /* jsimd_fdct_islow_neon() performs a slower but more accurate forward DCT
  * (Discrete Cosine Transform) on one block of samples.  It uses the same

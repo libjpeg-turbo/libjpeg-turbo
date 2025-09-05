@@ -31,8 +31,6 @@
 
 #include <limits.h>
 
-#include <arm_neon.h>
-
 
 ALIGN(16) static const uint8_t jsimd_huff_encode_one_block_consts[] = {
     0,   1,   2,   3,  16,  17,  32,  33,
