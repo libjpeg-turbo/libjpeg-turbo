@@ -27,7 +27,7 @@
 
 #include <ctype.h>
 
-#if defined(__linux__)
+#if !defined(__mips_loongson_vector_rev) && defined(__linux__)
 
 #define SOMEWHAT_SANE_PROC_CPUINFO_SIZE_LIMIT  (1024 * 1024)
 
@@ -96,21 +96,19 @@ parse_proc_cpuinfo(int bufsize, unsigned int *simd_support)
 HIDDEN unsigned int
 jpeg_simd_cpu_support(void)
 {
-#if defined(__linux__)
+#if !defined(__mips_loongson_vector_rev) && defined(__linux__)
   int bufsize = 1024; /* an initial guess for the line buffer size limit */
 #endif
   unsigned int simd_support = 0;
 
-#if defined(__linux__)
+#if defined(__mips_loongson_vector_rev)
+  simd_support |= JSIMD_MMI;
+#elif defined(__linux__)
   while (!parse_proc_cpuinfo(bufsize, &simd_support)) {
     bufsize *= 2;
     if (bufsize > SOMEWHAT_SANE_PROC_CPUINFO_SIZE_LIMIT)
       break;
   }
-#elif defined(__mips_loongson_vector_rev)
-  /* Only enable MMI by default on non-Linux platforms when the compiler flags
-   * support it. */
-  simd_support |= JSIMD_MMI;
 #endif
 
   return simd_support;
