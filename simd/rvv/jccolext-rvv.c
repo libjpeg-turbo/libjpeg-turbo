@@ -68,7 +68,6 @@ void jsimd_rgb_ycc_convert_rvv(JDIMENSION img_width, JSAMPARRAY input_buf,
             g = __riscv_vlse16_v_u16m4(inptr + RGB_GREEN, bstride, vl);
             b = __riscv_vlse16_v_u16m4(inptr + RGB_BLUE, bstride, vl);
 #endif
-            
 
             /* (Original)
             * Y  =  0.29900 * R + 0.58700 * G + 0.11400 * B

@@ -31,6 +31,7 @@
 #define POWERPC  4
 #define MIPS     5
 #define MIPS64   6
+#define RISCV64   7
 
 /* Bitmask for supported SIMD instruction sets */
 

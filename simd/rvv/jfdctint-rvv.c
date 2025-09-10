@@ -89,7 +89,7 @@ void jsimd_fdct_islow_rvv(DCTELEM *data)
     temp = __riscv_vadd_vv_i32m2(p1, temp, vl);
     temp = __riscv_vadd_vx_i32m2(temp, ROUND_ADD(CONST_BITS - PASS1_BITS), vl);
     out2 = __riscv_vnsra_wx_i16m1(temp, CONST_BITS - PASS1_BITS, vl);
-    
+
     temp = __riscv_vwmul_vx_i32m2(tmp12, F_1_847, vl);
     temp = __riscv_vsub_vv_i32m2(p1, temp, vl);
     temp = __riscv_vadd_vx_i32m2(temp, ROUND_ADD(CONST_BITS - PASS1_BITS), vl);

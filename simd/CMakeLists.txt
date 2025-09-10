@@ -481,10 +481,12 @@ if(CMAKE_POSITION_INDEPENDENT_CODE OR ENABLE_SHARED)
 endif()
 
 ###############################################################################
-# RVV 64-bit (Intrinsics)
+# RISCV 64-bit (Intrinsics)
 ###############################################################################
 
 elseif(CPU_TYPE STREQUAL "riscv64")
+
+set(SIMD_ARCHITECTURE RISCV64 PARENT_SCOPE)
 
 check_c_source_compiles("
   #include <riscv_vector.h>
@@ -528,8 +530,8 @@ enable_language(ASM)
 set_source_files_properties(${SIMD_SOURCES} PROPERTIES
   COMPILE_FLAGS -march=rv64gcv)
 
-add_library(simd OBJECT ${SIMD_SOURCES} rvv/jsimd.c rvv/jsimd.S)
-
+add_library(simd OBJECT ${SIMD_SOURCES} jsimd.c rvv/jsimdcpu.c rvv/jsimd.S)
+# riscv64/jsimdcpu.c
 
 if(CMAKE_POSITION_INDEPENDENT_CODE OR ENABLE_SHARED)
   set_target_properties(simd PROPERTIES POSITION_INDEPENDENT_CODE 1)

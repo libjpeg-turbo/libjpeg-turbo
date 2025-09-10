@@ -64,7 +64,6 @@ void jsimd_rgb_gray_convert_rvv(JDIMENSION img_width, JSAMPARRAY input_buf,
             r = __riscv_vlse16_v_u16m4(inptr + RGB_RED, bstride, vl);
             g = __riscv_vlse16_v_u16m4(inptr + RGB_GREEN, bstride, vl);
             b = __riscv_vlse16_v_u16m4(inptr + RGB_BLUE, bstride, vl);
-            
 #endif
 
             /* (Original)

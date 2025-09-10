@@ -150,7 +150,9 @@ endif()
 if(MSVC_IDE AND CMAKE_GENERATOR_PLATFORM MATCHES "arm64")
   set(CPU_TYPE arm64)
 endif()
-
+if(CMAKE_GENERATOR_PLATFORM MATCHES "riscv64")
+  set(CPU_TYPE riscv64)
+endif()
 message(STATUS "${BITS}-bit build (${CPU_TYPE})")
 
 
