@@ -29,6 +29,9 @@
 #include "jdsample.h"
 #include "jsimd.h"
 #include "jpegapicomp.h"
+#ifdef WITH_BENCHMARK
+#include "tjutil.h"
+#endif
 
 
 
@@ -76,9 +79,17 @@ sep_upsample(j_decompress_ptr cinfo, _JSAMPIMAGE input_buf,
       /* Invoke per-component upsample method.  Notice we pass a POINTER
        * to color_buf[ci], so that fullsize_upsample can change it.
        */
+#ifdef WITH_BENCHMARK
+      cinfo->master->start = getTime();
+#endif
       (*upsample->methods[ci]) (cinfo, compptr,
         input_buf[ci] + (*in_row_group_ctr * upsample->rowgroup_height[ci]),
         upsample->color_buf + ci);
+#ifdef WITH_BENCHMARK
+      cinfo->master->upsample_elapsed += getTime() - cinfo->master->start;
+      cinfo->master->upsample_msamples +=
+        (double)cinfo->output_width * cinfo->max_v_samp_factor / 1000000.;
+#endif
     }
     upsample->next_row_out = 0;
   }
@@ -97,10 +108,18 @@ sep_upsample(j_decompress_ptr cinfo, _JSAMPIMAGE input_buf,
   if (num_rows > out_rows_avail)
     num_rows = out_rows_avail;
 
+#ifdef WITH_BENCHMARK
+  cinfo->master->start = getTime();
+#endif
   (*cinfo->cconvert->_color_convert) (cinfo, upsample->color_buf,
                                       (JDIMENSION)upsample->next_row_out,
                                       output_buf + *out_row_ctr,
                                       (int)num_rows);
+#ifdef WITH_BENCHMARK
+  cinfo->master->cconvert_elapsed += getTime() - cinfo->master->start;
+  cinfo->master->cconvert_mpixels +=
+    (double)cinfo->output_width * num_rows / 1000000.;
+#endif
 
   /* Adjust counts */
   *out_row_ctr += num_rows;

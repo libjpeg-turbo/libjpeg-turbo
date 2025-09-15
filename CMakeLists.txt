@@ -278,6 +278,8 @@ if(NOT WITH_TOOLS)
   set(WITH_TESTS 0)
 endif()
 option(WITH_FUZZ "Build fuzz targets" FALSE)
+option(WITH_BENCHMARK "Enable low-level JPEG algorithm benchmarks (useful for SIMD module development but not suitable for production)"
+  FALSE)
 
 macro(report_option var desc)
   if(${var})
@@ -672,6 +674,9 @@ set(JPEG_SOURCES src/jcapimin.c
   src/wrapper/jquant1-8.c src/wrapper/jquant1-12.c
   src/wrapper/jquant2-8.c src/wrapper/jquant2-12.c
   src/wrapper/jutils-8.c src/wrapper/jutils-12.c src/wrapper/jutils-16.c)
+if(WITH_BENCHMARK)
+  set(JPEG_SOURCES ${JPEG_SOURCES} src/tjutil.c)
+endif()
 
 if(WITH_ARITH_ENC OR WITH_ARITH_DEC)
   set(JPEG_SOURCES ${JPEG_SOURCES} src/jaricom.c)

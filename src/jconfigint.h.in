@@ -76,3 +76,5 @@
 #define SIMD_ARCHITECTURE  @SIMD_ARCHITECTURE@
 
 #endif
+
+#cmakedefine WITH_BENCHMARK

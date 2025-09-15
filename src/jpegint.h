@@ -101,6 +101,16 @@ struct jpeg_comp_master {
   /* SIMD-specific variables */
   unsigned int simd_support;
   unsigned int simd_huffman;
+
+#ifdef WITH_BENCHMARK
+  double start;
+  double cconvert_elapsed, cconvert_mpixels;
+  double downsample_elapsed, downsample_msamples;
+  double convsamp_elapsed, convsamp_msamples;
+  double fdct_elapsed, fdct_mcoeffs;
+  double quantize_elapsed, quantize_mcoeffs;
+  double entropy_elapsed, entropy_mcoeffs;
+#endif
 };
 
 /* Main buffer control (downsampled-data buffer) */
@@ -274,6 +284,14 @@ struct jpeg_decomp_master {
   /* SIMD-specific variables */
   unsigned int simd_support;
   unsigned int simd_huffman;
+
+#ifdef WITH_BENCHMARK
+  double start;
+  double idct_elapsed, idct_mcoeffs;
+  double merged_upsample_elapsed, merged_upsample_mpixels;
+  double upsample_elapsed, upsample_msamples;
+  double cconvert_elapsed, cconvert_mpixels;
+#endif
 };
 
 /* Input control module */
