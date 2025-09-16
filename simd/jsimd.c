@@ -125,13 +125,11 @@ jsimd_set_rgb_ycc(j_compress_ptr cinfo)
     return JSIMD_NONE;
 
 #if SIMD_ARCHITECTURE == X86_64 || SIMD_ARCHITECTURE == I386
-  if ((cinfo->master->simd_support & JSIMD_AVX2) &&
-      IS_ALIGNED_AVX(jconst_rgb_ycc_convert_avx2)) {
+  if (cinfo->master->simd_support & JSIMD_AVX2) {
     SET_SIMD_EXTRGB_COLOR_CONVERTER(ycc, avx2);
     return JSIMD_AVX2;
   }
-  if ((cinfo->master->simd_support & JSIMD_SSE2) &&
-      IS_ALIGNED_SSE(jconst_rgb_ycc_convert_sse2)) {
+  if (cinfo->master->simd_support & JSIMD_SSE2) {
     SET_SIMD_EXTRGB_COLOR_CONVERTER(ycc, sse2);
     return JSIMD_SSE2;
   }

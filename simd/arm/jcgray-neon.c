@@ -2,7 +2,7 @@
  * Grayscale colorspace conversion (Arm Neon)
  *
  * Copyright (C) 2020, Arm Limited.  All Rights Reserved.
- * Copyright (C) 2024, D. R. Commander.  All Rights Reserved.
+ * Copyright (C) 2024-2025, D. R. Commander.  All Rights Reserved.
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the authors be held liable for any damages
@@ -22,7 +22,7 @@
  */
 
 #include "../jsimd.h"
-#include "align.h"
+#include "../align.h"
 #include "neon-compat.h"
 
 

@@ -25,7 +25,7 @@
  */
 
 #include "../../jsimd.h"
-#include "../align.h"
+#include "../../align.h"
 #include "../jchuff.h"
 #include "neon-compat.h"
 

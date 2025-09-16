@@ -22,7 +22,7 @@
  */
 
 #include "../jsimd.h"
-#include "align.h"
+#include "../align.h"
 #include "neon-compat.h"
 
 
