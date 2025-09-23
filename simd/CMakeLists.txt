@@ -216,6 +216,9 @@ foreach(file ${SIMD_SOURCES})
 endforeach()
 
 if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID MATCHES "Clang")
+  if(BITS EQUAL 32)
+    set_source_files_properties(x86/jccolor-sse2.c COMPILE_FLAGS "-msse2")
+  endif()
   set_source_files_properties(x86/jccolor-avx2.c COMPILE_FLAGS "-mavx2")
 endif()
 
