@@ -565,9 +565,9 @@ storage.
 64-bit libjpeg-turbo SDK for Visual C++ were installed on the same system, only
 one of them could be uninstalled.
 
-2. Fixed a signed integer overflow and subsequent segfault that occurred when
-attempting to decompress images with more than 715827882 pixels using the
-64-bit C version of TJBench.
+2. Fixed a signed integer overflow and subsequent segfault (CVE-2019-2201) that
+occurred when attempting to decompress images with more than 715827882 pixels
+using the 64-bit C version of TJBench.
 
 3. Fixed out-of-bounds write in `tjDecompressToYUV2()` and
 `tjDecompressToYUVPlanes()` (sometimes manifesting as a double free) that
@@ -619,9 +619,9 @@ regardless of whether a 4:2:2 JPEG image is rotated or transposed prior to
 decompression (in the frequency domain) or after decompression (in the spatial
 domain), the final image will be similar.
 
-4. Fixed an integer overflow and subsequent segfault that occurred when
-attempting to compress or decompress images with more than 1 billion pixels
-using the TurboJPEG API.
+4. Fixed an integer overflow and subsequent segfault (CVE-2019-2201) that
+occurred when attempting to compress or decompress images with more than 1
+billion pixels using the TurboJPEG API.
 
 5. Fixed a regression introduced by 2.0 beta1[15] whereby attempting to
 generate a progressive JPEG image on an SSE2-capable CPU using a scan script
