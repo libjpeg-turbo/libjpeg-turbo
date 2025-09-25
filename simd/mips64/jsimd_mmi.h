@@ -7,6 +7,7 @@
  *           CaiWanwei   <caiwanwei@loongson.cn>
  *           SunZhangzhi <sunzhangzhi-cq@loongson.cn>
  *           QingfaLiu   <liuqingfa-hf@loongson.cn>
+ * Copyright (C) 2025, D. R. Commander.  All Rights Reserved.
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the authors be held liable for any damages
@@ -29,6 +30,8 @@
 #include "../../jinclude.h"
 #include "../../jpeglib.h"
 #include "../../jdct.h"
+#include "../../jchuff.h"
+#include "../jsimd.h"
 #include "loongson-mmintrin.h"
 
 
