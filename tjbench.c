@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2009-2019, 2021-2024 D. R. Commander.  All Rights Reserved.
+ * Copyright (C)2009-2019, 2021-2025 D. R. Commander.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -40,9 +40,9 @@
 #if !defined(_MSC_VER) || _MSC_VER > 1600
 #include <stdint.h>
 #endif
-#include <cdjpeg.h>
-#include "./tjutil.h"
-#include "./turbojpeg.h"
+#include "cdjpeg.h"
+#include "tjutil.h"
+#include "turbojpeg.h"
 
 
 #define THROW(op, err) { \
