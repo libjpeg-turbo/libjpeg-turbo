@@ -24,7 +24,7 @@
  * 32-bit Arm architecture.
  */
 
-#include "../../jsimd.h"
+#include "../../jsimdint.h"
 
 #include <ctype.h>
 

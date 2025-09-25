@@ -24,13 +24,7 @@
  * Recommendation ITU-T T.81 (1992) | ISO/IEC 10918-1:1994.
  */
 
-#define JPEG_INTERNALS
-#include "../../../src/jinclude.h"
-#include "../../../src/jpeglib.h"
-#include "../../../src/jsimd.h"
-#include "../../../src/jdct.h"
-#include "../../../src/jsimddct.h"
-#include "../../jsimd.h"
+#include "../../jsimdint.h"
 #include "../jchuff.h"
 #include "neon-compat.h"
 

@@ -128,8 +128,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "SunOS")
   set(GREP ggrep)
 endif()
 add_custom_target(jsimdcfg COMMAND
-  ${CMAKE_C_COMPILER} -E -I${CMAKE_BINARY_DIR} -I${CMAKE_CURRENT_BINARY_DIR}
-    -I${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_C_COMPILER} -Wall -Werror -E -I${CMAKE_BINARY_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/nasm/jsimdcfg.inc.h |
   ${GREP} -E '^[\;%]|^\ %' | sed 's%_cpp_protection_%%' |
   sed 's@% define@%define@g' >${CMAKE_CURRENT_SOURCE_DIR}/nasm/jsimdcfg.inc)

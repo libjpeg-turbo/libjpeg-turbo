@@ -19,12 +19,8 @@
  */
 
 #include <stdio.h>
-#define JPEG_INTERNALS
-#include "../src/jinclude.h"
-#include "../src/jpeglib.h"
-#include "../src/jdct.h"
-#include "../src/jsimd.h"
-#include "../src/jsimddct.h"
+#include "jsimddct.h"
+#include "jsimd.h"
 #include "../src/jpegapicomp.h"
 
 static const char *instrset_name(int instrset) {

@@ -32,9 +32,9 @@
 #define jsimd_rgb_ycc_convert_dspr2  jsimd_extrgb_ycc_convert_dspr2
 #define jsimd_rgb_gray_convert_dspr2  jsimd_extrgb_gray_convert_dspr2
 #define jsimd_ycc_rgb_convert_dspr2  jsimd_ycc_extrgb_convert_dspr2
+#include "jsimddct.h"
 #include "jsimd.h"
-#include "../src/jsimd.h"
-#include "../src/jsimddct.h"
+#include "jsimdint.h"
 
 #if SIMD_ARCHITECTURE == X86_64 || SIMD_ARCHITECTURE == I386
 

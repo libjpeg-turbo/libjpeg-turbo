@@ -2,7 +2,7 @@
  * Merged upsampling/color conversion (Arm Neon)
  *
  * Copyright (C) 2020, Arm Limited.  All Rights Reserved.
- * Copyright (C) 2024, D. R. Commander.  All Rights Reserved.
+ * Copyright (C) 2024-2025, D. R. Commander.  All Rights Reserved.
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the authors be held liable for any damages
@@ -21,7 +21,7 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
-#include "../jsimd.h"
+#include "../jsimdint.h"
 #include "align.h"
 #include "neon-compat.h"
 

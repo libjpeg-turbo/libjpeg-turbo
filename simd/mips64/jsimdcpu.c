@@ -23,7 +23,7 @@
  * 64-bit MIPS architecture.
  */
 
-#include "../jsimd.h"
+#include "../jsimdint.h"
 
 #include <ctype.h>
 

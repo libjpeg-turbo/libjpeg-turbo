@@ -24,11 +24,10 @@
  * MIPS architecture.
  */
 
-#define JPEG_INTERNALS
-#include "../src/jsimd.h"
-#include "../src/jsimddct.h"
-#include "../src/jdsample.h"
+#include "../jsimddct.h"
 #include "../jsimd.h"
+#include "../jsimdint.h"
+#include "../src/jdsample.h"
 
 #if !(defined(__mips_dsp) && (__mips_dsp_rev >= 2)) && defined(__linux__)
 

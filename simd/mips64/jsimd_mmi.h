@@ -26,12 +26,9 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
-#define JPEG_INTERNALS
-#include "../../src/jinclude.h"
-#include "../../src/jpeglib.h"
 #include "../../src/jdct.h"
 #include "../../src/jchuff.h"
-#include "../jsimd.h"
+#include "../jsimdint.h"
 #include "loongson-mmintrin.h"
 
 

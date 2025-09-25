@@ -55,7 +55,9 @@
 #define JPEG_INTERNALS
 #include "jinclude.h"
 #include "jpeglib.h"
-#include "jsimd.h"
+#ifdef WITH_SIMD
+#include "../simd/jsimd.h"
+#endif
 #include "jsamplecomp.h"
 
 
