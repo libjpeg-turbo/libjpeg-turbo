@@ -40,9 +40,9 @@
 #if !defined(_MSC_VER) || _MSC_VER > 1600
 #include <stdint.h>
 #endif
-#include <cdjpeg.h>
-#include "./tjutil.h"
-#include "./turbojpeg.h"
+#include "cdjpeg.h"
+#include "tjutil.h"
+#include "turbojpeg.h"
 
 
 #define MATCH_ARG(arg, string, minChars) \

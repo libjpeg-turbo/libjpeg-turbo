@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <turbojpeg.h>
+#include "../src/turbojpeg.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>

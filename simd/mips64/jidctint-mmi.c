@@ -2,7 +2,7 @@
  * Loongson MMI optimizations for libjpeg-turbo
  *
  * Copyright (C) 2014-2015, 2018, 2020, 2025, D. R. Commander.
- *           All Rights Reserved.
+ *                                            All Rights Reserved.
  * Copyright (C) 2016-2017, Loongson Technology Corporation Limited, BeiJing.
  *                          All Rights Reserved.
  * Authors:  ZhuChen     <zhuchen@loongson.cn>
@@ -109,8 +109,7 @@ static uint64_t const_value[] = {
 
 #define DO_IDCT_COMMON(PASS) { \
   __m64 tmp0_3l, tmp0_3h, tmp1_2l, tmp1_2h; \
-  __m64 tmp0l, tmp0h, tmp1l, tmp1h, tmp2l, tmp2h, tmp3l, tmp3h; \
-  __m64 z34l, z34h, z3l, z3h, z4l, z4h, z3, z4; \
+  __m64 z34l, z34h, z3l, z3h, z4l, z4h, z4; \
   __m64 out0l, out0h, out1l, out1h, out2l, out2h, out3l, out3h; \
   __m64 out4l, out4h, out5l, out5h, out6l, out6h, out7l, out7h; \
   \
@@ -257,10 +256,9 @@ static uint64_t const_value[] = {
   __m64 col0l, col1l, col2l, col3l, col4l, col5l, col6l, col7l; \
   __m64 quant0l, quant1l, quant2l, quant3l; \
   __m64 quant4l, quant5l, quant6l, quant7l; \
-  __m64 z23, z2, z3, z23l, z23h; \
+  __m64 z23, z2, z23l, z23h; \
   __m64 row01a, row01b, row01c, row01d, row23a, row23b, row23c, row23d; \
   __m64 row0l, row0h, row1l, row1h, row2l, row2h, row3l, row3h; \
-  __m64 tmp0l, tmp0h, tmp1l, tmp1h, tmp2l, tmp2h, tmp3l, tmp3h; \
   __m64 tmp10l, tmp10h, tmp11l, tmp11h, tmp12l, tmp12h, tmp13l, tmp13h; \
   __m32 col0a, col1a, mm0; \
   \
@@ -437,7 +435,6 @@ static uint64_t const_value[] = {
   __m64 col0123a, col0123b, col0123c, col0123d; \
   __m64 col01l, col01h, col23l, col23h, row06, row17, row24, row35; \
   __m64 col0, col1, col2, col3; \
-  __m64 tmp0l, tmp0h, tmp1l, tmp1h, tmp2l, tmp2h, tmp3l, tmp3h; \
   __m64 tmp10l, tmp10h, tmp11l, tmp11h, tmp12l, tmp12h, tmp13l, tmp13h; \
   \
   row0l = _mm_load_si64((__m64 *)&wsptr[DCTSIZE * 0]);  /* (00 01 02 03) */ \
@@ -543,6 +540,8 @@ jsimd_idct_islow_mmi(void *dct_table, JCOEFPTR coef_block,
                      JSAMPARRAY output_buf, JDIMENSION output_col)
 {
   __m64 tmp0, tmp1, tmp2, tmp3;
+  __m64 tmp0l, tmp0h, tmp1l, tmp1h, tmp2l, tmp2h, tmp3l, tmp3h;
+  __m64 z3;
   __m64 out0, out1, out2, out3, out4, out5, out6, out7;
   JCOEFPTR inptr;
   ISLOW_MULT_TYPE *quantptr;

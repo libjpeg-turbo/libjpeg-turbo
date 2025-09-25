@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2013, 2016, 2024 D. R. Commander.  All Rights Reserved.
+ * Copyright (C)2013, 2016, 2024-2025 D. R. Commander.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -33,7 +33,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
-#include "./md5.h"
+#include "md5.h"
 
 int main(int argc, char *argv[])
 {
