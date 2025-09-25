@@ -49,7 +49,7 @@ add_fuzz_target(compress_lossless compress_lossless.cc)
 
 add_fuzz_target(compress12 compress12.cc)
 
-add_fuzz_target(compress12_lossless compress12.cc)
+add_fuzz_target(compress12_lossless compress12_lossless.cc)
 
 add_fuzz_target(compress16_lossless compress16_lossless.cc)
 
