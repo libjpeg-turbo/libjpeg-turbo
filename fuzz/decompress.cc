@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2021-2024 D. R. Commander.  All Rights Reserved.
+ * Copyright (C)2021-2025 D. R. Commander.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <turbojpeg.h>
+#include "../src/turbojpeg.h"
 #include <stdlib.h>
 #include <stdint.h>
 

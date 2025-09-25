@@ -6,8 +6,8 @@
  * this stuff is worth it, you can buy me a beer in return.   Poul-Henning Kamp
  * ----------------------------------------------------------------------------
  * libjpeg-turbo Modifications:
- * Copyright (C)2016, 2018-2019, 2022, 2024 D. R. Commander.
- *                                          All Rights Reserved.
+ * Copyright (C)2016, 2018-2019, 2022, 2024-2025 D. R. Commander.
+ *                                               All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -59,7 +59,7 @@
 
 #define LENGTH  16
 
-#include "./md5.h"
+#include "md5.h"
 
 static char *MD5End(MD5_CTX *ctx, char *buf)
 {
