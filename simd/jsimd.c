@@ -1604,7 +1604,7 @@ jsimd_set_huff_encode_one_block(j_compress_ptr cinfo)
     return JSIMD_SSE2;
   }
 #elif SIMD_ARCHITECTURE == ARM64 || SIMD_ARCHITECTURE == ARM
-  if (cinfo->master->simd_support & JSIMD_NEON &&
+  if ((cinfo->master->simd_support & JSIMD_NEON) &&
       cinfo->master->simd_huffman) {
     cinfo->entropy->huff_encode_one_block_simd =
       jsimd_huff_encode_one_block_neon;
@@ -1626,12 +1626,14 @@ jsimd_set_encode_mcu_AC_first_prepare(j_compress_ptr cinfo,
     return JSIMD_NONE;
 
 #if SIMD_ARCHITECTURE == X86_64 || SIMD_ARCHITECTURE == I386
-  if (cinfo->master->simd_support & JSIMD_SSE2) {
+  if ((cinfo->master->simd_support & JSIMD_SSE2) &&
+      cinfo->master->simd_huffman) {
     *method = jsimd_encode_mcu_AC_first_prepare_sse2;
     return JSIMD_SSE2;
   }
 #elif SIMD_ARCHITECTURE == ARM64 || SIMD_ARCHITECTURE == ARM
-  if (cinfo->master->simd_support & JSIMD_NEON) {
+  if ((cinfo->master->simd_support & JSIMD_NEON) &&
+      cinfo->master->simd_huffman) {
     *method = jsimd_encode_mcu_AC_first_prepare_neon;
     return JSIMD_NEON;
   }
@@ -1651,12 +1653,14 @@ jsimd_set_encode_mcu_AC_refine_prepare(j_compress_ptr cinfo,
     return JSIMD_NONE;
 
 #if SIMD_ARCHITECTURE == X86_64 || SIMD_ARCHITECTURE == I386
-  if (cinfo->master->simd_support & JSIMD_SSE2) {
+  if ((cinfo->master->simd_support & JSIMD_SSE2) &&
+      cinfo->master->simd_huffman) {
     *method = jsimd_encode_mcu_AC_refine_prepare_sse2;
     return JSIMD_SSE2;
   }
 #elif SIMD_ARCHITECTURE == ARM64 || SIMD_ARCHITECTURE == ARM
-  if (cinfo->master->simd_support & JSIMD_NEON) {
+  if ((cinfo->master->simd_support & JSIMD_NEON) &&
+      cinfo->master->simd_huffman) {
     *method = jsimd_encode_mcu_AC_refine_prepare_neon;
     return JSIMD_NEON;
   }
