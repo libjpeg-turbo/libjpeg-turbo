@@ -17,7 +17,7 @@
 #include "jinclude.h"
 #include "jpeglib.h"
 #include "jsamplecomp.h"
-#ifdef WITH_BENCHMARK
+#ifdef WITH_PROFILE
 #include "tjutil.h"
 #endif
 
@@ -206,21 +206,21 @@ compress_data(j_compress_ptr cinfo, _JSAMPIMAGE input_buf)
       /* Try to write the MCU.  In event of a suspension failure, we will
        * re-DCT the MCU on restart (a bit inefficient, could be fixed...)
        */
-#ifdef WITH_BENCHMARK
+#ifdef WITH_PROFILE
       cinfo->master->start = getTime();
 #endif
       if (!(*cinfo->entropy->encode_mcu) (cinfo, coef->MCU_buffer)) {
         /* Suspension forced; update state counters and exit */
         coef->MCU_vert_offset = yoffset;
         coef->mcu_ctr = MCU_col_num;
-#ifdef WITH_BENCHMARK
+#ifdef WITH_PROFILE
         cinfo->master->entropy_elapsed += getTime() - cinfo->master->start;
         cinfo->master->entropy_mcoeffs +=
           (double)cinfo->blocks_in_MCU * DCTSIZE2 / 1000000.;
 #endif
         return FALSE;
       }
-#ifdef WITH_BENCHMARK
+#ifdef WITH_PROFILE
       cinfo->master->entropy_elapsed += getTime() - cinfo->master->start;
       cinfo->master->entropy_mcoeffs +=
         (double)cinfo->blocks_in_MCU * DCTSIZE2 / 1000000.;
@@ -396,21 +396,21 @@ compress_output(j_compress_ptr cinfo, _JSAMPIMAGE input_buf)
         }
       }
       /* Try to write the MCU. */
-#ifdef WITH_BENCHMARK
+#ifdef WITH_PROFILE
       cinfo->master->start = getTime();
 #endif
       if (!(*cinfo->entropy->encode_mcu) (cinfo, coef->MCU_buffer)) {
         /* Suspension forced; update state counters and exit */
         coef->MCU_vert_offset = yoffset;
         coef->mcu_ctr = MCU_col_num;
-#ifdef WITH_BENCHMARK
+#ifdef WITH_PROFILE
         cinfo->master->entropy_elapsed += getTime() - cinfo->master->start;
         cinfo->master->entropy_mcoeffs +=
           (double)cinfo->blocks_in_MCU * DCTSIZE2 / 1000000.;
 #endif
         return FALSE;
       }
-#ifdef WITH_BENCHMARK
+#ifdef WITH_PROFILE
       cinfo->master->entropy_elapsed += getTime() - cinfo->master->start;
       cinfo->master->entropy_mcoeffs +=
         (double)cinfo->blocks_in_MCU * DCTSIZE2 / 1000000.;

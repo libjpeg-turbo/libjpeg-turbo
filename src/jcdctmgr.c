@@ -23,7 +23,7 @@
 #ifdef WITH_SIMD
 #include "../simd/jsimddct.h"
 #endif
-#ifdef WITH_BENCHMARK
+#ifdef WITH_PROFILE
 #include "tjutil.h"
 #endif
 
@@ -508,31 +508,31 @@ forward_DCT(j_compress_ptr cinfo, jpeg_component_info *compptr,
 
   for (bi = 0; bi < num_blocks; bi++, start_col += DCTSIZE) {
     /* Load data into workspace, applying unsigned->signed conversion */
-#ifdef WITH_BENCHMARK
+#ifdef WITH_PROFILE
     cinfo->master->start = getTime();
 #endif
     (*do_convsamp) (sample_data, start_col, workspace);
-#ifdef WITH_BENCHMARK
+#ifdef WITH_PROFILE
     cinfo->master->convsamp_elapsed += getTime() - cinfo->master->start;
     cinfo->master->convsamp_msamples += (double)DCTSIZE2 / 1000000.;
 #endif
 
     /* Perform the DCT */
-#ifdef WITH_BENCHMARK
+#ifdef WITH_PROFILE
     cinfo->master->start = getTime();
 #endif
     (*do_dct) (workspace);
-#ifdef WITH_BENCHMARK
+#ifdef WITH_PROFILE
     cinfo->master->fdct_elapsed += getTime() - cinfo->master->start;
     cinfo->master->fdct_mcoeffs += (double)DCTSIZE2 / 1000000.;
 #endif
 
     /* Quantize/descale the coefficients, and store into coef_blocks[] */
-#ifdef WITH_BENCHMARK
+#ifdef WITH_PROFILE
     cinfo->master->start = getTime();
 #endif
     (*do_quantize) (coef_blocks[bi], divisors, workspace);
-#ifdef WITH_BENCHMARK
+#ifdef WITH_PROFILE
     cinfo->master->quantize_elapsed += getTime() - cinfo->master->start;
     cinfo->master->quantize_mcoeffs += (double)DCTSIZE2 / 1000000.;
 #endif
@@ -620,31 +620,31 @@ forward_DCT_float(j_compress_ptr cinfo, jpeg_component_info *compptr,
 
   for (bi = 0; bi < num_blocks; bi++, start_col += DCTSIZE) {
     /* Load data into workspace, applying unsigned->signed conversion */
-#ifdef WITH_BENCHMARK
+#ifdef WITH_PROFILE
     cinfo->master->start = getTime();
 #endif
     (*do_convsamp) (sample_data, start_col, workspace);
-#ifdef WITH_BENCHMARK
+#ifdef WITH_PROFILE
     cinfo->master->convsamp_elapsed += getTime() - cinfo->master->start;
     cinfo->master->convsamp_msamples += (double)DCTSIZE2 / 1000000.;
 #endif
 
     /* Perform the DCT */
-#ifdef WITH_BENCHMARK
+#ifdef WITH_PROFILE
     cinfo->master->start = getTime();
 #endif
     (*do_dct) (workspace);
-#ifdef WITH_BENCHMARK
+#ifdef WITH_PROFILE
     cinfo->master->fdct_elapsed += getTime() - cinfo->master->start;
     cinfo->master->fdct_mcoeffs += (double)DCTSIZE2 / 1000000.;
 #endif
 
     /* Quantize/descale the coefficients, and store into coef_blocks[] */
-#ifdef WITH_BENCHMARK
+#ifdef WITH_PROFILE
     cinfo->master->start = getTime();
 #endif
     (*do_quantize) (coef_blocks[bi], divisors, workspace);
-#ifdef WITH_BENCHMARK
+#ifdef WITH_PROFILE
     cinfo->master->quantize_elapsed += getTime() - cinfo->master->start;
     cinfo->master->quantize_mcoeffs += (double)DCTSIZE2 / 1000000.;
 #endif

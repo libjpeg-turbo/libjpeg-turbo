@@ -15,7 +15,7 @@
 #define JPEG_INTERNALS
 #include "jinclude.h"
 #include "jpeglib.h"
-#ifdef WITH_BENCHMARK
+#ifdef WITH_PROFILE
 #include <stdio.h>
 #endif
 
@@ -75,7 +75,7 @@ jpeg_abort(j_common_ptr cinfo)
 GLOBAL(void)
 jpeg_destroy(j_common_ptr cinfo)
 {
-#ifdef WITH_BENCHMARK
+#ifdef WITH_PROFILE
   if (cinfo->is_decompressor) {
     if (((j_decompress_ptr)cinfo)->master->idct_mcoeffs > 0.0)
       fprintf(stderr, "Inverse DCT:         %f Mcoefficients/sec\n",

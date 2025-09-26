@@ -23,7 +23,7 @@
 #include "jinclude.h"
 #include "jpeglib.h"
 #include "jsamplecomp.h"
-#ifdef WITH_BENCHMARK
+#ifdef WITH_PROFILE
 #include "tjutil.h"
 #endif
 
@@ -153,14 +153,14 @@ pre_process_data(j_compress_ptr cinfo, _JSAMPARRAY input_buf,
     inrows = in_rows_avail - *in_row_ctr;
     numrows = cinfo->max_v_samp_factor - prep->next_buf_row;
     numrows = (int)MIN((JDIMENSION)numrows, inrows);
-#ifdef WITH_BENCHMARK
+#ifdef WITH_PROFILE
     cinfo->master->start = getTime();
 #endif
     (*cinfo->cconvert->_color_convert) (cinfo, input_buf + *in_row_ctr,
                                         prep->color_buf,
                                         (JDIMENSION)prep->next_buf_row,
                                         numrows);
-#ifdef WITH_BENCHMARK
+#ifdef WITH_PROFILE
     cinfo->master->cconvert_elapsed += getTime() - cinfo->master->start;
     cinfo->master->cconvert_mpixels +=
       (double)cinfo->image_width * numrows / 1000000.;
@@ -179,13 +179,13 @@ pre_process_data(j_compress_ptr cinfo, _JSAMPARRAY input_buf,
     }
     /* If we've filled the conversion buffer, empty it. */
     if (prep->next_buf_row == cinfo->max_v_samp_factor) {
-#ifdef WITH_BENCHMARK
+#ifdef WITH_PROFILE
       cinfo->master->start = getTime();
 #endif
       (*cinfo->downsample->_downsample) (cinfo,
                                          prep->color_buf, (JDIMENSION)0,
                                          output_buf, *out_row_group_ctr);
-#ifdef WITH_BENCHMARK
+#ifdef WITH_PROFILE
       cinfo->master->downsample_elapsed += getTime() - cinfo->master->start;
       cinfo->master->downsample_msamples +=
         (double)cinfo->image_width * cinfo->max_v_samp_factor / 1000000.;
@@ -234,14 +234,14 @@ pre_process_context(j_compress_ptr cinfo, _JSAMPARRAY input_buf,
       inrows = in_rows_avail - *in_row_ctr;
       numrows = prep->next_buf_stop - prep->next_buf_row;
       numrows = (int)MIN((JDIMENSION)numrows, inrows);
-#ifdef WITH_BENCHMARK
+#ifdef WITH_PROFILE
       cinfo->master->start = getTime();
 #endif
       (*cinfo->cconvert->_color_convert) (cinfo, input_buf + *in_row_ctr,
                                           prep->color_buf,
                                           (JDIMENSION)prep->next_buf_row,
                                           numrows);
-#ifdef WITH_BENCHMARK
+#ifdef WITH_PROFILE
       cinfo->master->cconvert_elapsed += getTime() - cinfo->master->start;
       cinfo->master->cconvert_mpixels +=
         (double)cinfo->image_width * numrows / 1000000.;
@@ -274,13 +274,13 @@ pre_process_context(j_compress_ptr cinfo, _JSAMPARRAY input_buf,
     }
     /* If we've gotten enough data, downsample a row group. */
     if (prep->next_buf_row == prep->next_buf_stop) {
-#ifdef WITH_BENCHMARK
+#ifdef WITH_PROFILE
       cinfo->master->start = getTime();
 #endif
       (*cinfo->downsample->_downsample) (cinfo, prep->color_buf,
                                          (JDIMENSION)prep->this_row_group,
                                          output_buf, *out_row_group_ctr);
-#ifdef WITH_BENCHMARK
+#ifdef WITH_PROFILE
       cinfo->master->downsample_elapsed += getTime() - cinfo->master->start;
       cinfo->master->downsample_msamples +=
         (double)cinfo->image_width * cinfo->max_v_samp_factor / 1000000.;

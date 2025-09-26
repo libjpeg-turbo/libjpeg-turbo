@@ -44,7 +44,7 @@
 #ifdef WITH_SIMD
 #include "../simd/jsimd.h"
 #endif
-#ifdef WITH_BENCHMARK
+#ifdef WITH_PROFILE
 #include "tjutil.h"
 #endif
 
@@ -262,11 +262,11 @@ merged_2v_upsample(j_decompress_ptr cinfo, _JSAMPIMAGE input_buf,
       upsample->spare_full = TRUE;
     }
     /* Now do the upsampling. */
-#ifdef WITH_BENCHMARK
+#ifdef WITH_PROFILE
     cinfo->master->start = getTime();
 #endif
     (*upsample->upmethod) (cinfo, input_buf, *in_row_group_ctr, work_ptrs);
-#ifdef WITH_BENCHMARK
+#ifdef WITH_PROFILE
     cinfo->master->merged_upsample_elapsed += getTime() - cinfo->master->start;
     cinfo->master->merged_upsample_mpixels +=
       (double)cinfo->output_width * 2 / 1000000.;
@@ -292,12 +292,12 @@ merged_1v_upsample(j_decompress_ptr cinfo, _JSAMPIMAGE input_buf,
   my_merged_upsample_ptr upsample = (my_merged_upsample_ptr)cinfo->upsample;
 
   /* Just do the upsampling. */
-#ifdef WITH_BENCHMARK
+#ifdef WITH_PROFILE
   cinfo->master->start = getTime();
 #endif
   (*upsample->upmethod) (cinfo, input_buf, *in_row_group_ctr,
                          output_buf + *out_row_ctr);
-#ifdef WITH_BENCHMARK
+#ifdef WITH_PROFILE
   cinfo->master->merged_upsample_elapsed += getTime() - cinfo->master->start;
   cinfo->master->merged_upsample_mpixels +=
     (double)cinfo->output_width / 1000000.;
