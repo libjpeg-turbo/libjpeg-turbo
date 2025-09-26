@@ -28,11 +28,11 @@
 #include "jsimd_mmi.h"
 
 
-#define F_0_114  ((short)7471)                /* FIX(0.11400) */
-#define F_0_250  ((short)16384)               /* FIX(0.25000) */
-#define F_0_299  ((short)19595)               /* FIX(0.29900) */
-#define F_0_587  ((short)38470)               /* FIX(0.58700) */
-#define F_0_337  ((short)(F_0_587 - F_0_250)) /* FIX(0.58700) - FIX(0.25000) */
+#define F_0_114  ((short)7471)                 /* FIX(0.11400) */
+#define F_0_250  ((short)16384)                /* FIX(0.25000) */
+#define F_0_299  ((short)19595)                /* FIX(0.29900) */
+#define F_0_587  ((short)38470)                /* FIX(0.58700) */
+#define F_0_337  ((short)(F_0_587 - F_0_250))  /* FIX(0.58700) - FIX(0.25000) */
 
 enum const_index {
   index_PD_ONEHALF,

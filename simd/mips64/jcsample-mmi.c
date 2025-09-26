@@ -50,9 +50,9 @@ void jsimd_h2v2_downsample_mmi(JDIMENSION image_width, int max_v_samp_factor,
                     output_cols * 2);
 
   bias = _mm_set1_pi32((1 << 17) + 1);   /* 0x00020001 (32-bit bias pattern) */
-                                         /* bias={1, 2, 1, 2} (16-bit) */
+                                         /* bias = { 1, 2, 1, 2 } (16-bit) */
   mask = _mm_cmpeq_pi16(mask, mask);
-  mask = _mm_srli_pi16(mask, BYTE_BIT);  /* {0xFF 0x00 0xFF 0x00 ..} */
+  mask = _mm_srli_pi16(mask, BYTE_BIT);  /* { 0xFF 0x00 0xFF 0x00 .. } */
 
   for (inrow = 0, outrow = 0; outrow < v_samp_factor;
        inrow += 2, outrow++) {
