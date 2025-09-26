@@ -16,6 +16,12 @@ generally simplifies the process of adding new SIMD extensions.  A new test
 program (simdcoverage) can be used to validate the correctness of a particular
 dispatcher.
 
+3. If the `WITH_PROFILE` CMake variable is enabled, libjpeg-turbo now measures
+the cumulative average throughput of each lossy JPEG compression and
+decompression algorithm and reports it to the command line when
+`jpeg_destroy_compress()`, `jpeg_destroy_decompress()`, or `tj3Destroy()` is
+called.
+
 
 3.1.2
 =====

@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2009-2024 D. R. Commander.  All Rights Reserved.
+ * Copyright (C)2009-2025 D. R. Commander.  All Rights Reserved.
  * Copyright (C)2021 Alex Richardson.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,17 +35,17 @@
 #if !defined(_MSC_VER) || _MSC_VER > 1600
 #include <stdint.h>
 #endif
-#include <jinclude.h>
+#include "jinclude.h"
 #define JPEG_INTERNALS
-#include <jpeglib.h>
-#include <jerror.h>
+#include "jpeglib.h"
+#include "jerror.h"
 #include <setjmp.h>
 #include <errno.h>
-#include "./turbojpeg.h"
-#include "./tjutil.h"
+#include "turbojpeg.h"
+#include "tjutil.h"
 #include "transupp.h"
-#include "./jpegapicomp.h"
-#include "./cdjpeg.h"
+#include "jpegapicomp.h"
+#include "cdjpeg.h"
 
 extern void jpeg_mem_dest_tj(j_compress_ptr, unsigned char **, size_t *,
                              boolean);

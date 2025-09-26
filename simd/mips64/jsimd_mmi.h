@@ -7,7 +7,7 @@
  *           CaiWanwei   <caiwanwei@loongson.cn>
  *           SunZhangzhi <sunzhangzhi-cq@loongson.cn>
  *           QingfaLiu   <liuqingfa-hf@loongson.cn>
- * Copyright (C) 2024, D. R. Commander.  All Rights Reserved.
+ * Copyright (C) 2024-2025, D. R. Commander.  All Rights Reserved.
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the authors be held liable for any damages
@@ -26,10 +26,9 @@
  * 3. This notice may not be removed or altered from any source distribution.
  */
 
-#define JPEG_INTERNALS
-#include "../../src/jinclude.h"
-#include "../../src/jpeglib.h"
 #include "../../src/jdct.h"
+#include "../../src/jchuff.h"
+#include "../jsimdint.h"
 #include "loongson-mmintrin.h"
 
 

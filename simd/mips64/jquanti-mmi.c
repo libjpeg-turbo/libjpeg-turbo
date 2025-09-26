@@ -62,9 +62,10 @@
   rowl = _mm_mulhi_pi16(rowl, recipl); \
   rowh = _mm_mulhi_pi16(rowh, reciph); \
   \
-  /* reciprocal is always negative (MSB=1), so we always need to add the */ \
-  /* initial value (input value is never negative as we inverted it at the */ \
-  /* start of this routine) */ \
+  /* reciprocal is always negative (MSB = 1), so we always need to add the \
+   * initial value.  (The input value is never negative, as we inverted it at \
+   * the start of this routine.) \
+   */ \
   rowlsave = rowl = _mm_add_pi16(rowl, rowlsave); \
   rowhsave = rowh = _mm_add_pi16(rowh, rowhsave); \
   \

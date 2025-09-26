@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2011-2024 D. R. Commander.  All Rights Reserved.
+ * Copyright (C)2011-2025 D. R. Commander.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -27,8 +27,8 @@
  */
 
 #include <limits.h>
-#include "turbojpeg.h"
-#include "jinclude.h"
+#include "../src/turbojpeg.h"
+#include "../src/jinclude.h"
 #include <jni.h>
 #include "org_libjpegturbo_turbojpeg_TJCompressor.h"
 #include "org_libjpegturbo_turbojpeg_TJDecompressor.h"

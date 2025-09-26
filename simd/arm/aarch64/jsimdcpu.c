@@ -22,7 +22,7 @@
  * 64-bit Arm architecture.
  */
 
-#include "../../jsimd.h"
+#include "../../jsimdint.h"
 
 HIDDEN unsigned int
 jpeg_simd_cpu_support(void)

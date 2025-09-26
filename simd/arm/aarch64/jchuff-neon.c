@@ -24,7 +24,7 @@
  * Recommendation ITU-T T.81 (1992) | ISO/IEC 10918-1:1994.
  */
 
-#include "../../jsimd.h"
+#include "../../jsimdint.h"
 #include "../../align.h"
 #include "../jchuff.h"
 #include "neon-compat.h"

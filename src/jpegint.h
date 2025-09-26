@@ -102,7 +102,7 @@ struct jpeg_comp_master {
   unsigned int simd_support;
   unsigned int simd_huffman;
 
-#ifdef WITH_BENCHMARK
+#ifdef WITH_PROFILE
   double start;
   double cconvert_elapsed, cconvert_mpixels;
   double downsample_elapsed, downsample_msamples;
@@ -285,7 +285,7 @@ struct jpeg_decomp_master {
   unsigned int simd_support;
   unsigned int simd_huffman;
 
-#ifdef WITH_BENCHMARK
+#ifdef WITH_PROFILE
   double start;
   double idct_elapsed, idct_mcoeffs;
   double merged_upsample_elapsed, merged_upsample_mpixels;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2011-2012, 2014-2015, 2017, 2019, 2021-2024
+ * Copyright (C)2011-2012, 2014-2015, 2017, 2019, 2021-2025
  *           D. R. Commander.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -56,7 +56,7 @@
 #if !defined(_MSC_VER) || _MSC_VER > 1600
 #include <stdint.h>
 #endif
-#include <turbojpeg.h>
+#include "turbojpeg.h"
 
 
 #ifdef _WIN32

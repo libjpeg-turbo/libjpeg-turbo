@@ -30,10 +30,9 @@
 #include "jinclude.h"
 #include "jpeglib.h"
 #ifdef WITH_SIMD
-#include "jsimd.h"
-#else
-#include "jchuff.h"             /* Declarations shared with jc*huff.c */
+#include "../simd/jsimd.h"
 #endif
+#include "jchuff.h"             /* Declarations shared with jc*huff.c */
 #include <limits.h>
 #include "jpeg_nbits.h"
 

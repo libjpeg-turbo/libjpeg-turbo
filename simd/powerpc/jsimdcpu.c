@@ -28,7 +28,7 @@
 #include <proto/exec.h>
 #endif
 
-#include "../jsimd.h"
+#include "../jsimdint.h"
 
 #include <ctype.h>
 
