@@ -33,6 +33,10 @@ used.  Thus, this issue did not cause a segfault or other user-visible errant
 behavior (it was only detectable with ASan), and it did not likely pose a
 security risk.
 
+6. Hardened the TurboJPEG API against hypothetical applications that may
+erroneously call `tj*Compress*()` or `tj*Transform()` with a reused JPEG
+destination buffer pointer while specifying a destination buffer size of 0.
+
 
 3.0.4
 =====
