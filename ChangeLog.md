@@ -1,3 +1,13 @@
+3.1.3
+=====
+
+### Significant changes relative to 3.1.2:
+
+1. Hardened the TurboJPEG API against hypothetical applications that may
+erroneously call `tj*Compress*()` or `tj*Transform()` with a reused JPEG
+destination buffer pointer while specifying a destination buffer size of 0.
+
+
 3.1.2
 =====
 
