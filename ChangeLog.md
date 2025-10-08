@@ -116,6 +116,10 @@ was specified for all lossless transforms.
 values if Huffman table optimization or progressive mode was previously enabled
 in the same libjpeg instance.
 
+18. Hardened the TurboJPEG API against hypothetical applications that may
+erroneously call `tjCompress*()` or `tjTransform()` with a reused JPEG
+destination buffer pointer while specifying a destination buffer size of 0.
+
 
 2.0.8 ESR
 =========
