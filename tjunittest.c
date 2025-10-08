@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2009-2014, 2017-2019, 2022-2024 D. R. Commander.
+ * Copyright (C)2009-2014, 2017-2019, 2022-2025 D. R. Commander.
  *                                              All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -650,6 +650,10 @@ static void bufSizeTest(void)
           TRY_TJ(tjEncodeYUV3(handle, srcBuf, w, 0, h, TJPF_BGRX, dstBuf,
                               yuvAlign, subsamp, 0));
         } else {
+          /* Verify that the API is hardened against hypothetical applications
+             that may erroneously set the JPEG destination buffer size to 0
+             while reusing the destination buffer pointer. */
+          if (alloc && (w > 1 || h > 1)) dstSize = 0;
           TRY_TJ(tjCompress2(handle, srcBuf, w, 0, h, TJPF_BGRX, &dstBuf,
                              &dstSize, subsamp, 100,
                              alloc ? 0 : TJFLAG_NOREALLOC));
@@ -677,6 +681,7 @@ static void bufSizeTest(void)
           TRY_TJ(tjEncodeYUV3(handle, srcBuf, h, 0, w, TJPF_BGRX, dstBuf,
                               yuvAlign, subsamp, 0));
         } else {
+          if (alloc && (w > 1 || h > 1)) dstSize = 0;
           TRY_TJ(tjCompress2(handle, srcBuf, h, 0, w, TJPF_BGRX, &dstBuf,
                              &dstSize, subsamp, 100,
                              alloc ? 0 : TJFLAG_NOREALLOC));
