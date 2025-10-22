@@ -326,9 +326,9 @@ static int getPixelFormat(int pixelSize, int flags)
   return -1;
 }
 
-static void setCompDefaults(tjinstance *this, int pixelFormat)
+static void setCompDefaults(tjinstance *this, int pixelFormat, boolean yuv)
 {
-  int subsamp = this->subsamp;
+  int colorspace = yuv ? -1 : this->colorspace;
 
   this->cinfo.in_color_space = pf2cs[pixelFormat];
   this->cinfo.input_components = tjPixelSize[pixelFormat];
@@ -341,21 +341,17 @@ static void setCompDefaults(tjinstance *this, int pixelFormat)
   this->cinfo.density_unit = (UINT8)this->densityUnits;
   this->cinfo.mem->max_memory_to_use = (long)this->maxMemory * 1048576L;
 
-  if (this->lossless) {
+  if (this->lossless && !yuv) {
 #ifdef C_LOSSLESS_SUPPORTED
     jpeg_enable_lossless(&this->cinfo, this->losslessPSV, this->losslessPt);
 #endif
-    if (pixelFormat == TJPF_GRAY)
-      subsamp = TJSAMP_GRAY;
-    else if (subsamp != TJSAMP_GRAY)
-      subsamp = TJSAMP_444;
     return;
   }
 
   jpeg_set_quality(&this->cinfo, this->quality, TRUE);
   this->cinfo.dct_method = this->fastDCT ? JDCT_FASTEST : JDCT_ISLOW;
 
-  switch (this->colorspace) {
+  switch (colorspace) {
   case TJCS_RGB:
     jpeg_set_colorspace(&this->cinfo, JCS_RGB);  break;
   case TJCS_YCbCr:
@@ -367,7 +363,7 @@ static void setCompDefaults(tjinstance *this, int pixelFormat)
   case TJCS_YCCK:
     jpeg_set_colorspace(&this->cinfo, JCS_YCCK);  break;
   default:
-    if (subsamp == TJSAMP_GRAY)
+    if (this->subsamp == TJSAMP_GRAY)
       jpeg_set_colorspace(&this->cinfo, JCS_GRAYSCALE);
     else if (pixelFormat == TJPF_CMYK)
       jpeg_set_colorspace(&this->cinfo, JCS_YCCK);
@@ -382,16 +378,16 @@ static void setCompDefaults(tjinstance *this, int pixelFormat)
 #endif
   this->cinfo.arith_code = this->arithmetic;
 
-  this->cinfo.comp_info[0].h_samp_factor = tjMCUWidth[subsamp] / 8;
+  this->cinfo.comp_info[0].h_samp_factor = tjMCUWidth[this->subsamp] / 8;
   this->cinfo.comp_info[1].h_samp_factor = 1;
   this->cinfo.comp_info[2].h_samp_factor = 1;
   if (this->cinfo.num_components > 3)
-    this->cinfo.comp_info[3].h_samp_factor = tjMCUWidth[subsamp] / 8;
-  this->cinfo.comp_info[0].v_samp_factor = tjMCUHeight[subsamp] / 8;
+    this->cinfo.comp_info[3].h_samp_factor = tjMCUWidth[this->subsamp] / 8;
+  this->cinfo.comp_info[0].v_samp_factor = tjMCUHeight[this->subsamp] / 8;
   this->cinfo.comp_info[1].v_samp_factor = 1;
   this->cinfo.comp_info[2].v_samp_factor = 1;
   if (this->cinfo.num_components > 3)
-    this->cinfo.comp_info[3].v_samp_factor = tjMCUHeight[subsamp] / 8;
+    this->cinfo.comp_info[3].v_samp_factor = tjMCUHeight[this->subsamp] / 8;
 }
 
 
@@ -1264,7 +1260,7 @@ DLLEXPORT int tj3CompressFromYUVPlanes8(tjhandle handle,
     alloc = FALSE;  *jpegSize = tj3JPEGBufSize(width, height, this->subsamp);
   }
   jpeg_mem_dest_tj(cinfo, jpegBuf, jpegSize, alloc);
-  setCompDefaults(this, TJPF_RGB);
+  setCompDefaults(this, TJPF_RGB, TRUE);
   cinfo->raw_data_in = TRUE;
 
   jpeg_start_compress(cinfo, TRUE);
@@ -1509,7 +1505,7 @@ DLLEXPORT int tj3EncodeYUVPlanes8(tjhandle handle, const unsigned char *srcBuf,
   cinfo->image_height = height;
   cinfo->data_precision = 8;
 
-  setCompDefaults(this, pixelFormat);
+  setCompDefaults(this, pixelFormat, TRUE);
 
   /* Execute only the parts of jpeg_start_compress() that we need.  If we
      were to call the whole jpeg_start_compress() function, then it would try

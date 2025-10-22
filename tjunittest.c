@@ -429,6 +429,10 @@ static void compTest(tjhandle handle, unsigned char **dstBuf, size_t *dstSize,
     memset(yuvBuf, 0, yuvSize);
 
     printf("%s %s -> YUV %s ... ", pfStr, buStrLong, subNameLong[subsamp]);
+    /* Verify that tj3EncodeYUV*8() ignores TJPARAM_LOSSLESS and
+       TJPARAM_COLORSPACE. */
+    TRY_TJ(handle2, tj3Set(handle2, TJPARAM_LOSSLESS, 1));
+    TRY_TJ(handle2, tj3Set(handle2, TJPARAM_COLORSPACE, TJCS_RGB));
     TRY_TJ(handle2, tj3EncodeYUV8(handle2, (unsigned char *)srcBuf, w, 0, h,
                                   pf, yuvBuf, yuvAlign));
     tj3Destroy(handle2);
@@ -437,6 +441,10 @@ static void compTest(tjhandle handle, unsigned char **dstBuf, size_t *dstSize,
 
     printf("YUV %s %s -> JPEG Q%d ... ", subNameLong[subsamp], buStrLong,
            jpegQual);
+    /* Verify that tj3CompressFromYUV*8() ignores TJPARAM_LOSSLESS and
+       TJPARAM_COLORSPACE. */
+    TRY_TJ(handle, tj3Set(handle, TJPARAM_LOSSLESS, 1));
+    TRY_TJ(handle, tj3Set(handle, TJPARAM_COLORSPACE, TJCS_RGB));
     TRY_TJ(handle, tj3CompressFromYUV8(handle, yuvBuf, w, yuvAlign, h, dstBuf,
                                        dstSize));
   } else {
@@ -761,6 +769,10 @@ static void bufSizeTest(void)
         }
 
         if (doYUV) {
+          /* Verify that tj3EncodeYUV*8() ignores TJPARAM_LOSSLESS and
+             TJPARAM_COLORSPACE. */
+          TRY_TJ(handle, tj3Set(handle, TJPARAM_LOSSLESS, 1));
+          TRY_TJ(handle, tj3Set(handle, TJPARAM_COLORSPACE, TJCS_RGB));
           TRY_TJ(handle, tj3EncodeYUV8(handle, (unsigned char *)srcBuf, w, 0,
                                        h, TJPF_BGRX, dstBuf, yuvAlign));
         } else {
@@ -799,6 +811,10 @@ static void bufSizeTest(void)
         }
 
         if (doYUV) {
+          /* Verify that tj3EncodeYUV*8() ignores TJPARAM_LOSSLESS and
+             TJPARAM_COLORSPACE. */
+          TRY_TJ(handle, tj3Set(handle, TJPARAM_LOSSLESS, 1));
+          TRY_TJ(handle, tj3Set(handle, TJPARAM_COLORSPACE, TJCS_RGB));
           TRY_TJ(handle, tj3EncodeYUV8(handle, (unsigned char *)srcBuf, h, 0,
                                        w, TJPF_BGRX, dstBuf, yuvAlign));
         } else {
