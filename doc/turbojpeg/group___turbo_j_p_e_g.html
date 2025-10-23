@@ -321,10 +321,10 @@ Functions</h2></td></tr>
 <tr class="memdesc:ga77901b71d0471784f318ada31ff4e7bd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compress a packed-pixel RGB, grayscale, or CMYK image with 13 to 16 bits of data precision per sample into a lossless JPEG image with the same data precision.  <br /></td></tr>
 <tr class="separator:ga77901b71d0471784f318ada31ff4e7bd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gac9f5ace3e73805b476c95dda9f8d0cd0" id="r_gac9f5ace3e73805b476c95dda9f8d0cd0"><td class="memItemLeft" align="right" valign="top">DLLEXPORT int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___turbo_j_p_e_g.html#gac9f5ace3e73805b476c95dda9f8d0cd0">tj3CompressFromYUVPlanes8</a> (<a class="el" href="group___turbo_j_p_e_g.html#ga758d2634ecb4949de7815cba621f5763">tjhandle</a> handle, const unsigned char *const *srcPlanes, int width, const int *strides, int height, unsigned char **jpegBuf, size_t *jpegSize)</td></tr>
-<tr class="memdesc:gac9f5ace3e73805b476c95dda9f8d0cd0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compress a set of 8-bit-per-sample Y, U (Cb), and V (Cr) image planes into an 8-bit-per-sample JPEG image.  <br /></td></tr>
+<tr class="memdesc:gac9f5ace3e73805b476c95dda9f8d0cd0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compress a set of 8-bit-per-sample Y, U (Cb), and V (Cr) image planes into an 8-bit-per-sample lossy JPEG image.  <br /></td></tr>
 <tr class="separator:gac9f5ace3e73805b476c95dda9f8d0cd0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga041c870d9c669eb3f385c78f4346c43f" id="r_ga041c870d9c669eb3f385c78f4346c43f"><td class="memItemLeft" align="right" valign="top">DLLEXPORT int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___turbo_j_p_e_g.html#ga041c870d9c669eb3f385c78f4346c43f">tj3CompressFromYUV8</a> (<a class="el" href="group___turbo_j_p_e_g.html#ga758d2634ecb4949de7815cba621f5763">tjhandle</a> handle, const unsigned char *srcBuf, int width, int align, int height, unsigned char **jpegBuf, size_t *jpegSize)</td></tr>
-<tr class="memdesc:ga041c870d9c669eb3f385c78f4346c43f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compress an 8-bit-per-sample unified planar YUV image into an 8-bit-per-sample JPEG image.  <br /></td></tr>
+<tr class="memdesc:ga041c870d9c669eb3f385c78f4346c43f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compress an 8-bit-per-sample unified planar YUV image into an 8-bit-per-sample lossy JPEG image.  <br /></td></tr>
 <tr class="separator:ga041c870d9c669eb3f385c78f4346c43f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gae2e9df38790e9bddc249d04cb158a4cf" id="r_gae2e9df38790e9bddc249d04cb158a4cf"><td class="memItemLeft" align="right" valign="top">DLLEXPORT int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___turbo_j_p_e_g.html#gae2e9df38790e9bddc249d04cb158a4cf">tj3EncodeYUVPlanes8</a> (<a class="el" href="group___turbo_j_p_e_g.html#ga758d2634ecb4949de7815cba621f5763">tjhandle</a> handle, const unsigned char *srcBuf, int width, int pitch, int height, int pixelFormat, unsigned char **dstPlanes, int *strides)</td></tr>
 <tr class="memdesc:gae2e9df38790e9bddc249d04cb158a4cf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Encode an 8-bit-per-sample packed-pixel RGB or grayscale image into separate 8-bit-per-sample Y, U (Cb), and V (Cr) image planes.  <br /></td></tr>
@@ -357,10 +357,10 @@ Functions</h2></td></tr>
 <tr class="memdesc:gaa074e63f9beb0b3ff42b833a4049df6e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Decompress a lossless JPEG image with 13 to 16 bits of data precision per sample into a packed-pixel RGB, grayscale, or CMYK image with the same data precision.  <br /></td></tr>
 <tr class="separator:gaa074e63f9beb0b3ff42b833a4049df6e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga934373482dbbf257f2280505b6ff4fb5" id="r_ga934373482dbbf257f2280505b6ff4fb5"><td class="memItemLeft" align="right" valign="top">DLLEXPORT int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___turbo_j_p_e_g.html#ga934373482dbbf257f2280505b6ff4fb5">tj3DecompressToYUVPlanes8</a> (<a class="el" href="group___turbo_j_p_e_g.html#ga758d2634ecb4949de7815cba621f5763">tjhandle</a> handle, const unsigned char *jpegBuf, size_t jpegSize, unsigned char **dstPlanes, int *strides)</td></tr>
-<tr class="memdesc:ga934373482dbbf257f2280505b6ff4fb5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Decompress an 8-bit-per-sample JPEG image into separate 8-bit-per-sample Y, U (Cb), and V (Cr) image planes.  <br /></td></tr>
+<tr class="memdesc:ga934373482dbbf257f2280505b6ff4fb5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Decompress an 8-bit-per-sample lossy JPEG image into separate 8-bit-per-sample Y, U (Cb), and V (Cr) image planes.  <br /></td></tr>
 <tr class="separator:ga934373482dbbf257f2280505b6ff4fb5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga1e6bf6a19fec3f9fa7534348879d8320" id="r_ga1e6bf6a19fec3f9fa7534348879d8320"><td class="memItemLeft" align="right" valign="top">DLLEXPORT int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___turbo_j_p_e_g.html#ga1e6bf6a19fec3f9fa7534348879d8320">tj3DecompressToYUV8</a> (<a class="el" href="group___turbo_j_p_e_g.html#ga758d2634ecb4949de7815cba621f5763">tjhandle</a> handle, const unsigned char *jpegBuf, size_t jpegSize, unsigned char *dstBuf, int align)</td></tr>
-<tr class="memdesc:ga1e6bf6a19fec3f9fa7534348879d8320"><td class="mdescLeft">&#160;</td><td class="mdescRight">Decompress an 8-bit-per-sample JPEG image into an 8-bit-per-sample unified planar YUV image.  <br /></td></tr>
+<tr class="memdesc:ga1e6bf6a19fec3f9fa7534348879d8320"><td class="mdescLeft">&#160;</td><td class="mdescRight">Decompress an 8-bit-per-sample lossy JPEG image into an 8-bit-per-sample unified planar YUV image.  <br /></td></tr>
 <tr class="separator:ga1e6bf6a19fec3f9fa7534348879d8320"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gad366f1915f82c1ad4e7e37ebe073ca89" id="r_gad366f1915f82c1ad4e7e37ebe073ca89"><td class="memItemLeft" align="right" valign="top">DLLEXPORT int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group___turbo_j_p_e_g.html#gad366f1915f82c1ad4e7e37ebe073ca89">tj3DecodeYUVPlanes8</a> (<a class="el" href="group___turbo_j_p_e_g.html#ga758d2634ecb4949de7815cba621f5763">tjhandle</a> handle, const unsigned char *const *srcPlanes, const int *strides, unsigned char *dstBuf, int width, int pitch, int height, int pixelFormat)</td></tr>
 <tr class="memdesc:gad366f1915f82c1ad4e7e37ebe073ca89"><td class="mdescLeft">&#160;</td><td class="mdescRight">Decode a set of 8-bit-per-sample Y, U (Cb), and V (Cr) image planes into an 8-bit-per-sample packed-pixel RGB or grayscale image.  <br /></td></tr>
@@ -1537,7 +1537,7 @@ If you choose option 1 or 3, then <code>*jpegSize</code> should be set to the si
       </table>
 </div><div class="memdoc">
 
-<p>Compress an 8-bit-per-sample unified planar YUV image into an 8-bit-per-sample JPEG image. </p>
+<p>Compress an 8-bit-per-sample unified planar YUV image into an 8-bit-per-sample lossy JPEG image. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">handle</td><td>handle to a TurboJPEG instance that has been initialized for compression</td></tr>
@@ -1615,7 +1615,7 @@ If you choose option 1 or 3, then <code>*jpegSize</code> should be set to the si
       </table>
 </div><div class="memdoc">
 
-<p>Compress a set of 8-bit-per-sample Y, U (Cb), and V (Cr) image planes into an 8-bit-per-sample JPEG image. </p>
+<p>Compress a set of 8-bit-per-sample Y, U (Cb), and V (Cr) image planes into an 8-bit-per-sample lossy JPEG image. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">handle</td><td>handle to a TurboJPEG instance that has been initialized for compression</td></tr>
@@ -2090,7 +2090,7 @@ If you choose option 1 or 3, then <code>*jpegSize</code> should be set to the si
       </table>
 </div><div class="memdoc">
 
-<p>Decompress an 8-bit-per-sample JPEG image into an 8-bit-per-sample unified planar YUV image. </p>
+<p>Decompress an 8-bit-per-sample lossy JPEG image into an 8-bit-per-sample unified planar YUV image. </p>
 <p>This function performs JPEG decompression but leaves out the color conversion step, so a planar YUV image is generated instead of a packed-pixel image. The <a class="el" href="group___turbo_j_p_e_g.html#gaa0f6be63ba78278299c9f5c12031fe82">parameters</a> that describe the JPEG image will be set when this function returns.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -2150,7 +2150,7 @@ If you choose option 1 or 3, then <code>*jpegSize</code> should be set to the si
       </table>
 </div><div class="memdoc">
 
-<p>Decompress an 8-bit-per-sample JPEG image into separate 8-bit-per-sample Y, U (Cb), and V (Cr) image planes. </p>
+<p>Decompress an 8-bit-per-sample lossy JPEG image into separate 8-bit-per-sample Y, U (Cb), and V (Cr) image planes. </p>
 <p>This function performs JPEG decompression but leaves out the color conversion step, so a planar YUV image is generated instead of a packed-pixel image. The <a class="el" href="group___turbo_j_p_e_g.html#gaa0f6be63ba78278299c9f5c12031fe82">parameters</a> that describe the JPEG image will be set when this function returns.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
