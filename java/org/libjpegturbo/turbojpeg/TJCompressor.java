@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2011-2015, 2018, 2020, 2022-2024 D. R. Commander.
+ * Copyright (C)2011-2015, 2018, 2020, 2022-2025 D. R. Commander.
  *                                               All Rights Reserved.
  * Copyright (C)2015 Viktor Szathmáry.  All Rights Reserved.
  *
@@ -634,11 +634,11 @@ public class TJCompressor implements Closeable {
    * Encode the 8-bit-per-sample packed-pixel source image associated with this
    * compressor instance into an 8-bit-per-sample planar YUV image and store it
    * in the given {@link YUVImage} instance.  This method performs color
-   * conversion (which is accelerated in the libjpeg-turbo implementation) but
-   * does not execute any of the other steps in the JPEG compression process.
-   * Encoding CMYK source images into YUV images is not supported.  This method
-   * sets {@link TJ#PARAM_SUBSAMP} to the chrominance subsampling level of the
-   * destination image.
+   * conversion and downsampling (which are accelerated in the libjpeg-turbo
+   * implementation) but does not execute any of the other steps in the JPEG
+   * compression process.  Encoding CMYK source images into YUV images is not
+   * supported.  This method sets {@link TJ#PARAM_SUBSAMP} to the chrominance
+   * subsampling level of the destination image.
    *
    * @param dstImage {@link YUVImage} instance that will receive the planar YUV
    * image
@@ -670,10 +670,10 @@ public class TJCompressor implements Closeable {
    * Encode the 8-bit-per-sample packed-pixel source image associated with this
    * compressor instance into an 8-bit-per-sample unified planar YUV image and
    * return a {@link YUVImage} instance containing the encoded image.  This
-   * method performs color conversion (which is accelerated in the
-   * libjpeg-turbo implementation) but does not execute any of the other steps
-   * in the JPEG compression process.  Encoding CMYK source images into YUV
-   * images is not supported.
+   * method performs color conversion and downsampling (which are accelerated
+   * in the libjpeg-turbo implementation) but does not execute any of the other
+   * steps in the JPEG compression process.  Encoding CMYK source images into
+   * YUV images is not supported.
    *
    * @param align row alignment (in bytes) of the YUV image (must be a power of
    * 2.)  Setting this parameter to n will cause each row in each plane of the
@@ -698,10 +698,10 @@ public class TJCompressor implements Closeable {
    * Encode the 8-bit-per-sample packed-pixel source image associated with this
    * compressor instance into separate 8-bit-per-sample Y, U (Cb), and V (Cr)
    * image planes and return a {@link YUVImage} instance containing the encoded
-   * image planes.  This method performs color conversion (which is accelerated
-   * in the libjpeg-turbo implementation) but does not execute any of the other
-   * steps in the JPEG compression process.  Encoding CMYK source images into
-   * YUV images is not supported.
+   * image planes.  This method performs color conversion and downsampling
+   * (which are accelerated in the libjpeg-turbo implementation) but does not
+   * execute any of the other steps in the JPEG compression process.  Encoding
+   * CMYK source images into YUV images is not supported.
    *
    * @param strides an array of integers, each specifying the number of bytes
    * per row in the corresponding plane of the YUV source image.  Setting the
