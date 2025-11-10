@@ -464,10 +464,16 @@ enum TJCS {
  */
 #define TJFLAG_FASTUPSAMPLE  256
 /**
- * Disable JPEG buffer (re)allocation.  If passed to one of the JPEG
- * compression or transform functions, this flag will cause those functions to
- * generate an error if the JPEG destination buffer is invalid or too small,
- * rather than attempt to allocate or reallocate that buffer.
+ * Disable JPEG destination buffer (re)allocation.  If this flag is specified,
+ * then the JPEG compression and transform functions will assume that the JPEG
+ * destination buffer is pre-allocated to a "worst case" size determined by
+ * calling #tjBufSize(), and they will generate an error in the unlikely event
+ * that the "worst case" size is too small.  (That will only be the case if
+ * attempting to losslessly transform a JPEG image that has a large amount of
+ * embedded Exif or ICC profile data, unless #TJXOPT_COPYNONE is specified.)
+ * If this flag is not specified, then the JPEG compression and transform
+ * functions will attempt to allocate or reallocate the JPEG destination
+ * buffer.
  */
 #define TJFLAG_NOREALLOC  1024
 /**
@@ -804,17 +810,16 @@ DLLEXPORT tjhandle tjInitCompress(void);
  * #tjBufSize().  This should ensure that the buffer never has to be
  * re-allocated.  (Setting #TJFLAG_NOREALLOC guarantees that it won't be.)
  * .
- * If you choose option 1, then `*jpegSize` should be set to the size of your
- * pre-allocated buffer.  In any case, unless you have set #TJFLAG_NOREALLOC,
- * you should always check `*jpegBuf` upon return from this function, as it may
- * have changed.
+ * Unless you have set #TJFLAG_NOREALLOC, you should always check `*jpegBuf`
+ * upon return from this function, as it may have changed.
  *
  * @param jpegSize pointer to an unsigned long variable that holds the size of
- * the JPEG buffer.  If `*jpegBuf` points to a pre-allocated buffer, then
- * `*jpegSize` should be set to the size of the buffer.  Upon return,
- * `*jpegSize` will contain the size of the JPEG image (in bytes.)  If
- * `*jpegBuf` points to a JPEG buffer that is being reused from a previous call
- * to one of the JPEG compression functions, then `*jpegSize` is ignored.
+ * the JPEG buffer.  If `*jpegBuf` points to a pre-allocated buffer and
+ * #TJFLAG_NOREALLOC is not set, then `*jpegSize` should be set to the size of
+ * the buffer.  Otherwise, `*jpegSize` is ignored.  If `*jpegBuf` points to a
+ * JPEG buffer that is being reused from a previous call to one of the JPEG
+ * compression functions, then `*jpegSize` is also ignored.  Upon return,
+ * `*jpegSize` will contain the size of the JPEG image (in bytes.)
  *
  * @param jpegSubsamp the level of chrominance subsampling to be used when
  * generating the JPEG image (see @ref TJSAMP
@@ -874,17 +879,16 @@ DLLEXPORT int tjCompress2(tjhandle handle, const unsigned char *srcBuf,
  * #tjBufSize().  This should ensure that the buffer never has to be
  * re-allocated.  (Setting #TJFLAG_NOREALLOC guarantees that it won't be.)
  * .
- * If you choose option 1, then `*jpegSize` should be set to the size of your
- * pre-allocated buffer.  In any case, unless you have set #TJFLAG_NOREALLOC,
- * you should always check `*jpegBuf` upon return from this function, as it may
- * have changed.
+ * Unless you have set #TJFLAG_NOREALLOC, you should always check `*jpegBuf`
+ * upon return from this function, as it may have changed.
  *
  * @param jpegSize pointer to an unsigned long variable that holds the size of
- * the JPEG buffer.  If `*jpegBuf` points to a pre-allocated buffer, then
- * `*jpegSize` should be set to the size of the buffer.  Upon return,
- * `*jpegSize` will contain the size of the JPEG image (in bytes.)  If
- * `*jpegBuf` points to a JPEG buffer that is being reused from a previous call
- * to one of the JPEG compression functions, then `*jpegSize` is ignored.
+ * the JPEG buffer.  If `*jpegBuf` points to a pre-allocated buffer and
+ * #TJFLAG_NOREALLOC is not set, then `*jpegSize` should be set to the size of
+ * the buffer.  Otherwise, `*jpegSize` is ignored.  If `*jpegBuf` points to a
+ * JPEG buffer that is being reused from a previous call to one of the JPEG
+ * compression functions, then `*jpegSize` is also ignored.  Upon return,
+ * `*jpegSize` will contain the size of the JPEG image (in bytes.)
  *
  * @param jpegQual the image quality of the generated JPEG image (1 = worst,
  * 100 = best)
@@ -946,17 +950,16 @@ DLLEXPORT int tjCompressFromYUV(tjhandle handle, const unsigned char *srcBuf,
  * #tjBufSize().  This should ensure that the buffer never has to be
  * re-allocated.  (Setting #TJFLAG_NOREALLOC guarantees that it won't be.)
  * .
- * If you choose option 1, then `*jpegSize` should be set to the size of your
- * pre-allocated buffer.  In any case, unless you have set #TJFLAG_NOREALLOC,
- * you should always check `*jpegBuf` upon return from this function, as it may
- * have changed.
+ * Unless you have set #TJFLAG_NOREALLOC, you should always check `*jpegBuf`
+ * upon return from this function, as it may have changed.
  *
  * @param jpegSize pointer to an unsigned long variable that holds the size of
- * the JPEG buffer.  If `*jpegBuf` points to a pre-allocated buffer, then
- * `*jpegSize` should be set to the size of the buffer.  Upon return,
- * `*jpegSize` will contain the size of the JPEG image (in bytes.)  If
- * `*jpegBuf` points to a JPEG buffer that is being reused from a previous call
- * to one of the JPEG compression functions, then `*jpegSize` is ignored.
+ * the JPEG buffer.  If `*jpegBuf` points to a pre-allocated buffer and
+ * #TJFLAG_NOREALLOC is not set, then `*jpegSize` should be set to the size of
+ * the buffer.  Otherwise, `*jpegSize` is ignored.  If `*jpegBuf` points to a
+ * JPEG buffer that is being reused from a previous call to one of the JPEG
+ * compression functions, then `*jpegSize` is also ignored.  Upon return,
+ * `*jpegSize` will contain the size of the JPEG image (in bytes.)
  *
  * @param jpegQual the image quality of the generated JPEG image (1 = worst,
  * 100 = best)
@@ -1596,23 +1599,21 @@ DLLEXPORT tjhandle tjInitTransform(void);
  * of subsampling used in the destination image (taking into account grayscale
  * conversion and transposition of the width and height.)  Under normal
  * circumstances, this should ensure that the buffer never has to be
- * re-allocated.  (Setting #TJFLAG_NOREALLOC guarantees that it won't be.)
- * Note, however, that there are some rare cases (such as transforming images
- * with a large amount of embedded Exif or ICC profile data) in which the
- * transformed JPEG image will be larger than the worst-case size, and
- * #TJFLAG_NOREALLOC cannot be used in those cases unless the embedded data is
- * discarded using #TJXOPT_COPYNONE.
+ * re-allocated.  (Setting #TJFLAG_NOREALLOC guarantees that it won't be.
+ * However, if the source image has a large amount of embedded Exif or ICC
+ * profile data, then the transformed JPEG image may be larger than the
+ * worst-case size.  #TJFLAG_NOREALLOC cannot be used in that case unless the
+ * embedded data is discarded using #TJXOPT_COPYNONE.)
  * .
- * If you choose option 1, then `dstSizes[i]` should be set to the size of your
- * pre-allocated buffer.  In any case, unless you have set #TJFLAG_NOREALLOC,
- * you should always check `dstBufs[i]` upon return from this function, as it
- * may have changed.
+ * Unless you have set #TJFLAG_NOREALLOC, you should always check `dstBufs[i]`
+ * upon return from this function, as it may have changed.
  *
  * @param dstSizes pointer to an array of n unsigned long variables that will
  * receive the actual sizes (in bytes) of each transformed JPEG image.  If
- * `dstBufs[i]` points to a pre-allocated buffer, then `dstSizes[i]` should be
- * set to the size of the buffer.  Upon return, `dstSizes[i]` will contain the
- * size of the transformed JPEG image (in bytes.)
+ * `dstBufs[i]` points to a pre-allocated buffer and #TJFLAG_NOREALLOC is not
+ * set, then `dstSizes[i]` should be set to the size of the buffer.  Otherwise,
+ * `dstSizes[i]` is ignored.  Upon return, `dstSizes[i]` will contain the size
+ * of the transformed JPEG image (in bytes.)
  *
  * @param transforms pointer to an array of n #tjtransform structures, each of
  * which specifies the transform parameters and/or cropping region for the
