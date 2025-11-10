@@ -539,8 +539,12 @@ enum TJPARAM {
    * **Value**
    * - `0` *[default]* Attempt to allocate or reallocate the JPEG destination
    * buffer as needed.
-   * - `1` Generate an error if the JPEG destination buffer is invalid or too
-   * small.
+   * - `1` Assume that the JPEG destination buffer is pre-allocated to a "worst
+   * case" size determined by calling #tj3JPEGBufSize(), and generate an error
+   * in the unlikely event that the "worst case" size is too small.  (That will
+   * only be the case if attempting to losslessly transform a JPEG image that
+   * has a large amount of embedded Exif or ICC profile data, unless
+   * #TJXOPT_COPYNONE is specified.)
    */
   TJPARAM_NOREALLOC,
   /**
@@ -1431,17 +1435,16 @@ DLLEXPORT int tj3YUVPlaneHeight(int componentID, int height, int subsamp);
  * #tj3JPEGBufSize().  This should ensure that the buffer never has to be
  * re-allocated.  (Setting #TJPARAM_NOREALLOC guarantees that it won't be.)
  * .
- * If you choose option 1, then `*jpegSize` should be set to the size of your
- * pre-allocated buffer.  In any case, unless you have set #TJPARAM_NOREALLOC,
- * you should always check `*jpegBuf` upon return from this function, as it may
- * have changed.
+ * Unless you have set #TJPARAM_NOREALLOC, you should always check `*jpegBuf`
+ * upon return from this function, as it may have changed.
  *
  * @param jpegSize pointer to a size_t variable that holds the size of the JPEG
- * buffer.  If `*jpegBuf` points to a pre-allocated buffer, then `*jpegSize`
- * should be set to the size of the buffer.  Upon return, `*jpegSize` will
- * contain the size of the JPEG image (in bytes.)  If `*jpegBuf` points to a
+ * buffer.  If `*jpegBuf` points to a pre-allocated buffer and
+ * #TJPARAM_NOREALLOC is not set, then `*jpegSize` should be set to the size of
+ * the buffer.  Otherwise, `*jpegSize` is ignored.  If `*jpegBuf` points to a
  * JPEG buffer that is being reused from a previous call to one of the JPEG
- * compression functions, then `*jpegSize` is ignored.
+ * compression functions, then `*jpegSize` is also ignored.  Upon return,
+ * `*jpegSize` will contain the size of the JPEG image (in bytes.)
  *
  * @return 0 if successful, or -1 if an error occurred (see #tj3GetErrorStr()
  * and #tj3GetErrorCode().)
@@ -1515,17 +1518,16 @@ DLLEXPORT int tj3Compress16(tjhandle handle, const unsigned short *srcBuf,
  * #tj3JPEGBufSize().  This should ensure that the buffer never has to be
  * re-allocated.  (Setting #TJPARAM_NOREALLOC guarantees that it won't be.)
  * .
- * If you choose option 1, then `*jpegSize` should be set to the size of your
- * pre-allocated buffer.  In any case, unless you have set #TJPARAM_NOREALLOC,
- * you should always check `*jpegBuf` upon return from this function, as it may
- * have changed.
+ * Unless you have set #TJPARAM_NOREALLOC, you should always check `*jpegBuf`
+ * upon return from this function, as it may have changed.
  *
  * @param jpegSize pointer to a size_t variable that holds the size of the JPEG
- * buffer.  If `*jpegBuf` points to a pre-allocated buffer, then `*jpegSize`
- * should be set to the size of the buffer.  Upon return, `*jpegSize` will
- * contain the size of the JPEG image (in bytes.)  If `*jpegBuf` points to a
+ * buffer.  If `*jpegBuf` points to a pre-allocated buffer and
+ * #TJPARAM_NOREALLOC is not set, then `*jpegSize` should be set to the size of
+ * the buffer.  Otherwise, `*jpegSize` is ignored.  If `*jpegBuf` points to a
  * JPEG buffer that is being reused from a previous call to one of the JPEG
- * compression functions, then `*jpegSize` is ignored.
+ * compression functions, then `*jpegSize` is also ignored.  Upon return,
+ * `*jpegSize` will contain the size of the JPEG image (in bytes.)
  *
  * @return 0 if successful, or -1 if an error occurred (see #tj3GetErrorStr()
  * and #tj3GetErrorCode().)
@@ -1576,17 +1578,16 @@ DLLEXPORT int tj3CompressFromYUVPlanes8(tjhandle handle,
  * #tj3JPEGBufSize().  This should ensure that the buffer never has to be
  * re-allocated.  (Setting #TJPARAM_NOREALLOC guarantees that it won't be.)
  * .
- * If you choose option 1, then `*jpegSize` should be set to the size of your
- * pre-allocated buffer.  In any case, unless you have set #TJPARAM_NOREALLOC,
- * you should always check `*jpegBuf` upon return from this function, as it may
- * have changed.
+ * Unless you have set #TJPARAM_NOREALLOC, you should always check `*jpegBuf`
+ * upon return from this function, as it may have changed.
  *
  * @param jpegSize pointer to a size_t variable that holds the size of the JPEG
- * buffer.  If `*jpegBuf` points to a pre-allocated buffer, then `*jpegSize`
- * should be set to the size of the buffer.  Upon return, `*jpegSize` will
- * contain the size of the JPEG image (in bytes.)  If `*jpegBuf` points to a
+ * buffer.  If `*jpegBuf` points to a pre-allocated buffer and
+ * #TJPARAM_NOREALLOC is not set, then `*jpegSize` should be set to the size of
+ * the buffer.  Otherwise, `*jpegSize` is ignored.  If `*jpegBuf` points to a
  * JPEG buffer that is being reused from a previous call to one of the JPEG
- * compression functions, then `*jpegSize` is ignored.
+ * compression functions, then `*jpegSize` is also ignored.  Upon return,
+ * `*jpegSize` will contain the size of the JPEG image (in bytes.)
  *
  * @return 0 if successful, or -1 if an error occurred (see #tj3GetErrorStr()
  * and #tj3GetErrorCode().)
@@ -2083,23 +2084,21 @@ DLLEXPORT int tj3DecodeYUV8(tjhandle handle, const unsigned char *srcBuf,
  * level of subsampling used in the destination image (taking into account
  * grayscale conversion and transposition of the width and height.)  Under
  * normal circumstances, this should ensure that the buffer never has to be
- * re-allocated.  (Setting #TJPARAM_NOREALLOC guarantees that it won't be.)
- * Note, however, that there are some rare cases (such as transforming images
- * with a large amount of embedded Exif or ICC profile data) in which the
- * transformed JPEG image will be larger than the worst-case size, and
- * #TJPARAM_NOREALLOC cannot be used in those cases unless the embedded data is
- * discarded using #TJXOPT_COPYNONE.
+ * re-allocated.  (Setting #TJPARAM_NOREALLOC guarantees that it won't be.
+ * However, if the source image has a large amount of embedded Exif or ICC
+ * profile data, then the transformed JPEG image may be larger than the
+ * worst-case size.  #TJPARAM_NOREALLOC cannot be used in that case unless the
+ * embedded data is discarded using #TJXOPT_COPYNONE.)
  * .
- * If you choose option 1, then `dstSizes[i]` should be set to the size of your
- * pre-allocated buffer.  In any case, unless you have set #TJPARAM_NOREALLOC,
- * you should always check `dstBufs[i]` upon return from this function, as it
- * may have changed.
+ * Unless you have set #TJPARAM_NOREALLOC, you should always check `dstBufs[i]`
+ * upon return from this function, as it may have changed.
  *
  * @param dstSizes pointer to an array of n size_t variables that will receive
  * the actual sizes (in bytes) of each transformed JPEG image.  If `dstBufs[i]`
- * points to a pre-allocated buffer, then `dstSizes[i]` should be set to the
- * size of the buffer.  Upon return, `dstSizes[i]` will contain the size of the
- * transformed JPEG image (in bytes.)
+ * points to a pre-allocated buffer and #TJPARAM_NOREALLOC is not set, then
+ * `dstSizes[i]` should be set to the size of the buffer.  Otherwise,
+ * `dstSizes[i]` is ignored.  Upon return, `dstSizes[i]` will contain the size
+ * of the transformed JPEG image (in bytes.)
  *
  * @param transforms pointer to an array of n #tjtransform structures, each of
  * which specifies the transform parameters and/or cropping region for the
