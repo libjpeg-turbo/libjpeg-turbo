@@ -38,17 +38,18 @@ jobs:
           mv $HOME/src/ljt.nightly/latest/log-${{github.job}}.txt $HOME/src/ljt.nightly/latest/files/
   macos:
     if: ${{!contains(github.ref, 'refs/tags/')}}
-    runs-on: macos-13
+    runs-on: macos-15
     steps:
       - name: Set global environment variables
         run: |
           echo "BRANCH=${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}}" >$GITHUB_ENV
+          echo "JAVA_HOME=$JAVA_HOME_17_arm64" >>$GITHUB_ENV
       - name: Check out code
         uses: actions/checkout@v4
       - name: Set up build
         run: |
           brew install yasm md5sha1sum
-          sudo xcode-select -s /Applications/Xcode_14.2.app
+          sudo xcode-select -s /Applications/Xcode_16.4.app
           mkdir -p $HOME/src/ljt.nightly
           git clone --depth=1 https://github.com/libjpeg-turbo/buildscripts.git -b $BRANCH $HOME/src/buildscripts
       - name: Configure GPG signing
