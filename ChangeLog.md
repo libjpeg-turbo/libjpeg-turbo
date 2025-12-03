@@ -102,6 +102,11 @@ a security risk.
 erroneously call `tjCompress*()` or `tjTransform()` with a reused JPEG
 destination buffer pointer while specifying a destination buffer size of 0.
 
+15. Hardened the TurboJPEG Java API against hypothetical applications that may
+erroneously pass huge X or Y offsets to one of the compression, YUV encoding,
+decompression, or YUV decoding methods, leading to signed integer overflow in
+the JNI wrapper's buffer size checks that rendered those checks ineffective.
+
 
 2.1.5.1
 =======
