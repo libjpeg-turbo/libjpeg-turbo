@@ -13,6 +13,11 @@ erroneously set `TJPARAM_LOSSLESS` or `TJPARAM_COLORSPACE` prior to calling
 `tj3CompressFromYUV*8()` now ignore `TJPARAM_LOSSLESS` and
 `TJPARAM_COLORSPACE`.
 
+3. Hardened the TurboJPEG Java API against hypothetical applications that may
+erroneously pass huge X or Y offsets to one of the compression, YUV encoding,
+decompression, or YUV decoding methods, leading to signed integer overflow in
+the JNI wrapper's buffer size checks that rendered those checks ineffective.
+
 
 3.1.2
 =====
