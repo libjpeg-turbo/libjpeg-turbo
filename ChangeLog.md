@@ -40,7 +40,8 @@ destination buffer pointer while specifying a destination buffer size of 0.
 7. Hardened the TurboJPEG API against hypothetical applications that may
 erroneously set `TJPARAM_LOSSLESS` or `TJPARAM_COLORSPACE` prior to calling
 `tj3EncodeYUV*8()` or `tj3CompressFromYUV*8()`.  `tj3EncodeYUV*8()` and
-`tj3CompressFromYUV*8()` now ignore `TJPARAM_LOSSLESS` and `TJPARAM_COLORSPACE`.
+`tj3CompressFromYUV*8()` now ignore `TJPARAM_LOSSLESS` and
+`TJPARAM_COLORSPACE`.
 
 
 3.0.4
