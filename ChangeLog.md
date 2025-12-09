@@ -18,6 +18,11 @@ erroneously pass huge X or Y offsets to one of the compression, YUV encoding,
 decompression, or YUV decoding methods, leading to signed integer overflow in
 the JNI wrapper's buffer size checks that rendered those checks ineffective.
 
+4. Fixed an issue in the TurboJPEG Java API whereby
+`TJCompressor.getSourceBuf()` sometimes returned the buffer from a previous
+invocation of `TJCompressor.loadSourceImage()` if the target data precision was
+changed before the most recent invocation.
+
 
 3.1.2
 =====
