@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2011-2018, 2022-2024 D. R. Commander.  All Rights Reserved.
+ * Copyright (C)2011-2018, 2022-2025 D. R. Commander.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -320,14 +320,14 @@ final class TJUnitTest {
     }
   }
 
-  static int getVal(Object buf, int index) {
+  static int getVal(Object buf, int index, int targetPrecision) {
     int v;
-    if (precision <= 8)
+    if (targetPrecision <= 8)
       v = (int)(((byte[])buf)[index]);
     else
       v = (int)(((short[])buf)[index]);
     if (v < 0)
-      v += maxSample + 1;
+      v += (1 << targetPrecision);
     return v;
   }
 
@@ -356,10 +356,10 @@ final class TJUnitTest {
               index = (h - row - 1) * w + col;
             else
               index = row * w + col;
-            int c = getVal(buf, index * ps);
-            int m = getVal(buf, index * ps + 1);
-            int y = getVal(buf, index * ps + 2);
-            int k = getVal(buf, index * ps + 3);
+            int c = getVal(buf, index * ps, precision);
+            int m = getVal(buf, index * ps + 1, precision);
+            int y = getVal(buf, index * ps + 2, precision);
+            int k = getVal(buf, index * ps + 3, precision);
             checkValMax(row, col, c, "C");
             if (((row / blockSize) + (col / blockSize)) % 2 == 0) {
               checkValMax(row, col, m, "M");
@@ -387,10 +387,11 @@ final class TJUnitTest {
             index = pitch * (h - row - 1) + col * ps;
           else
             index = pitch * row + col * ps;
-          int r = getVal(buf, index + roffset);
-          int g = getVal(buf, index + goffset);
-          int b = getVal(buf, index + boffset);
-          int a = aoffset >= 0 ? getVal(buf, index + aoffset) : maxSample;
+          int r = getVal(buf, index + roffset, precision);
+          int g = getVal(buf, index + goffset, precision);
+          int b = getVal(buf, index + boffset, precision);
+          int a = aoffset >= 0 ? getVal(buf, index + aoffset, precision) :
+                                 maxSample;
           if (((row / blockSize) + (col / blockSize)) % 2 == 0) {
             if (row < halfway) {
               checkValMax(row, col, r, "R");
@@ -434,15 +435,15 @@ final class TJUnitTest {
       for (row = 0; row < h; row++) {
         for (col = 0; col < w; col++) {
           if (pf == TJ.PF_CMYK) {
-            int c = getVal(buf, pitch * row + col * ps);
-            int m = getVal(buf, pitch * row + col * ps + 1);
-            int y = getVal(buf, pitch * row + col * ps + 2);
-            int k = getVal(buf, pitch * row + col * ps + 3);
+            int c = getVal(buf, pitch * row + col * ps, precision);
+            int m = getVal(buf, pitch * row + col * ps + 1, precision);
+            int y = getVal(buf, pitch * row + col * ps + 2, precision);
+            int k = getVal(buf, pitch * row + col * ps + 3, precision);
             System.out.format("%3d/%3d/%3d/%3d ", c, m, y, k);
           } else {
-            int r = getVal(buf, pitch * row + col * ps + roffset);
-            int g = getVal(buf, pitch * row + col * ps + goffset);
-            int b = getVal(buf, pitch * row + col * ps + boffset);
+            int r = getVal(buf, pitch * row + col * ps + roffset, precision);
+            int g = getVal(buf, pitch * row + col * ps + goffset, precision);
+            int b = getVal(buf, pitch * row + col * ps + boffset, precision);
             System.out.format("%3d/%3d/%3d ", r, g, b);
           }
         }
@@ -1080,20 +1081,22 @@ final class TJUnitTest {
   }
 
   static void cmykToRGB(int c, int m, int y, int k, int[] r, int[] g,
-                        int[] b) {
-    r[0] = (int)((double)c * (double)k / (double)maxSample + 0.5);
-    g[0] = (int)((double)m * (double)k / (double)maxSample + 0.5);
-    b[0] = (int)((double)y * (double)k / (double)maxSample + 0.5);
+                        int[] b, int targetMaxSample) {
+    r[0] = (int)((double)c * (double)k / (double)targetMaxSample + 0.5);
+    g[0] = (int)((double)m * (double)k / (double)targetMaxSample + 0.5);
+    b[0] = (int)((double)y * (double)k / (double)targetMaxSample + 0.5);
   }
 
   static boolean cmpBitmap(Object buf, int width, int pitch, int height,
-                           int pf, boolean bottomUp, boolean gray2rgb) {
+                           int pf, boolean bottomUp, boolean gray2rgb,
+                           int targetPrecision) {
     int roffset = TJ.getRedOffset(pf);
     int goffset = TJ.getGreenOffset(pf);
     int boffset = TJ.getBlueOffset(pf);
     int aoffset = TJ.getAlphaOffset(pf);
     int ps = TJ.getPixelSize(pf);
     int i, j;
+    int targetMaxSample = (1 << targetPrecision) - 1;
 
     for (j = 0; j < height; j++) {
       int row = bottomUp ? height - j - 1 : j;
@@ -1104,16 +1107,28 @@ final class TJUnitTest {
         int b = (j * (maxSample + 1) / height +
                  i * (maxSample + 1) / width) % (maxSample + 1);
 
+        if (precision != targetPrecision) {
+          long halfMaxSample = maxSample / 2;
+
+          r = (int)((r * ((1 << targetPrecision) - 1) + halfMaxSample) /
+                    maxSample);
+          g = (int)((g * ((1 << targetPrecision) - 1) + halfMaxSample) /
+                    maxSample);
+          b = (int)((b * ((1 << targetPrecision) - 1) + halfMaxSample) /
+                    maxSample);
+        }
+
         if (pf == TJ.PF_GRAY) {
-          if (getVal(buf, row * pitch + i * ps) != b)
+          if (getVal(buf, row * pitch + i * ps, targetPrecision) != b)
             return false;
         } else if (pf == TJ.PF_CMYK) {
           int[] rf = new int[1], gf = new int[1], bf = new int[1];
 
-          cmykToRGB(getVal(buf, row * pitch + i * ps + 0),
-                    getVal(buf, row * pitch + i * ps + 1),
-                    getVal(buf, row * pitch + i * ps + 2),
-                    getVal(buf, row * pitch + i * ps + 3), rf, gf, bf);
+          cmykToRGB(getVal(buf, row * pitch + i * ps + 0, targetPrecision),
+                    getVal(buf, row * pitch + i * ps + 1, targetPrecision),
+                    getVal(buf, row * pitch + i * ps + 2, targetPrecision),
+                    getVal(buf, row * pitch + i * ps + 3, targetPrecision),
+                    rf, gf, bf, targetMaxSample);
           if (gray2rgb) {
             if (rf[0] != b || gf[0] != b || bf[0] != b)
               return false;
@@ -1121,16 +1136,23 @@ final class TJUnitTest {
             return false;
         } else {
           if (gray2rgb) {
-            if (getVal(buf, row * pitch + i * ps + roffset) != b ||
-                getVal(buf, row * pitch + i * ps + goffset) != b ||
-                getVal(buf, row * pitch + i * ps + boffset) != b)
+            if (getVal(buf, row * pitch + i * ps + roffset,
+                       targetPrecision) != b ||
+                getVal(buf, row * pitch + i * ps + goffset,
+                       targetPrecision) != b ||
+                getVal(buf, row * pitch + i * ps + boffset,
+                       targetPrecision) != b)
               return false;
-          } else if (getVal(buf, row * pitch + i * ps + roffset) != r ||
-                     getVal(buf, row * pitch + i * ps + goffset) != g ||
-                     getVal(buf, row * pitch + i * ps + boffset) != b)
+          } else if (getVal(buf, row * pitch + i * ps + roffset,
+                            targetPrecision) != r ||
+                     getVal(buf, row * pitch + i * ps + goffset,
+                            targetPrecision) != g ||
+                     getVal(buf, row * pitch + i * ps + boffset,
+                            targetPrecision) != b)
             return false;
           if (aoffset >= 0 &&
-              getVal(buf, row * pitch + i * ps + aoffset) != maxSample)
+              getVal(buf, row * pitch + i * ps + aoffset,
+                     targetPrecision) != targetMaxSample)
             return false;
         }
       }
@@ -1174,19 +1196,20 @@ final class TJUnitTest {
       "fc2803bca103ff75785ea0dca992aa",   "d8c91fac522c16b029e514d331a22bc4",
       "e50cff0b3562ed7e64dbfc093440e333", "64f3320b226ea37fb58080713b4df1b2"
     };
+    int maxTargetPrecision = 16;
 
     try {
       tjc = new TJCompressor();
       tjc.set(TJ.PARAM_BOTTOMUP, bottomUp ? 1 : 0);
-      tjc.set(TJ.PARAM_PRECISION, precision);
       tjd = new TJDecompressor();
       tjd.set(TJ.PARAM_BOTTOMUP, bottomUp ? 1 : 0);
       tjd.set(TJ.PARAM_PRECISION, precision);
 
-      if (precision == 8 && ext.equalsIgnoreCase("bmp"))
+      if (precision == 8 && ext.equalsIgnoreCase("bmp")) {
         md5ref = (pf == TJ.PF_GRAY ? "51976530acf75f02beddf5d21149101d" :
                                      "6d659071b9bfcdee2def22cb58ddadca");
-      else
+        maxTargetPrecision = 8;
+      } else
         md5ref = (pf == TJ.PF_GRAY ? grayPPMRefs[precision] :
                                      colorPPMRefs[precision]);
 
@@ -1207,32 +1230,11 @@ final class TJUnitTest {
         throw new Exception(filename + " has an MD5 sum of " + md5sum +
                             ".  Should be " + md5ref);
 
-      tjc.loadSourceImage(filename, align, pf);
-      loadWidth = tjc.getWidth();
-      loadPitch = tjc.getPitch();
-      loadHeight = tjc.getHeight();
-      pf = tjc.getPixelFormat();
-      buf = tjc.getSourceBuf();
-      if (width != loadWidth || pitch != loadPitch || height != loadHeight)
-        throw new Exception("Image dimensions of " + filename + " are bogus");
-      if (!cmpBitmap(buf, width, pitch, height, pf, bottomUp, false))
-        throw new Exception("Pixel data in " + filename + " is bogus");
-      if (pf == TJ.PF_GRAY) {
-        pf = TJ.PF_XBGR;
-        tjc.loadSourceImage(filename, align, pf);
-        loadWidth = tjc.getWidth();
-        loadPitch = tjc.getPitch();
-        loadHeight = tjc.getHeight();
-        pf = tjc.getPixelFormat();
-        buf = tjc.getSourceBuf();
-        pitch = pad(width * TJ.getPixelSize(pf), align);
-        if (width != loadWidth || pitch != loadPitch || height != loadHeight)
-          throw new Exception("Image dimensions of " + filename +
-                              " are bogus");
-        if (!cmpBitmap(buf, width, pitch, height, pf, bottomUp, true))
-          throw new Exception("Converting " + filename + " to RGB failed");
+      for (int targetPrecision = 2; targetPrecision <= maxTargetPrecision;
+           targetPrecision++) {
+        tjc.set(TJ.PARAM_PRECISION, targetPrecision);
+        pf = pixelFormat;
 
-        pf = TJ.PF_CMYK;
         tjc.loadSourceImage(filename, align, pf);
         loadWidth = tjc.getWidth();
         loadPitch = tjc.getPitch();
@@ -1243,22 +1245,62 @@ final class TJUnitTest {
         if (width != loadWidth || pitch != loadPitch || height != loadHeight)
           throw new Exception("Image dimensions of " + filename +
                               " are bogus");
-        if (!cmpBitmap(buf, width, pitch, height, pf, bottomUp, true))
-          throw new Exception("Converting " + filename + " to CMYK failed");
+        if (!cmpBitmap(buf, width, pitch, height, pf, bottomUp, false,
+                       ext.equalsIgnoreCase("bmp") ? 8 : targetPrecision))
+          throw new Exception("Pixel data in " + filename + " is bogus " +
+                              "(target data precision = " + targetPrecision +
+                              ")");
+
+        if (pf == TJ.PF_GRAY) {
+          pf = TJ.PF_XBGR;
+          tjc.loadSourceImage(filename, align, pf);
+          loadWidth = tjc.getWidth();
+          loadPitch = tjc.getPitch();
+          loadHeight = tjc.getHeight();
+          pf = tjc.getPixelFormat();
+          buf = tjc.getSourceBuf();
+          pitch = pad(width * TJ.getPixelSize(pf), align);
+          if (width != loadWidth || pitch != loadPitch || height != loadHeight)
+            throw new Exception("Image dimensions of " + filename +
+                                " are bogus");
+          if (!cmpBitmap(buf, width, pitch, height, pf, bottomUp, true,
+                         ext.equalsIgnoreCase("bmp") ? 8 : targetPrecision))
+            throw new Exception("Converting " + filename + " to RGB failed " +
+                                "(target data precision = " + targetPrecision +
+                                ")");
+
+          pf = TJ.PF_CMYK;
+          tjc.loadSourceImage(filename, align, pf);
+          loadWidth = tjc.getWidth();
+          loadPitch = tjc.getPitch();
+          loadHeight = tjc.getHeight();
+          pf = tjc.getPixelFormat();
+          buf = tjc.getSourceBuf();
+          pitch = pad(width * TJ.getPixelSize(pf), align);
+          if (width != loadWidth || pitch != loadPitch || height != loadHeight)
+            throw new Exception("Image dimensions of " + filename +
+                                " are bogus");
+          if (!cmpBitmap(buf, width, pitch, height, pf, bottomUp, true,
+                         ext.equalsIgnoreCase("bmp") ? 8 : targetPrecision))
+            throw new Exception("Converting " + filename +
+                                " to CMYK failed (target data precision = " +
+                                targetPrecision + ")");
+        }
+
+        /* Verify that TJCompressor.loadSourceImage() returns the proper
+           "preferred" pixel format for the file type. */
+        pf = pixelFormat;
+        pixelFormat = TJ.PF_UNKNOWN;
+        tjc.loadSourceImage(filename, align, pixelFormat);
+        pixelFormat = tjc.getPixelFormat();
+        if ((pf == TJ.PF_GRAY && pixelFormat != TJ.PF_GRAY) ||
+            (pf != TJ.PF_GRAY && ext.equalsIgnoreCase("bmp") &&
+             pixelFormat != TJ.PF_BGR) ||
+            (pf != TJ.PF_GRAY && ext.equalsIgnoreCase("ppm") &&
+             pixelFormat != TJ.PF_RGB))
+          throw new Exception("TJCompressor.loadImage() returned unexpected " +
+                              "pixel format: " + PIXFORMATSTR[pixelFormat]);
       }
-      /* Verify that TJCompressor.loadSourceImage() returns the proper
-         "preferred" pixel format for the file type. */
-      pf = pixelFormat;
-      pixelFormat = TJ.PF_UNKNOWN;
-      tjc.loadSourceImage(filename, align, pixelFormat);
-      pixelFormat = tjc.getPixelFormat();
-      if ((pf == TJ.PF_GRAY && pixelFormat != TJ.PF_GRAY) ||
-          (pf != TJ.PF_GRAY && ext.equalsIgnoreCase("bmp") &&
-           pixelFormat != TJ.PF_BGR) ||
-          (pf != TJ.PF_GRAY && ext.equalsIgnoreCase("ppm") &&
-           pixelFormat != TJ.PF_RGB))
-        throw new Exception("TJCompressor.loadImage() returned unexpected " +
-                            "pixel format: " + PIXFORMATSTR[pixelFormat]);
       File file = new File(filename);
       file.delete();
     } catch (Exception e) {

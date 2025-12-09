@@ -5,7 +5,7 @@
  * Copyright (C) 1991-1997, Thomas G. Lane.
  * Modified 2009 by Bill Allombert, Guido Vollbeding.
  * libjpeg-turbo Modifications:
- * Copyright (C) 2015-2017, 2020-2024, D. R. Commander.
+ * Copyright (C) 2015-2017, 2020-2025, D. R. Commander.
  * For conditions of distribution and use, see the accompanying README.ijg
  * file.
  *
@@ -217,7 +217,8 @@ get_text_gray_cmyk_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
   } else {
     for (col = cinfo->image_width; col > 0; col--) {
       _JSAMPLE gray = rescale[read_pbm_integer(cinfo, infile, maxval)];
-      rgb_to_cmyk(maxval, gray, gray, gray, ptr, ptr + 1, ptr + 2, ptr + 3);
+      rgb_to_cmyk((1 << cinfo->data_precision) - 1, gray, gray, gray, ptr,
+                  ptr + 1, ptr + 2, ptr + 3);
       ptr += 4;
     }
   }
@@ -295,7 +296,8 @@ get_text_rgb_cmyk_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
       _JSAMPLE r = rescale[read_pbm_integer(cinfo, infile, maxval)];
       _JSAMPLE g = rescale[read_pbm_integer(cinfo, infile, maxval)];
       _JSAMPLE b = rescale[read_pbm_integer(cinfo, infile, maxval)];
-      rgb_to_cmyk(maxval, r, g, b, ptr, ptr + 1, ptr + 2, ptr + 3);
+      rgb_to_cmyk((1 << cinfo->data_precision) - 1, r, g, b, ptr, ptr + 1,
+                  ptr + 2, ptr + 3);
       ptr += 4;
     }
   }
@@ -386,7 +388,8 @@ get_gray_cmyk_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
   } else {
     for (col = cinfo->image_width; col > 0; col--) {
       _JSAMPLE gray = rescale[UCH(*bufferptr++)];
-      rgb_to_cmyk(maxval, gray, gray, gray, ptr, ptr + 1, ptr + 2, ptr + 3);
+      rgb_to_cmyk((1 << cinfo->data_precision) - 1, gray, gray, gray, ptr,
+                  ptr + 1, ptr + 2, ptr + 3);
       ptr += 4;
     }
   }
@@ -459,7 +462,8 @@ get_rgb_cmyk_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
       _JSAMPLE r = rescale[UCH(*bufferptr++)];
       _JSAMPLE g = rescale[UCH(*bufferptr++)];
       _JSAMPLE b = rescale[UCH(*bufferptr++)];
-      rgb_to_cmyk(maxval, r, g, b, ptr, ptr + 1, ptr + 2, ptr + 3);
+      rgb_to_cmyk((1 << cinfo->data_precision) - 1, r, g, b, ptr, ptr + 1,
+                  ptr + 2, ptr + 3);
       ptr += 4;
     }
   }
@@ -560,15 +564,29 @@ get_word_gray_cmyk_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
     ERREXIT(cinfo, JERR_INPUT_EOF);
   ptr = source->pub._buffer[0];
   bufferptr = source->iobuffer;
-  for (col = cinfo->image_width; col > 0; col--) {
-    register unsigned int gray;
-    gray  = UCH(*bufferptr++) << 8;
-    gray |= UCH(*bufferptr++);
-    if (gray > maxval)
-      ERREXIT(cinfo, JERR_PPM_OUTOFRANGE);
-    rgb_to_cmyk(maxval, rescale[gray], rescale[gray], rescale[gray], ptr,
-                ptr + 1, ptr + 2, ptr + 3);
-    ptr += 4;
+  if (maxval == (1U << cinfo->data_precision) - 1U) {
+    for (col = cinfo->image_width; col > 0; col--) {
+      register unsigned int gray;
+      gray  = UCH(*bufferptr++) << 8;
+      gray |= UCH(*bufferptr++);
+      if (gray > maxval)
+        ERREXIT(cinfo, JERR_PPM_OUTOFRANGE);
+      rgb_to_cmyk(maxval, gray, gray, gray, ptr, ptr + 1, ptr + 2, ptr + 3);
+      ptr += 4;
+    }
+  } else {
+    for (col = cinfo->image_width; col > 0; col--) {
+      register unsigned int temp;
+      _JSAMPLE gray;
+      temp  = UCH(*bufferptr++) << 8;
+      temp |= UCH(*bufferptr++);
+      if (temp > maxval)
+        ERREXIT(cinfo, JERR_PPM_OUTOFRANGE);
+      gray = rescale[temp];
+      rgb_to_cmyk((1 << cinfo->data_precision) - 1, gray, gray, gray, ptr,
+                  ptr + 1, ptr + 2, ptr + 3);
+      ptr += 4;
+    }
   }
   return 1;
 }
@@ -634,23 +652,43 @@ get_word_rgb_cmyk_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
     ERREXIT(cinfo, JERR_INPUT_EOF);
   ptr = source->pub._buffer[0];
   bufferptr = source->iobuffer;
-  for (col = cinfo->image_width; col > 0; col--) {
-    register unsigned int r, g, b;
-    r  = UCH(*bufferptr++) << 8;
-    r |= UCH(*bufferptr++);
-    if (r > maxval)
-      ERREXIT(cinfo, JERR_PPM_OUTOFRANGE);
-    g  = UCH(*bufferptr++) << 8;
-    g |= UCH(*bufferptr++);
-    if (g > maxval)
-      ERREXIT(cinfo, JERR_PPM_OUTOFRANGE);
-    b  = UCH(*bufferptr++) << 8;
-    b |= UCH(*bufferptr++);
-    if (b > maxval)
-      ERREXIT(cinfo, JERR_PPM_OUTOFRANGE);
-    rgb_to_cmyk(maxval, rescale[r], rescale[g], rescale[b], ptr, ptr + 1,
-                ptr + 2, ptr + 3);
-    ptr += 4;
+  if (maxval == (1U << cinfo->data_precision) - 1U) {
+    for (col = cinfo->image_width; col > 0; col--) {
+      register unsigned int r, g, b;
+      r  = UCH(*bufferptr++) << 8;
+      r |= UCH(*bufferptr++);
+      if (r > maxval)
+        ERREXIT(cinfo, JERR_PPM_OUTOFRANGE);
+      g  = UCH(*bufferptr++) << 8;
+      g |= UCH(*bufferptr++);
+      if (g > maxval)
+        ERREXIT(cinfo, JERR_PPM_OUTOFRANGE);
+      b  = UCH(*bufferptr++) << 8;
+      b |= UCH(*bufferptr++);
+      if (b > maxval)
+        ERREXIT(cinfo, JERR_PPM_OUTOFRANGE);
+      rgb_to_cmyk(maxval, r, g, b, ptr, ptr + 1, ptr + 2, ptr + 3);
+      ptr += 4;
+    }
+  } else {
+    for (col = cinfo->image_width; col > 0; col--) {
+      register unsigned int r, g, b;
+      r  = UCH(*bufferptr++) << 8;
+      r |= UCH(*bufferptr++);
+      if (r > maxval)
+        ERREXIT(cinfo, JERR_PPM_OUTOFRANGE);
+      g  = UCH(*bufferptr++) << 8;
+      g |= UCH(*bufferptr++);
+      if (g > maxval)
+        ERREXIT(cinfo, JERR_PPM_OUTOFRANGE);
+      b  = UCH(*bufferptr++) << 8;
+      b |= UCH(*bufferptr++);
+      if (b > maxval)
+        ERREXIT(cinfo, JERR_PPM_OUTOFRANGE);
+      rgb_to_cmyk((1 << cinfo->data_precision) - 1, rescale[r], rescale[g],
+                  rescale[b], ptr, ptr + 1, ptr + 2, ptr + 3);
+      ptr += 4;
+    }
   }
   return 1;
 }

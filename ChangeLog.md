@@ -23,6 +23,11 @@ the JNI wrapper's buffer size checks that rendered those checks ineffective.
 invocation of `TJCompressor.loadSourceImage()` if the target data precision was
 changed before the most recent invocation.
 
+5. Fixed an issue in the PPM reader that caused incorrect pixels to be
+generated when using `tj3LoadImage*()` or `TJCompressor.loadSourceImage()` to
+load a PBMPLUS (PPM/PGM) file into a CMYK buffer with a different data
+precision than that of the file.
+
 
 3.1.2
 =====
