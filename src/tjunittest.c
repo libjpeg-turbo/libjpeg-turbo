@@ -199,11 +199,11 @@ static void initBuf(void *buf, int w, int h, int pf, int bottomUp)
 }
 
 
-static int getVal(void *buf, int index)
+static int getVal(void *buf, int index, int targetPrecision)
 {
-  if (precision <= 8)
+  if (targetPrecision <= 8)
     return ((unsigned char *)buf)[index];
-  else if (precision <= 12)
+  else if (targetPrecision <= 12)
     return ((short *)buf)[index];
   else
     return ((unsigned short *)buf)[index];
@@ -230,10 +230,10 @@ static int checkBuf(void *buf, int w, int h, int pf,  int subsamp,
 
         if (bottomUp) index = (h - row - 1) * w + col;
         else index = row * w + col;
-        c = getVal(buf, index * ps);
-        m = getVal(buf, index * ps + 1);
-        y = getVal(buf, index * ps + 2);
-        k = getVal(buf, index * ps + 3);
+        c = getVal(buf, index * ps, precision);
+        m = getVal(buf, index * ps + 1, precision);
+        y = getVal(buf, index * ps + 2, precision);
+        k = getVal(buf, index * ps + 3, precision);
         if (((row / blocksize) + (col / blocksize)) % 2 == 0) {
           CHECKVALMAX(c);  CHECKVALMAX(m);  CHECKVALMAX(y);
           if (row < halfway) CHECKVALMAX(k)
@@ -254,10 +254,11 @@ static int checkBuf(void *buf, int w, int h, int pf,  int subsamp,
 
       if (bottomUp) index = (h - row - 1) * w + col;
       else index = row * w + col;
-      r = getVal(buf, index * ps + roffset);
-      g = getVal(buf, index * ps + goffset);
-      b = getVal(buf, index * ps + boffset);
-      a = aoffset >= 0 ? getVal(buf, index * ps + aoffset) : maxSample;
+      r = getVal(buf, index * ps + roffset, precision);
+      g = getVal(buf, index * ps + goffset, precision);
+      b = getVal(buf, index * ps + boffset, precision);
+      a = aoffset >= 0 ? getVal(buf, index * ps + aoffset, precision) :
+                         maxSample;
       if (((row / blocksize) + (col / blocksize)) % 2 == 0) {
         if (row < halfway) {
           CHECKVALMAX(r);  CHECKVALMAX(g);  CHECKVALMAX(b);
@@ -289,15 +290,16 @@ bailout:
     for (row = 0; row < h; row++) {
       for (col = 0; col < w; col++) {
         if (pf == TJPF_CMYK)
-          printf("%.3d/%.3d/%.3d/%.3d ", getVal(buf, (row * w + col) * ps),
-                 getVal(buf, (row * w + col) * ps + 1),
-                 getVal(buf, (row * w + col) * ps + 2),
-                 getVal(buf, (row * w + col) * ps + 3));
+          printf("%.3d/%.3d/%.3d/%.3d ",
+                 getVal(buf, (row * w + col) * ps, precision),
+                 getVal(buf, (row * w + col) * ps + 1, precision),
+                 getVal(buf, (row * w + col) * ps + 2, precision),
+                 getVal(buf, (row * w + col) * ps + 3, precision));
         else
           printf("%.3d/%.3d/%.3d ",
-                 getVal(buf, (row * w + col) * ps + roffset),
-                 getVal(buf, (row * w + col) * ps + goffset),
-                 getVal(buf, (row * w + col) * ps + boffset));
+                 getVal(buf, (row * w + col) * ps + roffset, precision),
+                 getVal(buf, (row * w + col) * ps + goffset, precision),
+                 getVal(buf, (row * w + col) * ps + boffset, precision));
       }
       printf("\n");
     }
@@ -909,15 +911,16 @@ static void initBitmap(void *buf, int width, int pitch, int height, int pf,
 }
 
 
-static void cmyk_to_rgb(int c, int m, int y, int k, int *r, int *g, int *b)
+static void cmyk_to_rgb(int c, int m, int y, int k, int *r, int *g, int *b,
+                        int targetMaxSample)
 {
-  *r = (int)((double)c * (double)k / (double)maxSample + 0.5);
-  *g = (int)((double)m * (double)k / (double)maxSample + 0.5);
-  *b = (int)((double)y * (double)k / (double)maxSample + 0.5);
+  *r = (int)((double)c * (double)k / (double)targetMaxSample + 0.5);
+  *g = (int)((double)m * (double)k / (double)targetMaxSample + 0.5);
+  *b = (int)((double)y * (double)k / (double)targetMaxSample + 0.5);
 }
 
 static int cmpBitmap(void *buf, int width, int pitch, int height, int pf,
-                     int bottomUp, int gray2rgb)
+                     int bottomUp, int gray2rgb, int targetPrecision)
 {
   int roffset = tjRedOffset[pf];
   int goffset = tjGreenOffset[pf];
@@ -925,6 +928,7 @@ static int cmpBitmap(void *buf, int width, int pitch, int height, int pf,
   int aoffset = tjAlphaOffset[pf];
   int ps = tjPixelSize[pf];
   int i, j;
+  int targetMaxSample = (1 << targetPrecision) - 1;
 
   for (j = 0; j < height; j++) {
     int row = bottomUp ? height - j - 1 : j;
@@ -935,32 +939,51 @@ static int cmpBitmap(void *buf, int width, int pitch, int height, int pf,
       int b = (j * (maxSample + 1) / height +
                i * (maxSample + 1) / width) % (maxSample + 1);
 
+      if (precision != targetPrecision) {
+        long halfMaxSample = maxSample / 2;
+
+        r = (int)((r * ((1 << targetPrecision) - 1) + halfMaxSample) /
+                  maxSample);
+        g = (int)((g * ((1 << targetPrecision) - 1) + halfMaxSample) /
+                  maxSample);
+        b = (int)((b * ((1 << targetPrecision) - 1) + halfMaxSample) /
+                  maxSample);
+      }
+
       if (pf == TJPF_GRAY) {
-        if (getVal(buf, row * pitch + i * ps) != b)
+        if (getVal(buf, row * pitch + i * ps, targetPrecision) != b)
           return 0;
       } else if (pf == TJPF_CMYK) {
         int rf, gf, bf;
 
-        cmyk_to_rgb(getVal(buf, row * pitch + i * ps + 0),
-                    getVal(buf, row * pitch + i * ps + 1),
-                    getVal(buf, row * pitch + i * ps + 2),
-                    getVal(buf, row * pitch + i * ps + 3), &rf, &gf, &bf);
+        cmyk_to_rgb(getVal(buf, row * pitch + i * ps + 0, targetPrecision),
+                    getVal(buf, row * pitch + i * ps + 1, targetPrecision),
+                    getVal(buf, row * pitch + i * ps + 2, targetPrecision),
+                    getVal(buf, row * pitch + i * ps + 3, targetPrecision),
+                    &rf, &gf, &bf, targetMaxSample);
         if (gray2rgb) {
           if (rf != b || gf != b || bf != b)
             return 0;
         } else if (rf != r || gf != g || bf != b) return 0;
       } else {
         if (gray2rgb) {
-          if (getVal(buf, row * pitch + i * ps + roffset) != b ||
-              getVal(buf, row * pitch + i * ps + goffset) != b ||
-              getVal(buf, row * pitch + i * ps + boffset) != b)
+          if (getVal(buf, row * pitch + i * ps + roffset,
+                     targetPrecision) != b ||
+              getVal(buf, row * pitch + i * ps + goffset,
+                     targetPrecision) != b ||
+              getVal(buf, row * pitch + i * ps + boffset,
+                     targetPrecision) != b)
             return 0;
-        } else if (getVal(buf, row * pitch + i * ps + roffset) != r ||
-                   getVal(buf, row * pitch + i * ps + goffset) != g ||
-                   getVal(buf, row * pitch + i * ps + boffset) != b)
+        } else if (getVal(buf, row * pitch + i * ps + roffset,
+                          targetPrecision) != r ||
+                   getVal(buf, row * pitch + i * ps + goffset,
+                          targetPrecision) != g ||
+                   getVal(buf, row * pitch + i * ps + boffset,
+                          targetPrecision) != b)
           return 0;
         if (aoffset >= 0 &&
-            getVal(buf, row * pitch + i * ps + aoffset) != maxSample)
+            getVal(buf, row * pitch + i * ps + aoffset,
+                   targetPrecision) != targetMaxSample)
           return 0;
       }
     }
@@ -998,16 +1021,18 @@ static int doBmpTest(const char *ext, int width, int align, int height, int pf,
     "00fc2803bca103ff75785ea0dca992aa", "d8c91fac522c16b029e514d331a22bc4",
     "e50cff0b3562ed7e64dbfc093440e333", "64f3320b226ea37fb58080713b4df1b2"
   };
+  int targetPrecision, maxTargetPrecision = 16;
 
   if ((handle = tj3Init(TJINIT_TRANSFORM)) == NULL)
     THROW_TJ(NULL);
   TRY_TJ(handle, tj3Set(handle, TJPARAM_BOTTOMUP, bottomUp));
   TRY_TJ(handle, tj3Set(handle, TJPARAM_PRECISION, precision));
 
-  if (precision == 8 && !strcasecmp(ext, "bmp"))
+  if (precision == 8 && !strcasecmp(ext, "bmp")) {
     md5ref = (pf == TJPF_GRAY ? "51976530acf75f02beddf5d21149101d" :
                                 "6d659071b9bfcdee2def22cb58ddadca");
-  else
+    maxTargetPrecision = 8;
+  } else
     md5ref = (pf == TJPF_GRAY ? grayPPMRefs[precision] :
                                 colorPPMRefs[precision]);
 
@@ -1027,6 +1052,7 @@ static int doBmpTest(const char *ext, int width, int align, int height, int pf,
     TRY_TJ(handle, tj3SaveImage16(handle, filename, (unsigned short *)buf,
                                   width, pitch, height, pf));
   }
+  tj3Free(buf);  buf = NULL;
   md5sum = MD5File(filename, md5buf);
   if (!md5sum) {
     printf("\n   Could not determine MD5 sum of %s\n", filename);
@@ -1035,36 +1061,16 @@ static int doBmpTest(const char *ext, int width, int align, int height, int pf,
   if (strcasecmp(md5sum, md5ref))
     THROW_MD5(filename, md5sum, md5ref);
 
-  tj3Free(buf);  buf = NULL;
-  if (precision <= 8) {
-    if ((buf = tj3LoadImage8(handle, filename, &loadWidth, align, &loadHeight,
-                             &pf)) == NULL)
-      THROW_TJ(handle);
-  } else if (precision <= 12) {
-    if ((buf = tj3LoadImage12(handle, filename, &loadWidth, align, &loadHeight,
-                              &pf)) == NULL)
-      THROW_TJ(handle);
-  } else {
-    if ((buf = tj3LoadImage16(handle, filename, &loadWidth, align, &loadHeight,
-                              &pf)) == NULL)
-      THROW_TJ(handle);
-  }
-  if (width != loadWidth || height != loadHeight) {
-    printf("\n   Image dimensions of %s are bogus\n", filename);
-    retval = -1;  goto bailout;
-  }
-  if (!cmpBitmap(buf, width, pitch, height, pf, bottomUp, 0)) {
-    printf("\n   Pixel data in %s is bogus\n", filename);
-    retval = -1;  goto bailout;
-  }
-  if (pf == TJPF_GRAY) {
-    tj3Free(buf);  buf = NULL;
-    pf = TJPF_XBGR;
-    if (precision <= 8) {
+  for (targetPrecision = 2; targetPrecision <= maxTargetPrecision;
+       targetPrecision++) {
+    TRY_TJ(handle, tj3Set(handle, TJPARAM_PRECISION, targetPrecision));
+    pf = pixelFormat;
+
+    if (targetPrecision <= 8) {
       if ((buf = tj3LoadImage8(handle, filename, &loadWidth, align,
                                &loadHeight, &pf)) == NULL)
         THROW_TJ(handle);
-    } else if (precision <= 12) {
+    } else if (targetPrecision <= 12) {
       if ((buf = tj3LoadImage12(handle, filename, &loadWidth, align,
                                 &loadHeight, &pf)) == NULL)
         THROW_TJ(handle);
@@ -1073,59 +1079,94 @@ static int doBmpTest(const char *ext, int width, int align, int height, int pf,
                                 &loadHeight, &pf)) == NULL)
         THROW_TJ(handle);
     }
-    pitch = PAD(width * tjPixelSize[pf], align);
-    if (!cmpBitmap(buf, width, pitch, height, pf, bottomUp, 1)) {
-      printf("\n   Converting %s to RGB failed\n", filename);
+    if (width != loadWidth || height != loadHeight) {
+      printf("\n   Image dimensions of %s are bogus\n", filename);
       retval = -1;  goto bailout;
+    }
+    pitch = PAD(width * tjPixelSize[pf], align);
+    if (!cmpBitmap(buf, width, pitch, height, pf, bottomUp, 0,
+                   !strcasecmp(ext, "bmp") ? 8 : targetPrecision)) {
+      printf("\n   Pixel data in %s is bogus\n", filename);
+      printf("   (target data precision = %d)\n", targetPrecision);
+      retval = -1;  goto bailout;
+    }
+    tj3Free(buf);  buf = NULL;
+
+    if (pf == TJPF_GRAY) {
+      pf = TJPF_XBGR;
+      if (targetPrecision <= 8) {
+        if ((buf = tj3LoadImage8(handle, filename, &loadWidth, align,
+                                 &loadHeight, &pf)) == NULL)
+          THROW_TJ(handle);
+      } else if (targetPrecision <= 12) {
+        if ((buf = tj3LoadImage12(handle, filename, &loadWidth, align,
+                                  &loadHeight, &pf)) == NULL)
+          THROW_TJ(handle);
+      } else {
+        if ((buf = tj3LoadImage16(handle, filename, &loadWidth, align,
+                                  &loadHeight, &pf)) == NULL)
+          THROW_TJ(handle);
+      }
+      pitch = PAD(width * tjPixelSize[pf], align);
+      if (!cmpBitmap(buf, width, pitch, height, pf, bottomUp, 1,
+                     !strcasecmp(ext, "bmp") ? 8 : targetPrecision)) {
+        printf("\n   Converting %s to RGB failed\n", filename);
+        printf("   (target data precision = %d)\n", targetPrecision);
+        retval = -1;  goto bailout;
+      }
+      tj3Free(buf);  buf = NULL;
+
+      pf = TJPF_CMYK;
+      if (targetPrecision <= 8) {
+        if ((buf = tj3LoadImage8(handle, filename, &loadWidth, align,
+                                 &loadHeight, &pf)) == NULL)
+          THROW_TJ(handle);
+      } else if (targetPrecision <= 12) {
+        if ((buf = tj3LoadImage12(handle, filename, &loadWidth, align,
+                                  &loadHeight, &pf)) == NULL)
+          THROW_TJ(handle);
+      } else {
+        if ((buf = tj3LoadImage16(handle, filename, &loadWidth, align,
+                                  &loadHeight, &pf)) == NULL)
+          THROW_TJ(handle);
+      }
+      pitch = PAD(width * tjPixelSize[pf], align);
+      if (!cmpBitmap(buf, width, pitch, height, pf, bottomUp, 1,
+                     !strcasecmp(ext, "bmp") ? 8 : targetPrecision)) {
+        printf("\n   Converting %s to CMYK failed\n", filename);
+        printf("   (target data precision = %d)\n", targetPrecision);
+        retval = -1;  goto bailout;
+      }
+      tj3Free(buf);  buf = NULL;
     }
 
-    tj3Free(buf);  buf = NULL;
-    pf = TJPF_CMYK;
-    if (precision <= 8) {
+    /* Verify that tj3LoadImage*() returns the proper "preferred" pixel format
+       for the file type. */
+    pf = pixelFormat;
+    pixelFormat = TJPF_UNKNOWN;
+    if (targetPrecision <= 8) {
       if ((buf = tj3LoadImage8(handle, filename, &loadWidth, align,
-                               &loadHeight, &pf)) == NULL)
+                               &loadHeight, &pixelFormat)) == NULL)
         THROW_TJ(handle);
-    } else if (precision <= 12) {
+    } else if (targetPrecision <= 12) {
       if ((buf = tj3LoadImage12(handle, filename, &loadWidth, align,
-                                &loadHeight, &pf)) == NULL)
+                                &loadHeight, &pixelFormat)) == NULL)
         THROW_TJ(handle);
     } else {
       if ((buf = tj3LoadImage16(handle, filename, &loadWidth, align,
-                                &loadHeight, &pf)) == NULL)
+                                &loadHeight, &pixelFormat)) == NULL)
         THROW_TJ(handle);
     }
-    pitch = PAD(width * tjPixelSize[pf], align);
-    if (!cmpBitmap(buf, width, pitch, height, pf, bottomUp, 1)) {
-      printf("\n   Converting %s to CMYK failed\n", filename);
-      retval = -1;  goto bailout;
+    tj3Free(buf);  buf = NULL;
+    if ((pf == TJPF_GRAY && pixelFormat != TJPF_GRAY) ||
+        (pf != TJPF_GRAY && !strcasecmp(ext, "bmp") &&
+         pixelFormat != TJPF_BGR) ||
+        (pf != TJPF_GRAY && !strcasecmp(ext, "ppm") &&
+         pixelFormat != TJPF_RGB)) {
+      printf("\n   tj3LoadImage8() returned unexpected pixel format: %s\n",
+             pixFormatStr[pixelFormat]);
+      retval = -1;
     }
-  }
-  /* Verify that tj3LoadImage*() returns the proper "preferred" pixel format
-     for the file type. */
-  tj3Free(buf);  buf = NULL;
-  pf = pixelFormat;
-  pixelFormat = TJPF_UNKNOWN;
-  if (precision <= 8) {
-    if ((buf = tj3LoadImage8(handle, filename, &loadWidth, align, &loadHeight,
-                             &pixelFormat)) == NULL)
-      THROW_TJ(handle);
-  } else if (precision <= 12) {
-    if ((buf = tj3LoadImage12(handle, filename, &loadWidth, align, &loadHeight,
-                              &pixelFormat)) == NULL)
-      THROW_TJ(handle);
-  } else {
-    if ((buf = tj3LoadImage16(handle, filename, &loadWidth, align, &loadHeight,
-                              &pixelFormat)) == NULL)
-      THROW_TJ(handle);
-  }
-  if ((pf == TJPF_GRAY && pixelFormat != TJPF_GRAY) ||
-      (pf != TJPF_GRAY && !strcasecmp(ext, "bmp") &&
-       pixelFormat != TJPF_BGR) ||
-      (pf != TJPF_GRAY && !strcasecmp(ext, "ppm") &&
-       pixelFormat != TJPF_RGB)) {
-    printf("\n   tj3LoadImage8() returned unexpected pixel format: %s\n",
-           pixFormatStr[pixelFormat]);
-    retval = -1;
   }
   unlink(filename);
 

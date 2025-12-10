@@ -439,12 +439,19 @@ public class TJCompressor implements Closeable {
     if (precision < 2 || precision > 16)
       precision = 8;
     Object srcBuf = loadSourceImage(precision, fileName, align, pixelFormat);
-    if (precision <= 8)
+    if (precision <= 8) {
       srcBuf8 = (byte[])srcBuf;
-    else if (precision <= 12)
+      srcBuf12 = null;
+      srcBuf16 = null;
+    } else if (precision <= 12) {
       srcBuf12 = (short[])srcBuf;
-    else
+      srcBuf8 = null;
+      srcBuf16 = null;
+    } else {
       srcBuf16 = (short[])srcBuf;
+      srcBuf8 = null;
+      srcBuf12 = null;
+    }
     srcBufInt = null;
   }
 
