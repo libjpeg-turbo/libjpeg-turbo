@@ -571,7 +571,8 @@ get_word_gray_cmyk_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
       gray |= UCH(*bufferptr++);
       if (gray > maxval)
         ERREXIT(cinfo, JERR_PPM_OUTOFRANGE);
-      rgb_to_cmyk(maxval, gray, gray, gray, ptr, ptr + 1, ptr + 2, ptr + 3);
+      rgb_to_cmyk(maxval, (_JSAMPLE)gray, (_JSAMPLE)gray, (_JSAMPLE)gray, ptr,
+                  ptr + 1, ptr + 2, ptr + 3);
       ptr += 4;
     }
   } else {
@@ -667,7 +668,8 @@ get_word_rgb_cmyk_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
       b |= UCH(*bufferptr++);
       if (b > maxval)
         ERREXIT(cinfo, JERR_PPM_OUTOFRANGE);
-      rgb_to_cmyk(maxval, r, g, b, ptr, ptr + 1, ptr + 2, ptr + 3);
+      rgb_to_cmyk(maxval, (_JSAMPLE)r, (_JSAMPLE)g, (_JSAMPLE)b, ptr, ptr + 1,
+                  ptr + 2, ptr + 3);
       ptr += 4;
     }
   } else {
