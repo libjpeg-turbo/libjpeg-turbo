@@ -27,23 +27,20 @@
  */
 
 /*
- * This fuzzer targets the raw libjpeg API (as opposed to TurboJPEG API)
- * to exercise code paths that might not be covered by the TurboJPEG fuzzer.
+ * This fuzzer targets partial decoding features of the libjpeg API.
  *
  * Specifically targets:
- * - DHT (Huffman table) marker processing
- * - Slow-path Huffman decode in jpeg_huff_decode() (codes > 8 bits)
- * - Edge cases in valoffset calculations
- * - Multiple output colorspaces including JCS_UNKNOWN
- * - DCT scaling factors
- * - Various decompression options (fancy upsampling, block smoothing, etc.)
+ * - jpeg_skip_scanlines() for skipping rows
+ * - jpeg_crop_scanline() for cropping columns
+ * - Boundary conditions in partial decode
+ * - Interaction between skip and crop operations
  *
  * Sanitizer support:
- * - MemorySanitizer: All output bytes are touched to detect uninitialized reads
+ * - MemorySanitizer: All decoded pixels are touched
  * - AddressSanitizer: Standard heap/stack checking
  * - UndefinedBehaviorSanitizer: Integer overflow, null pointer, etc.
  *
- * Coverage: Multiple test configurations maximize code path coverage.
+ * Coverage: Multiple skip/crop configurations test boundary conditions.
  */
 
 #include <stdint.h>
@@ -59,16 +56,14 @@ extern "C" {
 
 
 /* Ensure sum variable is not optimized out - visible to sanitizers */
-#if defined(__clang__)
-#define PREVENT_OPTIMIZATION(x) __asm__ volatile("" : "+r"(x))
-#elif defined(__GNUC__)
+#if defined(__clang__) || defined(__GNUC__)
 #define PREVENT_OPTIMIZATION(x) __asm__ volatile("" : "+r"(x))
 #else
 #define PREVENT_OPTIMIZATION(x) ((void)(x))
 #endif
 
 
-#define NUMTESTS 6
+#define NUMTESTS 4
 
 
 /* Error handler that uses longjmp to return control to fuzzer */
@@ -94,13 +89,12 @@ static void fuzzer_emit_message(j_common_ptr cinfo, int msg_level)
 
 /* Test configuration structure */
 struct test_config {
-  J_COLOR_SPACE out_color_space;
-  int scale_num;
-  int scale_denom;
-  boolean do_fancy_upsampling;
-  boolean do_block_smoothing;
-  J_DCT_METHOD dct_method;
-  J_DITHER_MODE dither_mode;
+  /* Fraction of height to skip at start (0-3 maps to 0, 1/4, 1/2, 3/4) */
+  int skip_fraction;
+  /* Fraction of width to crop (0-3 maps to full, 3/4, 1/2, 1/4) */
+  int crop_fraction;
+  /* Whether to alternate between skip and read */
+  boolean alternate_skip;
 };
 
 
@@ -109,23 +103,18 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
   struct jpeg_decompress_struct cinfo;
   struct fuzzer_error_mgr jerr;
   JSAMPARRAY buffer = NULL;
-  int row_stride;
   int ti;
 
-  /* Various test configurations to exercise different code paths */
+  /* Various test configurations */
   struct test_config tests[NUMTESTS] = {
-    /* Test 0: RGB output with 1/1 scale, fast DCT */
-    { JCS_RGB, 1, 1, TRUE, TRUE, JDCT_IFAST, JDITHER_NONE },
-    /* Test 1: Grayscale output with 1/2 scale, integer DCT */
-    { JCS_GRAYSCALE, 1, 2, FALSE, FALSE, JDCT_ISLOW, JDITHER_ORDERED },
-    /* Test 2: RGB output with 1/4 scale, float DCT */
-    { JCS_RGB, 1, 4, TRUE, FALSE, JDCT_FLOAT, JDITHER_FS },
-    /* Test 3: CMYK output (for CMYK JPEGs), 1/8 scale */
-    { JCS_CMYK, 1, 8, FALSE, TRUE, JDCT_ISLOW, JDITHER_NONE },
-    /* Test 4: YCbCr output (no color conversion), 3/4 scale */
-    { JCS_YCbCr, 3, 4, TRUE, TRUE, JDCT_IFAST, JDITHER_NONE },
-    /* Test 5: Unknown colorspace (pass-through), 1/1 scale */
-    { JCS_UNKNOWN, 1, 1, FALSE, FALSE, JDCT_ISLOW, JDITHER_NONE }
+    /* Test 0: Skip first quarter, read rest, full width */
+    { 1, 0, FALSE },
+    /* Test 1: Skip first half, read rest, crop to 3/4 width */
+    { 2, 1, FALSE },
+    /* Test 2: Skip 3/4, read rest, crop to half width */
+    { 3, 2, FALSE },
+    /* Test 3: Alternate skip and read, crop to quarter width */
+    { 0, 3, TRUE }
   };
 
   /* Reject too-small input */
@@ -139,6 +128,8 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 
   for (ti = 0; ti < NUMTESTS; ti++) {
     int64_t sum = 0;
+    JDIMENSION skip_lines, crop_x, crop_width;
+    int row_stride;
 
     if (setjmp(jerr.setjmp_buffer)) {
       jpeg_destroy_decompress(&cinfo);
@@ -161,34 +152,10 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
       continue;
     }
 
-    /* Apply test configuration */
-    cinfo.out_color_space = tests[ti].out_color_space;
-    cinfo.scale_num = tests[ti].scale_num;
-    cinfo.scale_denom = tests[ti].scale_denom;
-    cinfo.do_fancy_upsampling = tests[ti].do_fancy_upsampling;
-    cinfo.do_block_smoothing = tests[ti].do_block_smoothing;
-    cinfo.dct_method = tests[ti].dct_method;
-    cinfo.dither_mode = tests[ti].dither_mode;
-
-    /* Handle colorspace compatibility:
-     * - CMYK output only works with CMYK/YCCK input
-     * - YCbCr output requires YCbCr input
-     * - Unknown passes through without conversion
-     */
-    if (tests[ti].out_color_space == JCS_CMYK &&
-        cinfo.jpeg_color_space != JCS_CMYK &&
-        cinfo.jpeg_color_space != JCS_YCCK) {
-      /* Fall back to RGB for non-CMYK images */
-      cinfo.out_color_space = JCS_RGB;
-    }
-    if (tests[ti].out_color_space == JCS_YCbCr &&
-        cinfo.jpeg_color_space != JCS_YCbCr) {
-      /* Fall back to RGB for non-YCbCr images */
-      cinfo.out_color_space = JCS_RGB;
-    }
-    if (tests[ti].out_color_space == JCS_UNKNOWN) {
-      /* For unknown, match the input components */
-      cinfo.out_color_components = cinfo.num_components;
+    /* Need minimum dimensions for meaningful partial decode testing */
+    if (cinfo.image_width < 32 || cinfo.image_height < 32) {
+      jpeg_destroy_decompress(&cinfo);
+      continue;
     }
 
     if (!jpeg_start_decompress(&cinfo)) {
@@ -196,18 +163,72 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
       continue;
     }
 
+    /* Calculate crop parameters based on test configuration */
+    switch (tests[ti].crop_fraction) {
+      case 1:  /* 3/4 width */
+        crop_width = (cinfo.output_width * 3) / 4;
+        crop_x = cinfo.output_width / 8;
+        break;
+      case 2:  /* 1/2 width */
+        crop_width = cinfo.output_width / 2;
+        crop_x = cinfo.output_width / 4;
+        break;
+      case 3:  /* 1/4 width */
+        crop_width = cinfo.output_width / 4;
+        crop_x = cinfo.output_width / 8;
+        break;
+      default: /* full width */
+        crop_width = cinfo.output_width;
+        crop_x = 0;
+        break;
+    }
+
+    /* Apply cropping if specified */
+    if (tests[ti].crop_fraction > 0 && crop_width > 0) {
+      jpeg_crop_scanline(&cinfo, &crop_x, &crop_width);
+    }
+
     row_stride = cinfo.output_width * cinfo.output_components;
     buffer = (*cinfo.mem->alloc_sarray)
       ((j_common_ptr)&cinfo, JPOOL_IMAGE, row_stride, 1);
 
-    /* Read all scanlines - this exercises Huffman decoding including
-     * the slow-path jpeg_huff_decode() where OOB reads can occur */
-    while (cinfo.output_scanline < cinfo.output_height) {
-      jpeg_read_scanlines(&cinfo, buffer, 1);
-      /* Touch all of the output pixels in order to catch uninitialized reads
-         when using MemorySanitizer. */
-      for (int i = 0; i < row_stride; i++)
-        sum += buffer[0][i];
+    /* Calculate skip lines based on test configuration */
+    skip_lines = (cinfo.output_height * tests[ti].skip_fraction) / 4;
+
+    if (tests[ti].alternate_skip) {
+      /* Alternate between skipping and reading groups of 8 lines */
+      JDIMENSION group_size = 8;
+      boolean do_skip = TRUE;
+
+      while (cinfo.output_scanline < cinfo.output_height) {
+        JDIMENSION remaining = cinfo.output_height - cinfo.output_scanline;
+        JDIMENSION to_process = (remaining < group_size) ? remaining : group_size;
+
+        if (do_skip && to_process > 0) {
+          jpeg_skip_scanlines(&cinfo, to_process);
+        } else {
+          while (to_process > 0 &&
+                 cinfo.output_scanline < cinfo.output_height) {
+            jpeg_read_scanlines(&cinfo, buffer, 1);
+            for (int i = 0; i < row_stride; i++)
+              sum += buffer[0][i];
+            to_process--;
+          }
+        }
+        do_skip = !do_skip;
+      }
+    } else {
+      /* Skip initial lines */
+      if (skip_lines > 0 && skip_lines < cinfo.output_height) {
+        jpeg_skip_scanlines(&cinfo, skip_lines);
+      }
+
+      /* Read remaining lines */
+      while (cinfo.output_scanline < cinfo.output_height) {
+        jpeg_read_scanlines(&cinfo, buffer, 1);
+        for (int i = 0; i < row_stride; i++)
+          sum += buffer[0][i];
+      }
     }
 
     jpeg_finish_decompress(&cinfo);

@@ -32,3 +32,13 @@ cp $SRC/decompress_fuzzer_seed_corpus.zip $OUT/libjpeg_turbo_fuzzer${FUZZER_SUFF
 cp $SRC/decompress_fuzzer_seed_corpus.zip $OUT/decompress_yuv_fuzzer${FUZZER_SUFFIX}_seed_corpus.zip
 cp $SRC/decompress_fuzzer_seed_corpus.zip $OUT/transform_fuzzer${FUZZER_SUFFIX}_seed_corpus.zip
 cp $SRC/decompress_fuzzer_seed_corpus.zip $OUT/decompress_libjpeg_fuzzer${FUZZER_SUFFIX}_seed_corpus.zip
+cp $SRC/decompress_fuzzer_seed_corpus.zip $OUT/progressive_fuzzer${FUZZER_SUFFIX}_seed_corpus.zip
+cp $SRC/decompress_fuzzer_seed_corpus.zip $OUT/marker_fuzzer${FUZZER_SUFFIX}_seed_corpus.zip
+cp $SRC/decompress_fuzzer_seed_corpus.zip $OUT/coefficient_fuzzer${FUZZER_SUFFIX}_seed_corpus.zip
+cp $SRC/decompress_fuzzer_seed_corpus.zip $OUT/partial_fuzzer${FUZZER_SUFFIX}_seed_corpus.zip
+cp $SRC/decompress_fuzzer_seed_corpus.zip $OUT/error_recovery_fuzzer${FUZZER_SUFFIX}_seed_corpus.zip
+cp $SRC/decompress_fuzzer_seed_corpus.zip $OUT/raw_data_fuzzer${FUZZER_SUFFIX}_seed_corpus.zip
+cp $SRC/decompress_fuzzer_seed_corpus.zip $OUT/transcode_fuzzer${FUZZER_SUFFIX}_seed_corpus.zip
+cp $SRC/compress_fuzzer_seed_corpus.zip $OUT/compress_libjpeg_fuzzer${FUZZER_SUFFIX}_seed_corpus.zip
+cp $SRC/compress_fuzzer_seed_corpus.zip $OUT/compress_raw_data_fuzzer${FUZZER_SUFFIX}_seed_corpus.zip
+cp $SRC/decompress_fuzzer_seed_corpus.zip $OUT/resync_fuzzer${FUZZER_SUFFIX}_seed_corpus.zip
