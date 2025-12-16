@@ -467,7 +467,7 @@ jpeg_huff_decode(bitread_working_state *state,
     return 0;                   /* fake a zero as the safest result */
   }
 
-  return htbl->pub->huffval[(int)(code + htbl->valoffset[l])];
+  return htbl->pub->huffval[(int)(code + htbl->valoffset[l]) & 0xFF];
 }
 
 
