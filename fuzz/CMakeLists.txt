@@ -62,3 +62,12 @@ add_fuzz_target(libjpeg_turbo decompress.cc)
 add_fuzz_target(decompress_yuv decompress_yuv.cc)
 
 add_fuzz_target(transform transform.cc)
+
+# Raw libjpeg API fuzzer (links against jpeg-static, not turbojpeg-static)
+# This targets code paths not covered by TurboJPEG API fuzzers, including
+# the slow-path Huffman decode in jpeg_huff_decode().
+add_executable(decompress_libjpeg_fuzzer${FUZZER_SUFFIX} decompress_libjpeg.cc)
+target_link_libraries(decompress_libjpeg_fuzzer${FUZZER_SUFFIX} ${FUZZ_LIBRARY}
+  jpeg-static)
+install(TARGETS decompress_libjpeg_fuzzer${FUZZER_SUFFIX}
+  RUNTIME DESTINATION ${FUZZ_BINDIR} COMPONENT bin)
