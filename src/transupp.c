@@ -4,7 +4,7 @@
  * This file was part of the Independent JPEG Group's software:
  * Copyright (C) 1997-2019, Thomas G. Lane, Guido Vollbeding.
  * libjpeg-turbo Modifications:
- * Copyright (C) 2010, 2017, 2021-2022, 2024, D. R. Commander.
+ * Copyright (C) 2010, 2017, 2021-2022, 2024, 2026, D. R. Commander.
  * For conditions of distribution and use, see the accompanying README.ijg
  * file.
  *
@@ -313,8 +313,7 @@ do_crop(j_decompress_ptr srcinfo, j_compress_ptr dstinfo,
 
 LOCAL(void)
 do_crop_ext_zero(j_decompress_ptr srcinfo, j_compress_ptr dstinfo,
-                 JDIMENSION x_crop_offset, JDIMENSION y_crop_offset,
-                 jvirt_barray_ptr *src_coef_arrays,
+                 jpeg_transform_info *info, jvirt_barray_ptr *src_coef_arrays,
                  jvirt_barray_ptr *dst_coef_arrays)
 /* Crop.  This is only used when no rotate/flip is requested with the crop.
  * Extension: If the destination size is larger than the source, we fill in the
@@ -333,13 +332,29 @@ do_crop_ext_zero(j_decompress_ptr srcinfo, j_compress_ptr dstinfo,
              (dstinfo->max_h_samp_factor * dstinfo_min_DCT_h_scaled_size);
   MCU_rows = srcinfo->output_height /
              (dstinfo->max_v_samp_factor * dstinfo_min_DCT_v_scaled_size);
+  if (!info->trim) {
+    int MCU_width, MCU_height;
+
+    if (info->num_components == 1) {
+      MCU_width = srcinfo->_min_DCT_h_scaled_size;
+      MCU_height = srcinfo->_min_DCT_v_scaled_size;
+    } else {
+      MCU_width = srcinfo->max_h_samp_factor * srcinfo->_min_DCT_h_scaled_size;
+      MCU_height = srcinfo->max_v_samp_factor *
+                   srcinfo->_min_DCT_v_scaled_size;
+    }
+    if (srcinfo->output_width % (JDIMENSION)MCU_width)
+      MCU_cols++;
+    if (srcinfo->output_height % (JDIMENSION)MCU_height)
+      MCU_rows++;
+  }
 
   for (ci = 0; ci < dstinfo->num_components; ci++) {
     compptr = dstinfo->comp_info + ci;
     comp_width = MCU_cols * compptr->h_samp_factor;
     comp_height = MCU_rows * compptr->v_samp_factor;
-    x_crop_blocks = x_crop_offset * compptr->h_samp_factor;
-    y_crop_blocks = y_crop_offset * compptr->v_samp_factor;
+    x_crop_blocks = info->x_crop_offset * compptr->h_samp_factor;
+    y_crop_blocks = info->y_crop_offset * compptr->v_samp_factor;
     for (dst_blk_y = 0; dst_blk_y < compptr->height_in_blocks;
          dst_blk_y += compptr->v_samp_factor) {
       dst_buffer = (*srcinfo->mem->access_virt_barray)
@@ -388,8 +403,7 @@ do_crop_ext_zero(j_decompress_ptr srcinfo, j_compress_ptr dstinfo,
 
 LOCAL(void)
 do_crop_ext_flat(j_decompress_ptr srcinfo, j_compress_ptr dstinfo,
-                 JDIMENSION x_crop_offset, JDIMENSION y_crop_offset,
-                 jvirt_barray_ptr *src_coef_arrays,
+                 jpeg_transform_info *info, jvirt_barray_ptr *src_coef_arrays,
                  jvirt_barray_ptr *dst_coef_arrays)
 /* Crop.  This is only used when no rotate/flip is requested with the crop.
  * Extension: The destination width is larger than the source, and we fill in
@@ -409,13 +423,29 @@ do_crop_ext_flat(j_decompress_ptr srcinfo, j_compress_ptr dstinfo,
              (dstinfo->max_h_samp_factor * dstinfo_min_DCT_h_scaled_size);
   MCU_rows = srcinfo->output_height /
              (dstinfo->max_v_samp_factor * dstinfo_min_DCT_v_scaled_size);
+  if (!info->trim) {
+    int MCU_width, MCU_height;
+
+    if (info->num_components == 1) {
+      MCU_width = srcinfo->_min_DCT_h_scaled_size;
+      MCU_height = srcinfo->_min_DCT_v_scaled_size;
+    } else {
+      MCU_width = srcinfo->max_h_samp_factor * srcinfo->_min_DCT_h_scaled_size;
+      MCU_height = srcinfo->max_v_samp_factor *
+                   srcinfo->_min_DCT_v_scaled_size;
+    }
+    if (srcinfo->output_width % (JDIMENSION)MCU_width)
+      MCU_cols++;
+    if (srcinfo->output_height % (JDIMENSION)MCU_height)
+      MCU_rows++;
+  }
 
   for (ci = 0; ci < dstinfo->num_components; ci++) {
     compptr = dstinfo->comp_info + ci;
     comp_width = MCU_cols * compptr->h_samp_factor;
     comp_height = MCU_rows * compptr->v_samp_factor;
-    x_crop_blocks = x_crop_offset * compptr->h_samp_factor;
-    y_crop_blocks = y_crop_offset * compptr->v_samp_factor;
+    x_crop_blocks = info->x_crop_offset * compptr->h_samp_factor;
+    y_crop_blocks = info->y_crop_offset * compptr->v_samp_factor;
     for (dst_blk_y = 0; dst_blk_y < compptr->height_in_blocks;
          dst_blk_y += compptr->v_samp_factor) {
       dst_buffer = (*srcinfo->mem->access_virt_barray)
@@ -468,7 +498,7 @@ do_crop_ext_flat(j_decompress_ptr srcinfo, j_compress_ptr dstinfo,
 
 LOCAL(void)
 do_crop_ext_reflect(j_decompress_ptr srcinfo, j_compress_ptr dstinfo,
-                    JDIMENSION x_crop_offset, JDIMENSION y_crop_offset,
+                    jpeg_transform_info *info,
                     jvirt_barray_ptr *src_coef_arrays,
                     jvirt_barray_ptr *dst_coef_arrays)
 /* Crop.  This is only used when no rotate/flip is requested with the crop.
@@ -490,13 +520,29 @@ do_crop_ext_reflect(j_decompress_ptr srcinfo, j_compress_ptr dstinfo,
              (dstinfo->max_h_samp_factor * dstinfo_min_DCT_h_scaled_size);
   MCU_rows = srcinfo->output_height /
              (dstinfo->max_v_samp_factor * dstinfo_min_DCT_v_scaled_size);
+  if (!info->trim) {
+    int MCU_width, MCU_height;
+
+    if (info->num_components == 1) {
+      MCU_width = srcinfo->_min_DCT_h_scaled_size;
+      MCU_height = srcinfo->_min_DCT_v_scaled_size;
+    } else {
+      MCU_width = srcinfo->max_h_samp_factor * srcinfo->_min_DCT_h_scaled_size;
+      MCU_height = srcinfo->max_v_samp_factor *
+                   srcinfo->_min_DCT_v_scaled_size;
+    }
+    if (srcinfo->output_width % (JDIMENSION)MCU_width)
+      MCU_cols++;
+    if (srcinfo->output_height % (JDIMENSION)MCU_height)
+      MCU_rows++;
+  }
 
   for (ci = 0; ci < dstinfo->num_components; ci++) {
     compptr = dstinfo->comp_info + ci;
     comp_width = MCU_cols * compptr->h_samp_factor;
     comp_height = MCU_rows * compptr->v_samp_factor;
-    x_crop_blocks = x_crop_offset * compptr->h_samp_factor;
-    y_crop_blocks = y_crop_offset * compptr->v_samp_factor;
+    x_crop_blocks = info->x_crop_offset * compptr->h_samp_factor;
+    y_crop_blocks = info->y_crop_offset * compptr->v_samp_factor;
     for (dst_blk_y = 0; dst_blk_y < compptr->height_in_blocks;
          dst_blk_y += compptr->v_samp_factor) {
       dst_buffer = (*srcinfo->mem->access_virt_barray)
@@ -1502,7 +1548,7 @@ jtransform_request_workspace(j_decompress_ptr srcinfo,
   JDIMENSION xoffset, yoffset, dtemp;
   JDIMENSION width_in_iMCUs, height_in_iMCUs;
   JDIMENSION width_in_blocks, height_in_blocks;
-  int itemp, ci, h_samp_factor, v_samp_factor;
+  int itemp, ci, h_samp_factor, v_samp_factor, MCU_width, MCU_height;
 
   /* Determine number of components in output image */
   if (info->force_grayscale &&
@@ -1522,25 +1568,21 @@ jtransform_request_workspace(j_decompress_ptr srcinfo,
   srcinfo->output_height = srcinfo->image_height;
 #endif
 
+  if (info->num_components == 1) {
+    MCU_width = srcinfo->_min_DCT_h_scaled_size;
+    MCU_height = srcinfo->_min_DCT_v_scaled_size;
+  } else {
+    MCU_width = srcinfo->max_h_samp_factor * srcinfo->_min_DCT_h_scaled_size;
+    MCU_height = srcinfo->max_v_samp_factor * srcinfo->_min_DCT_v_scaled_size;
+  }
+
   /* Return right away if -perfect is given and transformation is not perfect.
    */
-  if (info->perfect) {
-    if (info->num_components == 1) {
-      if (!jtransform_perfect_transform(srcinfo->output_width,
-          srcinfo->output_height,
-          srcinfo->_min_DCT_h_scaled_size,
-          srcinfo->_min_DCT_v_scaled_size,
-          info->transform))
-        return FALSE;
-    } else {
-      if (!jtransform_perfect_transform(srcinfo->output_width,
-          srcinfo->output_height,
-          srcinfo->max_h_samp_factor * srcinfo->_min_DCT_h_scaled_size,
-          srcinfo->max_v_samp_factor * srcinfo->_min_DCT_v_scaled_size,
-          info->transform))
-        return FALSE;
-    }
-  }
+  if (info->perfect &&
+      !jtransform_perfect_transform(srcinfo->output_width,
+                                    srcinfo->output_height, MCU_width,
+                                    MCU_height, info->transform))
+    return FALSE;
 
   /* If there is only one output component, force the iMCU size to be 1;
    * else use the source iMCU size.  (This allows us to do the right thing
@@ -1600,6 +1642,8 @@ jtransform_request_workspace(j_decompress_ptr srcinfo,
             info->crop_xoffset >= info->crop_width ||
             info->crop_xoffset > info->crop_width - info->output_width)
           ERREXIT(srcinfo, JERR_BAD_CROP_SPEC);
+        if (info->perfect && srcinfo->output_width % (JDIMENSION)MCU_width)
+          return FALSE;
       } else {
         if (info->crop_xoffset >= info->output_width ||
             info->crop_width <= 0 ||
@@ -1619,6 +1663,8 @@ jtransform_request_workspace(j_decompress_ptr srcinfo,
             info->crop_yoffset >= info->crop_height ||
             info->crop_yoffset > info->crop_height - info->output_height)
           ERREXIT(srcinfo, JERR_BAD_CROP_SPEC);
+        if (info->perfect && srcinfo->output_height % (JDIMENSION)MCU_height)
+          return FALSE;
       } else {
         if (info->crop_yoffset >= info->output_height ||
             info->crop_height <= 0 ||
@@ -2174,18 +2220,15 @@ jtransform_execute_transform(j_decompress_ptr srcinfo, j_compress_ptr dstinfo,
         info->output_height > srcinfo->output_height) {
       if (info->output_width > srcinfo->output_width &&
           info->crop_width_set == JCROP_REFLECT)
-        do_crop_ext_reflect(srcinfo, dstinfo,
-                            info->x_crop_offset, info->y_crop_offset,
-                            src_coef_arrays, dst_coef_arrays);
+        do_crop_ext_reflect(srcinfo, dstinfo, info, src_coef_arrays,
+                            dst_coef_arrays);
       else if (info->output_width > srcinfo->output_width &&
                info->crop_width_set == JCROP_FORCE)
-        do_crop_ext_flat(srcinfo, dstinfo,
-                         info->x_crop_offset, info->y_crop_offset,
-                         src_coef_arrays, dst_coef_arrays);
+        do_crop_ext_flat(srcinfo, dstinfo, info, src_coef_arrays,
+                         dst_coef_arrays);
       else
-        do_crop_ext_zero(srcinfo, dstinfo,
-                         info->x_crop_offset, info->y_crop_offset,
-                         src_coef_arrays, dst_coef_arrays);
+        do_crop_ext_zero(srcinfo, dstinfo, info, src_coef_arrays,
+                         dst_coef_arrays);
     } else if (info->x_crop_offset != 0 || info->y_crop_offset != 0)
       do_crop(srcinfo, dstinfo, info->x_crop_offset, info->y_crop_offset,
               src_coef_arrays, dst_coef_arrays);

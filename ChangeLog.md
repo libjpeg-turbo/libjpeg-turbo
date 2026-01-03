@@ -22,6 +22,16 @@ decompression algorithm and reports it to the command line when
 `jpeg_destroy_compress()`, `jpeg_destroy_decompress()`, or `tj3Destroy()` is
 called.
 
+4. jpegtran now honors the `-trim` and `-perfect` options when expanding the
+image size using the `-crop` option.  If `-trim` is specified, then partial
+iMCUs from the source image are discarded in the expanded image (equivalent to
+the previous behavior.)  If `-trim` is not specified, then partial iMCUs are
+left in place.  If `-perfect` is specified, then expanding the image size using
+the `-crop` option will fail if there are any partial iMCUs in the source
+image.  The new default behavior is useful, in combination with the `-drop`
+option, for reversibly combining multiple JPEG source images into a single
+composite JPEG image.
+
 
 3.1.3
 =====

@@ -1,7 +1,7 @@
 This file was part of the Independent JPEG Group's software:
 Copyright (C) 1991-2020, Thomas G. Lane, Guido Vollbeding.
 libjpeg-turbo Modifications:
-Copyright (C) 2010, 2012, 2014-2017, 2020-2024, D. R. Commander.
+Copyright (C) 2010, 2012, 2014-2017, 2020-2024, 2026, D. R. Commander.
 For conditions of distribution and use, see the accompanying README.ijg file.
 
 USAGE instructions for the Independent JPEG Group's JPEG software
@@ -683,6 +683,16 @@ coefficient of the nearest block in the input image rather than grayed out.
 Attaching an 'r' character ("reflect") to the width number will cause the
 expanded region to be filled in with repeated reflections of the input image
 rather than grayed out.
+
+As with horizontal flipping, 180-degree rotation, 270-degree rotation, and
+transverse transposition, expanding the image width using the -crop option is
+imperfect if there is a partial iMCU column at the right edge of the image.
+Similarly, as with vertical flipping, 90-degree rotation, 180-degree rotation,
+and transverse transposition, expanding the image height using the -crop option
+is imperfect if there is a partial iMCU row at the bottom edge of the image.
+jpegtran's default behavior is to silently preserve these non-transformable
+edge blocks, but the -trim and -perfect options can be used to change that
+behavior.
 
 A complementary lossless wipe option is provided to discard (gray out) data
 inside a given image region while losslessly preserving what is outside:
