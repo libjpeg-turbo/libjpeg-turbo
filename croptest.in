@@ -76,7 +76,7 @@ for PROGARG in "" -progressive; do
 					echo
 					for samp in GRAY 420 422 440 444; do
 						$EXEDIR/djpeg $NSARG $COLORSARG -rgb -outfile $OUTDIR/${basename}_${samp}_full.ppm $OUTDIR/${basename}_${samp}.jpg
-						convert -crop $CROPSPEC $OUTDIR/${basename}_${samp}_full.ppm $OUTDIR/${basename}_${samp}_ref.ppm
+						magick $OUTDIR/${basename}_${samp}_full.ppm -crop $CROPSPEC $OUTDIR/${basename}_${samp}_ref.ppm
 						runme $EXEDIR/djpeg $NSARG $COLORSARG -crop $CROPSPEC -rgb -outfile $OUTDIR/${basename}_${samp}.ppm $OUTDIR/${basename}_${samp}.jpg
 						runme cmp $OUTDIR/${basename}_${samp}.ppm $OUTDIR/${basename}_${samp}_ref.ppm
 					done
