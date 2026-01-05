@@ -1,0 +1,7 @@
+[libfuzzer]
+# Maximum input size: 1MB is sufficient for JPEG images
+max_len = 1048576
+# Timeout: 25 seconds (OSS-Fuzz default, image decode should be fast)
+timeout = 25
+# RSS limit: 2GB (default, sufficient for 1M pixel limit)
+rss_limit_mb = 2048
