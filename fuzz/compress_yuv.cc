@@ -105,8 +105,10 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
         sum += dstBuf[i];
     }
 
-    free(dstBuf);
+    /* dstBuf was allocated with tj3Alloc(), so release it with tj3Free(). */
+    tj3Free(dstBuf);
     dstBuf = NULL;
+
     free(yuvBuf);
     yuvBuf = NULL;
     tj3Free(srcBuf);
@@ -119,7 +121,8 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
   }
 
 bailout:
-  free(dstBuf);
+  /* Free TurboJPEG-managed allocations with tj3Free(), not free(). */
+  tj3Free(dstBuf);
   free(yuvBuf);
   tj3Free(srcBuf);
   if (fd >= 0) {
