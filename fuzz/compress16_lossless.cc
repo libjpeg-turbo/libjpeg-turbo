@@ -33,6 +33,10 @@
 #include <string.h>
 #include <unistd.h>
 
+extern "C" unsigned short *
+_tj3LoadImageFromFileHandle16(tjhandle handle, FILE *file, int *width,
+                              int align, int *height, int *pixelFormat);
+
 
 #define NUMTESTS  7
 
@@ -48,8 +52,8 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
   tjhandle handle = NULL;
   unsigned short *srcBuf = NULL;
   unsigned char *dstBuf = NULL;
-  int width = 0, height = 0, fd = -1, ti;
-  char filename[FILENAME_MAX] = { 0 };
+  int width = 0, height = 0, ti;
+  FILE *file = NULL;
   struct test tests[NUMTESTS] = {
     { TJPF_RGB, 16, 1, 0 },
     { TJPF_BGR, 15, 2, 2 },
@@ -60,8 +64,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
     { TJPF_CMYK, 16, 7, 0 }
   };
 
-  snprintf(filename, FILENAME_MAX, "/tmp/libjpeg-turbo_compress_fuzz.XXXXXX");
-  if ((fd = mkstemp(filename)) < 0 || write(fd, data, size) < 0)
+  if ((file = fmemopen((void *)data, size, "r")) == NULL)
     goto bailout;
 
   if ((handle = tj3Init(TJINIT_COMPRESS)) == NULL)
@@ -80,8 +83,9 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
     tj3Set(handle, TJPARAM_MAXPIXELS, 1048576);
     /* tj3LoadImage16() will refuse to load images larger than 1 Megapixel, so
        we don't need to check the width and height here. */
-    if ((srcBuf = tj3LoadImage16(handle, filename, &width, 1, &height,
-                                 &pf)) == NULL)
+    fseek(file, 0, SEEK_SET);
+    if ((srcBuf = _tj3LoadImageFromFileHandle16(handle, file, &width, 1,
+                                                &height, &pf)) == NULL)
       continue;
 
     dstSize = maxBufSize = tj3JPEGBufSize(width, height, TJSAMP_444);
@@ -116,10 +120,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 bailout:
   tj3Free(dstBuf);
   tj3Free(srcBuf);
-  if (fd >= 0) {
-    close(fd);
-    if (strlen(filename) > 0) unlink(filename);
-  }
+  if (file) fclose(file);
   tj3Destroy(handle);
   return 0;
 }

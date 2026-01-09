@@ -33,6 +33,10 @@
 #include <string.h>
 #include <unistd.h>
 
+extern "C" unsigned char *
+_tj3LoadImageFromFileHandle8(tjhandle handle, FILE *file, int *width,
+                             int align, int *height, int *pixelFormat);
+
 
 #define NUMTESTS  7
 
@@ -48,8 +52,8 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 {
   tjhandle handle = NULL;
   unsigned char *srcBuf = NULL, *dstBuf = NULL;
-  int width = 0, height = 0, fd = -1, ti;
-  char filename[FILENAME_MAX] = { 0 };
+  int width = 0, height = 0, ti;
+  FILE *file = NULL;
   struct test tests[NUMTESTS] = {
     { TJPF_RGB, TJSAMP_444, 100 },
     { TJPF_BGR, TJSAMP_422, 90 },
@@ -60,8 +64,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
     { TJPF_CMYK, TJSAMP_440, 40 }
   };
 
-  snprintf(filename, FILENAME_MAX, "/tmp/libjpeg-turbo_compress_fuzz.XXXXXX");
-  if ((fd = mkstemp(filename)) < 0 || write(fd, data, size) < 0)
+  if ((file = fmemopen((void *)data, size, "r")) == NULL)
     goto bailout;
 
   if ((handle = tj3Init(TJINIT_COMPRESS)) == NULL)
@@ -83,8 +86,9 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
     tj3Set(handle, TJPARAM_MAXPIXELS, 1048576);
     /* tj3LoadImage8() will refuse to load images larger than 1 Megapixel, so
        we don't need to check the width and height here. */
-    if ((srcBuf = tj3LoadImage8(handle, filename, &width, 1, &height,
-                                &pf)) == NULL)
+    fseek(file, 0, SEEK_SET);
+    if ((srcBuf = _tj3LoadImageFromFileHandle8(handle, file, &width, 1,
+                                               &height, &pf)) == NULL)
       continue;
 
     dstSize = maxBufSize = tj3JPEGBufSize(width, height, tests[ti].subsamp);
@@ -118,10 +122,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 bailout:
   tj3Free(dstBuf);
   tj3Free(srcBuf);
-  if (fd >= 0) {
-    close(fd);
-    if (strlen(filename) > 0) unlink(filename);
-  }
+  if (file) fclose(file);
   tj3Destroy(handle);
   return 0;
 }
