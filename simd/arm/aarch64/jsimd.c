@@ -241,6 +241,9 @@ jsimd_rgb_ycc_convert(j_compress_ptr cinfo, JSAMPARRAY input_buf,
 
   switch (cinfo->in_color_space) {
   case JCS_EXT_RGB:
+#ifdef SVE2_INTRINSICS
+    neonfct = jsimd_extrgb_ycc_convert_sve2;
+#else
 #ifndef NEON_INTRINSICS
     if (simd_features & JSIMD_FASTLD3)
 #endif
@@ -249,12 +252,20 @@ jsimd_rgb_ycc_convert(j_compress_ptr cinfo, JSAMPARRAY input_buf,
     else
       neonfct = jsimd_extrgb_ycc_convert_neon_slowld3;
 #endif
+#endif
     break;
   case JCS_EXT_RGBX:
   case JCS_EXT_RGBA:
+#ifdef SVE2_INTRINSICS
+    neonfct = jsimd_extrgbx_ycc_convert_sve2;
+#else
     neonfct = jsimd_extrgbx_ycc_convert_neon;
+#endif
     break;
   case JCS_EXT_BGR:
+#ifdef SVE2_INTRINSICS
+    neonfct = jsimd_extbgr_ycc_convert_sve2;
+#else
 #ifndef NEON_INTRINSICS
     if (simd_features & JSIMD_FASTLD3)
 #endif
@@ -263,20 +274,36 @@ jsimd_rgb_ycc_convert(j_compress_ptr cinfo, JSAMPARRAY input_buf,
     else
       neonfct = jsimd_extbgr_ycc_convert_neon_slowld3;
 #endif
+#endif
     break;
   case JCS_EXT_BGRX:
   case JCS_EXT_BGRA:
-    neonfct = jsimd_extbgrx_ycc_convert_neon;
+#ifdef SVE2_INTRINSICS
+      neonfct = jsimd_extbgrx_ycc_convert_sve2;
+#else
+      neonfct = jsimd_extbgrx_ycc_convert_neon;
+#endif
     break;
   case JCS_EXT_XBGR:
   case JCS_EXT_ABGR:
-    neonfct = jsimd_extxbgr_ycc_convert_neon;
+#ifdef SVE2_INTRINSICS
+      neonfct = jsimd_extxbgr_ycc_convert_sve2;
+#else
+      neonfct = jsimd_extxbgr_ycc_convert_neon;
+#endif
     break;
   case JCS_EXT_XRGB:
   case JCS_EXT_ARGB:
-    neonfct = jsimd_extxrgb_ycc_convert_neon;
+#ifdef SVE2_INTRINSICS
+      neonfct = jsimd_extxrgb_ycc_convert_sve2;
+#else
+      neonfct = jsimd_extxrgb_ycc_convert_neon;
+#endif
     break;
   default:
+#ifdef SVE2_INTRINSICS
+    neonfct = jsimd_extrgb_ycc_convert_sve2;
+#else
 #ifndef NEON_INTRINSICS
     if (simd_features & JSIMD_FASTLD3)
 #endif
@@ -284,6 +311,7 @@ jsimd_rgb_ycc_convert(j_compress_ptr cinfo, JSAMPARRAY input_buf,
 #ifndef NEON_INTRINSICS
     else
       neonfct = jsimd_extrgb_ycc_convert_neon_slowld3;
+#endif
 #endif
     break;
   }
@@ -338,6 +366,9 @@ jsimd_ycc_rgb_convert(j_decompress_ptr cinfo, JSAMPIMAGE input_buf,
 
   switch (cinfo->out_color_space) {
   case JCS_EXT_RGB:
+#ifdef SVE2_INTRINSICS
+    neonfct = jsimd_ycc_extrgb_convert_sve2;
+#else
 #ifndef NEON_INTRINSICS
     if (simd_features & JSIMD_FASTST3)
 #endif
@@ -346,12 +377,20 @@ jsimd_ycc_rgb_convert(j_decompress_ptr cinfo, JSAMPIMAGE input_buf,
     else
       neonfct = jsimd_ycc_extrgb_convert_neon_slowst3;
 #endif
+#endif
     break;
   case JCS_EXT_RGBX:
   case JCS_EXT_RGBA:
+#ifdef SVE2_INTRINSICS
+    neonfct = jsimd_ycc_extrgbx_convert_sve2;
+#else
     neonfct = jsimd_ycc_extrgbx_convert_neon;
+#endif
     break;
   case JCS_EXT_BGR:
+#ifdef SVE2_INTRINSICS
+    neonfct = jsimd_ycc_extbgr_convert_sve2;
+#else
 #ifndef NEON_INTRINSICS
     if (simd_features & JSIMD_FASTST3)
 #endif
@@ -360,20 +399,36 @@ jsimd_ycc_rgb_convert(j_decompress_ptr cinfo, JSAMPIMAGE input_buf,
     else
       neonfct = jsimd_ycc_extbgr_convert_neon_slowst3;
 #endif
+#endif
     break;
   case JCS_EXT_BGRX:
   case JCS_EXT_BGRA:
+#ifdef SVE2_INTRINSICS
+    neonfct = jsimd_ycc_extbgrx_convert_sve2;
+#else
     neonfct = jsimd_ycc_extbgrx_convert_neon;
+#endif
     break;
   case JCS_EXT_XBGR:
   case JCS_EXT_ABGR:
+#ifdef SVE2_INTRINSICS
+    neonfct = jsimd_ycc_extxbgr_convert_sve2;
+#else
     neonfct = jsimd_ycc_extxbgr_convert_neon;
+#endif
     break;
   case JCS_EXT_XRGB:
   case JCS_EXT_ARGB:
+#ifdef SVE2_INTRINSICS
+    neonfct = jsimd_ycc_extxrgb_convert_sve2;
+#else
     neonfct = jsimd_ycc_extxrgb_convert_neon;
+#endif
     break;
   default:
+#ifdef SVE2_INTRINSICS
+    neonfct = jsimd_ycc_extrgb_convert_sve2;
+#else
 #ifndef NEON_INTRINSICS
     if (simd_features & JSIMD_FASTST3)
 #endif
@@ -381,6 +436,7 @@ jsimd_ycc_rgb_convert(j_decompress_ptr cinfo, JSAMPIMAGE input_buf,
 #ifndef NEON_INTRINSICS
     else
       neonfct = jsimd_ycc_extrgb_convert_neon_slowst3;
+#endif
 #endif
     break;
   }
@@ -393,8 +449,13 @@ jsimd_ycc_rgb565_convert(j_decompress_ptr cinfo, JSAMPIMAGE input_buf,
                          JDIMENSION input_row, JSAMPARRAY output_buf,
                          int num_rows)
 {
+#ifdef SVE2_INTRINSICS
+  jsimd_ycc_rgb565_convert_sve2(cinfo->output_width, input_buf, input_row,
+                                output_buf, num_rows);
+#else
   jsimd_ycc_rgb565_convert_neon(cinfo->output_width, input_buf, input_row,
                                 output_buf, num_rows);
+#endif
 }
 
 GLOBAL(int)
