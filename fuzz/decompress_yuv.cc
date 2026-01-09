@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2021-2025 D. R. Commander.  All Rights Reserved.
+ * Copyright (C)2021-2026 D. R. Commander.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -83,11 +83,10 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
         tj3SetScalingFactor(handle, TJUNSCALED);
     }
 
-    if ((dstBuf = (unsigned char *)tj3Alloc(w * h * tjPixelSize[pf])) == NULL)
+    if ((dstBuf = (unsigned char *)malloc(w * h * tjPixelSize[pf])) == NULL)
       goto bailout;
-    if ((yuvBuf =
-         (unsigned char *)tj3Alloc(tj3YUVBufSize(w, 1, h,
-                                                 jpegSubsamp))) == NULL)
+    if ((yuvBuf = (unsigned char *)malloc(tj3YUVBufSize(w, 1, h,
+                                                        jpegSubsamp))) == NULL)
       goto bailout;
 
     if (tj3DecompressToYUV8(handle, data, size, yuvBuf, 1) == 0 &&

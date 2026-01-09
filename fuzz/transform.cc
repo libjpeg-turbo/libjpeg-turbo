@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2021-2025 D. R. Commander.  All Rights Reserved.
+ * Copyright (C)2021-2026 D. R. Commander.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -92,7 +92,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
       goto bailout;
   }
 
-  free(dstBufs[0]);
+  tj3Free(dstBufs[0]);
   dstBufs[0] = NULL;
 
   transforms[0].r.w = (height + 1) / 2;
@@ -119,7 +119,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
       goto bailout;
   }
 
-  free(dstBufs[0]);
+  tj3Free(dstBufs[0]);
   dstBufs[0] = NULL;
 
   transforms[0].op = TJXOP_ROT90;
@@ -147,7 +147,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
       goto bailout;
   }
 
-  free(dstBufs[0]);
+  tj3Free(dstBufs[0]);
   dstBufs[0] = NULL;
 
   transforms[0].op = TJXOP_NONE;
@@ -167,7 +167,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
   }
 
 bailout:
-  free(dstBufs[0]);
+  tj3Free(dstBufs[0]);
   tj3Destroy(handle);
   return 0;
 }
