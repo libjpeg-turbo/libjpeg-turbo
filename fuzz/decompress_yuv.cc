@@ -99,9 +99,10 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
     } else
       goto bailout;
 
-    free(dstBuf);
+    /* Free TurboJPEG-managed allocations with tj3Free(), not free(). */
+    tj3Free(dstBuf);
     dstBuf = NULL;
-    free(yuvBuf);
+    tj3Free(yuvBuf);
     yuvBuf = NULL;
 
     /* Prevent the code above from being optimized out.  This test should never
@@ -111,8 +112,9 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
   }
 
 bailout:
-  free(dstBuf);
-  free(yuvBuf);
+  /* Free TurboJPEG-managed allocations with tj3Free(), not free(). */
+  tj3Free(dstBuf);
+  tj3Free(yuvBuf);
   tj3Destroy(handle);
   return 0;
 }
