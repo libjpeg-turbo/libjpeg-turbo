@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2021, 2023-2025 D. R. Commander.  All Rights Reserved.
+ * Copyright (C)2021, 2023-2026 D. R. Commander.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -104,7 +104,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
         sum += dstBuf[i];
     }
 
-    free(dstBuf);
+    tj3Free(dstBuf);
     dstBuf = NULL;
     tj3Free(srcBuf);
     srcBuf = NULL;
@@ -116,7 +116,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
   }
 
 bailout:
-  free(dstBuf);
+  tj3Free(dstBuf);
   tj3Free(srcBuf);
   if (fd >= 0) {
     close(fd);
