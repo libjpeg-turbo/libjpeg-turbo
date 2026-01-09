@@ -844,6 +844,7 @@ add_executable(wrjpgcom wrjpgcom.c)
 ###############################################################################
 
 if(WITH_FUZZ)
+  add_definitions(-DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION)
   add_subdirectory(fuzz)
 endif()
 

@@ -7,7 +7,7 @@
  * Lossless JPEG Modifications:
  * Copyright (C) 1999, Ken Murchison.
  * libjpeg-turbo Modifications:
- * Copyright (C) 2010, 2013-2014, 2017, 2019-2022, 2024-2025,
+ * Copyright (C) 2010, 2013-2014, 2017, 2019-2022, 2024-2026,
  *           D. R. Commander.
  * For conditions of distribution and use, see the accompanying README.ijg
  * file.
@@ -171,7 +171,7 @@ struct my_error_mgr {
   jmp_buf setjmp_buffer;
 };
 
-void my_error_exit(j_common_ptr cinfo)
+static void my_error_exit(j_common_ptr cinfo)
 {
   struct my_error_mgr *myerr = (struct my_error_mgr *)cinfo->err;
 
@@ -191,8 +191,6 @@ static void my_emit_message_fuzzer(j_common_ptr cinfo, int msg_level)
     jpeg_abort_compress(&cinfo); \
   } \
   jpeg_destroy_compress(&cinfo); \
-  if (input_file != stdin && input_file != NULL) \
-    fclose(input_file); \
   if (memdst) \
     free(outbuffer); \
   free(icc_profile); \
@@ -625,8 +623,13 @@ my_emit_message(j_common_ptr cinfo, int msg_level)
  * The main program.
  */
 
+#ifdef CJPEG_FUZZER
+static int
+cjpeg_fuzzer(int argc, char **argv, FILE *input_file)
+#else
 int
 main(int argc, char **argv)
+#endif
 {
   struct jpeg_compress_struct cinfo;
 #ifdef CJPEG_FUZZER
@@ -638,7 +641,9 @@ main(int argc, char **argv)
   struct cdjpeg_progress_mgr progress;
   int file_index;
   cjpeg_source_ptr src_mgr;
+#ifndef CJPEG_FUZZER
   FILE *input_file = NULL;
+#endif
   FILE *icc_file;
   JOCTET *icc_profile = NULL;
   long icc_len = 0;
@@ -705,6 +710,7 @@ main(int argc, char **argv)
   }
 #endif /* TWO_FILE_COMMANDLINE */
 
+#ifndef CJPEG_FUZZER
   /* Open the input file. */
   if (file_index < argc) {
     if ((input_file = fopen(argv[file_index], READ_BINARY)) == NULL) {
@@ -715,6 +721,7 @@ main(int argc, char **argv)
     /* default input file is stdin */
     input_file = read_stdin();
   }
+#endif
 
   /* Open the output file. */
   if (outfilename != NULL) {
@@ -827,8 +834,10 @@ main(int argc, char **argv)
   jpeg_destroy_compress(&cinfo);
 
   /* Close files, if we opened them */
+#ifndef CJPEG_FUZZER
   if (input_file != stdin)
     fclose(input_file);
+#endif
   if (output_file != stdout && output_file != NULL)
     fclose(output_file);
 
