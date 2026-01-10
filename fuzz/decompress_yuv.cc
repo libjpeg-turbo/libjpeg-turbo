@@ -103,7 +103,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
     free(yuvBuf);
     yuvBuf = NULL;
 
-    /* Prevent the code above from being optimized out.  This test should never
+    /* Prevent the sum above from being optimized out.  This test should never
        be true, but the compiler doesn't know that. */
     if (sum > 255 * 1048576 * tjPixelSize[pf])
       goto bailout;

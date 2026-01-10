@@ -103,7 +103,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
     if (tj3EncodeYUV8(handle, srcBuf, width, 0, height, pf, yuvBuf, 1) == 0 &&
         tj3CompressFromYUV8(handle, yuvBuf, width, 1, height, &dstBuf,
                             &dstSize) == 0) {
-      /* Touch all of the output pixels in order to catch uninitialized reads
+      /* Touch all of the output data in order to catch uninitialized reads
          when using MemorySanitizer. */
       for (i = 0; i < dstSize; i++)
         sum += dstBuf[i];
@@ -117,7 +117,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
     tj3Free(srcBuf);
     srcBuf = NULL;
 
-    /* Prevent the code above from being optimized out.  This test should never
+    /* Prevent the sum above from being optimized out.  This test should never
        be true, but the compiler doesn't know that. */
     if (sum > 255 * maxBufSize)
       goto bailout;
