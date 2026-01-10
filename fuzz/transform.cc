@@ -79,15 +79,15 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
   tj3Set(handle, TJPARAM_NOREALLOC, 1);
   if (tj3Transform(handle, data, size, 1, dstBufs, dstSizes,
                    transforms) == 0) {
-    /* Touch all of the output pixels in order to catch uninitialized reads
-       when using MemorySanitizer. */
+    /* Touch all of the output data in order to catch uninitialized reads when
+       using MemorySanitizer. */
     size_t sum = 0;
 
     for (i = 0; i < dstSizes[0]; i++)
       sum += dstBufs[0][i];
 
-    /* Prevent the code above from being optimized out.  This test should
-       never be true, but the compiler doesn't know that. */
+    /* Prevent the sum above from being optimized out.  This test should never
+       be true, but the compiler doesn't know that. */
     if (sum > 255 * maxBufSize)
       goto bailout;
   }
