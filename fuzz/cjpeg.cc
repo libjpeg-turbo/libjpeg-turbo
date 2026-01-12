@@ -42,14 +42,12 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 {
   char *argv1[] = {
     (char *)"cjpeg", (char *)"-dct", (char *)"float", (char *)"-memdst",
-    (char *)"-optimize", (char *)"-quality", (char *)"100,99,98",
-    (char *)"-restart", (char *)"2", (char *)"-sample", (char *)"4x1,2x2,1x2",
-    (char *)"-targa"
+    (char *)"-quality", (char *)"100,99,98",
+    (char *)"-sample", (char *)"4x1,2x2,1x2", (char *)"-targa"
   };
   char *argv2[] = {
-    (char *)"cjpeg", (char *)"-arithmetic", (char *)"-dct", (char *)"float",
-    (char *)"-memdst", (char *)"-quality", (char *)"90,80,70", (char *)"-rgb",
-    (char *)"-sample", (char *)"2x2", (char *)"-smooth", (char *)"50",
+    (char *)"cjpeg", (char *)"-dct", (char *)"float", (char *)"-memdst",
+    (char *)"-quality", (char *)"90,80,70", (char *)"-smooth", (char *)"50",
     (char *)"-targa"
   };
   FILE *file = NULL;
@@ -58,16 +56,16 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
     goto bailout;
 
   fseek(file, 0, SEEK_SET);
-  cjpeg_fuzzer(12, argv1, file);
+  cjpeg_fuzzer(9, argv1, file);
   fseek(file, 0, SEEK_SET);
-  cjpeg_fuzzer(13, argv2, file);
+  cjpeg_fuzzer(9, argv2, file);
 
-  argv1[11] = argv2[12] = NULL;
+  argv1[8] = argv2[8] = NULL;
 
   fseek(file, 0, SEEK_SET);
-  cjpeg_fuzzer(11, argv1, file);
+  cjpeg_fuzzer(8, argv1, file);
   fseek(file, 0, SEEK_SET);
-  cjpeg_fuzzer(12, argv2, file);
+  cjpeg_fuzzer(8, argv2, file);
 
 bailout:
   if (file) fclose(file);

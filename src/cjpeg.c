@@ -157,19 +157,19 @@ static boolean strict;          /* for -strict switch */
 
 #include <setjmp.h>
 
-struct my_error_mgr {
+struct fuzzer_error_mgr {
   struct jpeg_error_mgr pub;
   jmp_buf setjmp_buffer;
 };
 
-static void my_error_exit(j_common_ptr cinfo)
+static void fuzzer_error_exit(j_common_ptr cinfo)
 {
-  struct my_error_mgr *myerr = (struct my_error_mgr *)cinfo->err;
+  struct fuzzer_error_mgr *myerr = (struct fuzzer_error_mgr *)cinfo->err;
 
   longjmp(myerr->setjmp_buffer, 1);
 }
 
-static void my_emit_message_fuzzer(j_common_ptr cinfo, int msg_level)
+static void fuzzer_emit_message(j_common_ptr cinfo, int msg_level)
 {
   if (msg_level < 0)
     cinfo->err->num_warnings++;
@@ -624,7 +624,7 @@ main(int argc, char **argv)
 {
   struct jpeg_compress_struct cinfo;
 #ifdef CJPEG_FUZZER
-  struct my_error_mgr myerr;
+  struct fuzzer_error_mgr myerr;
   struct jpeg_error_mgr &jerr = myerr.pub;
 #else
   struct jpeg_error_mgr jerr;
@@ -753,8 +753,8 @@ main(int argc, char **argv)
   }
 
 #ifdef CJPEG_FUZZER
-  jerr.error_exit = my_error_exit;
-  jerr.emit_message = my_emit_message_fuzzer;
+  jerr.error_exit = fuzzer_error_exit;
+  jerr.emit_message = fuzzer_emit_message;
   if (setjmp(myerr.setjmp_buffer))
     HANDLE_ERROR()
 #endif
