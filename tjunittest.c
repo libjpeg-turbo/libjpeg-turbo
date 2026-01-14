@@ -1,6 +1,6 @@
 /*
- * Copyright (C)2009-2014, 2017-2019, 2023, 2025 D. R. Commander.
-                                                 All Rights Reserved.
+ * Copyright (C)2009-2014, 2017-2019, 2023, 2025-2026 D. R. Commander.
+ *                                                    All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -886,14 +886,14 @@ static int bmpTest(void)
 
       printf("%s Top-Down PPM (row alignment = %d bytes)  ...  ",
              pixFormatStr[format], align);
-      if (doBmpTest("ppm", width, align, height, format,
-                    TJFLAG_BOTTOMUP) == -1)
+      if (doBmpTest("ppm", width, align, height, format, 0) == -1)
         return -1;
       printf("OK.\n");
 
       printf("%s Bottom-Up BMP (row alignment = %d bytes)  ...  ",
              pixFormatStr[format], align);
-      if (doBmpTest("bmp", width, align, height, format, 0) == -1)
+      if (doBmpTest("bmp", width, align, height, format,
+                    TJFLAG_BOTTOMUP) == -1)
         return -1;
       printf("OK.\n");
 
