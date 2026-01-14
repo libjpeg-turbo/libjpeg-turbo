@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2011-2018, 2022-2025 D. R. Commander.  All Rights Reserved.
+ * Copyright (C)2011-2018, 2022-2026 D. R. Commander.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -1326,13 +1326,13 @@ final class TJUnitTest {
 
         System.out.format("%s Top-Down PPM (row alignment = %d samples)  ...  ",
                           PIXFORMATSTR[format], align);
-        doBmpTest("ppm", width, align, height, format, true);
+        doBmpTest("ppm", width, align, height, format, false);
         System.out.println("OK.");
 
         if (precision == 8) {
           System.out.format("%s Bottom-Up BMP (row alignment = %d samples)  ...  ",
                             PIXFORMATSTR[format], align);
-          doBmpTest("bmp", width, align, height, format, false);
+          doBmpTest("bmp", width, align, height, format, true);
           System.out.println("OK.");
         }
 
