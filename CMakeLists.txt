@@ -877,6 +877,13 @@ if(WITH_TESTS)
 
 add_executable(strtest src/strtest.c)
 
+# Huffman decoder bounds check regression test
+if(ENABLE_STATIC)
+  add_executable(hufftest src/hufftest.c)
+  target_link_libraries(hufftest jpeg-static)
+  add_test(NAME hufftest COMMAND hufftest)
+endif()
+
 add_subdirectory(src/md5)
 
 if(GENERATOR_IS_MULTI_CONFIG)
