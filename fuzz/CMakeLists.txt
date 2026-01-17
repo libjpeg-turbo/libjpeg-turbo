@@ -59,6 +59,12 @@ add_fuzz_target(compress16_lossless compress16_lossless.cc)
 # libjpeg-turbo, which this target replaces.
 add_fuzz_target(libjpeg_turbo decompress.cc)
 
+add_executable(decompress_libjpeg_fuzzer${FUZZER_SUFFIX} decompress_libjpeg.cc)
+target_link_libraries(decompress_libjpeg_fuzzer${FUZZER_SUFFIX} ${FUZZ_LIBRARY}
+  jpeg-static)
+install(TARGETS decompress_libjpeg_fuzzer${FUZZER_SUFFIX}
+  RUNTIME DESTINATION ${FUZZ_BINDIR} COMPONENT bin)
+
 add_fuzz_target(decompress_yuv decompress_yuv.cc)
 
 add_fuzz_target(transform transform.cc)

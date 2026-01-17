@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2021-2025 D. R. Commander.  All Rights Reserved.
+ * Copyright (C)2021-2026 D. R. Commander.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -29,9 +29,10 @@
 #include "../src/turbojpeg.h"
 #include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
 
 
-#define NUMPF  4
+#define NUMPF  5
 
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
@@ -43,7 +44,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
      TJPF_RGBA-TJPF_ARGB.  Thus, the pixel formats below should be the minimum
      necessary to achieve full coverage. */
   enum TJPF pixelFormats[NUMPF] =
-    { TJPF_RGB, TJPF_BGRX, TJPF_GRAY, TJPF_CMYK };
+    { TJPF_RGB, TJPF_BGRX, TJPF_ABGR, TJPF_GRAY, TJPF_CMYK };
 
   if ((handle = tj3Init(TJINIT_DECOMPRESS)) == NULL)
     goto bailout;
@@ -77,25 +78,25 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
     if (!tj3Get(handle, TJPARAM_LOSSLESS)) {
       tj3Set(handle, TJPARAM_FASTDCT, pfi == 0);
 
-      /* Test IDCT scaling on the second iteration. */
-      if (pfi == 1) {
-        tjscalingfactor sf = { 1, 2 };
+      /* Test IDCT scaling on the second and third iterations. */
+      if (pfi == 1 || pfi == 2) {
+        tjscalingfactor sf = { 1, pfi == 1 ? 2 : 8 };
         tj3SetScalingFactor(handle, sf);
         w = TJSCALED(width, sf);
         h = TJSCALED(height, sf);
       } else
         tj3SetScalingFactor(handle, TJUNSCALED);
 
-      /* Test partial image decompression on the fourth iteration, if the image
-         is large enough. */
-      if (pfi == 3 && w >= 97 && h >= 75) {
+      /* Test partial image decompression on the second and fourth iterations,
+         if the image is large enough. */
+      if ((pfi == 1 || pfi == 3) && w >= 97 && h >= 75) {
         tjregion cr = { 32, 16, 65, 59 };
         tj3SetCroppingRegion(handle, cr);
       } else
         tj3SetCroppingRegion(handle, TJUNCROPPED);
     }
 
-    if ((dstBuf = tj3Alloc(w * h * tjPixelSize[pf] * sampleSize)) == NULL)
+    if ((dstBuf = malloc(w * h * tjPixelSize[pf] * sampleSize)) == NULL)
       goto bailout;
 
     if (precision == 8) {
@@ -105,7 +106,8 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
            when using MemorySanitizer. */
         for (i = 0; i < w * h * tjPixelSize[pf]; i++)
           sum += ((unsigned char *)dstBuf)[i];
-      } else
+      } else if (!strcmp(tj3GetErrorStr(handle),
+                         "Progressive JPEG image has more than 500 scans"))
         goto bailout;
     } else if (precision == 12) {
       if (tj3Decompress12(handle, data, size, (short *)dstBuf, 0, pf) == 0) {
@@ -113,7 +115,8 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
            when using MemorySanitizer. */
         for (i = 0; i < w * h * tjPixelSize[pf]; i++)
           sum += ((short *)dstBuf)[i];
-      } else
+      } else if (!strcmp(tj3GetErrorStr(handle),
+                         "Progressive JPEG image has more than 500 scans"))
         goto bailout;
     } else {
       if (tj3Decompress16(handle, data, size, (unsigned short *)dstBuf, 0,
@@ -122,14 +125,15 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
            when using MemorySanitizer. */
         for (i = 0; i < w * h * tjPixelSize[pf]; i++)
           sum += ((unsigned short *)dstBuf)[i];
-      } else
+      } else if (!strcmp(tj3GetErrorStr(handle),
+                         "Progressive JPEG image has more than 500 scans"))
         goto bailout;
     }
 
     free(dstBuf);
     dstBuf = NULL;
 
-    /* Prevent the code above from being optimized out.  This test should never
+    /* Prevent the sum above from being optimized out.  This test should never
        be true, but the compiler doesn't know that. */
     if (sum > ((1LL << precision) - 1LL) * 1048576LL * tjPixelSize[pf])
       goto bailout;

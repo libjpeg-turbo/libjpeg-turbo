@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2009-2025 D. R. Commander.  All Rights Reserved.
+ * Copyright (C)2009-2026 D. R. Commander.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -290,8 +290,11 @@ bailout:
 /*************************** Packed-Pixel Image I/O **************************/
 
 /* TurboJPEG 3.0+ */
-DLLEXPORT _JSAMPLE *GET_NAME(tj3LoadImage, BITS_IN_JSAMPLE)
-  (tjhandle handle, const char *filename, int *width, int align, int *height,
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+static
+#endif
+_JSAMPLE *GET_NAME(_tj3LoadImageFromFileHandle, BITS_IN_JSAMPLE)
+  (tjhandle handle, FILE *file, int *width, int align, int *height,
    int *pixelFormat)
 {
   static const char FUNCTION_NAME[] =
@@ -306,12 +309,11 @@ DLLEXPORT _JSAMPLE *GET_NAME(tj3LoadImage, BITS_IN_JSAMPLE)
   j_compress_ptr cinfo = NULL;
   cjpeg_source_ptr src;
   _JSAMPLE *dstBuf = NULL;
-  FILE *file = NULL;
   boolean invert;
 
   GET_TJINSTANCE(handle, NULL)
 
-  if (!filename || !width || align < 1 || !height || !pixelFormat ||
+  if (!file || !width || align < 1 || !height || !pixelFormat ||
       *pixelFormat < TJPF_UNKNOWN || *pixelFormat >= TJ_NUMPF)
     THROW("Invalid argument");
   if ((align & (align - 1)) != 0)
@@ -323,13 +325,6 @@ DLLEXPORT _JSAMPLE *GET_NAME(tj3LoadImage, BITS_IN_JSAMPLE)
   if ((handle2 = tj3Init(TJINIT_COMPRESS)) == NULL) return NULL;
   this2 = (tjinstance *)handle2;
   cinfo = &this2->cinfo;
-
-#ifdef _MSC_VER
-  if (fopen_s(&file, filename, "rb") || file == NULL)
-#else
-  if ((file = fopen(filename, "rb")) == NULL)
-#endif
-    THROW_UNIX("Cannot open input file");
 
   if ((tempc = getc(file)) < 0 || ungetc(tempc, file) == EOF)
     THROW_UNIX("Could not read input file")
@@ -415,6 +410,56 @@ DLLEXPORT _JSAMPLE *GET_NAME(tj3LoadImage, BITS_IN_JSAMPLE)
 
 bailout:
   tj3Destroy(handle2);
+  if (retval < 0) { free(dstBuf);  dstBuf = NULL; }
+  return dstBuf;
+
+#else /* BITS_IN_JSAMPLE != 16 || defined(C_LOSSLESS_SUPPORTED) */
+
+  static const char ERROR_MSG[] =
+    "16-bit data precision requires lossless JPEG,\n"
+    "which was disabled at build time.";
+  _JSAMPLE *retval = NULL;
+
+  GET_TJINSTANCE(handle, NULL)
+  SNPRINTF(this->errStr, JMSG_LENGTH_MAX, "%s(): %s", FUNCTION_NAME,
+           ERROR_MSG);
+  this->isInstanceError = TRUE;  THROWG(ERROR_MSG, NULL)
+
+bailout:
+  return retval;
+
+#endif
+}
+
+DLLEXPORT _JSAMPLE *GET_NAME(tj3LoadImage, BITS_IN_JSAMPLE)
+  (tjhandle handle, const char *filename, int *width, int align, int *height,
+   int *pixelFormat)
+{
+  static const char FUNCTION_NAME[] =
+    GET_STRING(tj3LoadImage, BITS_IN_JSAMPLE);
+
+#if BITS_IN_JSAMPLE != 16 || defined(C_LOSSLESS_SUPPORTED)
+
+  int retval = 0;
+  _JSAMPLE *dstBuf = NULL;
+  FILE *file = NULL;
+
+  GET_TJINSTANCE(handle, NULL)
+
+  if (!filename)
+    THROW("Invalid argument");
+
+#ifdef _MSC_VER
+  if (fopen_s(&file, filename, "rb") || file == NULL)
+#else
+  if ((file = fopen(filename, "rb")) == NULL)
+#endif
+    THROW_UNIX("Cannot open input file");
+
+  dstBuf = GET_NAME(_tj3LoadImageFromFileHandle, BITS_IN_JSAMPLE)
+             (handle, file, width, align, height, pixelFormat);
+
+bailout:
   if (file) fclose(file);
   if (retval < 0) { free(dstBuf);  dstBuf = NULL; }
   return dstBuf;

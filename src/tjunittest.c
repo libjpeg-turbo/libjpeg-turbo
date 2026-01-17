@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2009-2014, 2017-2019, 2022-2025 D. R. Commander.
+ * Copyright (C)2009-2014, 2017-2019, 2022-2026 D. R. Commander.
  *                                              All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1194,14 +1194,14 @@ static int bmpTest(void)
 
       printf("%s Top-Down PPM (row alignment = %d samples)  ...  ",
              pixFormatStr[format], align);
-      if (doBmpTest("ppm", width, align, height, format, 1) == -1)
+      if (doBmpTest("ppm", width, align, height, format, 0) == -1)
         return -1;
       printf("OK.\n");
 
       if (precision == 8) {
         printf("%s Bottom-Up BMP (row alignment = %d samples)  ...  ",
                pixFormatStr[format], align);
-        if (doBmpTest("bmp", width, align, height, format, 0) == -1)
+        if (doBmpTest("bmp", width, align, height, format, 1) == -1)
           return -1;
         printf("OK.\n");
       }

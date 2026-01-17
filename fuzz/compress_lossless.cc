@@ -1,5 +1,6 @@
 /*
- * Copyright (C)2021-2025 D. R. Commander.  All Rights Reserved.
+ * Copyright (C)2021-2026 D. R. Commander.  All Rights Reserved.
+ * Copyright (C)2025 Leslie P. Polzer.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -33,34 +34,41 @@
 #include <string.h>
 #include <unistd.h>
 
+extern "C" unsigned char *
+_tj3LoadImageFromFileHandle8(tjhandle handle, FILE *file, int *width,
+                             int align, int *height, int *pixelFormat);
+
 
 #define NUMTESTS  7
 
 
 struct test {
+  int bottomUp;
   enum TJPF pf;
-  int precision, psv, pt;
+  int precision, psv, pt, noRealloc, restartRows;
 };
 
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 {
   tjhandle handle = NULL;
-  unsigned char *srcBuf = NULL, *dstBuf = NULL;
-  int width = 0, height = 0, fd = -1, ti;
-  char filename[FILENAME_MAX] = { 0 };
+  unsigned char *imgBuf = NULL, *srcBuf, *dstBuf = NULL;
+  int width = 0, height = 0, ti;
+  FILE *file = NULL;
   struct test tests[NUMTESTS] = {
-    { TJPF_RGB, 8, 1, 0 },
-    { TJPF_BGR, 7, 2, 5 },
-    { TJPF_RGBX, 6, 3, 4 },
-    { TJPF_BGRA, 5, 4, 1 },
-    { TJPF_XRGB, 4, 5, 3 },
-    { TJPF_GRAY, 3, 6, 2 },
-    { TJPF_CMYK, 2, 7, 0 }
+    /*
+      BU Pixel      Data PSV Pt No    Rst
+         Format     Prec        Realc Rows */
+    { 0, TJPF_RGB,  8,   1,  0, 1,    1    },
+    { 0, TJPF_BGR,  7,   2,  5, 1,    0    },
+    { 0, TJPF_RGBX, 6,   3,  4, 0,    0    },
+    { 0, TJPF_BGRA, 5,   4,  1, 1,    0    },
+    { 1, TJPF_XRGB, 4,   5,  3, 1,    0    },
+    { 0, TJPF_GRAY, 3,   6,  2, 1,    0    },
+    { 0, TJPF_CMYK, 2,   7,  0, 1,    1    }
   };
 
-  snprintf(filename, FILENAME_MAX, "/tmp/libjpeg-turbo_compress_fuzz.XXXXXX");
-  if ((fd = mkstemp(filename)) < 0 || write(fd, data, size) < 0)
+  if ((file = fmemopen((void *)data, size, "r")) == NULL)
     goto bailout;
 
   if ((handle = tj3Init(TJINIT_COMPRESS)) == NULL)
@@ -71,17 +79,38 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
     size_t dstSize = 0, maxBufSize, i, sum = 0;
 
     /* Test non-default compression options on specific iterations. */
-    tj3Set(handle, TJPARAM_BOTTOMUP, ti == 0);
-    tj3Set(handle, TJPARAM_NOREALLOC, ti != 2);
+    tj3Set(handle, TJPARAM_BOTTOMUP, tests[ti].bottomUp);
+    tj3Set(handle, TJPARAM_NOREALLOC, tests[ti].noRealloc);
     tj3Set(handle, TJPARAM_PRECISION, tests[ti].precision);
-    tj3Set(handle, TJPARAM_RESTARTROWS, ti == 0 || ti == 6 ? 1 : 0);
+    tj3Set(handle, TJPARAM_RESTARTROWS, tests[ti].restartRows);
 
     tj3Set(handle, TJPARAM_MAXPIXELS, 1048576);
     /* tj3LoadImage8() will refuse to load images larger than 1 Megapixel, so
        we don't need to check the width and height here. */
-    if ((srcBuf = tj3LoadImage8(handle, filename, &width, 1, &height,
-                                &pf)) == NULL)
-      continue;
+    fseek(file, 0, SEEK_SET);
+    if ((imgBuf = _tj3LoadImageFromFileHandle8(handle, file, &width, 1,
+                                               &height, &pf)) == NULL) {
+      /* Derive image dimensions from input data.  Use first 2 bytes to
+         influence width/height. */
+      width = (data[0] % 64) + 8;   /* 8-71 */
+      height = (data[1] % 64) + 8;  /* 8-71 */
+
+      size_t required_size = 2 + (size_t)width * height *
+                             tjPixelSize[tests[ti].pf];
+      if (size < required_size) {
+        /* Not enough data - try smaller dimensions */
+        width = 8;
+        height = 8;
+        required_size = 2 + (size_t)width * height *
+                        tjPixelSize[tests[ti].pf];
+        if (size < required_size)
+          continue;
+      }
+
+      /* Skip header bytes. */
+      srcBuf = (unsigned char *)data + 2;
+    } else
+      srcBuf = imgBuf;
 
     dstSize = maxBufSize = tj3JPEGBufSize(width, height, TJSAMP_444);
     if (tj3Get(handle, TJPARAM_NOREALLOC)) {
@@ -90,35 +119,35 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
     } else
       dstBuf = NULL;
 
+    if (size >= 34)
+      tj3SetICCProfile(handle, (unsigned char *)&data[2], 32);
+
     tj3Set(handle, TJPARAM_LOSSLESS, 1);
     tj3Set(handle, TJPARAM_LOSSLESSPSV, tests[ti].psv);
     tj3Set(handle, TJPARAM_LOSSLESSPT, tests[ti].pt);
     if (tj3Compress8(handle, srcBuf, width, 0, height, pf, &dstBuf,
                      &dstSize) == 0) {
-      /* Touch all of the output pixels in order to catch uninitialized reads
+      /* Touch all of the output data in order to catch uninitialized reads
          when using MemorySanitizer. */
       for (i = 0; i < dstSize; i++)
         sum += dstBuf[i];
     }
 
-    free(dstBuf);
+    tj3Free(dstBuf);
     dstBuf = NULL;
-    tj3Free(srcBuf);
-    srcBuf = NULL;
+    tj3Free(imgBuf);
+    imgBuf = NULL;
 
-    /* Prevent the code above from being optimized out.  This test should never
+    /* Prevent the sum above from being optimized out.  This test should never
        be true, but the compiler doesn't know that. */
     if (sum > 255 * maxBufSize)
       goto bailout;
   }
 
 bailout:
-  free(dstBuf);
-  tj3Free(srcBuf);
-  if (fd >= 0) {
-    close(fd);
-    if (strlen(filename) > 0) unlink(filename);
-  }
+  tj3Free(dstBuf);
+  tj3Free(imgBuf);
+  if (file) fclose(file);
   tj3Destroy(handle);
   return 0;
 }

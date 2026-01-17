@@ -21,13 +21,24 @@ cmake . -DCMAKE_BUILD_TYPE=RelWithDebInfo -DENABLE_STATIC=1 -DENABLE_SHARED=0 \
 make "-j$(nproc)" "--load-average=$(nproc)"
 make install
 
-cp $SRC/compress_fuzzer_seed_corpus.zip $OUT/cjpeg_fuzzer${FUZZER_SUFFIX}_seed_corpus.zip
-cp $SRC/compress_fuzzer_seed_corpus.zip $OUT/compress_fuzzer${FUZZER_SUFFIX}_seed_corpus.zip
-cp $SRC/compress_fuzzer_seed_corpus.zip $OUT/compress_yuv_fuzzer${FUZZER_SUFFIX}_seed_corpus.zip
-cp $SRC/compress_fuzzer_seed_corpus.zip $OUT/compress_lossless_fuzzer${FUZZER_SUFFIX}_seed_corpus.zip
-cp $SRC/compress_fuzzer_seed_corpus.zip $OUT/compress12_fuzzer${FUZZER_SUFFIX}_seed_corpus.zip
-cp $SRC/compress_fuzzer_seed_corpus.zip $OUT/compress12_lossless_fuzzer${FUZZER_SUFFIX}_seed_corpus.zip
-cp $SRC/compress_fuzzer_seed_corpus.zip $OUT/compress16_lossless_fuzzer${FUZZER_SUFFIX}_seed_corpus.zip
-cp $SRC/decompress_fuzzer_seed_corpus.zip $OUT/libjpeg_turbo_fuzzer${FUZZER_SUFFIX}_seed_corpus.zip
-cp $SRC/decompress_fuzzer_seed_corpus.zip $OUT/decompress_yuv_fuzzer${FUZZER_SUFFIX}_seed_corpus.zip
-cp $SRC/decompress_fuzzer_seed_corpus.zip $OUT/transform_fuzzer${FUZZER_SUFFIX}_seed_corpus.zip
+for fuzzer in cjpeg \
+	compress \
+	compress_yuv \
+	compress_lossless \
+	compress12 \
+	compress12_lossless \
+	compress16_lossless; do
+	cp $SRC/compress_fuzzer_seed_corpus.zip $OUT/${fuzzer}_fuzzer${FUZZER_SUFFIX}_seed_corpus.zip
+done
+
+FUZZ_DIR=$(dirname "$0")
+
+for fuzzer in libjpeg_turbo \
+	decompress_libjpeg \
+	decompress_yuv \
+	transform; do
+	cp $SRC/decompress_fuzzer_seed_corpus.zip $OUT/${fuzzer}_fuzzer${FUZZER_SUFFIX}_seed_corpus.zip
+	if [ -f "$FUZZ_DIR/jpeg.dict" ]; then
+		cp "$FUZZ_DIR/jpeg.dict" $OUT/${fuzzer}_fuzzer${FUZZER_SUFFIX}.dict
+	fi
+done

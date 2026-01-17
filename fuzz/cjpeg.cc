@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2021, 2024 D. R. Commander.  All Rights Reserved.
+ * Copyright (C)2021, 2024, 2026 D. R. Commander.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -29,13 +29,10 @@
 /* This fuzz target wraps cjpeg in order to test esoteric compression options
    as well as the GIF and Targa readers. */
 
-#define main  cjpeg_main
 #define CJPEG_FUZZER
 extern "C" {
 #include "../src/cjpeg.c"
 }
-#undef main
-#undef CJPEG_FUZZER
 
 #include <stdint.h>
 #include <unistd.h>
@@ -43,40 +40,34 @@ extern "C" {
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 {
-  char filename[FILENAME_MAX] = { 0 };
   char *argv1[] = {
     (char *)"cjpeg", (char *)"-dct", (char *)"float", (char *)"-memdst",
-    (char *)"-optimize", (char *)"-quality", (char *)"100,99,98",
-    (char *)"-restart", (char *)"2", (char *)"-sample", (char *)"4x1,2x2,1x2",
-    (char *)"-targa", NULL
+    (char *)"-quality", (char *)"100,99,98",
+    (char *)"-sample", (char *)"4x1,2x2,1x2", (char *)"-targa"
   };
   char *argv2[] = {
-    (char *)"cjpeg", (char *)"-arithmetic", (char *)"-dct", (char *)"float",
-    (char *)"-memdst", (char *)"-quality", (char *)"90,80,70", (char *)"-rgb",
-    (char *)"-sample", (char *)"2x2", (char *)"-smooth", (char *)"50",
-    (char *)"-targa", NULL
+    (char *)"cjpeg", (char *)"-dct", (char *)"float", (char *)"-memdst",
+    (char *)"-quality", (char *)"90,80,70", (char *)"-smooth", (char *)"50",
+    (char *)"-targa"
   };
-  int fd = -1;
+  FILE *file = NULL;
 
-  snprintf(filename, FILENAME_MAX, "/tmp/libjpeg-turbo_cjpeg_fuzz.XXXXXX");
-  if ((fd = mkstemp(filename)) < 0 || write(fd, data, size) < 0)
+  if ((file = fmemopen((void *)data, size, "r")) == NULL)
     goto bailout;
 
-  argv1[12] = argv2[13] = filename;
+  fseek(file, 0, SEEK_SET);
+  cjpeg_fuzzer(9, argv1, file);
+  fseek(file, 0, SEEK_SET);
+  cjpeg_fuzzer(9, argv2, file);
 
-  cjpeg_main(13, argv1);
-  cjpeg_main(14, argv2);
+  argv1[8] = argv2[8] = NULL;
 
-  argv1[12] = argv2[13] = NULL;
-  argv1[11] = argv2[12] = filename;
-
-  cjpeg_main(12, argv1);
-  cjpeg_main(13, argv2);
+  fseek(file, 0, SEEK_SET);
+  cjpeg_fuzzer(8, argv1, file);
+  fseek(file, 0, SEEK_SET);
+  cjpeg_fuzzer(8, argv2, file);
 
 bailout:
-  if (fd >= 0) {
-    close(fd);
-    if (strlen(filename) > 0) unlink(filename);
-  }
+  if (file) fclose(file);
   return 0;
 }

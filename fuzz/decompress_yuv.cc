@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2021-2025 D. R. Commander.  All Rights Reserved.
+ * Copyright (C)2021-2026 D. R. Commander.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -29,9 +29,10 @@
 #include "../src/turbojpeg.h"
 #include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
 
 
-#define NUMPF  3
+#define NUMPF  4
 
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
@@ -43,7 +44,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
      TJPF_RGBA-TJPF_ARGB.  Thus, the pixel formats below should be the minimum
      necessary to achieve full coverage. */
   enum TJPF pixelFormats[NUMPF] =
-    { TJPF_BGR, TJPF_XRGB, TJPF_GRAY };
+    { TJPF_BGR, TJPF_RGBA, TJPF_XRGB, TJPF_GRAY };
 
   if ((handle = tj3Init(TJINIT_DECOMPRESS)) == NULL)
     goto bailout;
@@ -73,9 +74,9 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
       tj3Set(handle, TJPARAM_FASTUPSAMPLE, pfi == 0);
       tj3Set(handle, TJPARAM_FASTDCT, pfi == 0);
 
-      /* Test IDCT scaling on the second iteration. */
-      if (pfi == 1) {
-        tjscalingfactor sf = { 3, 4 };
+      /* Test IDCT scaling on the second and third iteration. */
+      if (pfi == 1 || pfi == 2) {
+        tjscalingfactor sf = { pfi == 1 ? 3 : 1, 4 };
         tj3SetScalingFactor(handle, sf);
         w = TJSCALED(width, sf);
         h = TJSCALED(height, sf);
@@ -83,11 +84,10 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
         tj3SetScalingFactor(handle, TJUNSCALED);
     }
 
-    if ((dstBuf = (unsigned char *)tj3Alloc(w * h * tjPixelSize[pf])) == NULL)
+    if ((dstBuf = (unsigned char *)malloc(w * h * tjPixelSize[pf])) == NULL)
       goto bailout;
-    if ((yuvBuf =
-         (unsigned char *)tj3Alloc(tj3YUVBufSize(w, 1, h,
-                                                 jpegSubsamp))) == NULL)
+    if ((yuvBuf = (unsigned char *)malloc(tj3YUVBufSize(w, 1, h,
+                                                        jpegSubsamp))) == NULL)
       goto bailout;
 
     if (tj3DecompressToYUV8(handle, data, size, yuvBuf, 1) == 0 &&
@@ -96,7 +96,8 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
          when using MemorySanitizer. */
       for (i = 0; i < w * h * tjPixelSize[pf]; i++)
         sum += dstBuf[i];
-    } else
+    } else if (!strcmp(tj3GetErrorStr(handle),
+                       "Progressive JPEG image has more than 500 scans"))
       goto bailout;
 
     free(dstBuf);
@@ -104,7 +105,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
     free(yuvBuf);
     yuvBuf = NULL;
 
-    /* Prevent the code above from being optimized out.  This test should never
+    /* Prevent the sum above from being optimized out.  This test should never
        be true, but the compiler doesn't know that. */
     if (sum > 255 * 1048576 * tjPixelSize[pf])
       goto bailout;
