@@ -60,7 +60,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
     /*
       BU Pixel      Subsampling  Fst Qual Opt Prg Ari Rst
          Format     Level        DCT                  Blks */
-    { 0, TJPF_XBGR, TJSAMP_444,  0,  100, 0,  0,  0,  0    },
+    { 0, TJPF_XBGR, TJSAMP_444,  1,  100, 0,  0,  0,  0    },
     { 0, TJPF_XRGB, TJSAMP_422,  0,  90,  0,  1,  0,  4    },
     { 0, TJPF_BGR,  TJSAMP_420,  0,  75,  0,  0,  0,  0    },
     { 0, TJPF_RGB,  TJSAMP_411,  0,  50,  1,  0,  0,  0    },
