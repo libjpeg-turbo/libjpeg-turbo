@@ -38,7 +38,7 @@ for fuzzer in libjpeg_turbo \
 	decompress_yuv \
 	transform; do
 	cp $SRC/decompress_fuzzer_seed_corpus.zip $OUT/${fuzzer}_fuzzer${FUZZER_SUFFIX}_seed_corpus.zip
-	if [ -f "$FUZZ_DIR/jpeg.dict" ]; do
+	if [ -f "$FUZZ_DIR/jpeg.dict" ]; then
 		cp "$FUZZ_DIR/jpeg.dict" $OUT/${fuzzer}_fuzzer${FUZZER_SUFFIX}.dict
 	fi
 done
