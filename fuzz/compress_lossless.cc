@@ -90,6 +90,9 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
     fseek(file, 0, SEEK_SET);
     if ((imgBuf = _tj3LoadImageFromFileHandle8(handle, file, &width, 1,
                                                &height, &pf)) == NULL) {
+      if (size < 2)
+        continue;
+
       /* Derive image dimensions from input data.  Use first 2 bytes to
          influence width/height. */
       width = (data[0] % 64) + 8;   /* 8-71 */
