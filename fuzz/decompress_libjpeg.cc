@@ -37,6 +37,8 @@
  * - Interstitial line skipping
  * - jpeg_save_markers() with a length limit
  * - Custom marker processor
+ * - JCS_RGB565
+ * - Color quantization
  */
 
 #include <stdint.h>
@@ -113,6 +115,17 @@ static boolean custom_marker_processor(j_decompress_ptr cinfo)
 }
 
 
+#define NUMTESTS  7
+
+
+struct test {
+  J_COLOR_SPACE out_color_space;
+  boolean quantize_colors;
+  boolean two_pass_quantize;
+  J_DITHER_MODE dither_mode;
+};
+
+
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 {
   struct jpeg_decompress_struct cinfo;
@@ -120,6 +133,20 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
   JSAMPARRAY buffer = NULL;
   int row_stride;
   int64_t sum = 0;
+  int numTests = 1;
+  struct test tests[NUMTESTS] = {
+    /*
+      Output       Quantize 2-Pass Dither
+      Colorspace   Colors   Quant  Mode
+    */
+    { JCS_RGB565,  FALSE,   FALSE, JDITHER_NONE    },
+    { JCS_RGB565,  FALSE,   FALSE, JDITHER_ORDERED },
+    { JCS_UNKNOWN, TRUE,    FALSE, JDITHER_NONE    },
+    { JCS_UNKNOWN, TRUE,    FALSE, JDITHER_ORDERED },
+    { JCS_UNKNOWN, TRUE,    FALSE, JDITHER_FS      },
+    { JCS_UNKNOWN, TRUE,    TRUE,  JDITHER_NONE    },
+    { JCS_UNKNOWN, TRUE,    TRUE,  JDITHER_FS      }
+  };
 
   /* Reject too-small input. */
   if (size < 2)
@@ -133,85 +160,110 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
     goto bailout;
 
   jpeg_create_decompress(&cinfo);
-  jpeg_mem_src(&cinfo, data, (unsigned long)size);
 
-  for (int m = JPEG_APP0; m <= JPEG_APP0 + 15; m++) {
-    if (m != JPEG_APP0 + 3)
-      jpeg_save_markers(&cinfo, m, 256);
-  }
-  jpeg_set_marker_processor(&cinfo, JPEG_APP0 + 3, custom_marker_processor);
+  for (int ti = 0; ti < numTests; ti++) {
 
-  if (jpeg_read_header(&cinfo, TRUE) != JPEG_HEADER_OK)
-    goto bailout;
+    jpeg_mem_src(&cinfo, data, (unsigned long)size);
 
-  /* Sanity check dimensions to avoid memory exhaustion.  Casting width to
-     (uint64_t) prevents integer overflow if width * height > INT_MAX. */
-  if (cinfo.image_width < 1 || cinfo.image_height < 1 ||
-      (uint64_t)cinfo.image_width * cinfo.image_height > 1048576)
-    goto bailout;
+    for (int m = JPEG_APP0; m <= JPEG_APP0 + 15; m++) {
+      if (m != JPEG_APP0 + 3)
+        jpeg_save_markers(&cinfo, m, 256);
+    }
+    jpeg_set_marker_processor(&cinfo, JPEG_APP0 + 3, custom_marker_processor);
 
-  cinfo.dct_method = JDCT_FLOAT;
-  cinfo.buffered_image = jpeg_has_multiple_scans(&cinfo);
+    if (jpeg_read_header(&cinfo, TRUE) != JPEG_HEADER_OK)
+      goto bailout;
 
-  if (!jpeg_start_decompress(&cinfo))
-    goto bailout;
+    /* Sanity check dimensions to avoid memory exhaustion.  Casting width to
+       (uint64_t) prevents integer overflow if width * height > INT_MAX. */
+    if (cinfo.image_width < 1 || cinfo.image_height < 1 ||
+        (uint64_t)cinfo.image_width * cinfo.image_height > 1048576)
+      goto bailout;
 
-  row_stride = cinfo.output_width * cinfo.output_components;
-  buffer = (*cinfo.mem->alloc_sarray)
-    ((j_common_ptr)&cinfo, JPOOL_IMAGE, row_stride, 1);
+    cinfo.dct_method = JDCT_FLOAT;
+    cinfo.buffered_image = jpeg_has_multiple_scans(&cinfo);
+    if (((cinfo.jpeg_color_space == JCS_YCbCr ||
+          cinfo.jpeg_color_space == JCS_RGB) && cinfo.num_components == 3) ||
+        (cinfo.jpeg_color_space == JCS_GRAYSCALE &&
+         cinfo.num_components == 1)) {
+      cinfo.out_color_space = tests[ti].out_color_space;
+      if (cinfo.jpeg_color_space == JCS_GRAYSCALE) {
+        numTests = 5;
+        if (cinfo.out_color_space == JCS_UNKNOWN)
+          cinfo.out_color_space = JCS_GRAYSCALE;
+      } else {
+        numTests = 7;
+        if (cinfo.out_color_space == JCS_UNKNOWN)
+          cinfo.out_color_space = ti % 2 ? JCS_RGB : JCS_EXT_BGR;
+      }
+      cinfo.quantize_colors = tests[ti].quantize_colors;
+      cinfo.two_pass_quantize = tests[ti].two_pass_quantize;
+      cinfo.dither_mode = tests[ti].dither_mode;
+    }
 
-  if (cinfo.buffered_image) {
-    /* Process all scans. */
-    while (!jpeg_input_complete(&cinfo) &&
-           cinfo.input_scan_number != cinfo.output_scan_number) {
-      int retval;
+    if (!jpeg_start_decompress(&cinfo))
+      goto bailout;
 
-      /* Consume input data until we have a complete scan or reach the end
-         of input. */
-      do {
-        retval = jpeg_consume_input(&cinfo);
-      } while (retval != JPEG_SUSPENDED && retval != JPEG_REACHED_SOS &&
-               retval != JPEG_REACHED_EOI);
+    row_stride = cinfo.output_width * cinfo.output_components;
+    buffer = (*cinfo.mem->alloc_sarray)
+      ((j_common_ptr)&cinfo, JPOOL_IMAGE, row_stride, 1);
 
-      if (retval == JPEG_REACHED_EOI)
-        break;
+    if (cinfo.buffered_image) {
+      /* Process all scans. */
+      while (!jpeg_input_complete(&cinfo) &&
+             cinfo.input_scan_number != cinfo.output_scan_number) {
+        int retval;
 
-      /* Start outputting the current scan. */
-      if (!jpeg_start_output(&cinfo, cinfo.input_scan_number))
-        goto bailout;
+        /* Consume input data until we have a complete scan or reach the end
+           of input. */
+        do {
+          retval = jpeg_consume_input(&cinfo);
+        } while (retval != JPEG_SUSPENDED && retval != JPEG_REACHED_SOS &&
+                 retval != JPEG_REACHED_EOI);
+
+        if (retval == JPEG_REACHED_EOI)
+          break;
+
+        /* Start outputting the current scan. */
+        if (!jpeg_start_output(&cinfo, cinfo.input_scan_number))
+          goto bailout;
+
+        while (cinfo.output_scanline < cinfo.output_height) {
+          if (!cinfo.two_pass_quantize &&
+              (cinfo.output_scanline == 0 || cinfo.output_scanline == 16))
+            jpeg_skip_scanlines(&cinfo, 8);
+          else {
+            jpeg_read_scanlines(&cinfo, buffer, 1);
+            /* Touch all of the output pixels in order to catch uninitialized
+               reads when using MemorySanitizer. */
+            for (int i = 0; i < row_stride; i++)
+              sum += buffer[0][i];
+          }
+        }
+
+        /* Finish this output pass. */
+        if (!jpeg_finish_output(&cinfo))
+          goto bailout;
+      }
+
+    } else {
 
       while (cinfo.output_scanline < cinfo.output_height) {
-        if (cinfo.output_scanline == 0 || cinfo.output_scanline == 16)
+        if (!cinfo.two_pass_quantize &&
+            (cinfo.output_scanline == 0 || cinfo.output_scanline == 16))
           jpeg_skip_scanlines(&cinfo, 8);
         else {
           jpeg_read_scanlines(&cinfo, buffer, 1);
-          /* Touch all of the output pixels in order to catch uninitialized
-             reads when using MemorySanitizer. */
           for (int i = 0; i < row_stride; i++)
             sum += buffer[0][i];
         }
       }
 
-      /* Finish this output pass. */
-      if (!jpeg_finish_output(&cinfo))
-        goto bailout;
     }
 
-  } else {
-
-    while (cinfo.output_scanline < cinfo.output_height) {
-      if (cinfo.output_scanline == 0 || cinfo.output_scanline == 16)
-        jpeg_skip_scanlines(&cinfo, 8);
-      else {
-        jpeg_read_scanlines(&cinfo, buffer, 1);
-        for (int i = 0; i < row_stride; i++)
-          sum += buffer[0][i];
-      }
-    }
+    jpeg_finish_decompress(&cinfo);
 
   }
-
-  jpeg_finish_decompress(&cinfo);
 
 bailout:
   jpeg_destroy_decompress(&cinfo);
