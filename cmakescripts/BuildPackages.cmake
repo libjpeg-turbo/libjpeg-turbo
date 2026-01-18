@@ -105,7 +105,7 @@ else()
   set(INST_DEFS ${INST_DEFS} "-DBUILDDIR=")
 endif()
 
-string(REGEX REPLACE "/" "\\\\" INST_DIR ${CMAKE_INSTALL_PREFIX})
+string(REGEX REPLACE "/" "\\\\" INST_DIR "${CMAKE_INSTALL_PREFIX}")
 
 configure_file(release/installer.nsi.in installer.nsi @ONLY)
 # TODO: It would be nice to eventually switch to CPack and eliminate this mess,
