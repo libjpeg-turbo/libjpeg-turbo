@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2021-2026 D. R. Commander.  All Rights Reserved.
+ * Copyright (C)2011, 2021-2026 D. R. Commander.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,6 +30,18 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+
+
+static int dummyDCTFilter(short *coeffs, tjregion arrayRegion,
+                          tjregion planeRegion, int componentIndex,
+                          int transformIndex, tjtransform *transform)
+{
+  int i;
+
+  for (i = 0; i < arrayRegion.w * arrayRegion.h; i++)
+    coeffs[i] = -coeffs[i];
+  return 0;
+}
 
 
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
@@ -73,6 +85,9 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
   if (dstSizes[0] == 0 ||
       (dstBufs[0] = (unsigned char *)tj3Alloc(dstSizes[0])) == NULL)
     goto bailout;
+
+  if (size >= 34)
+    tj3SetICCProfile(handle, (unsigned char *)&data[2], 32);
 
   tj3Set(handle, TJPARAM_NOREALLOC, 1);
   if (tj3Transform(handle, data, size, 1, dstBufs, dstSizes,
@@ -140,6 +155,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 
   transforms[0].op = TJXOP_NONE;
   transforms[0].options = TJXOPT_PROGRESSIVE;
+  transforms[0].customFilter = dummyDCTFilter;
   dstSizes[0] = 0;
 
   tj3Set(handle, TJPARAM_NOREALLOC, 0);
