@@ -6,7 +6,6 @@
  * libjpeg-turbo Modifications:
  * Copyright 2009 Pierre Ossman <ossman@cendio.se> for Cendio AB
  * Copyright (C) 2010, 2015-2016, 2022, 2024-2025, D. R. Commander.
- * Copyright (C) 2014, MIPS Technologies, Inc., California.
  * Copyright (C) 2015, Google, Inc.
  * Copyright (C) 2019-2020, Arm Limited.
  * For conditions of distribution and use, see the accompanying README.ijg
@@ -550,12 +549,7 @@ _jinit_upsampler(j_decompress_ptr cinfo)
     } else if ((h_out_group % h_in_group) == 0 &&
                (v_out_group % v_in_group) == 0) {
       /* Generic integral-factors upsampling method */
-#if defined(WITH_SIMD) && SIMD_ARCHITECTURE == MIPS
-      if (jsimd_set_int_upsample(cinfo))
-        upsample->methods[ci] = jsimd_int_upsample;
-      else
-#endif
-        upsample->methods[ci] = int_upsample;
+      upsample->methods[ci] = int_upsample;
       upsample->h_expand[ci] = (UINT8)(h_out_group / h_in_group);
       upsample->v_expand[ci] = (UINT8)(v_out_group / v_in_group);
     } else

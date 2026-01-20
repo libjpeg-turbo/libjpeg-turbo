@@ -34,13 +34,6 @@ EXTERN(void) jsimd_color_convert(j_compress_ptr cinfo, JSAMPARRAY input_buf,
                                  JSAMPIMAGE output_buf, JDIMENSION output_row,
                                  int num_rows);
 
-#if SIMD_ARCHITECTURE == MIPS
-EXTERN(unsigned int) jsimd_set_c_null_convert(j_compress_ptr cinfo);
-EXTERN(void) jsimd_c_null_convert(j_compress_ptr cinfo, JSAMPARRAY input_buf,
-                                  JSAMPIMAGE output_buf, JDIMENSION output_row,
-                                  int num_rows);
-#endif
-
 EXTERN(unsigned int) jsimd_set_ycc_rgb(j_decompress_ptr cinfo);
 
 EXTERN(unsigned int) jsimd_set_ycc_rgb565(j_decompress_ptr cinfo);
@@ -64,16 +57,6 @@ EXTERN(void) jsimd_h2v2_downsample(j_compress_ptr cinfo,
                                    JSAMPARRAY output_data);
 
 
-/* Smooth Downsampling */
-#if SIMD_ARCHITECTURE == MIPS
-EXTERN(unsigned int) jsimd_set_h2v2_smooth_downsample(j_compress_ptr cinfo);
-EXTERN(void) jsimd_h2v2_smooth_downsample(j_compress_ptr cinfo,
-                                          jpeg_component_info *compptr,
-                                          JSAMPARRAY input_data,
-                                          JSAMPARRAY output_data);
-#endif
-
-
 /* Upsampling */
 EXTERN(unsigned int) jsimd_set_h2v1_upsample(j_decompress_ptr cinfo);
 EXTERN(void) jsimd_h2v1_upsample(j_decompress_ptr cinfo,
@@ -86,14 +69,6 @@ EXTERN(void) jsimd_h2v2_upsample(j_decompress_ptr cinfo,
                                  jpeg_component_info *compptr,
                                  JSAMPARRAY input_data,
                                  JSAMPARRAY *output_data_ptr);
-
-#if SIMD_ARCHITECTURE == MIPS
-EXTERN(unsigned int) jsimd_set_int_upsample(j_decompress_ptr cinfo);
-EXTERN(void) jsimd_int_upsample(j_decompress_ptr cinfo,
-                                jpeg_component_info *compptr,
-                                JSAMPARRAY input_data,
-                                JSAMPARRAY *output_data_ptr);
-#endif
 
 
 /* Fancy (Smooth) Upsampling */

@@ -3,7 +3,6 @@
  * Copyright (C) 2009-2011, 2013-2014, 2016, 2018, 2020, 2022-2025,
  *           D. R. Commander.
  * Copyright (C) 2011, Nokia Corporation and/or its subsidiary(-ies).
- * Copyright (C) 2013-2014, MIPS Technologies, Inc., California.
  * Copyright (C) 2015-2016, 2018, 2022, Matthieu Darbois.
  * Copyright (C) 2016-2018, Loongson Technology Corporation Limited, BeiJing.
  * Copyright (C) 2019, Google LLC.
@@ -29,9 +28,6 @@
  * of the library and the SIMD implementations.
  */
 
-#define jsimd_rgb_ycc_convert_dspr2  jsimd_extrgb_ycc_convert_dspr2
-#define jsimd_rgb_gray_convert_dspr2  jsimd_extrgb_gray_convert_dspr2
-#define jsimd_ycc_rgb_convert_dspr2  jsimd_ycc_extrgb_convert_dspr2
 #include "jsimddct.h"
 #include "jsimd.h"
 #include "jsimdint.h"
@@ -87,9 +83,6 @@ init_simd(j_common_ptr cinfo)
 #elif SIMD_ARCHITECTURE == ARM
   if (!GETENV_S(env, 2, "JSIMD_FORCENEON") && !strcmp(env, "1"))
     simd_support = JSIMD_NEON;
-#elif SIMD_ARCHITECTURE == MIPS
-  if (!GETENV_S(env, 2, "JSIMD_FORCEDSPR2") && !strcmp(env, "1"))
-    simd_support = JSIMD_DSPR2;
 #elif SIMD_ARCHITECTURE == MIPS64
   if (!GETENV_S(env, 2, "JSIMD_FORCEMMI") && !strcmp(env, "1"))
     simd_support = JSIMD_MMI;
@@ -151,11 +144,6 @@ jsimd_set_rgb_ycc(j_compress_ptr cinfo)
     SET_SIMD_EXTRGB_COLOR_CONVERTER(ycc, altivec);
     return JSIMD_ALTIVEC;
   }
-#elif SIMD_ARCHITECTURE == MIPS
-  if (cinfo->master->simd_support & JSIMD_DSPR2) {
-    SET_SIMD_EXTRGB_COLOR_CONVERTER(ycc, dspr2);
-    return JSIMD_DSPR2;
-  }
 #elif SIMD_ARCHITECTURE == MIPS64
   if (cinfo->master->simd_support & JSIMD_MMI) {
     SET_SIMD_EXTRGB_COLOR_CONVERTER(ycc, mmi);
@@ -208,11 +196,6 @@ jsimd_set_rgb_gray(j_compress_ptr cinfo)
     SET_SIMD_EXTRGB_COLOR_CONVERTER(gray, altivec);
     return JSIMD_ALTIVEC;
   }
-#elif SIMD_ARCHITECTURE == MIPS
-  if (cinfo->master->simd_support & JSIMD_DSPR2) {
-    SET_SIMD_EXTRGB_COLOR_CONVERTER(gray, dspr2);
-    return JSIMD_DSPR2;
-  }
 #elif SIMD_ARCHITECTURE == MIPS64
   if (cinfo->master->simd_support & JSIMD_MMI) {
     SET_SIMD_EXTRGB_COLOR_CONVERTER(gray, mmi);
@@ -231,27 +214,6 @@ jsimd_color_convert(j_compress_ptr cinfo, JSAMPARRAY input_buf,
   cinfo->cconvert->color_convert_simd(cinfo->image_width, input_buf,
                                       output_buf, output_row, num_rows);
 }
-
-
-#if SIMD_ARCHITECTURE == MIPS
-
-HIDDEN unsigned int
-jsimd_set_c_null_convert(j_compress_ptr cinfo)
-{
-  init_simd((j_common_ptr)cinfo);
-
-  if (BITS_IN_JSAMPLE != 8)
-    return JSIMD_NONE;
-  if (sizeof(JDIMENSION) != 4)
-    return JSIMD_NONE;
-
-  if (cinfo->master->simd_support & JSIMD_DSPR2)
-    return JSIMD_DSPR2;
-
-  return JSIMD_NONE;
-}
-
-#endif
 
 
 HIDDEN unsigned int
@@ -294,11 +256,6 @@ jsimd_set_ycc_rgb(j_decompress_ptr cinfo)
   if (cinfo->master->simd_support & JSIMD_ALTIVEC) {
     SET_SIMD_EXTRGB_COLOR_DECONVERTER(altivec);
     return JSIMD_ALTIVEC;
-  }
-#elif SIMD_ARCHITECTURE == MIPS
-  if (cinfo->master->simd_support & JSIMD_DSPR2) {
-    SET_SIMD_EXTRGB_COLOR_DECONVERTER(dspr2);
-    return JSIMD_DSPR2;
   }
 #elif SIMD_ARCHITECTURE == MIPS64
   if (cinfo->master->simd_support & JSIMD_MMI) {
@@ -381,16 +338,6 @@ jsimd_set_h2v1_downsample(j_compress_ptr cinfo)
     cinfo->downsample->h2v1_downsample_simd = jsimd_h2v1_downsample_altivec;
     return JSIMD_ALTIVEC;
   }
-#elif SIMD_ARCHITECTURE == MIPS
-  /* FIXME: jsimd_h2v1_downsample_dspr2() fails some of the TJBench tiling
-   * regression tests, probably because the DSPr2 SIMD implementation predates
-   * those tests. */
-#if 0
-  if (cinfo->master->simd_support & JSIMD_DSPR2) {
-    cinfo->downsample->h2v1_downsample_simd = jsimd_h2v1_downsample_dspr2;
-    return JSIMD_DSPR2;
-  }
-#endif
 #endif
 
   return JSIMD_NONE;
@@ -446,16 +393,6 @@ jsimd_set_h2v2_downsample(j_compress_ptr cinfo)
     cinfo->downsample->h2v2_downsample_simd = jsimd_h2v2_downsample_altivec;
     return JSIMD_ALTIVEC;
   }
-#elif SIMD_ARCHITECTURE == MIPS
-  /* FIXME: jsimd_h2v2_downsample_dspr2() fails some of the TJBench tiling
-   * regression tests, probably because the DSPr2 SIMD implementation predates
-   * those tests. */
-#if 0
-  if (cinfo->master->simd_support & JSIMD_DSPR2) {
-    cinfo->downsample->h2v2_downsample_simd = jsimd_h2v2_downsample_dspr2;
-    return JSIMD_DSPR2;
-  }
-#endif
 #elif SIMD_ARCHITECTURE == MIPS64
   if (cinfo->master->simd_support & JSIMD_MMI) {
     cinfo->downsample->h2v2_downsample_simd = jsimd_h2v2_downsample_mmi;
@@ -477,27 +414,6 @@ jsimd_h2v2_downsample(j_compress_ptr cinfo, jpeg_component_info *compptr,
                                           compptr->width_in_blocks, input_data,
                                           output_data);
 }
-
-
-#if SIMD_ARCHITECTURE == MIPS
-
-HIDDEN unsigned int
-jsimd_set_h2v2_smooth_downsample(j_compress_ptr cinfo)
-{
-  init_simd((j_common_ptr)cinfo);
-
-  if (BITS_IN_JSAMPLE != 8)
-    return JSIMD_NONE;
-  if (sizeof(JDIMENSION) != 4)
-    return JSIMD_NONE;
-
-  if (cinfo->master->simd_support & JSIMD_DSPR2)
-    return JSIMD_DSPR2;
-
-  return JSIMD_NONE;
-}
-
-#endif
 
 
 HIDDEN unsigned int
@@ -536,11 +452,6 @@ jsimd_set_h2v1_upsample(j_decompress_ptr cinfo)
   if (cinfo->master->simd_support & JSIMD_ALTIVEC) {
     cinfo->upsample->h2v1_upsample_simd = jsimd_h2v1_upsample_altivec;
     return JSIMD_ALTIVEC;
-  }
-#elif SIMD_ARCHITECTURE == MIPS && defined(__MIPSEL__)
-  if (cinfo->master->simd_support & JSIMD_DSPR2) {
-    cinfo->upsample->h2v1_upsample_simd = jsimd_h2v1_upsample_dspr2;
-    return JSIMD_DSPR2;
   }
 #endif
 
@@ -595,11 +506,6 @@ jsimd_set_h2v2_upsample(j_decompress_ptr cinfo)
     cinfo->upsample->h2v2_upsample_simd = jsimd_h2v2_upsample_altivec;
     return JSIMD_ALTIVEC;
   }
-#elif SIMD_ARCHITECTURE == MIPS
-  if (cinfo->master->simd_support & JSIMD_DSPR2) {
-    cinfo->upsample->h2v2_upsample_simd = jsimd_h2v2_upsample_dspr2;
-    return JSIMD_DSPR2;
-  }
 #endif
 
   return JSIMD_NONE;
@@ -614,34 +520,6 @@ jsimd_h2v2_upsample(j_decompress_ptr cinfo, jpeg_component_info *compptr,
                                       cinfo->output_width, input_data,
                                       output_data_ptr);
 }
-
-
-#if SIMD_ARCHITECTURE == MIPS
-
-HIDDEN unsigned int
-jsimd_set_int_upsample(j_decompress_ptr cinfo)
-{
-  init_simd((j_common_ptr)cinfo);
-
-  if (BITS_IN_JSAMPLE != 8)
-    return JSIMD_NONE;
-  if (sizeof(JDIMENSION) != 4)
-    return JSIMD_NONE;
-  if (!cinfo->upsample)
-    return JSIMD_NONE;
-
-  /* FIXME: jsimd_int_upsample_dspr2() segfaults during the 4:4:1 tests in
-   * TJUnitTest, probably because the DSPr2 SIMD implementation predates those
-   * tests. */
-#if 0
-  if (cinfo->master->simd_support & JSIMD_DSPR2)
-    return JSIMD_DSPR2;
-#endif
-
-  return JSIMD_NONE;
-}
-
-#endif
 
 
 HIDDEN unsigned int
@@ -682,11 +560,6 @@ jsimd_set_h2v1_fancy_upsample(j_decompress_ptr cinfo)
   if (cinfo->master->simd_support & JSIMD_ALTIVEC) {
     cinfo->upsample->h2v1_upsample_simd = jsimd_h2v1_fancy_upsample_altivec;
     return JSIMD_ALTIVEC;
-  }
-#elif SIMD_ARCHITECTURE == MIPS && defined(__MIPSEL__)
-  if (cinfo->master->simd_support & JSIMD_DSPR2) {
-    cinfo->upsample->h2v1_upsample_simd = jsimd_h2v1_fancy_upsample_dspr2;
-    return JSIMD_DSPR2;
   }
 #elif SIMD_ARCHITECTURE == MIPS64
   if (cinfo->master->simd_support & JSIMD_MMI) {
@@ -747,11 +620,6 @@ jsimd_set_h2v2_fancy_upsample(j_decompress_ptr cinfo)
   if (cinfo->master->simd_support & JSIMD_ALTIVEC) {
     cinfo->upsample->h2v2_upsample_simd = jsimd_h2v2_fancy_upsample_altivec;
     return JSIMD_ALTIVEC;
-  }
-#elif SIMD_ARCHITECTURE == MIPS && defined(__MIPSEL__)
-  if (cinfo->master->simd_support & JSIMD_DSPR2) {
-    cinfo->upsample->h2v2_upsample_simd = jsimd_h2v2_fancy_upsample_dspr2;
-    return JSIMD_DSPR2;
   }
 #elif SIMD_ARCHITECTURE == MIPS64
   if (cinfo->master->simd_support & JSIMD_MMI) {
@@ -848,9 +716,6 @@ jsimd_set_h2v1_merged_upsample(j_decompress_ptr cinfo)
     SET_SIMD_EXTRGB_MERGED_UPSAMPLER(h2v1, altivec);
     return JSIMD_ALTIVEC;
   }
-#elif SIMD_ARCHITECTURE == MIPS
-  if (cinfo->master->simd_support & JSIMD_DSPR2)
-    return JSIMD_DSPR2;
 #elif SIMD_ARCHITECTURE == MIPS64
   if (cinfo->master->simd_support & JSIMD_MMI) {
     SET_SIMD_EXTRGB_MERGED_UPSAMPLER(h2v1, mmi);
@@ -862,8 +727,6 @@ jsimd_set_h2v1_merged_upsample(j_decompress_ptr cinfo)
 }
 
 
-#if SIMD_ARCHITECTURE != MIPS
-
 HIDDEN void
 jsimd_h2v1_merged_upsample(j_decompress_ptr cinfo, JSAMPIMAGE input_buf,
                            JDIMENSION in_row_group_ctr, JSAMPARRAY output_buf)
@@ -871,8 +734,6 @@ jsimd_h2v1_merged_upsample(j_decompress_ptr cinfo, JSAMPIMAGE input_buf,
   cinfo->upsample->merged_upsample_simd(cinfo->output_width, input_buf,
                                         in_row_group_ctr, output_buf);
 }
-
-#endif
 
 
 HIDDEN unsigned int
@@ -914,9 +775,6 @@ jsimd_set_h2v2_merged_upsample(j_decompress_ptr cinfo)
     SET_SIMD_EXTRGB_MERGED_UPSAMPLER(h2v2, altivec);
     return JSIMD_ALTIVEC;
   }
-#elif SIMD_ARCHITECTURE == MIPS
-  if (cinfo->master->simd_support & JSIMD_DSPR2)
-    return JSIMD_DSPR2;
 #elif SIMD_ARCHITECTURE == MIPS64
   if (cinfo->master->simd_support & JSIMD_MMI) {
     SET_SIMD_EXTRGB_MERGED_UPSAMPLER(h2v2, mmi);
@@ -928,8 +786,6 @@ jsimd_set_h2v2_merged_upsample(j_decompress_ptr cinfo)
 }
 
 
-#if SIMD_ARCHITECTURE != MIPS
-
 HIDDEN void
 jsimd_h2v2_merged_upsample(j_decompress_ptr cinfo, JSAMPIMAGE input_buf,
                            JDIMENSION in_row_group_ctr, JSAMPARRAY output_buf)
@@ -937,8 +793,6 @@ jsimd_h2v2_merged_upsample(j_decompress_ptr cinfo, JSAMPIMAGE input_buf,
   cinfo->upsample->merged_upsample_simd(cinfo->output_width, input_buf,
                                         in_row_group_ctr, output_buf);
 }
-
-#endif
 
 
 HIDDEN unsigned int
@@ -978,11 +832,6 @@ jsimd_set_convsamp(j_compress_ptr cinfo, convsamp_method_ptr *method)
     *method = jsimd_convsamp_altivec;
     return JSIMD_ALTIVEC;
   }
-#elif SIMD_ARCHITECTURE == MIPS && defined(__MIPSEL__)
-  if (cinfo->master->simd_support & JSIMD_DSPR2) {
-    *method = jsimd_convsamp_dspr2;
-    return JSIMD_DSPR2;
-  }
 #endif
 
   return JSIMD_NONE;
@@ -1017,11 +866,6 @@ jsimd_set_convsamp_float(j_compress_ptr cinfo,
     return JSIMD_3DNOW;
   }
 #endif
-#elif SIMD_ARCHITECTURE == MIPS && !defined(__mips_soft_float)
-  if (cinfo->master->simd_support & JSIMD_DSPR2) {
-    *method = jsimd_convsamp_float_dspr2;
-    return JSIMD_DSPR2;
-  }
 #endif
 
   return JSIMD_NONE;
@@ -1063,11 +907,6 @@ jsimd_set_fdct_islow(j_compress_ptr cinfo, forward_DCT_method_ptr *method)
     *method = jsimd_fdct_islow_altivec;
     return JSIMD_ALTIVEC;
   }
-#elif SIMD_ARCHITECTURE == MIPS && defined(__MIPSEL__)
-  if (cinfo->master->simd_support & JSIMD_DSPR2) {
-    *method = jsimd_fdct_islow_dspr2;
-    return JSIMD_DSPR2;
-  }
 #elif SIMD_ARCHITECTURE == MIPS64
   if (cinfo->master->simd_support & JSIMD_MMI) {
     *method = jsimd_fdct_islow_mmi;
@@ -1108,11 +947,6 @@ jsimd_set_fdct_ifast(j_compress_ptr cinfo, forward_DCT_method_ptr *method)
   if (cinfo->master->simd_support & JSIMD_ALTIVEC) {
     *method = jsimd_fdct_ifast_altivec;
     return JSIMD_ALTIVEC;
-  }
-#elif SIMD_ARCHITECTURE == MIPS && defined(__MIPSEL__)
-  if (cinfo->master->simd_support & JSIMD_DSPR2) {
-    *method = jsimd_fdct_ifast_dspr2;
-    return JSIMD_DSPR2;
   }
 #elif SIMD_ARCHITECTURE == MIPS64
   if (cinfo->master->simd_support & JSIMD_MMI) {
@@ -1186,11 +1020,6 @@ jsimd_set_quantize(j_compress_ptr cinfo, quantize_method_ptr *method)
     *method = jsimd_quantize_altivec;
     return JSIMD_ALTIVEC;
   }
-#elif SIMD_ARCHITECTURE == MIPS
-  if (cinfo->master->simd_support & JSIMD_DSPR2) {
-    *method = jsimd_quantize_dspr2;
-    return JSIMD_DSPR2;
-  }
 #elif SIMD_ARCHITECTURE == MIPS64
   if (cinfo->master->simd_support & JSIMD_MMI) {
     *method = jsimd_quantize_mmi;
@@ -1228,11 +1057,6 @@ jsimd_set_quantize_float(j_compress_ptr cinfo,
     return JSIMD_3DNOW;
   }
 #endif
-#elif SIMD_ARCHITECTURE == MIPS && !defined(__mips_soft_float)
-  if (cinfo->master->simd_support & JSIMD_DSPR2) {
-    *method = jsimd_quantize_float_dspr2;
-    return JSIMD_DSPR2;
-  }
 #endif
 
   return JSIMD_NONE;
@@ -1282,9 +1106,6 @@ jsimd_set_idct_islow(j_decompress_ptr cinfo)
     cinfo->idct->idct_simd = jsimd_idct_islow_altivec;
     return JSIMD_ALTIVEC;
   }
-#elif SIMD_ARCHITECTURE == MIPS
-  if (cinfo->master->simd_support & JSIMD_DSPR2)
-    return JSIMD_DSPR2;
 #elif SIMD_ARCHITECTURE == MIPS64
   if (cinfo->master->simd_support & JSIMD_MMI) {
     cinfo->idct->idct_simd = jsimd_idct_islow_mmi;
@@ -1296,8 +1117,6 @@ jsimd_set_idct_islow(j_decompress_ptr cinfo)
 }
 
 
-#if SIMD_ARCHITECTURE != MIPS
-
 HIDDEN void
 jsimd_idct_islow(j_decompress_ptr cinfo, jpeg_component_info *compptr,
                  JCOEFPTR coef_block, JSAMPARRAY output_buf,
@@ -1306,8 +1125,6 @@ jsimd_idct_islow(j_decompress_ptr cinfo, jpeg_component_info *compptr,
   cinfo->idct->idct_simd(compptr->dct_table, coef_block, output_buf,
                          output_col);
 }
-
-#endif
 
 
 HIDDEN unsigned int
@@ -1350,9 +1167,6 @@ jsimd_set_idct_ifast(j_decompress_ptr cinfo)
     cinfo->idct->idct_simd = jsimd_idct_ifast_altivec;
     return JSIMD_ALTIVEC;
   }
-#elif SIMD_ARCHITECTURE == MIPS && defined(__MIPSEL__)
-  if (cinfo->master->simd_support & JSIMD_DSPR2)
-    return JSIMD_DSPR2;
 #elif SIMD_ARCHITECTURE == MIPS64
   if (cinfo->master->simd_support & JSIMD_MMI) {
     cinfo->idct->idct_simd = jsimd_idct_ifast_mmi;
@@ -1364,8 +1178,6 @@ jsimd_set_idct_ifast(j_decompress_ptr cinfo)
 }
 
 
-#if SIMD_ARCHITECTURE != MIPS
-
 HIDDEN void
 jsimd_idct_ifast(j_decompress_ptr cinfo, jpeg_component_info *compptr,
                  JCOEFPTR coef_block, JSAMPARRAY output_buf,
@@ -1374,8 +1186,6 @@ jsimd_idct_ifast(j_decompress_ptr cinfo, jpeg_component_info *compptr,
   cinfo->idct->idct_simd(compptr->dct_table, coef_block, output_buf,
                          output_col);
 }
-
-#endif
 
 
 HIDDEN unsigned int
@@ -1462,11 +1272,6 @@ jsimd_set_idct_2x2(j_decompress_ptr cinfo)
     cinfo->idct->idct_2x2_simd = jsimd_idct_2x2_neon;
     return JSIMD_NEON;
   }
-#elif SIMD_ARCHITECTURE == MIPS
-  if (cinfo->master->simd_support & JSIMD_DSPR2) {
-    cinfo->idct->idct_2x2_simd = jsimd_idct_2x2_dspr2;
-    return JSIMD_DSPR2;
-  }
 #endif
 
   return JSIMD_NONE;
@@ -1516,16 +1321,11 @@ jsimd_set_idct_4x4(j_decompress_ptr cinfo)
     cinfo->idct->idct_4x4_simd = jsimd_idct_4x4_neon;
     return JSIMD_NEON;
   }
-#elif SIMD_ARCHITECTURE == MIPS && defined(__MIPSEL__)
-  if (cinfo->master->simd_support & JSIMD_DSPR2)
-    return JSIMD_DSPR2;
 #endif
 
   return JSIMD_NONE;
 }
 
-
-#if SIMD_ARCHITECTURE != MIPS
 
 HIDDEN void
 jsimd_idct_4x4(j_decompress_ptr cinfo, jpeg_component_info *compptr,
@@ -1535,54 +1335,6 @@ jsimd_idct_4x4(j_decompress_ptr cinfo, jpeg_component_info *compptr,
   cinfo->idct->idct_4x4_simd(compptr->dct_table, coef_block, output_buf,
                              output_col);
 }
-
-#endif
-
-
-#if SIMD_ARCHITECTURE == MIPS
-
-HIDDEN unsigned int
-jsimd_set_idct_6x6(j_decompress_ptr cinfo)
-{
-  init_simd((j_common_ptr)cinfo);
-
-  if (sizeof(JCOEF) != 2)
-    return JSIMD_NONE;
-  if (BITS_IN_JSAMPLE != 8)
-    return JSIMD_NONE;
-  if (sizeof(JDIMENSION) != 4)
-    return JSIMD_NONE;
-  if (sizeof(ISLOW_MULT_TYPE) != 2)
-    return JSIMD_NONE;
-
-  if (cinfo->master->simd_support & JSIMD_DSPR2)
-    return JSIMD_DSPR2;
-
-  return JSIMD_NONE;
-}
-
-
-HIDDEN unsigned int
-jsimd_set_idct_12x12(j_decompress_ptr cinfo)
-{
-  init_simd((j_common_ptr)cinfo);
-
-  if (BITS_IN_JSAMPLE != 8)
-    return JSIMD_NONE;
-  if (sizeof(JCOEF) != 2)
-    return JSIMD_NONE;
-  if (sizeof(JDIMENSION) != 4)
-    return JSIMD_NONE;
-  if (sizeof(ISLOW_MULT_TYPE) != 2)
-    return JSIMD_NONE;
-
-  if (cinfo->master->simd_support & JSIMD_DSPR2)
-    return JSIMD_DSPR2;
-
-  return JSIMD_NONE;
-}
-
-#endif
 
 
 HIDDEN unsigned int

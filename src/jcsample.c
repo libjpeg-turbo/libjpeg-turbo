@@ -7,7 +7,6 @@
  * Copyright (C) 1999, Ken Murchison.
  * libjpeg-turbo Modifications:
  * Copyright 2009 Pierre Ossman <ossman@cendio.se> for Cendio AB
- * Copyright (C) 2014, MIPS Technologies, Inc., California.
  * Copyright (C) 2015, 2019, 2022, 2024-2025, D. R. Commander.
  * For conditions of distribution and use, see the accompanying README.ijg
  * file.
@@ -524,12 +523,7 @@ _jinit_downsampler(j_compress_ptr cinfo)
                compptr->v_samp_factor * 2 == cinfo->max_v_samp_factor) {
 #ifdef INPUT_SMOOTHING_SUPPORTED
       if (cinfo->smoothing_factor) {
-#if defined(WITH_SIMD) && SIMD_ARCHITECTURE == MIPS
-        if (jsimd_set_h2v2_smooth_downsample(cinfo))
-          downsample->methods[ci] = jsimd_h2v2_smooth_downsample;
-        else
-#endif
-          downsample->methods[ci] = h2v2_smooth_downsample;
+        downsample->methods[ci] = h2v2_smooth_downsample;
         downsample->pub.need_context_rows = TRUE;
       } else
 #endif

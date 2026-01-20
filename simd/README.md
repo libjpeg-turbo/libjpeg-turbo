@@ -108,9 +108,6 @@ modules:
 - `JSIMD_FORCENEON=1` (AArch32) force-enables the Neon SIMD modules, bypassing
   **/proc/cpuinfo** feature detection (which may be unreliable in QEMU and
   other emulation/virtualization environments.)
-- `JSIMD_FORCEDSPR2=1` (MIPS) force-enables the DSPr2 SIMD modules, bypassing
-  **/proc/cpuinfo** feature detection (which may be unreliable in QEMU and
-  other emulation/virtualization environments.)
 - `JSIMD_FORCEMMI=1` (Loongson) force-enables the MMI SIMD modules, bypassing
   **/proc/cpuinfo** feature detection (which may be unreliable in QEMU and
   other emulation/virtualization environments.)

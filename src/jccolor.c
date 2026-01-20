@@ -6,7 +6,6 @@
  * libjpeg-turbo Modifications:
  * Copyright 2009 Pierre Ossman <ossman@cendio.se> for Cendio AB
  * Copyright (C) 2009-2012, 2015, 2022, 2024-2025, D. R. Commander.
- * Copyright (C) 2014, MIPS Technologies, Inc., California.
  * For conditions of distribution and use, see the accompanying README.ijg
  * file.
  *
@@ -548,12 +547,7 @@ _jinit_color_converter(j_compress_ptr cinfo)
         rgb_green[cinfo->in_color_space] == 1 &&
         rgb_blue[cinfo->in_color_space] == 2 &&
         rgb_pixelsize[cinfo->in_color_space] == 3) {
-#if defined(WITH_SIMD) && SIMD_ARCHITECTURE == MIPS
-      if (jsimd_set_c_null_convert(cinfo))
-        cconvert->pub._color_convert = jsimd_c_null_convert;
-      else
-#endif
-        cconvert->pub._color_convert = null_convert;
+      cconvert->pub._color_convert = null_convert;
     } else if (IsExtRGB(cinfo->in_color_space)) {
       switch (cinfo->in_color_space) {
       case JCS_EXT_RGB:
@@ -629,12 +623,7 @@ _jinit_color_converter(j_compress_ptr cinfo)
         }
       }
     } else if (cinfo->in_color_space == JCS_YCbCr) {
-#if defined(WITH_SIMD) && SIMD_ARCHITECTURE == MIPS
-      if (jsimd_set_c_null_convert(cinfo))
-        cconvert->pub._color_convert = jsimd_c_null_convert;
-      else
-#endif
-        cconvert->pub._color_convert = null_convert;
+      cconvert->pub._color_convert = null_convert;
     } else
       ERREXIT(cinfo, JERR_CONVERSION_NOTIMPL);
     break;
@@ -648,12 +637,7 @@ _jinit_color_converter(j_compress_ptr cinfo)
     if (cinfo->num_components != 4)
       ERREXIT(cinfo, JERR_BAD_J_COLORSPACE);
     if (cinfo->in_color_space == JCS_CMYK) {
-#if defined(WITH_SIMD) && SIMD_ARCHITECTURE == MIPS
-      if (jsimd_set_c_null_convert(cinfo))
-        cconvert->pub._color_convert = jsimd_c_null_convert;
-      else
-#endif
-        cconvert->pub._color_convert = null_convert;
+      cconvert->pub._color_convert = null_convert;
     } else
       ERREXIT(cinfo, JERR_CONVERSION_NOTIMPL);
     break;
@@ -670,12 +654,7 @@ _jinit_color_converter(j_compress_ptr cinfo)
       cconvert->pub.start_pass = rgb_ycc_start;
       cconvert->pub._color_convert = cmyk_ycck_convert;
     } else if (cinfo->in_color_space == JCS_YCCK) {
-#if defined(WITH_SIMD) && SIMD_ARCHITECTURE == MIPS
-      if (jsimd_set_c_null_convert(cinfo))
-        cconvert->pub._color_convert = jsimd_c_null_convert;
-      else
-#endif
-        cconvert->pub._color_convert = null_convert;
+      cconvert->pub._color_convert = null_convert;
     } else
       ERREXIT(cinfo, JERR_CONVERSION_NOTIMPL);
     break;
@@ -684,12 +663,7 @@ _jinit_color_converter(j_compress_ptr cinfo)
     if (cinfo->jpeg_color_space != cinfo->in_color_space ||
         cinfo->num_components != cinfo->input_components)
       ERREXIT(cinfo, JERR_CONVERSION_NOTIMPL);
-#if defined(WITH_SIMD) && SIMD_ARCHITECTURE == MIPS
-    if (jsimd_set_c_null_convert(cinfo))
-      cconvert->pub._color_convert = jsimd_c_null_convert;
-    else
-#endif
-      cconvert->pub._color_convert = null_convert;
+    cconvert->pub._color_convert = null_convert;
     break;
   }
 }

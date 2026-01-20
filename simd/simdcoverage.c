@@ -37,8 +37,6 @@ static const char *instrset_name(int instrset) {
       return "SSE2";
     case JSIMD_NEON:
       return "Neon";
-    case JSIMD_DSPR2:
-      return "DSPr2";
     case JSIMD_ALTIVEC:
       return "AltiVec";
     case JSIMD_AVX2:
@@ -115,14 +113,8 @@ int main(void)
   D_COVERAGE_TEST(jsimd_set_ycc_rgb565);
   C_COVERAGE_TEST(jsimd_set_h2v1_downsample);
   C_COVERAGE_TEST(jsimd_set_h2v2_downsample);
-#if SIMD_ARCHITECTURE == MIPS
-  C_COVERAGE_TEST(jsimd_set_h2v2_smooth_downsample);
-#endif
   D_COVERAGE_TEST(jsimd_set_h2v1_upsample);
   D_COVERAGE_TEST(jsimd_set_h2v2_upsample);
-#if SIMD_ARCHITECTURE == MIPS
-  D_COVERAGE_TEST(jsimd_set_int_upsample);
-#endif
   D_COVERAGE_TEST(jsimd_set_h2v1_fancy_upsample);
   D_COVERAGE_TEST(jsimd_set_h2v2_fancy_upsample);
 #if SIMD_ARCHITECTURE == ARM || SIMD_ARCHITECTURE == ARM64
@@ -142,10 +134,6 @@ int main(void)
   D_COVERAGE_TEST(jsimd_set_idct_float);
   D_COVERAGE_TEST(jsimd_set_idct_2x2);
   D_COVERAGE_TEST(jsimd_set_idct_4x4);
-#if SIMD_ARCHITECTURE == MIPS
-  D_COVERAGE_TEST(jsimd_set_idct_6x6);
-  D_COVERAGE_TEST(jsimd_set_idct_12x12);
-#endif
   C_COVERAGE_TEST(jsimd_set_huff_encode_one_block);
   C_COVERAGE_TEST2(jsimd_set_encode_mcu_AC_first_prepare,
                    encode_mcu_AC_first_method);

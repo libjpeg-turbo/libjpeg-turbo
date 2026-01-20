@@ -32,6 +32,28 @@ image.  The new default behavior is useful, in combination with the `-drop`
 option, for reversibly combining multiple JPEG source images into a single
 composite JPEG image.
 
+5. The MIPS DSPr2 SIMD extensions have been removed.  Justifications:
+
+     - MIPS Technologies deprecated the MIPS architecture in favor of RISC-V in
+2021.
+     - The DSPr2 instruction set was already obsolete at that point, having
+been superseded by the MSA instruction set (which is now also deprecated.)
+     - The overall speedup from the DSPr2 SIMD extensions was never compelling,
+in part because some of the modules were implemented using scalar (non-SIMD)
+instructions and were thus no faster than the equivalent C modules.
+     - Some of the DSPr2 SIMD modules had long-standing bugs, and it was
+necessary to disable those modules in order to prevent accuracy issues with
+libjpeg-turbo on MIPS CPUs.
+     - The DSPr2 SIMD extensions only worked with 32-bit MIPS applications.
+     - The libjpeg-turbo Project has never had access to a MIPS test platform,
+which limited our ability to maintain the DSPr2 SIMD extensions.
+
+    Even before the MIPS architecture was deprecated, the aforementioned
+limitations had already reduced the number of platforms and applications that
+could benefit from the DSPr2 SIMD extensions to near zero.  The DSPr2 SIMD
+extensions will continue to be maintained in the 3.1.x branch on a break/fix
+basis.
+
 
 3.1.3
 =====

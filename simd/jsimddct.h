@@ -80,16 +80,3 @@ EXTERN(unsigned int) jsimd_set_idct_4x4(j_decompress_ptr cinfo);
 EXTERN(void) jsimd_idct_4x4(j_decompress_ptr cinfo,
                             jpeg_component_info *compptr, JCOEFPTR coef_block,
                             JSAMPARRAY output_buf, JDIMENSION output_col);
-
-#if SIMD_ARCHITECTURE == MIPS
-EXTERN(unsigned int) jsimd_set_idct_6x6(j_decompress_ptr cinfo);
-EXTERN(void) jsimd_idct_6x6(j_decompress_ptr cinfo,
-                            jpeg_component_info *compptr, JCOEFPTR coef_block,
-                            JSAMPARRAY output_buf, JDIMENSION output_col);
-
-EXTERN(unsigned int) jsimd_set_idct_12x12(j_decompress_ptr cinfo);
-EXTERN(void) jsimd_idct_12x12(j_decompress_ptr cinfo,
-                              jpeg_component_info *compptr,
-                              JCOEFPTR coef_block, JSAMPARRAY output_buf,
-                              JDIMENSION output_col);
-#endif
