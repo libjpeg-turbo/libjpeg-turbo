@@ -96,7 +96,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
         tj3SetCroppingRegion(handle, TJUNCROPPED);
     }
 
-    if ((dstBuf = malloc(w * h * tjPixelSize[pf] * sampleSize)) == NULL)
+    if ((dstBuf = tj3Alloc(w * h * tjPixelSize[pf] * sampleSize)) == NULL)
       goto bailout;
 
     if (precision == 8) {
@@ -130,7 +130,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
         goto bailout;
     }
 
-    free(dstBuf);
+    tj3Free(dstBuf);
     dstBuf = NULL;
 
     /* Prevent the sum above from being optimized out.  This test should never
@@ -140,7 +140,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
   }
 
 bailout:
-  free(dstBuf);
+  tj3Free(dstBuf);
   tj3Destroy(handle);
   return 0;
 }
