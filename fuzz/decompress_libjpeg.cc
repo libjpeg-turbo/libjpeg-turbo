@@ -61,9 +61,9 @@ struct fuzzer_error_mgr {
 
 static void fuzzer_error_exit(j_common_ptr cinfo)
 {
-  struct fuzzer_error_mgr *myerr = (struct fuzzer_error_mgr *)cinfo->err;
+  struct fuzzer_error_mgr *fuzz_err = (struct fuzzer_error_mgr *)cinfo->err;
 
-  longjmp(myerr->setjmp_buffer, 1);
+  longjmp(fuzz_err->setjmp_buffer, 1);
 }
 
 
@@ -132,7 +132,6 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
   struct fuzzer_error_mgr jerr;
   JSAMPARRAY buffer = NULL;
   int row_stride;
-  int64_t sum = 0;
   int numTests = 1;
   struct test tests[NUMTESTS] = {
     /*
@@ -156,12 +155,17 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
   jerr.pub.error_exit = fuzzer_error_exit;
   jerr.pub.emit_message = fuzzer_emit_message;
 
-  if (setjmp(jerr.setjmp_buffer))
-    goto bailout;
-
   jpeg_create_decompress(&cinfo);
 
   for (int ti = 0; ti < numTests; ti++) {
+    int64_t sum = 0;
+
+    marker_sum = 0;
+
+    if (setjmp(jerr.setjmp_buffer)) {
+      jpeg_abort_decompress(&cinfo);
+      continue;
+    }
 
     jpeg_mem_src(&cinfo, data, (unsigned long)size);
 
@@ -171,8 +175,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
     }
     jpeg_set_marker_processor(&cinfo, JPEG_APP0 + 3, custom_marker_processor);
 
-    if (jpeg_read_header(&cinfo, TRUE) != JPEG_HEADER_OK)
-      goto bailout;
+    jpeg_read_header(&cinfo, TRUE);
 
     /* Sanity check dimensions to avoid memory exhaustion.  Casting width to
        (uint64_t) prevents integer overflow if width * height > INT_MAX. */
@@ -201,8 +204,10 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
       cinfo.dither_mode = tests[ti].dither_mode;
     }
 
-    if (!jpeg_start_decompress(&cinfo))
-      goto bailout;
+    if (!jpeg_start_decompress(&cinfo)) {
+      jpeg_abort_decompress(&cinfo);
+      continue;
+    }
 
     row_stride = cinfo.output_width * cinfo.output_components;
     buffer = (*cinfo.mem->alloc_sarray)
@@ -213,6 +218,11 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
       while (!jpeg_input_complete(&cinfo) &&
              cinfo.input_scan_number != cinfo.output_scan_number) {
         int retval;
+
+        if (cinfo.input_scan_number > 500) {
+          jpeg_abort_decompress(&cinfo);
+          goto bailout;
+        }
 
         /* Consume input data until we have a complete scan or reach the end
            of input. */
@@ -226,14 +236,15 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 
         /* Start outputting the current scan. */
         if (!jpeg_start_output(&cinfo, cinfo.input_scan_number))
-          goto bailout;
+          break;
 
         while (cinfo.output_scanline < cinfo.output_height) {
           if (!cinfo.two_pass_quantize &&
               (cinfo.output_scanline == 0 || cinfo.output_scanline == 16))
             jpeg_skip_scanlines(&cinfo, 8);
           else {
-            jpeg_read_scanlines(&cinfo, buffer, 1);
+            if (jpeg_read_scanlines(&cinfo, buffer, 1) != 1)
+              break;
             /* Touch all of the output pixels in order to catch uninitialized
                reads when using MemorySanitizer. */
             for (int i = 0; i < row_stride; i++)
@@ -243,7 +254,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 
         /* Finish this output pass. */
         if (!jpeg_finish_output(&cinfo))
-          goto bailout;
+          break;
       }
 
     } else {
@@ -263,16 +274,14 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 
     jpeg_finish_decompress(&cinfo);
 
+    /* Prevent the sums above from being optimized out.  This test should never
+       be true, but the compiler doesn't know that. */
+    if (sum > (int64_t)255 * 1048576 * 4 ||
+        marker_sum > (int64_t)255 * 1048576)
+      goto bailout;
   }
 
 bailout:
   jpeg_destroy_decompress(&cinfo);
-
-  /* Prevent the sums above from being optimized out.  This test should never
-     be true, but the compiler doesn't know that. */
-  if (sum > (int64_t)255 * 1048576 * 4 ||
-      marker_sum > (int64_t)255 * 1048576)
-    return 1;
-
   return 0;
 }
