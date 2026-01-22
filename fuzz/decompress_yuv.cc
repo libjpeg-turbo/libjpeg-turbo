@@ -84,10 +84,11 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
         tj3SetScalingFactor(handle, TJUNSCALED);
     }
 
-    if ((dstBuf = (unsigned char *)malloc(w * h * tjPixelSize[pf])) == NULL)
+    if ((dstBuf = (unsigned char *)tj3Alloc(w * h * tjPixelSize[pf])) == NULL)
       goto bailout;
-    if ((yuvBuf = (unsigned char *)malloc(tj3YUVBufSize(w, 1, h,
-                                                        jpegSubsamp))) == NULL)
+    if ((yuvBuf =
+         (unsigned char *)tj3Alloc(tj3YUVBufSize(w, 1, h,
+                                                 jpegSubsamp))) == NULL)
       goto bailout;
 
     if (tj3DecompressToYUV8(handle, data, size, yuvBuf, 1) == 0 &&
@@ -100,9 +101,9 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
                        "Progressive JPEG image has more than 500 scans"))
       goto bailout;
 
-    free(dstBuf);
+    tj3Free(dstBuf);
     dstBuf = NULL;
-    free(yuvBuf);
+    tj3Free(yuvBuf);
     yuvBuf = NULL;
 
     /* Prevent the sum above from being optimized out.  This test should never
@@ -112,8 +113,8 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
   }
 
 bailout:
-  free(dstBuf);
-  free(yuvBuf);
+  tj3Free(dstBuf);
+  tj3Free(yuvBuf);
   tj3Destroy(handle);
   return 0;
 }
