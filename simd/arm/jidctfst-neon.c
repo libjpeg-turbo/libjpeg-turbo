@@ -1,5 +1,5 @@
 /*
- * Fast integer IDCT (Arm Neon)
+ * Fast Integer Inverse DCT (Arm Neon)
  *
  * Copyright (C) 2020, Arm Limited.  All Rights Reserved.
  * Copyright (C) 2024-2025, D. R. Commander.  All Rights Reserved.

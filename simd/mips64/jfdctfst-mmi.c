@@ -1,5 +1,5 @@
 /*
- * Loongson MMI optimizations for libjpeg-turbo
+ * Fast Integer Forward DCT (64-bit MMI)
  *
  * Copyright (C) 2014, 2018-2019, 2025, D. R. Commander.  All Rights Reserved.
  * Copyright (C) 2016-2018, Loongson Technology Corporation Limited, BeiJing.
@@ -25,8 +25,6 @@
  *    misrepresented as being the original software.
  * 3. This notice may not be removed or altered from any source distribution.
  */
-
-/* FAST INTEGER FORWARD DCT */
 
 #include "jsimd_mmi.h"
 

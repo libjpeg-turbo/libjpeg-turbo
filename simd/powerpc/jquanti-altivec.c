@@ -1,5 +1,5 @@
 /*
- * AltiVec optimizations for libjpeg-turbo
+ * Integer Sample Conversion and Quantization (AltiVec)
  *
  * Copyright (C) 2014-2015, 2024-2025, D. R. Commander.  All Rights Reserved.
  *
@@ -19,8 +19,6 @@
  *    misrepresented as being the original software.
  * 3. This notice may not be removed or altered from any source distribution.
  */
-
-/* INTEGER QUANTIZATION AND SAMPLE CONVERSION */
 
 #include "jsimd_altivec.h"
 

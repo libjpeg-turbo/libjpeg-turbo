@@ -1,5 +1,5 @@
 /*
- * Sample data conversion and quantization (Arm Neon)
+ * Integer Sample Conversion and Quantization (Arm Neon)
  *
  * Copyright (C) 2020-2021, Arm Limited.  All Rights Reserved.
  * Copyright (C) 2024-2025, D. R. Commander.  All Rights Reserved.

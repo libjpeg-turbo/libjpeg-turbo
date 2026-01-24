@@ -1,5 +1,5 @@
 /*
- * Loongson MMI optimizations for libjpeg-turbo
+ * Fancy (Smooth) Upsampling (64-bit MMI)
  *
  * Copyright (C) 2015, 2018-2019, 2025, D. R. Commander.  All Rights Reserved.
  * Copyright (C) 2016-2018, Loongson Technology Corporation Limited, BeiJing.
@@ -28,8 +28,6 @@
  *    misrepresented as being the original software.
  * 3. This notice may not be removed or altered from any source distribution.
  */
-
-/* CHROMA UPSAMPLING */
 
 #include "jsimd_mmi.h"
 

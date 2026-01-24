@@ -70,7 +70,7 @@ EXTERN(void) jsimd_idct_float(j_decompress_ptr cinfo,
                               JDIMENSION output_col);
 
 
-/* Scaled Inverse DCT */
+/* Scaled Integer Inverse DCT */
 EXTERN(unsigned int) jsimd_set_idct_2x2(j_decompress_ptr cinfo);
 EXTERN(void) jsimd_idct_2x2(j_decompress_ptr cinfo,
                             jpeg_component_info *compptr, JCOEFPTR coef_block,

@@ -1,5 +1,5 @@
 /*
- * AltiVec optimizations for libjpeg-turbo
+ * YCbCr-to-RGB Color Conversion (AltiVec)
  *
  * Copyright (C) 2015, D. R. Commander.  All Rights Reserved.
  *
@@ -19,8 +19,6 @@
  *    misrepresented as being the original software.
  * 3. This notice may not be removed or altered from any source distribution.
  */
-
-/* YCC --> RGB CONVERSION */
 
 #include "jsimd_altivec.h"
 

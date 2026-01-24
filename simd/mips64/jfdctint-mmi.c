@@ -1,5 +1,5 @@
 /*
- * Loongson MMI optimizations for libjpeg-turbo
+ * Accurate Integer Forward DCT (64-bit MMI)
  *
  * Copyright (C) 2014, 2018, 2020, 2025, D. R. Commander.
  *           All Rights Reserved.
@@ -28,8 +28,6 @@
  *    misrepresented as being the original software.
  * 3. This notice may not be removed or altered from any source distribution.
  */
-
-/* ACCURATE INTEGER FORWARD DCT */
 
 #include "jsimd_mmi.h"
 

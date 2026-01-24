@@ -1,5 +1,5 @@
 /*
- * AltiVec optimizations for libjpeg-turbo
+ * Merged Upsampling/Color Conversion (AltiVec)
  *
  * Copyright (C) 2015, D. R. Commander.  All Rights Reserved.
  *
@@ -19,8 +19,6 @@
  *    misrepresented as being the original software.
  * 3. This notice may not be removed or altered from any source distribution.
  */
-
-/* MERGED YCC --> RGB CONVERSION AND UPSAMPLING */
 
 #include "jsimd_altivec.h"
 

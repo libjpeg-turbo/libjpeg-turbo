@@ -25,7 +25,7 @@
 #include "jsimdconst.h"
 
 
-/* Colorspace Conversion */
+/* Color Conversion/Deconversion */
 EXTERN(unsigned int) jsimd_set_rgb_ycc(j_compress_ptr cinfo);
 
 EXTERN(unsigned int) jsimd_set_rgb_gray(j_compress_ptr cinfo);
@@ -57,7 +57,7 @@ EXTERN(void) jsimd_h2v2_downsample(j_compress_ptr cinfo,
                                    JSAMPARRAY output_data);
 
 
-/* Upsampling */
+/* Plain Upsampling */
 EXTERN(unsigned int) jsimd_set_h2v1_upsample(j_decompress_ptr cinfo);
 EXTERN(void) jsimd_h2v1_upsample(j_decompress_ptr cinfo,
                                  jpeg_component_info *compptr,

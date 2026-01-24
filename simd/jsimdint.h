@@ -32,7 +32,7 @@
 EXTERN(unsigned int) jpeg_simd_cpu_support(void);
 
 
-/* RGB & Extended RGB --> YCC/Grayscale Colorspace Conversion */
+/* RGB-to-YCbCr/Grayscale Color Conversion */
 
 #define SET_SIMD_EXTRGB_COLOR_CONVERTER(cs, instrset) { \
   switch (cinfo->in_color_space) { \
@@ -116,7 +116,7 @@ DEFINE_SIMD_EXTRGB_COLOR_CONVERTERS(ycc, mmi)
 DEFINE_SIMD_EXTRGB_COLOR_CONVERTERS(gray, mmi)
 
 
-/* YCC --> RGB & Extended RGB Colorspace Conversion */
+/* YCbCr-to-RGB Color Conversion */
 
 #define SET_SIMD_EXTRGB_COLOR_DECONVERTER(instrset) { \
   switch (cinfo->out_color_space) { \
@@ -192,7 +192,7 @@ DEFINE_SIMD_EXTRGB_COLOR_DECONVERTERS(altivec)
 DEFINE_SIMD_EXTRGB_COLOR_DECONVERTERS(mmi)
 
 
-/* YCC --> RGB565 Colorspace Conversion */
+/* YCbCr-to-RGB565 Color Conversion */
 
 EXTERN(void) jsimd_ycc_rgb565_convert_neon
   (JDIMENSION out_width, JSAMPIMAGE input_buf, JDIMENSION input_row,
@@ -241,7 +241,7 @@ EXTERN(void) jsimd_h2v2_downsample_mmi
    JDIMENSION width_in_blocks, JSAMPARRAY input_data, JSAMPARRAY output_data);
 
 
-/* Upsampling */
+/* Plain Upsampling */
 
 EXTERN(void) jsimd_h2v1_upsample_avx2
   (int max_v_samp_factor, JDIMENSION output_width, JSAMPARRAY input_data,
@@ -563,7 +563,7 @@ EXTERN(void) jsimd_idct_ifast_mmi
    JDIMENSION output_col);
 
 
-/* Scaled Inverse DCT */
+/* Scaled Integer Inverse DCT */
 
 extern const int jconst_idct_red_sse2[];
 EXTERN(void) jsimd_idct_2x2_sse2

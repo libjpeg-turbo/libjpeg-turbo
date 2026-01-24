@@ -55,7 +55,7 @@ currently implemented as SIMD modules:
   * H2V1 (4:2:2) Plain Upsampling (infrequently used)
   * H2V2 (4:2:0) Plain Upsampling (infrequently used)
   * Integer Upsampling (infrequently used)
-- Merged Upsampling (see [jdmerge.c](../src/jdmerge.c))
+- Merged Upsampling/Color Conversion (see [jdmerge.c](../src/jdmerge.c))
   * H2V1 (4:2:2) Merged Upsampling/Color Conversion
   * H2V2 (4:2:0) Merged Upsampling/Color Conversion
 - Color Deconversion (see [jdcolor.c](../src/jdcolor.c))

@@ -1,5 +1,5 @@
 /*
- * Loongson MMI optimizations for libjpeg-turbo
+ * Integer Quantization (64-bit MMI)
  *
  * Copyright (C) 2016-2017, Loongson Technology Corporation Limited, BeiJing.
  *                          All Rights Reserved.
@@ -27,8 +27,6 @@
  *    misrepresented as being the original software.
  * 3. This notice may not be removed or altered from any source distribution.
  */
-
-/* INTEGER QUANTIZATION AND SAMPLE CONVERSION */
 
 #include "jsimd_mmi.h"
 

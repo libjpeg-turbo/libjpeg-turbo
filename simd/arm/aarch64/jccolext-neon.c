@@ -1,5 +1,5 @@
 /*
- * Colorspace conversion (64-bit Arm Neon)
+ * RGB-to-YCbCr Color Conversion (64-bit Arm Neon)
  *
  * Copyright (C) 2020, Arm Limited.  All Rights Reserved.
  * Copyright (C) 2025, D. R. Commander.  All Rights Reserved.

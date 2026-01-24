@@ -1,5 +1,5 @@
 /*
- * Colorspace conversion (Arm Neon)
+ * YCbCr-to-RGB/RGB565 Color Conversion (Arm Neon)
  *
  * Copyright (C) 2020, Arm Limited.  All Rights Reserved.
  * Copyright (C) 2020, 2025, D. R. Commander.  All Rights Reserved.
