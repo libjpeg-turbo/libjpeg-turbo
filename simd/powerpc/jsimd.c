@@ -30,13 +30,15 @@
 #if defined(__APPLE__)
 #include <sys/types.h>
 #include <sys/sysctl.h>
+#elif defined(HAVE_ELF_AUX_INFO)
+#if defined(__FreeBSD__)
+#include <machine/cpu.h>
+#endif
+#include <sys/auxv.h>
 #elif defined(__OpenBSD__)
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #include <machine/cpu.h>
-#elif defined(__FreeBSD__)
-#include <machine/cpu.h>
-#include <sys/auxv.h>
 #endif
 
 static THREAD_LOCAL unsigned int simd_support = ~0;
@@ -122,12 +124,12 @@ init_simd(void)
   int mib[2] = { CTL_HW, HW_VECTORUNIT };
   int altivec;
   size_t len = sizeof(altivec);
+#elif defined(HAVE_ELF_AUX_INFO)
+  unsigned long cpufeatures = 0;
 #elif defined(__OpenBSD__)
   int mib[2] = { CTL_MACHDEP, CPU_ALTIVEC };
   int altivec;
   size_t len = sizeof(altivec);
-#elif defined(__FreeBSD__)
-  unsigned long cpufeatures = 0;
 #endif
 
   if (simd_support != ~0U)
@@ -147,12 +149,15 @@ init_simd(void)
   IExec->GetCPUInfoTags(GCIT_VectorUnit, &altivec, TAG_DONE);
   if (altivec == VECTORTYPE_ALTIVEC)
     simd_support |= JSIMD_ALTIVEC;
-#elif defined(__APPLE__) || defined(__OpenBSD__)
+#elif defined(__APPLE__)
   if (sysctl(mib, 2, &altivec, &len, NULL, 0) == 0 && altivec != 0)
     simd_support |= JSIMD_ALTIVEC;
-#elif defined(__FreeBSD__)
+#elif defined(HAVE_ELF_AUX_INFO)
   elf_aux_info(AT_HWCAP, &cpufeatures, sizeof(cpufeatures));
   if (cpufeatures & PPC_FEATURE_HAS_ALTIVEC)
+    simd_support |= JSIMD_ALTIVEC;
+#elif defined(__OpenBSD__)
+  if (sysctl(mib, 2, &altivec, &len, NULL, 0) == 0 && altivec != 0)
     simd_support |= JSIMD_ALTIVEC;
 #endif
 
