@@ -146,12 +146,12 @@ if(CPU_TYPE STREQUAL "x86_64")
     x86_64/jfdctint-avx2.asm x86_64/jidctint-avx2.asm x86_64/jquanti-avx2.asm)
 else()
   set(SIMD_SOURCES i386/jsimdcpu.asm i386/jfdctflt-3dn.asm
-    i386/jidctflt-3dn.asm i386/jquant-3dn.asm
+    i386/jidctflt-3dn.asm i386/jquantf-3dn.asm
     i386/jccolor-mmx.asm i386/jcgray-mmx.asm i386/jcsample-mmx.asm
     i386/jdcolor-mmx.asm i386/jdmerge-mmx.asm i386/jdsample-mmx.asm
     i386/jfdctfst-mmx.asm i386/jfdctint-mmx.asm i386/jidctfst-mmx.asm
-    i386/jidctint-mmx.asm i386/jidctred-mmx.asm i386/jquant-mmx.asm
-    i386/jfdctflt-sse.asm i386/jidctflt-sse.asm i386/jquant-sse.asm
+    i386/jidctint-mmx.asm i386/jidctred-mmx.asm i386/jquanti-mmx.asm
+    i386/jfdctflt-sse.asm i386/jidctflt-sse.asm i386/jquantf-sse.asm
     i386/jccolor-sse2.asm i386/jcgray-sse2.asm i386/jchuff-sse2.asm
     i386/jcphuff-sse2.asm i386/jcsample-sse2.asm i386/jdcolor-sse2.asm
     i386/jdmerge-sse2.asm i386/jdsample-sse2.asm i386/jfdctfst-sse2.asm
