@@ -18,11 +18,9 @@ implemented as SIMD modules:
 - Color Conversion (see [jccolor.c](../src/jccolor.c))
   * RGB-to-YCbCr Color Conversion
   * RGB-to-Grayscale Color Conversion
-  * NULL Color Conversion (infrequently used)
 - Downsampling (see [jcsample.c](../src/jcsample.c))
   * H2V1 (4:2:2) Downsampling
   * H2V2 (4:2:0) Downsampling
-  * H2V2 (4:2:0) Smooth Downsampling (infrequently used)
 - Sample Conversion (see [jcdctmgr.c](../src/jcdctmgr.c))
   * Integer Sample Conversion
   * Floating Point Sample Conversion (legacy feature)
@@ -46,15 +44,12 @@ currently implemented as SIMD modules:
   * Floating Point Inverse DCT (legacy feature)
   * 2x2 (1/4 Scaling) Integer Inverse DCT (infrequently used)
   * 4x4 (1/2 Scaling) Integer Inverse DCT (infrequently used)
-  * 6x6 (3/4 Scaling) Integer Inverse DCT (infrequently used)
-  * 12x12 (3/2 Scaling) Integer Inverse DCT (infrequently used)
 - Upsampling (see [jdsample.c](../src/jdsample.c))
   * H2V1 (4:2:2) Fancy (Smooth) Upsampling
   * H2V2 (4:2:0) Fancy (Smooth) Upsampling
   * H1V2 (4:4:0) Fancy (Smooth) Upsampling
   * H2V1 (4:2:2) Plain Upsampling (infrequently used)
   * H2V2 (4:2:0) Plain Upsampling (infrequently used)
-  * Integer Upsampling (infrequently used)
 - Merged Upsampling/Color Conversion (see [jdmerge.c](../src/jdmerge.c))
   * H2V1 (4:2:2) Merged Upsampling/Color Conversion
   * H2V2 (4:2:0) Merged Upsampling/Color Conversion
@@ -176,9 +171,6 @@ the following command lines to obtain the performance of specific algorithms.
   * "Upsampling" reports the performance of the H2V2 (4:2:0) Plain Upsampling
     algorithm.
 
-- `tjbench {image}.ppm 95 -rgb -quiet -nowrite -benchtime 10 -warmup 10 -subsamp 440 -nosmooth`
-  * "Upsampling" reports the performance of the Integer Upsampling algorithm.
-
 - `tjbench {image}.ppm 95 -rgb -quiet -nowrite -benchtime 10 -warmup 10 -subsamp 422 -nosmooth`
   * "Merged upsampling" reports the performance of the H2V1 (4:2:2) Merged
     Upsampling/Color Conversion algorithm.
@@ -197,14 +189,6 @@ the following command lines to obtain the performance of specific algorithms.
 
 - `tjbench {image}.ppm 95 -rgb -quiet -nowrite -benchtime 10 -warmup 10 -subsamp 422 -scale 1/2`
   * "Inverse DCT" reports the performance of the 4x4 (1/2 Scaling) Integer
-    Inverse DCT algorithm.
-
-- `tjbench {image}.ppm 95 -rgb -quiet -nowrite -benchtime 10 -warmup 10 -subsamp 422 -scale 3/4`
-  * "Inverse DCT" reports the performance of the 6x6 (3/4 Scaling) Integer
-    Inverse DCT algorithm.
-
-- `tjbench {image}.ppm 95 -rgb -quiet -nowrite -benchtime 10 -warmup 10 -subsamp 422 -scale 3/2`
-  * "Inverse DCT" reports the performance of the 12x12 (3/2 Scaling) Integer
     Inverse DCT algorithm.
 
 - `tjbench {image}.ppm 95 -rgb -quiet -nowrite -benchtime 10 -warmup 10 -subsamp 422 -dct fast`
