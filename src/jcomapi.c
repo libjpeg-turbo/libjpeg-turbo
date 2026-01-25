@@ -4,7 +4,7 @@
  * This file was part of the Independent JPEG Group's software:
  * Copyright (C) 1994-1997, Thomas G. Lane.
  * libjpeg-turbo Modifications:
- * Copyright (C) 2024-2025, D. R. Commander.
+ * Copyright (C) 2024-2026, D. R. Commander.
  * For conditions of distribution and use, see the accompanying README.ijg
  * file.
  *
@@ -78,44 +78,44 @@ jpeg_destroy(j_common_ptr cinfo)
 #ifdef WITH_PROFILE
   if (cinfo->is_decompressor) {
     if (((j_decompress_ptr)cinfo)->master->idct_mcoeffs > 0.0)
-      fprintf(stderr, "Inverse DCT:         %f Mcoefficients/sec\n",
+      fprintf(stderr, "Inverse DCT:         %14.6f Mcoefficients/sec\n",
               ((j_decompress_ptr)cinfo)->master->idct_mcoeffs /
               ((j_decompress_ptr)cinfo)->master->idct_elapsed);
     if (((j_decompress_ptr)cinfo)->master->merged_upsample_mpixels > 0.0)
-      fprintf(stderr, "Merged upsampling:   %f Mpixels/sec\n",
+      fprintf(stderr, "Merged upsampling:   %14.6f Mpixels/sec\n",
               ((j_decompress_ptr)cinfo)->master->merged_upsample_mpixels /
               ((j_decompress_ptr)cinfo)->master->merged_upsample_elapsed);
     if (((j_decompress_ptr)cinfo)->master->upsample_msamples > 0.0)
-      fprintf(stderr, "Upsampling:          %f Msamples/sec\n",
+      fprintf(stderr, "Upsampling:          %14.6f Msamples/sec\n",
               ((j_decompress_ptr)cinfo)->master->upsample_msamples /
               ((j_decompress_ptr)cinfo)->master->upsample_elapsed);
     if (((j_decompress_ptr)cinfo)->master->cconvert_mpixels > 0.0)
-      fprintf(stderr, "Color deconversion:  %f Mpixels/sec\n",
+      fprintf(stderr, "Color deconversion:  %14.6f Mpixels/sec\n",
               ((j_decompress_ptr)cinfo)->master->cconvert_mpixels /
               ((j_decompress_ptr)cinfo)->master->cconvert_elapsed);
   } else {
     if (((j_compress_ptr)cinfo)->master->cconvert_mpixels > 0.0)
-      fprintf(stderr, "Color conversion:    %f Mpixels/sec\n",
+      fprintf(stderr, "Color conversion:    %14.6f Mpixels/sec\n",
               ((j_compress_ptr)cinfo)->master->cconvert_mpixels /
               ((j_compress_ptr)cinfo)->master->cconvert_elapsed);
     if (((j_compress_ptr)cinfo)->master->downsample_msamples > 0.0)
-      fprintf(stderr, "Downsampling:        %f Msamples/sec\n",
+      fprintf(stderr, "Downsampling:        %14.6f Msamples/sec\n",
               ((j_compress_ptr)cinfo)->master->downsample_msamples /
               ((j_compress_ptr)cinfo)->master->downsample_elapsed);
     if (((j_compress_ptr)cinfo)->master->convsamp_msamples > 0.0)
-      fprintf(stderr, "Sample conversion:   %f Msamples/sec\n",
+      fprintf(stderr, "Sample conversion:   %14.6f Msamples/sec\n",
               ((j_compress_ptr)cinfo)->master->convsamp_msamples /
               ((j_compress_ptr)cinfo)->master->convsamp_elapsed);
     if (((j_compress_ptr)cinfo)->master->fdct_mcoeffs > 0.0)
-      fprintf(stderr, "Forward DCT:         %f Mcoefficients/sec\n",
+      fprintf(stderr, "Forward DCT:         %14.6f Mcoefficients/sec\n",
               ((j_compress_ptr)cinfo)->master->fdct_mcoeffs /
               ((j_compress_ptr)cinfo)->master->fdct_elapsed);
     if (((j_compress_ptr)cinfo)->master->quantize_mcoeffs > 0.0)
-      fprintf(stderr, "Quantization:        %f Mcoefficients/sec\n",
+      fprintf(stderr, "Quantization:        %14.6f Mcoefficients/sec\n",
               ((j_compress_ptr)cinfo)->master->quantize_mcoeffs /
               ((j_compress_ptr)cinfo)->master->quantize_elapsed);
     if (((j_compress_ptr)cinfo)->master->entropy_mcoeffs > 0.0)
-      fprintf(stderr, "Entropy encoding:    %f Mcoefficients/sec\n",
+      fprintf(stderr, "Entropy encoding:    %14.6f Mcoefficients/sec\n",
               ((j_compress_ptr)cinfo)->master->entropy_mcoeffs /
               ((j_compress_ptr)cinfo)->master->entropy_elapsed);
   }
