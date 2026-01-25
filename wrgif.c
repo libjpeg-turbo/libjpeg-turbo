@@ -2,7 +2,7 @@
  * wrgif.c
  *
  * Copyright (C) 1991-1996, Thomas G. Lane.
- * Modified 2015-2019 by Guido Vollbeding.
+ * Modified 2015-2026 by Guido Vollbeding.
  * This file is part of the Independent JPEG Group's software.
  * For conditions of distribution and use, see the accompanying README file.
  *
@@ -527,8 +527,8 @@ jinit_write_gif (j_decompress_ptr cinfo, boolean is_lzw)
       cinfo->out_color_space != JCS_RGB)
     ERREXIT(cinfo, JERR_GIF_COLORSPACE);
 
-  /* Force quantization if color or if > 8 bits input */
-  if (cinfo->out_color_space != JCS_GRAYSCALE || cinfo->data_precision > 8) {
+  /* Force quantization if larger than 8-bit samples or if color */
+  if (BITS_IN_JSAMPLE > 8 || cinfo->out_color_space != JCS_GRAYSCALE) {
     /* Force quantization to at most 256 colors */
     cinfo->quantize_colors = TRUE;
     if (cinfo->desired_number_of_colors > 256)

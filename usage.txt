@@ -555,6 +555,10 @@ For example you may want to do
   jpegtran -rot 90 -perfect foo.jpg || djpeg foo.jpg | pnmflip -r90 | cjpeg
 to do a perfect rotation if available or an approximated one if not.
 
+A lossless negation function can be used in case an image file contains
+inverted component data:
+	-negate		Negate image (invert component data).
+
 We also offer a lossless-crop option, which discards data outside a given
 image region but losslessly preserves what is inside.  Like the rotate and
 flip transforms, lossless crop is restricted by the current JPEG format: the
@@ -591,7 +595,7 @@ region with repeated reflections of the outside area, instead of gray out.
 
 Another option is lossless-drop, which replaces data at a given image
 position by another image:
-	-drop +X+Y filename	Drop another image
+	-drop +X+Y filename	Drop another image.
 
 Both source images must have the same subsampling values.  It is best if
 they also have the same quantization, otherwise quantization adaption occurs.

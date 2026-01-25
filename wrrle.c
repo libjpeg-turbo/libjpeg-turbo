@@ -2,7 +2,7 @@
  * wrrle.c
  *
  * Copyright (C) 1991-1996, Thomas G. Lane.
- * Modified 2017-2019 by Guido Vollbeding.
+ * Modified 2017-2026 by Guido Vollbeding.
  * This file is part of the Independent JPEG Group's software.
  * For conditions of distribution and use, see the accompanying README file.
  *
@@ -27,7 +27,8 @@
 
 /*
  * We assume that JSAMPLE has the same representation as rle_pixel,
- * to wit, "unsigned char".  Hence we can't cope with 12- or 16-bit samples.
+ * to wit, "unsigned char".
+ * Hence we can't cope with larger than 8-bit samples.
  */
 
 #if BITS_IN_JSAMPLE != 8

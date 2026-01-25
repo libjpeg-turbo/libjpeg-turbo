@@ -2,7 +2,7 @@
  * jctrans.c
  *
  * Copyright (C) 1995-1998, Thomas G. Lane.
- * Modified 2000-2020 by Guido Vollbeding.
+ * Modified 2000-2025 by Guido Vollbeding.
  * This file is part of the Independent JPEG Group's software.
  * For conditions of distribution and use, see the accompanying README file.
  *
@@ -91,6 +91,7 @@ jpeg_copy_critical_parameters (j_decompress_ptr srcinfo,
    * entropy coding mode dependent on image data precision.
    */
   dstinfo->color_transform = srcinfo->color_transform;
+  dstinfo->LSE_maxtrans = srcinfo->LSE_maxtrans;
   jpeg_set_colorspace(dstinfo, srcinfo->jpeg_color_space);
   dstinfo->data_precision = srcinfo->data_precision;
   dstinfo->arith_code = srcinfo->data_precision > 8 ? TRUE : FALSE;

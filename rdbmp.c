@@ -2,7 +2,7 @@
  * rdbmp.c
  *
  * Copyright (C) 1994-1996, Thomas G. Lane.
- * Modified 2009-2019 by Guido Vollbeding.
+ * Modified 2009-2026 by Guido Vollbeding.
  * This file is part of the Independent JPEG Group's software.
  * For conditions of distribution and use, see the accompanying README file.
  *
@@ -25,6 +25,11 @@
 #include "cdjpeg.h"		/* Common decls for cjpeg/djpeg applications */
 
 #ifdef BMP_SUPPORTED
+
+
+#if BITS_IN_JSAMPLE != 8
+  Sorry, this code only copes with 8-bit JSAMPLEs. /* deliberate syntax err */
+#endif
 
 
 /* Macros to deal with unsigned chars as efficiently as compiler allows */
@@ -429,7 +434,7 @@ start_input_bmp (j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
 
   cinfo->in_color_space = JCS_RGB;
   cinfo->input_components = 3;
-  cinfo->data_precision = 8;
+  cinfo->data_precision = JPEG_DATA_PRECISION;
   cinfo->image_width = (JDIMENSION) biWidth;
   cinfo->image_height = (JDIMENSION) biHeight;
 }

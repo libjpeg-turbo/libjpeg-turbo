@@ -2,7 +2,7 @@
  * rdgif.c
  *
  * Copyright (C) 1991-1996, Thomas G. Lane.
- * Modified 2019-2020 by Guido Vollbeding.
+ * Modified 2019-2026 by Guido Vollbeding.
  * This file is part of the Independent JPEG Group's software.
  * For conditions of distribution and use, see the accompanying README file.
  *
@@ -522,7 +522,7 @@ start_input_gif (j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
   /* Return info about the image. */
   cinfo->in_color_space = JCS_RGB;
   cinfo->input_components = NUMCOLORS;
-  cinfo->data_precision = BITS_IN_JSAMPLE; /* we always rescale data to this */
+  cinfo->data_precision = JPEG_DATA_PRECISION;
   cinfo->image_width = width;
   cinfo->image_height = height;
 

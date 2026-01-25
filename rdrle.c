@@ -2,7 +2,7 @@
  * rdrle.c
  *
  * Copyright (C) 1991-1996, Thomas G. Lane.
- * Modified 2019 by Guido Vollbeding.
+ * Modified 2019-2026 by Guido Vollbeding.
  * This file is part of the Independent JPEG Group's software.
  * For conditions of distribution and use, see the accompanying README file.
  *
@@ -30,7 +30,8 @@
 
 /*
  * We assume that JSAMPLE has the same representation as rle_pixel,
- * to wit, "unsigned char".  Hence we can't cope with 12- or 16-bit samples.
+ * to wit, "unsigned char".
+ * Hence we can't cope with larger than 8-bit samples.
  */
 
 #if BITS_IN_JSAMPLE != 8
@@ -107,15 +108,15 @@ start_input_rle (j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
   }
 
   /* Figure out what we have, set private vars and return values accordingly */
-  
+
   width  = source->header.xmax - source->header.xmin + 1;
   height = source->header.ymax - source->header.ymin + 1;
   source->header.xmin = 0;		/* realign horizontally */
   source->header.xmax = width-1;
 
-  cinfo->image_width      = width;
-  cinfo->image_height     = height;
-  cinfo->data_precision   = 8;  /* we can only handle 8 bit data */
+  cinfo->image_width    = width;
+  cinfo->image_height   = height;
+  cinfo->data_precision = JPEG_DATA_PRECISION;
 
   if (source->header.ncolors == 1 && source->header.ncmap == 0) {
     source->visual     = GRAYSCALE;
@@ -137,7 +138,7 @@ start_input_rle (j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
     TRACEMS2(cinfo, 1, JTRC_RLE, width, height);
   } else
     ERREXIT(cinfo, JERR_RLE_UNSUPPORTED);
-  
+
   if (source->visual == GRAYSCALE || source->visual == MAPPEDGRAY) {
     cinfo->in_color_space   = JCS_GRAYSCALE;
     cinfo->input_components = 1;

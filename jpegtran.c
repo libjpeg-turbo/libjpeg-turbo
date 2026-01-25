@@ -1,7 +1,7 @@
 /*
  * jpegtran.c
  *
- * Copyright (C) 1995-2019, Thomas G. Lane, Guido Vollbeding.
+ * Copyright (C) 1995-2025, Thomas G. Lane, Guido Vollbeding.
  * This file is part of the Independent JPEG Group's software.
  * For conditions of distribution and use, see the accompanying README file.
  *
@@ -70,6 +70,7 @@ usage (void)
   fprintf(stderr, "  -drop +X+Y filename          Drop another image\n");
   fprintf(stderr, "  -flip [horizontal|vertical]  Mirror image (left-right or top-bottom)\n");
   fprintf(stderr, "  -grayscale     Reduce to grayscale (omit color data)\n");
+  fprintf(stderr, "  -negate        Negate image (invert component data)\n");
   fprintf(stderr, "  -perfect       Fail if there is non-transformable edge blocks\n");
   fprintf(stderr, "  -rotate [90|180|270]         Rotate image (degrees clockwise)\n");
 #endif
@@ -251,6 +252,10 @@ parse_switches (j_compress_ptr cinfo, int argc, char **argv,
 #else
       select_transform(JXFORM_NONE);	/* force an error */
 #endif
+
+    } else if (keymatch(arg, "negate", 1)) {
+      /* Negate (invert component data). */
+      select_transform(JXFORM_NEGATE);
 
     } else if (keymatch(arg, "maxmemory", 3)) {
       /* Maximum memory in Kb (or Mb with 'm'). */

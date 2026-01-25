@@ -1,4 +1,4 @@
-.TH JPEGTRAN 1 "28 August 2019"
+.TH JPEGTRAN 1 "20 November 2025"
 .SH NAME
 jpegtran \- lossless transformation of JPEG files
 .SH SYNOPSIS
@@ -102,12 +102,12 @@ Transpose image (across UL-to-LR axis).
 .TP
 .B \-transverse
 Transverse transpose (across UR-to-LL axis).
-.IP
+.PP
 The transpose transformation has no restrictions regarding image dimensions.
 The other transformations operate rather oddly if the image dimensions are not
 a multiple of the iMCU size (usually 8 or 16 pixels), because they can only
 transform complete blocks of DCT coefficient data in the desired way.
-.IP
+.PP
 .BR jpegtran 's
 default behavior when transforming an odd-size image is designed
 to preserve exact reversibility and mathematical consistency of the
@@ -119,7 +119,7 @@ able to flip all columns.  The other transforms can be built up as sequences
 of transpose and flip operations; for consistency, their actions on edge
 pixels are defined to be the same as the end result of the corresponding
 transpose-and-flip sequence.
-.IP
+.PP
 For practical use, you may prefer to discard any untransformable edge pixels
 rather than having a strange-looking strip along the right and/or bottom edges
 of a transformed image.  To do this, add the
@@ -128,7 +128,7 @@ switch:
 .TP
 .B \-trim
 Drop non-transformable edge blocks.
-.IP
+.PP
 Obviously, a transformation with
 .B \-trim
 is not reversible, so strictly speaking
@@ -141,7 +141,7 @@ trims only the bottom edge, but
 followed by
 .B \-rot 180 -trim
 trims both edges.
-.IP
+.PP
 If you are only interested in perfect transformation, add the
 .B \-perfect
 switch:
@@ -159,6 +159,12 @@ For example you may want to do
 .IP
 to do a perfect rotation if available or an approximated one if not.
 .PP
+A lossless negation function can be used in case an image file contains
+inverted component data:
+.TP
+.B \-negate
+Negate image (invert component data).
+.PP
 We also offer a lossless-crop option, which discards data outside a given
 image region but losslessly preserves what is inside.  Like the rotate and
 flip transforms, lossless crop is restricted by the current JPEG format: the
@@ -174,7 +180,7 @@ The image can be losslessly cropped by giving the switch:
 .TP
 .B \-crop WxH+X+Y
 Crop to a rectangular subarea of width W, height H starting at point X,Y.
-.PP
+.IP
 Crop extension: The width or height parameters can be made larger than the
 source image.  In this case the extra area is filled in with zero (neutral
 gray).  A larger width parameter has two more options:  Attaching an 'f'
@@ -189,7 +195,7 @@ inside a given image region while losslessly preserving what is outside:
 .B \-wipe WxH+X+Y
 Wipe (gray out) a rectangular subarea of width W, height H starting at point
 X,Y.
-.PP
+.IP
 Attaching an 'f' character ("flatten") to the width number will fill the
 region with the average of adjacent blocks, instead of gray out.  In case
 the wipe region and outside area form two horizontally adjacent rectangles,
@@ -201,10 +207,12 @@ position by another image:
 .TP
 .B \-drop +X+Y filename
 Drop another image
-.PP
+.IP
 Both source images must have the same subsampling values.  It is best if
 they also have the same quantization, otherwise quantization adaption occurs.
-The trim option can be used with the drop option to requantize the drop file
+The
+.B \-trim
+option can be used with the drop option to requantize the drop file
 to the source file.
 .PP
 Other not-strictly-lossless transformation switches are:

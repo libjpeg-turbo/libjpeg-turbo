@@ -2,7 +2,7 @@
  * rdppm.c
  *
  * Copyright (C) 1991-1997, Thomas G. Lane.
- * Modified 2009-2020 by Bill Allombert, Guido Vollbeding.
+ * Modified 2009-2026 by Bill Allombert, Guido Vollbeding.
  * This file is part of the Independent JPEG Group's software.
  * For conditions of distribution and use, see the accompanying README file.
  *
@@ -371,7 +371,7 @@ start_input_ppm (j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
       ((long) maxval >> 16))	/* support max 16-bit (2-byte) sample values */
     ERREXIT(cinfo, JERR_PPM_OUTOFRANGE);
 
-  cinfo->data_precision = BITS_IN_JSAMPLE; /* we always rescale data to this */
+  cinfo->data_precision = JPEG_DATA_PRECISION;
   cinfo->image_width = (JDIMENSION) w;
   cinfo->image_height = (JDIMENSION) h;
   source->maxval = maxval;

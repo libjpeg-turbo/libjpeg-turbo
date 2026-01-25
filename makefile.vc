@@ -59,18 +59,18 @@ DOCS= README install.txt usage.txt cjpeg.1 djpeg.1 jpegtran.1 rdjpgcom.1 \
         coderules.txt filelist.txt cdaltui.txt change.log
 MKFILES= configure Makefile.in makefile.ansi makefile.unix makefile.xc \
         makefile.bcc makefile.b32 makefile.c32 makefile.d32 makefile.x32 \
-        makefile.b64 makefile.mc6 makefile.dj makefile.wat makefile.vc \
-        makefile.vs makejdsw.vc6 makeadsw.vc6 makejdep.vc6 makejdsp.vc6 \
-        makejmak.vc6 makecdep.vc6 makecdsp.vc6 makecmak.vc6 makeddep.vc6 \
-        makeddsp.vc6 makedmak.vc6 maketdep.vc6 maketdsp.vc6 maketmak.vc6 \
-        makerdep.vc6 makerdsp.vc6 makermak.vc6 makewdep.vc6 makewdsp.vc6 \
-        makewmak.vc6 makejsln.v16 makeasln.v16 makejvcx.v16 makejfil.v16 \
-        makecvcx.v16 makecfil.v16 makedvcx.v16 makedfil.v16 maketvcx.v16 \
-        maketfil.v16 makervcx.v16 makerfil.v16 makewvcx.v16 makewfil.v16 \
-        makajpeg.bcb makcjpeg.bcb makdjpeg.bcb makljpeg.bcb makrjpeg.bcb \
-        maktjpeg.bcb makwjpeg.bcb makcjpeg.st makdjpeg.st makljpeg.st \
-        maktjpeg.st makeproj.mac makefile.manx makefile.sas makefile.mms \
-        makefile.vms makvms.opt
+        makefile.b64 makefile.x64 makefile.mc6 makefile.dj makefile.wat \
+        makefile.vc makefile.vs makejdsw.vc6 makeadsw.vc6 makejdep.vc6 \
+        makejdsp.vc6 makejmak.vc6 makecdep.vc6 makecdsp.vc6 makecmak.vc6 \
+        makeddep.vc6 makeddsp.vc6 makedmak.vc6 maketdep.vc6 maketdsp.vc6 \
+        maketmak.vc6 makerdep.vc6 makerdsp.vc6 makermak.vc6 makewdep.vc6 \
+        makewdsp.vc6 makewmak.vc6 makejsln.v16 makeasln.v16 makejvcx.v16 \
+        makejfil.v16 makecvcx.v16 makecfil.v16 makedvcx.v16 makedfil.v16 \
+        maketvcx.v16 maketfil.v16 makervcx.v16 makerfil.v16 makewvcx.v16 \
+        makewfil.v16 makajpeg.bcb makcjpeg.bcb makdjpeg.bcb makljpeg.bcb \
+        makrjpeg.bcb maktjpeg.bcb makwjpeg.bcb makcjpeg.st makdjpeg.st \
+        makljpeg.st maktjpeg.st makeproj.mac makefile.manx makefile.sas \
+        makefile.mms makefile.vms makvms.opt
 CONFIGFILES= jconfig.cfg jconfig.xc jconfig.bcc jconfig.mc6 jconfig.dj \
         jconfig.wat jconfig.vc jconfig.mac jconfig.st jconfig.manx \
         jconfig.sas jconfig.vms
@@ -275,6 +275,40 @@ test-64:
 	.\Release\x64\djpeg -dct int -ppm -outfile .\Release\testoutp.ppm testprog.jpg
 	.\Release\x64\cjpeg -dct int -progressive -opt -outfile .\Release\testoutp.jpg testimg.ppm
 	.\Release\x64\jpegtran -outfile .\Release\testoutt.jpg testprog.jpg
+	fc /b testimg.ppm .\Release\testout.ppm
+	fc /b testimg.gif .\Release\testout.gif
+	fc /b testimg.bmp .\Release\testout.bmp
+	fc /b testimg.jpg .\Release\testout.jpg
+	fc /b testimg.ppm .\Release\testoutp.ppm
+	fc /b testimgp.jpg .\Release\testoutp.jpg
+	fc /b testorig.jpg .\Release\testoutt.jpg
+
+test-arm64:
+	IF EXIST .\Release\testout* $(RM) .\Release\testout*
+	.\Release\ARM64\djpeg -dct int -ppm -outfile .\Release\testout.ppm testorig.jpg
+	.\Release\ARM64\djpeg -dct int -gif -outfile .\Release\testout.gif testorig.jpg
+	.\Release\ARM64\djpeg -dct int -bmp -colors 256 -outfile .\Release\testout.bmp testorig.jpg
+	.\Release\ARM64\cjpeg -dct int -outfile .\Release\testout.jpg testimg.ppm
+	.\Release\ARM64\djpeg -dct int -ppm -outfile .\Release\testoutp.ppm testprog.jpg
+	.\Release\ARM64\cjpeg -dct int -progressive -opt -outfile .\Release\testoutp.jpg testimg.ppm
+	.\Release\ARM64\jpegtran -outfile .\Release\testoutt.jpg testprog.jpg
+	fc /b testimg.ppm .\Release\testout.ppm
+	fc /b testimg.gif .\Release\testout.gif
+	fc /b testimg.bmp .\Release\testout.bmp
+	fc /b testimg.jpg .\Release\testout.jpg
+	fc /b testimg.ppm .\Release\testoutp.ppm
+	fc /b testimgp.jpg .\Release\testoutp.jpg
+	fc /b testorig.jpg .\Release\testoutt.jpg
+
+test-arm64ec:
+	IF EXIST .\Release\testout* $(RM) .\Release\testout*
+	.\Release\ARM64EC\djpeg -dct int -ppm -outfile .\Release\testout.ppm testorig.jpg
+	.\Release\ARM64EC\djpeg -dct int -gif -outfile .\Release\testout.gif testorig.jpg
+	.\Release\ARM64EC\djpeg -dct int -bmp -colors 256 -outfile .\Release\testout.bmp testorig.jpg
+	.\Release\ARM64EC\cjpeg -dct int -outfile .\Release\testout.jpg testimg.ppm
+	.\Release\ARM64EC\djpeg -dct int -ppm -outfile .\Release\testoutp.ppm testprog.jpg
+	.\Release\ARM64EC\cjpeg -dct int -progressive -opt -outfile .\Release\testoutp.jpg testimg.ppm
+	.\Release\ARM64EC\jpegtran -outfile .\Release\testoutt.jpg testprog.jpg
 	fc /b testimg.ppm .\Release\testout.ppm
 	fc /b testimg.gif .\Release\testout.gif
 	fc /b testimg.bmp .\Release\testout.bmp

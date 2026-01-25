@@ -2,7 +2,7 @@
  * wrbmp.c
  *
  * Copyright (C) 1994-1996, Thomas G. Lane.
- * Modified 2017-2019 by Guido Vollbeding.
+ * Modified 2017-2026 by Guido Vollbeding.
  * This file is part of the Independent JPEG Group's software.
  * For conditions of distribution and use, see the accompanying README file.
  *
@@ -24,8 +24,8 @@
 
 
 /*
- * To support 12-bit JPEG data, we'd have to scale output down to 8 bits.
- * This is not yet implemented.
+ * To support larger than 8-bit sample data, we'd have to scale output
+ * down to 8 bits.  This is not yet implemented.
  */
 
 #if BITS_IN_JSAMPLE != 8

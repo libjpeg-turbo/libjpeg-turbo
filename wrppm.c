@@ -2,7 +2,7 @@
  * wrppm.c
  *
  * Copyright (C) 1991-1996, Thomas G. Lane.
- * Modified 2009-2020 by Guido Vollbeding.
+ * Modified 2009-2026 by Guido Vollbeding.
  * This file is part of the Independent JPEG Group's software.
  * For conditions of distribution and use, see the accompanying README file.
  *
@@ -22,13 +22,13 @@
 
 
 /*
- * For 12-bit JPEG data, we either downscale the values to 8 bits
- * (to write standard byte-per-sample PPM/PGM files), or output
- * nonstandard word-per-sample PPM/PGM files.  Downscaling is done
- * if PPM_NORAWWORD is defined (this can be done in the Makefile
- * or in jconfig.h).
- * (When the core library supports data precision reduction, a cleaner
- * implementation will be to ask for that instead.)
+ * For larger than 8-bit sample data, we either downscale the values
+ * to 8 bits (to write standard byte-per-sample PPM/PGM files),
+ * or output nonstandard word-per-sample PPM/PGM files.
+ * Downscaling is done if PPM_NORAWWORD is defined (this can be done
+ * in the Makefile or in jconfig.h).
+ * (When the core library supports data precision reduction,
+ * a cleaner implementation will be to ask for that instead.)
  */
 
 #if BITS_IN_JSAMPLE == 8
@@ -98,8 +98,9 @@ put_pixel_rows (j_decompress_ptr cinfo, djpeg_dest_ptr dinfo,
 
 
 /*
- * This code is used when we have to copy the data and apply a pixel
- * format translation.  Typically this only happens in 12-bit mode.
+ * This code is used when we have to copy the data and apply
+ * a pixel format translation.
+ * Typically this only happens in larger than 8-bit mode.
  */
 
 METHODDEF(void)

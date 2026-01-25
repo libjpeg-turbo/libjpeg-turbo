@@ -1,7 +1,7 @@
 /*
  * transupp.c
  *
- * Copyright (C) 1997-2023, Thomas G. Lane, Guido Vollbeding.
+ * Copyright (C) 1997-2025, Thomas G. Lane, Guido Vollbeding.
  * This file is part of the Independent JPEG Group's software.
  * For conditions of distribution and use, see the accompanying README file.
  *
@@ -268,10 +268,16 @@ adjust_quant(j_decompress_ptr srcinfo, jvirt_barray_ptr *src_coef_arrays,
 
   for (ci = 0; ci < dstinfo->num_components &&
 	       ci < dropinfo->num_components; ci++) {
-    compptr1 = srcinfo->comp_info + ci;
     compptr2 = dropinfo->comp_info + ci;
-    qtblptr1 = compptr1->quant_table;
     qtblptr2 = compptr2->quant_table;
+    if (qtblptr2 == NULL) continue;
+    compptr1 = srcinfo->comp_info + ci;
+    qtblptr1 = compptr1->quant_table;
+    if (qtblptr1 == NULL) {
+      MEMCOPY(dstinfo->quant_tbl_ptrs[compptr1->quant_tbl_no],
+	      qtblptr2, SIZEOF(JQUANT_TBL));
+      continue;
+    }
     for (k = 0; k < DCTSIZE2; k++) {
       if (qtblptr1->quantval[k] != qtblptr2->quantval[k]) {
 	if (trim)
@@ -800,6 +806,92 @@ do_reflect (j_decompress_ptr srcinfo, j_compress_ptr dstinfo,
 
 
 LOCAL(void)
+do_negate_no_crop (j_decompress_ptr srcinfo, j_compress_ptr dstinfo,
+		   JDIMENSION x_crop_offset,
+		   jvirt_barray_ptr *src_coef_arrays)
+/* Negation; done in-place, so no separate dest array is required.
+ * NB: this only works when y_crop_offset is zero.
+ */
+{
+  JDIMENSION blk_x, blk_y, x_crop_blocks;
+  int ci, k, offset_y;
+  JBLOCKARRAY buffer;
+  JBLOCKROW src_row_ptr, dst_row_ptr;
+  JCOEFPTR src_ptr, dst_ptr;
+  jpeg_component_info *compptr;
+
+  for (ci = 0; ci < dstinfo->num_components; ci++) {
+    compptr = dstinfo->comp_info + ci;
+    x_crop_blocks = x_crop_offset * compptr->h_samp_factor;
+    for (blk_y = 0; blk_y < compptr->height_in_blocks;
+	 blk_y += compptr->v_samp_factor) {
+      buffer = (*srcinfo->mem->access_virt_barray)
+	((j_common_ptr) srcinfo, src_coef_arrays[ci], blk_y,
+	 (JDIMENSION) compptr->v_samp_factor, TRUE);
+      for (offset_y = 0; offset_y < compptr->v_samp_factor; offset_y++) {
+	dst_row_ptr = buffer[offset_y];
+	src_row_ptr = dst_row_ptr + x_crop_blocks;
+	for (blk_x = 0; blk_x < compptr->width_in_blocks; blk_x++) {
+	  dst_ptr = dst_row_ptr[blk_x];
+	  src_ptr = src_row_ptr[blk_x];
+	  for (k = 0; k < DCTSIZE2; k++) {
+	    *dst_ptr++ = - *src_ptr++;
+	  }
+	}
+      }
+    }
+  }
+}
+
+
+LOCAL(void)
+do_negate (j_decompress_ptr srcinfo, j_compress_ptr dstinfo,
+	   JDIMENSION x_crop_offset, JDIMENSION y_crop_offset,
+	   jvirt_barray_ptr *src_coef_arrays,
+	   jvirt_barray_ptr *dst_coef_arrays)
+/* Negation in general cropping case */
+{
+  JDIMENSION dst_blk_x, dst_blk_y, x_crop_blocks, y_crop_blocks;
+  int ci, k, offset_y;
+  JBLOCKARRAY src_buffer, dst_buffer;
+  JBLOCKROW src_row_ptr, dst_row_ptr;
+  JCOEFPTR src_ptr, dst_ptr;
+  jpeg_component_info *compptr;
+
+  /* Here we must output into a separate array because we can't
+   * touch different rows of a single virtual array simultaneously.
+   * Otherwise, this is essentially the same as the routine above.
+   */
+  for (ci = 0; ci < dstinfo->num_components; ci++) {
+    compptr = dstinfo->comp_info + ci;
+    x_crop_blocks = x_crop_offset * compptr->h_samp_factor;
+    y_crop_blocks = y_crop_offset * compptr->v_samp_factor;
+    for (dst_blk_y = 0; dst_blk_y < compptr->height_in_blocks;
+	 dst_blk_y += compptr->v_samp_factor) {
+      dst_buffer = (*srcinfo->mem->access_virt_barray)
+	((j_common_ptr) srcinfo, dst_coef_arrays[ci], dst_blk_y,
+	 (JDIMENSION) compptr->v_samp_factor, TRUE);
+      src_buffer = (*srcinfo->mem->access_virt_barray)
+	((j_common_ptr) srcinfo, src_coef_arrays[ci],
+	 dst_blk_y + y_crop_blocks,
+	 (JDIMENSION) compptr->v_samp_factor, FALSE);
+      for (offset_y = 0; offset_y < compptr->v_samp_factor; offset_y++) {
+	dst_row_ptr = dst_buffer[offset_y];
+	src_row_ptr = src_buffer[offset_y] + x_crop_blocks;
+	for (dst_blk_x = 0; dst_blk_x < compptr->width_in_blocks; dst_blk_x++) {
+	  dst_ptr = dst_row_ptr[dst_blk_x];
+	  src_ptr = src_row_ptr[dst_blk_x];
+	  for (k = 0; k < DCTSIZE2; k++) {
+	    *dst_ptr++ = - *src_ptr++;
+	  }
+	}
+      }
+    }
+  }
+}
+
+
+LOCAL(void)
 do_flip_h_no_crop (j_decompress_ptr srcinfo, j_compress_ptr dstinfo,
 		   JDIMENSION x_crop_offset,
 		   jvirt_barray_ptr *src_coef_arrays)
@@ -810,6 +902,7 @@ do_flip_h_no_crop (j_decompress_ptr srcinfo, j_compress_ptr dstinfo,
   JDIMENSION MCU_cols, comp_width, blk_x, blk_y, x_crop_blocks;
   int ci, k, offset_y;
   JBLOCKARRAY buffer;
+  JBLOCKROW src_row_ptr, dst_row_ptr;
   JCOEFPTR ptr1, ptr2;
   JCOEF temp1, temp2;
   jpeg_component_info *compptr;
@@ -832,10 +925,11 @@ do_flip_h_no_crop (j_decompress_ptr srcinfo, j_compress_ptr dstinfo,
 	((j_common_ptr) srcinfo, src_coef_arrays[ci], blk_y,
 	 (JDIMENSION) compptr->v_samp_factor, TRUE);
       for (offset_y = 0; offset_y < compptr->v_samp_factor; offset_y++) {
+	dst_row_ptr = buffer[offset_y];
 	/* Do the mirroring */
 	for (blk_x = 0; blk_x * 2 < comp_width; blk_x++) {
-	  ptr1 = buffer[offset_y][blk_x];
-	  ptr2 = buffer[offset_y][comp_width - blk_x - 1];
+	  ptr1 = dst_row_ptr[blk_x];
+	  ptr2 = dst_row_ptr[comp_width - blk_x - 1];
 	  /* this unrolled loop doesn't need to know which row it's on... */
 	  for (k = 0; k < DCTSIZE2; k += 2) {
 	    temp1 = *ptr1;	/* swap even column */
@@ -854,9 +948,10 @@ do_flip_h_no_crop (j_decompress_ptr srcinfo, j_compress_ptr dstinfo,
 	   * depends on memcpy(), whose behavior is unspecified for overlapping
 	   * source and destination areas.  Sigh.
 	   */
+	  src_row_ptr = dst_row_ptr + x_crop_blocks;
 	  for (blk_x = 0; blk_x < compptr->width_in_blocks; blk_x++) {
-	    jcopy_block_row(buffer[offset_y] + blk_x + x_crop_blocks,
-			    buffer[offset_y] + blk_x,
+	    jcopy_block_row(src_row_ptr + blk_x,
+			    dst_row_ptr + blk_x,
 			    (JDIMENSION) 1);
 	  }
 	}
@@ -881,9 +976,9 @@ do_flip_h (j_decompress_ptr srcinfo, j_compress_ptr dstinfo,
   JCOEFPTR src_ptr, dst_ptr;
   jpeg_component_info *compptr;
 
-  /* Here we must output into a separate array because we can't touch
-   * different rows of a single virtual array simultaneously.  Otherwise,
-   * this is essentially the same as the routine above.
+  /* Here we must output into a separate array because we can't
+   * touch different rows of a single virtual array simultaneously.
+   * Otherwise, this is essentially the same as the routine above.
    */
   MCU_cols = srcinfo->output_width /
     (dstinfo->max_h_samp_factor * dstinfo->min_DCT_h_scaled_size);
@@ -944,10 +1039,10 @@ do_flip_v (j_decompress_ptr srcinfo, j_compress_ptr dstinfo,
   jpeg_component_info *compptr;
 
   /* We output into a separate array because we can't touch different
-   * rows of the source virtual array simultaneously.  Otherwise, this
-   * is a pretty straightforward analog of horizontal flip.
-   * Within a DCT block, vertical mirroring is done by changing the signs
-   * of odd-numbered rows.
+   * rows of the source virtual array simultaneously.  Otherwise,
+   * this is a pretty straightforward analog of horizontal flip.
+   * Within a DCT block, vertical mirroring is done by changing
+   * the signs of odd-numbered rows.
    * Partial iMCUs at the bottom edge are copied verbatim.
    */
   MCU_rows = srcinfo->output_height /
@@ -1858,6 +1953,11 @@ jtransform_request_workspace (j_decompress_ptr srcinfo,
     drop_request_from_src(info->drop_ptr, srcinfo);
 #endif
     break;
+  case JXFORM_NEGATE:
+    if (info->y_crop_offset != 0)
+      need_workspace = TRUE;
+    /* do_negate_no_crop doesn't need a workspace array */
+    break;
   }
 
   /* Allocate workspace if needed.
@@ -2298,6 +2398,14 @@ jtransform_execute_transform (j_decompress_ptr srcinfo,
       do_drop(srcinfo, dstinfo, info->x_crop_offset, info->y_crop_offset,
 	      src_coef_arrays, info->drop_ptr, info->drop_coef_arrays,
 	      info->drop_width, info->drop_height);
+    break;
+  case JXFORM_NEGATE:
+    if (info->y_crop_offset != 0)
+      do_negate(srcinfo, dstinfo, info->x_crop_offset, info->y_crop_offset,
+		src_coef_arrays, dst_coef_arrays);
+    else
+      do_negate_no_crop(srcinfo, dstinfo, info->x_crop_offset,
+			src_coef_arrays);
     break;
   }
 }

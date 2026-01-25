@@ -1,7 +1,7 @@
 /*
  * transupp.h
  *
- * Copyright (C) 1997-2019, Thomas G. Lane, Guido Vollbeding.
+ * Copyright (C) 1997-2025, Thomas G. Lane, Guido Vollbeding.
  * This file is part of the Independent JPEG Group's software.
  * For conditions of distribution and use, see the accompanying README file.
  *
@@ -67,6 +67,9 @@
  * otherwise quantization adaption occurs.  The trim option can be used with
  * the drop option to requantize the drop file to the source file.
  *
+ * A lossless negation function can be used in case an image file contains
+ * inverted component data.
+ *
  * We also provide a lossless-resize option, which is kind of a lossless-crop
  * operation in the DCT coefficient block domain - it discards higher-order
  * coefficients and losslessly preserves lower-order coefficients of a
@@ -112,7 +115,8 @@ typedef enum {
 	JXFORM_ROT_180,		/* 180-degree rotation */
 	JXFORM_ROT_270,		/* 270-degree clockwise (or 90 ccw) */
 	JXFORM_WIPE,		/* wipe */
-	JXFORM_DROP		/* drop */
+	JXFORM_DROP,		/* drop */
+	JXFORM_NEGATE		/* negate */
 } JXFORM_CODE;
 
 /*
