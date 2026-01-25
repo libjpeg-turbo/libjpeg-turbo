@@ -2,9 +2,7 @@
  * Fast Integer Inverse DCT (64-bit MMI)
  *
  * Copyright (C) 2014-2015, 2018-2019, 2025, D. R. Commander.
- *           All Rights Reserved.
  * Copyright (C) 2016-2018, Loongson Technology Corporation Limited, BeiJing.
- *                          All Rights Reserved.
  * Authors:  LiuQingfa <liuqingfa-hf@loongson.cn>
  *
  * Based on the x86 SIMD extension for IJG JPEG library

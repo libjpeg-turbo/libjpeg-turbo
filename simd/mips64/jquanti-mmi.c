@@ -2,11 +2,10 @@
  * Integer Quantization (64-bit MMI)
  *
  * Copyright (C) 2016-2017, Loongson Technology Corporation Limited, BeiJing.
- *                          All Rights Reserved.
  * Authors:  ZhuChen     <zhuchen@loongson.cn>
  *           CaiWanwei   <caiwanwei@loongson.cn>
  *           SunZhangzhi <sunzhangzhi-cq@loongson.cn>
- * Copyright (C) 2018-2019, 2025, D. R. Commander.  All Rights Reserved.
+ * Copyright (C) 2018-2019, 2025, D. R. Commander.
  *
  * Based on the x86 SIMD extension for IJG JPEG library
  * Copyright (C) 1999-2006, MIYASAKA Masaru.

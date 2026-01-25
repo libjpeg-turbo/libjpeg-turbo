@@ -1,9 +1,8 @@
 /*
  * Fancy (Smooth) Upsampling (64-bit MMI)
  *
- * Copyright (C) 2015, 2018-2019, 2025, D. R. Commander.  All Rights Reserved.
+ * Copyright (C) 2015, 2018-2019, 2025, D. R. Commander.
  * Copyright (C) 2016-2018, Loongson Technology Corporation Limited, BeiJing.
- *                          All Rights Reserved.
  * Authors:  ZhuChen     <zhuchen@loongson.cn>
  *           CaiWanwei   <caiwanwei@loongson.cn>
  *           SunZhangzhi <sunzhangzhi-cq@loongson.cn>

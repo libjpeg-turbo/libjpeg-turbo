@@ -2,9 +2,8 @@
  * RGB-to-YCbCr Color Conversion (64-bit MMI)
  *
  * Copyright 2009 Pierre Ossman <ossman@cendio.se> for Cendio AB
- * Copyright (C) 2014-2015, 2019, 2025, D. R. Commander.  All Rights Reserved.
+ * Copyright (C) 2014-2015, 2019, 2025, D. R. Commander.
  * Copyright (C) 2016-2018, Loongson Technology Corporation Limited, BeiJing.
- *                          All Rights Reserved.
  * Authors:  ZhuChen     <zhuchen@loongson.cn>
  *           SunZhangzhi <sunzhangzhi-cq@loongson.cn>
  *           CaiWanwei   <caiwanwei@loongson.cn>

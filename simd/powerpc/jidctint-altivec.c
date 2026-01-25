@@ -2,7 +2,6 @@
  * Accurate Integer Inverse DCT (AltiVec)
  *
  * Copyright (C) 2014-2015, 2020, 2024-2025, D. R. Commander.
- *           All Rights Reserved.
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the authors be held liable for any damages
