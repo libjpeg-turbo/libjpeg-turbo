@@ -2089,6 +2089,9 @@ DLLEXPORT int tjDecompress2(tjhandle handle, const unsigned char *jpegBuf,
   }
   if (i >= NUMSF)
     THROW("Could not scale down to desired image dimensions");
+  if (dinfo->master->lossless && ((JDIMENSION)scaledw != dinfo->image_width ||
+                                  (JDIMENSION)scaledh != dinfo->image_height))
+    THROW("Cannot use decompression scaling with lossless JPEG images");
 
   processFlags(handle, flags, DECOMPRESS);
 
