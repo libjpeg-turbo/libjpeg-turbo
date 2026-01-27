@@ -1,3 +1,16 @@
+3.1.4
+=====
+
+### Significant changes relative to 3.1.3:
+
+1. Fixed an issue in the TurboJPEG 2.x compatibility wrapper whereby, if a
+calling program attempted to decompress a lossless JPEG image using
+`tjDecompress2()` with decompression scaling, the decompressed image was
+unexpectedly unscaled.  This could have led to a buffer overrun if the caller
+allocated the packed-pixel destination buffer based on the assumption that the
+decompressed image would be scaled down.
+
+
 3.1.3
 =====
 
