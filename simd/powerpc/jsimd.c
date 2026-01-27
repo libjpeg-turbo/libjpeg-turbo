@@ -1,6 +1,6 @@
 /*
  * Copyright 2009 Pierre Ossman <ossman@cendio.se> for Cendio AB
- * Copyright (C) 2009-2011, 2014-2016, 2018, 2022, 2024, D. R. Commander.
+ * Copyright (C) 2009-2011, 2014-2016, 2018, 2022, 2024, 2026, D. R. Commander.
  * Copyright (C) 2015-2016, 2018, 2022, Matthieu Darbois.
  *
  * Based on the x86 SIMD extension for IJG JPEG library,
@@ -27,6 +27,7 @@
 
 #include <ctype.h>
 
+#if !defined(__ALTIVEC__)
 #if defined(__APPLE__)
 #include <sys/types.h>
 #include <sys/sysctl.h>
@@ -40,10 +41,12 @@
 #include <sys/sysctl.h>
 #include <machine/cpu.h>
 #endif
+#endif
 
 static THREAD_LOCAL unsigned int simd_support = ~0;
 
-#if !defined(__ALTIVEC__) && (defined(__linux__) || defined(ANDROID) || defined(__ANDROID__))
+#if !defined(__ALTIVEC__) && \
+    (defined(__linux__) || defined(ANDROID) || defined(__ANDROID__))
 
 #define SOMEWHAT_SANE_PROC_CPUINFO_SIZE_LIMIT  (1024 * 1024)
 
@@ -116,7 +119,8 @@ init_simd(void)
 #ifndef NO_GETENV
   char *env = NULL;
 #endif
-#if !defined(__ALTIVEC__) && (defined(__linux__) || defined(ANDROID) || defined(__ANDROID__))
+#if !defined(__ALTIVEC__)
+#if defined(__linux__) || defined(ANDROID) || defined(__ANDROID__)
   int bufsize = 1024; /* an initial guess for the line buffer size limit */
 #elif defined(__amigaos4__)
   uint32 altivec = 0;
@@ -130,6 +134,7 @@ init_simd(void)
   int mib[2] = { CTL_MACHDEP, CPU_ALTIVEC };
   int altivec;
   size_t len = sizeof(altivec);
+#endif
 #endif
 
   if (simd_support != ~0U)
