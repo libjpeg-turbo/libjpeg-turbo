@@ -48,6 +48,13 @@ erroneously pass huge X or Y offsets to one of the compression, YUV encoding,
 decompression, or YUV decoding methods, leading to signed integer overflow in
 the JNI wrapper's buffer size checks that rendered those checks ineffective.
 
+9. Fixed an issue in the TurboJPEG 2.x compatibility wrapper whereby, if a
+calling program attempted to decompress a lossless JPEG image using
+`tjDecompress2()` with decompression scaling, the decompressed image was
+unexpectedly unscaled.  This could have led to a buffer overrun if the caller
+allocated the packed-pixel destination buffer based on the assumption that the
+decompressed image would be scaled down.
+
 
 3.0.4
 =====
