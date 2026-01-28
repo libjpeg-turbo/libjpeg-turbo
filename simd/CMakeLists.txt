@@ -525,6 +525,11 @@ set_source_files_properties(${SIMD_SOURCES} PROPERTIES
 
 if(UNIX)
   include(CheckSymbolExists)
+  check_symbol_exists(getauxval sys/auxv.h HAVE_GETAUXVAL)
+  if(HAVE_GETAUXVAL)
+    set_source_files_properties(powerpc/jsimd.c PROPERTIES
+      COMPILE_DEFINITIONS HAVE_GETAUXVAL)
+  endif()
   check_symbol_exists(elf_aux_info sys/auxv.h HAVE_ELF_AUX_INFO)
   if(HAVE_ELF_AUX_INFO)
     set_source_files_properties(powerpc/jsimd.c PROPERTIES
