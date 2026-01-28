@@ -231,7 +231,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
         } while (retval != JPEG_SUSPENDED && retval != JPEG_REACHED_SOS &&
                  retval != JPEG_REACHED_EOI);
 
-        if (retval == JPEG_REACHED_EOI || retval == JPEG_SUSPENDED)
+        if (retval == JPEG_REACHED_EOI)
           break;
 
         /* Start outputting the current scan. */
@@ -240,10 +240,15 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 
         while (cinfo.output_scanline < cinfo.output_height) {
           if (!cinfo.two_pass_quantize &&
-              (cinfo.output_scanline == 0 || cinfo.output_scanline == 16))
+              (cinfo.output_scanline == 0 || cinfo.output_scanline == 16)) {
+            JDIMENSION output_scanline = cinfo.output_scanline;
+
             jpeg_skip_scanlines(&cinfo, 8);
-          else {
-            jpeg_read_scanlines(&cinfo, buffer, 1);
+            if (cinfo.output_scanline == output_scanline)
+              break;
+          } else {
+            if (jpeg_read_scanlines(&cinfo, buffer, 1) != 1)
+              break;
             /* Touch all of the output pixels in order to catch uninitialized
                reads when using MemorySanitizer. */
             for (int i = 0; i < row_stride; i++)
