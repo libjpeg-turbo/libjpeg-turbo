@@ -36,7 +36,7 @@
 #if defined(__APPLE__)
 #include <sys/types.h>
 #include <sys/sysctl.h>
-#elif defined(HAVE_ELF_AUX_INFO)
+#elif defined(HAVE_GETAUXVAL) || defined(HAVE_ELF_AUX_INFO)
 #if defined(__FreeBSD__)
 #include <machine/cpu.h>
 #endif
@@ -48,7 +48,7 @@
 #endif
 #endif
 
-#if !defined(__ALTIVEC__) && \
+#if !defined(__ALTIVEC__) && !defined(HAVE_GETAUXVAL) && \
     (defined(__linux__) || defined(ANDROID) || defined(__ANDROID__))
 
 #define SOMEWHAT_SANE_PROC_CPUINFO_SIZE_LIMIT  (1024 * 1024)
@@ -119,7 +119,9 @@ HIDDEN unsigned int
 jpeg_simd_cpu_support(void)
 {
 #if !defined(__ALTIVEC__)
-#if defined(__linux__) || defined(ANDROID) || defined(__ANDROID__)
+#if defined(HAVE_GETAUXVAL) || defined(HAVE_ELF_AUX_INFO)
+  unsigned long cpufeatures = 0;
+#elif defined(__linux__) || defined(ANDROID) || defined(__ANDROID__)
   int bufsize = 1024; /* an initial guess for the line buffer size limit */
 #elif defined(__amigaos4__)
   uint32 altivec = 0;
@@ -127,8 +129,6 @@ jpeg_simd_cpu_support(void)
   int mib[2] = { CTL_HW, HW_VECTORUNIT };
   int altivec;
   size_t len = sizeof(altivec);
-#elif defined(HAVE_ELF_AUX_INFO)
-  unsigned long cpufeatures = 0;
 #elif defined(__OpenBSD__)
   int mib[2] = { CTL_MACHDEP, CPU_ALTIVEC };
   int altivec;
@@ -139,6 +139,10 @@ jpeg_simd_cpu_support(void)
 
 #if defined(__ALTIVEC__)
   simd_support |= JSIMD_ALTIVEC;
+#elif defined(HAVE_GETAUXVAL)
+  cpufeatures = getauxval(AT_HWCAP);
+  if (cpufeatures & PPC_FEATURE_HAS_ALTIVEC)
+    simd_support |= JSIMD_ALTIVEC;
 #elif defined(__linux__) || defined(ANDROID) || defined(__ANDROID__)
   while (!parse_proc_cpuinfo(bufsize, &simd_support)) {
     bufsize *= 2;
