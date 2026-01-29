@@ -26,10 +26,16 @@
 
 #include <ctype.h>
 
+#if !defined(__ARM_NEON__) && \
+    (defined(HAVE_GETAUXVAL) || defined(HAVE_ELF_AUX_INFO))
+#include <sys/auxv.h>
+#endif
+
 static THREAD_LOCAL unsigned int simd_support = ~0;
 static THREAD_LOCAL unsigned int simd_huffman = 1;
 
-#if !defined(__ARM_NEON__) && (defined(__linux__) || defined(ANDROID) || defined(__ANDROID__))
+#if !defined(__ARM_NEON__) && !defined(HAVE_GETAUXVAL) && \
+    (defined(__linux__) || defined(ANDROID) || defined(__ANDROID__))
 
 #define SOMEWHAT_SANE_PROC_CPUINFO_SIZE_LIMIT  (1024 * 1024)
 
@@ -102,8 +108,12 @@ init_simd(void)
 #ifndef NO_GETENV
   char env[2] = { 0 };
 #endif
-#if !defined(__ARM_NEON__) && (defined(__linux__) || defined(ANDROID) || defined(__ANDROID__))
+#if !defined(__ARM_NEON__)
+#if defined(HAVE_GETAUXVAL) || defined(HAVE_ELF_AUX_INFO)
+  unsigned long cpufeatures = 0;
+#elif defined(__linux__) || defined(ANDROID) || defined(__ANDROID__)
   int bufsize = 1024; /* an initial guess for the line buffer size limit */
+#endif
 #endif
 
   if (simd_support != ~0U)
@@ -113,6 +123,10 @@ init_simd(void)
 
 #if defined(__ARM_NEON__)
   simd_support |= JSIMD_NEON;
+#elif defined(HAVE_GETAUXVAL)
+  cpufeatures = getauxval(AT_HWCAP);
+  if (cpufeatures & HWCAP_ARM_NEON)
+    simd_support |= JSIMD_NEON;
 #elif defined(__linux__) || defined(ANDROID) || defined(__ANDROID__)
   /* We still have a chance to use Neon regardless of globally used
    * -mcpu/-mfpu options passed to gcc by performing runtime detection via
@@ -122,6 +136,10 @@ init_simd(void)
     if (bufsize > SOMEWHAT_SANE_PROC_CPUINFO_SIZE_LIMIT)
       break;
   }
+#elif defined(HAVE_ELF_AUX_INFO)
+  elf_aux_info(AT_HWCAP, &cpufeatures, sizeof(cpufeatures));
+  if (cpufeatures & HWCAP_NEON)
+    simd_support |= JSIMD_NEON;
 #endif
 
 #ifndef NO_GETENV
