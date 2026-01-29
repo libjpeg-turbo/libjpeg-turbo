@@ -137,7 +137,7 @@ JMESSAGE(JERR_VIRTUAL_BUG, "Virtual array controller messed up")
 JMESSAGE(JERR_WIDTH_OVERFLOW, "Image too wide for this implementation")
 JMESSAGE(JERR_XMS_READ, "Read from XMS failed")
 JMESSAGE(JERR_XMS_WRITE, "Write to XMS failed")
-JMESSAGE(JMSG_COPYRIGHT, JCOPYRIGHT_SHORT)
+JMESSAGE(JMSG_COPYRIGHT, JCOPYRIGHT)
 JMESSAGE(JMSG_VERSION, JVERSION)
 JMESSAGE(JTRC_16BIT_TABLES,
          "Caution: quantization tables are too coarse for baseline JPEG")
