@@ -62,7 +62,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
   if (width < 1 || height < 1 || (uint64_t)width * height > 1048576)
     goto bailout;
 
-  tj3Set(handle, TJPARAM_SCANLIMIT, 500);
+  tj3Set(handle, TJPARAM_SCANLIMIT, 100);
 
   for (pfi = 0; pfi < NUMPF; pfi++) {
     int w = width, h = height;
@@ -98,7 +98,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
       for (i = 0; i < w * h * tjPixelSize[pf]; i++)
         sum += dstBuf[i];
     } else if (!strcmp(tj3GetErrorStr(handle),
-                       "Progressive JPEG image has more than 500 scans"))
+                       "Progressive JPEG image has more than 100 scans"))
       goto bailout;
 
     tj3Free(dstBuf);

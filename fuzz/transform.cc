@@ -72,7 +72,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
   if (width < 1 || height < 1 || (uint64_t)width * height > 1048576)
     goto bailout;
 
-  tj3Set(handle, TJPARAM_SCANLIMIT, 500);
+  tj3Set(handle, TJPARAM_SCANLIMIT, 100);
 
   if (jpegSubsamp < 0 || jpegSubsamp >= TJ_NUMSAMP)
     jpegSubsamp = TJSAMP_444;
@@ -103,7 +103,10 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
        be true, but the compiler doesn't know that. */
     if (sum > 255 * maxBufSize)
       goto bailout;
-  }
+  } else if (!strcmp(tj3GetErrorStr(handle),
+                     "Progressive JPEG image has more than 100 scans"))
+    goto bailout;
+
 
   tj3Free(dstBufs[0]);
   dstBufs[0] = NULL;
@@ -127,7 +130,9 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 
     if (sum > 255 * maxBufSize)
       goto bailout;
-  }
+  } else if (!strcmp(tj3GetErrorStr(handle),
+                     "Progressive JPEG image has more than 100 scans"))
+    goto bailout;
 
   tj3Free(dstBufs[0]);
   dstBufs[0] = NULL;
@@ -148,7 +153,9 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 
     if (sum > 255 * maxBufSize)
       goto bailout;
-  }
+  } else if (!strcmp(tj3GetErrorStr(handle),
+                     "Progressive JPEG image has more than 100 scans"))
+    goto bailout;
 
   tj3Free(dstBufs[0]);
   dstBufs[0] = NULL;
@@ -168,7 +175,9 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 
     if (sum > 255 * maxBufSize)
       goto bailout;
-  }
+  } else if (!strcmp(tj3GetErrorStr(handle),
+                     "Progressive JPEG image has more than 100 scans"))
+    goto bailout;
 
 bailout:
   tj3Free(dstBufs[0]);
