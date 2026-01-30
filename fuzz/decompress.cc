@@ -29,6 +29,7 @@
 #include "../turbojpeg.h"
 #include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
 
 
 #define NUMPF  4
@@ -63,7 +64,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
   if (width < 1 || height < 1 || (uint64_t)width * height > 1048576)
     goto bailout;
 
-  tj3Set(handle, TJPARAM_SCANLIMIT, 500);
+  tj3Set(handle, TJPARAM_SCANLIMIT, 100);
 
   for (pfi = 0; pfi < NUMPF; pfi++) {
     int w = width, h = height;
@@ -105,7 +106,8 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
            when using MemorySanitizer. */
         for (i = 0; i < w * h * tjPixelSize[pf]; i++)
           sum += ((unsigned char *)dstBuf)[i];
-      } else
+      } else if (!strcmp(tj3GetErrorStr(handle),
+                         "Progressive JPEG image has more than 100 scans"))
         goto bailout;
     } else if (precision == 12) {
       if (tj3Decompress12(handle, data, size, (short *)dstBuf, 0, pf) == 0) {
@@ -113,7 +115,8 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
            when using MemorySanitizer. */
         for (i = 0; i < w * h * tjPixelSize[pf]; i++)
           sum += ((short *)dstBuf)[i];
-      } else
+      } else if (!strcmp(tj3GetErrorStr(handle),
+                         "Progressive JPEG image has more than 100 scans"))
         goto bailout;
     } else {
       if (tj3Decompress16(handle, data, size, (unsigned short *)dstBuf, 0,
@@ -122,7 +125,8 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
            when using MemorySanitizer. */
         for (i = 0; i < w * h * tjPixelSize[pf]; i++)
           sum += ((unsigned short *)dstBuf)[i];
-      } else
+      } else if (!strcmp(tj3GetErrorStr(handle),
+                         "Progressive JPEG image has more than 100 scans"))
         goto bailout;
     }
 
