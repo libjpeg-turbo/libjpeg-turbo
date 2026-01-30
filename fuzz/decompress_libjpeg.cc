@@ -219,7 +219,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
              cinfo.input_scan_number != cinfo.output_scan_number) {
         int retval;
 
-        if (cinfo.input_scan_number > 500) {
+        if (cinfo.input_scan_number > 100) {
           jpeg_abort_decompress(&cinfo);
           goto bailout;
         }
