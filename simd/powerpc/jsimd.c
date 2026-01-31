@@ -117,7 +117,7 @@ LOCAL(void)
 init_simd(void)
 {
 #ifndef NO_GETENV
-  char *env = NULL;
+  char env[2] = { 0 };
 #endif
 #if !defined(__ALTIVEC__)
 #if defined(HAVE_GETAUXVAL) || defined(HAVE_ELF_AUX_INFO)
@@ -170,11 +170,9 @@ init_simd(void)
 
 #ifndef NO_GETENV
   /* Force different settings through environment variables */
-  env = getenv("JSIMD_FORCEALTIVEC");
-  if ((env != NULL) && (strcmp(env, "1") == 0))
+  if (!GETENV_S(env, 2, "JSIMD_FORCEALTIVEC") && !strcmp(env, "1"))
     simd_support = JSIMD_ALTIVEC;
-  env = getenv("JSIMD_FORCENONE");
-  if ((env != NULL) && (strcmp(env, "1") == 0))
+  if (!GETENV_S(env, 2, "JSIMD_FORCENONE") && !strcmp(env, "1"))
     simd_support = 0;
 #endif
 }

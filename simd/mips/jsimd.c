@@ -59,7 +59,7 @@ LOCAL(void)
 init_simd(void)
 {
 #ifndef NO_GETENV
-  char *env = NULL;
+  char env[2] = { 0 };
 #endif
 
   if (simd_support != ~0U)
@@ -78,11 +78,9 @@ init_simd(void)
 
 #ifndef NO_GETENV
   /* Force different settings through environment variables */
-  env = getenv("JSIMD_FORCEDSPR2");
-  if ((env != NULL) && (strcmp(env, "1") == 0))
+  if (!GETENV_S(env, 2, "JSIMD_FORCEDSPR2") && !strcmp(env, "1"))
     simd_support = JSIMD_DSPR2;
-  env = getenv("JSIMD_FORCENONE");
-  if ((env != NULL) && (strcmp(env, "1") == 0))
+  if (!GETENV_S(env, 2, "JSIMD_FORCENONE") && !strcmp(env, "1"))
     simd_support = 0;
 #endif
 }
