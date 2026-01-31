@@ -10,6 +10,10 @@ unexpectedly unscaled.  This could have led to a buffer overrun if the caller
 allocated the packed-pixel destination buffer based on the assumption that the
 decompressed image would be scaled down.
 
+2. The SIMD dispatchers now use `getauxval()` or `elf_aux_info()`, if
+available, to detect support for Neon and AltiVec instructions on AArch32 and
+PowerPC Linux, Android, and *BSD systems.
+
 
 3.1.3
 =====
