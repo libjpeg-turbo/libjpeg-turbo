@@ -553,3 +553,8 @@ else()
 simd_fail("SIMD extensions not available for this CPU (${CMAKE_SYSTEM_PROCESSOR})")
 
 endif() # CPU_TYPE
+
+if(WITH_SIMD AND ENABLE_STATIC)
+  add_executable(simdcoverage simdcoverage.c)
+  target_link_libraries(simdcoverage jpeg-static)
+endif()
