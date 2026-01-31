@@ -97,7 +97,7 @@ LOCAL(void)
 init_simd(void)
 {
 #ifndef NO_GETENV
-  char *env = NULL;
+  char env[2] = { 0 };
 #endif
 #if defined(__linux__)
   int bufsize = 1024; /* an initial guess for the line buffer size limit */
@@ -122,11 +122,9 @@ init_simd(void)
 
 #ifndef NO_GETENV
   /* Force different settings through environment variables */
-  env = getenv("JSIMD_FORCEMMI");
-  if ((env != NULL) && (strcmp(env, "1") == 0))
+  if (!GETENV_S(env, 2, "JSIMD_FORCEMMI") && !strcmp(env, "1"))
     simd_support = JSIMD_MMI;
-  env = getenv("JSIMD_FORCENONE");
-  if ((env != NULL) && (strcmp(env, "1") == 0))
+  if (!GETENV_S(env, 2, "JSIMD_FORCENONE") && !strcmp(env, "1"))
     simd_support = 0;
 #endif
 }
