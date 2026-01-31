@@ -358,6 +358,20 @@ if(BITS EQUAL 32)
   set_source_files_properties(${SIMD_SOURCES} COMPILE_FLAGS "-mfpu=neon ${SOFTFP_FLAG}")
 endif()
 
+if(UNIX AND BITS EQUAL 32)
+  include(CheckSymbolExists)
+  check_symbol_exists(getauxval sys/auxv.h HAVE_GETAUXVAL)
+  if(HAVE_GETAUXVAL)
+    set_source_files_properties(arm/aarch${BITS}/jsimdcpu.c PROPERTIES
+      COMPILE_DEFINITIONS HAVE_GETAUXVAL)
+  endif()
+  check_symbol_exists(elf_aux_info sys/auxv.h HAVE_ELF_AUX_INFO)
+  if(HAVE_ELF_AUX_INFO)
+    set_source_files_properties(arm/aarch${BITS}/jsimdcpu.c PROPERTIES
+      COMPILE_DEFINITIONS HAVE_ELF_AUX_INFO)
+  endif()
+endif()
+
 add_library(simd OBJECT ${SIMD_SOURCES} arm/aarch${BITS}/jsimdcpu.c jsimd.c)
 
 if(CMAKE_POSITION_INDEPENDENT_CODE OR ENABLE_SHARED)
