@@ -2,7 +2,7 @@
 ; Downsampling (64-bit AVX2)
 ;
 ; Copyright 2009 Pierre Ossman <ossman@cendio.se> for Cendio AB
-; Copyright (C) 2009, 2016, 2024-2025, D. R. Commander.
+; Copyright (C) 2009, 2016, 2024-2026, D. R. Commander.
 ; Copyright (C) 2015, Intel Corporation.
 ; Copyright (C) 2018, Matthias Räncker.
 ;
@@ -18,7 +18,7 @@
     SECTION     SEG_TEXT
     BITS        64
 
-; Downsample pixel values of a single component.
+; Downsample components from a single plane.
 ; This version handles the common case of 2:1 horizontal and 1:1 vertical,
 ; without smoothing.
 ;
@@ -179,7 +179,7 @@ EXTN(jsimd_h2v1_downsample_avx2):
 
 ; --------------------------------------------------------------------------
 ;
-; Downsample pixel values of a single component.
+; Downsample components from a single plane.
 ; This version handles the standard case of 2:1 horizontal and 2:1 vertical,
 ; without smoothing.
 ;

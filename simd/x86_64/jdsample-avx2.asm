@@ -2,7 +2,7 @@
 ; Upsampling (64-bit AVX2)
 ;
 ; Copyright 2009 Pierre Ossman <ossman@cendio.se> for Cendio AB
-; Copyright (C) 2009, 2016, 2024-2025, D. R. Commander.
+; Copyright (C) 2009, 2016, 2024-2026, D. R. Commander.
 ; Copyright (C) 2015, Intel Corporation.
 ; Copyright (C) 2018, Matthias Räncker.
 ; Copyright (C) 2023, Aliaksiej Kandracienka.
@@ -37,10 +37,10 @@ PW_EIGHT times 16 dw 8
 
 ; Fancy processing for the common case of 2:1 horizontal and 1:1 vertical.
 ;
-; The upsampling algorithm is linear interpolation between pixel centers, also
-; known as a "triangle filter".  This is a good compromise between speed and
-; visual quality.  The centers of the output pixels are 1/4 and 3/4 of the way
-; between input pixel centers.
+; The upsampling algorithm is linear interpolation between component centers,
+; also known as a "triangle filter".  This is a good compromise between speed
+; and visual quality.  The centers of the output components are 1/4 and 3/4 of
+; the way between input component centers.
 ;
 ; GLOBAL(void)
 ; jsimd_h2v1_fancy_upsample_avx2(int max_v_samp_factor,
