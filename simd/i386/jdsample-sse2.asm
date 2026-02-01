@@ -2,7 +2,7 @@
 ; Upsampling (32-bit SSE2)
 ;
 ; Copyright 2009 Pierre Ossman <ossman@cendio.se> for Cendio AB
-; Copyright (C) 2016, 2024-2025, D. R. Commander.
+; Copyright (C) 2016, 2024-2026, D. R. Commander.
 ;
 ; Based on the x86 SIMD extension for IJG JPEG library
 ; Copyright (C) 1999-2006, MIYASAKA Masaru.
@@ -34,10 +34,10 @@ PW_EIGHT times 8 dw 8
 
 ; Fancy processing for the common case of 2:1 horizontal and 1:1 vertical.
 ;
-; The upsampling algorithm is linear interpolation between pixel centers, also
-; known as a "triangle filter".  This is a good compromise between speed and
-; visual quality.  The centers of the output pixels are 1/4 and 3/4 of the way
-; between input pixel centers.
+; The upsampling algorithm is linear interpolation between component centers,
+; also known as a "triangle filter".  This is a good compromise between speed
+; and visual quality.  The centers of the output components are 1/4 and 3/4 of
+; the way between input component centers.
 ;
 ; GLOBAL(void)
 ; jsimd_h2v1_fancy_upsample_sse2(int max_v_samp_factor,
