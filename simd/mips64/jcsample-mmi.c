@@ -1,7 +1,7 @@
 /*
  * Downsampling (64-bit MMI)
  *
- * Copyright (C) 2015, 2018-2019, 2025, D. R. Commander.
+ * Copyright (C) 2015, 2018-2019, 2025-2026, D. R. Commander.
  * Copyright (C) 2016-2017, Loongson Technology Corporation Limited, BeiJing.
  * Authors:  ZhuChen     <zhuchen@loongson.cn>
  *           CaiWanwei   <caiwanwei@loongson.cn>
@@ -28,7 +28,7 @@
  */
 
 #include "jsimd_mmi.h"
-#include "jcsample.h"
+#include "../common/jcsample.h"
 
 
 HIDDEN void

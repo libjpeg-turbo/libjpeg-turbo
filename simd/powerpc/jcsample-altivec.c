@@ -1,7 +1,7 @@
 /*
  * Downsampling (AltiVec)
  *
- * Copyright (C) 2015, 2024-2025, D. R. Commander.
+ * Copyright (C) 2015, 2024-2026, D. R. Commander.
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the authors be held liable for any damages
@@ -21,7 +21,7 @@
  */
 
 #include "jsimd_altivec.h"
-#include "jcsample.h"
+#include "../common/jcsample.h"
 
 
 HIDDEN void
