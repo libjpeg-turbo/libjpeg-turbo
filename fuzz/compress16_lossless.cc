@@ -1,6 +1,6 @@
 /*
- * Copyright (C)2021-2026 D. R. Commander.  All Rights Reserved.
- * Copyright (C)2025 Leslie P. Polzer.  All Rights Reserved.
+ * Copyright (C) 2021-2026 D. R. Commander.  All Rights Reserved.
+ * Copyright (C) 2025 Leslie P. Polzer.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
