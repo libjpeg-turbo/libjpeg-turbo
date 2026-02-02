@@ -15,7 +15,7 @@
  * will fill a supplied 16-byte array with the digest.
  * ----------------------------------------------------------------------------
  * libjpeg-turbo Modifications:
- * Copyright (C)2018, D. R. Commander.  All Rights Reserved.
+ * Copyright (C) 2018 D. R. Commander.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:

@@ -1,7 +1,7 @@
 ;
 ; Prepare data for progressive Huffman encoding (32-bit SSE2)
 ;
-; Copyright (C) 2016, 2018, Matthieu Darbois
+; Copyright (C) 2016, 2018, Matthieu Darbois.
 ; Copyright (C) 2025, D. R. Commander.
 ;
 ; Based on the x86 SIMD extension for IJG JPEG library

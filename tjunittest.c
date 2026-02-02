@@ -1,6 +1,6 @@
 /*
- * Copyright (C)2009-2014, 2017-2019, 2022-2026 D. R. Commander.
- *                                              All Rights Reserved.
+ * Copyright (C) 2009-2014, 2017-2019, 2022-2026 D. R. Commander.
+ *                                               All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
