@@ -1,7 +1,7 @@
 /*
  * jcstest.c
  *
- * Copyright (C)2011, 2025, D. R. Commander.
+ * Copyright (C) 2011, 2025, D. R. Commander.
  * For conditions of distribution and use, see the accompanying README.ijg
  * file.
  */

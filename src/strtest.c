@@ -1,7 +1,7 @@
 /*
  * strtest.c
  *
- * Copyright (C)2022-2023, D. R. Commander.
+ * Copyright (C) 2022-2023, D. R. Commander.
  * For conditions of distribution and use, see the accompanying README.ijg
  * file.
  */

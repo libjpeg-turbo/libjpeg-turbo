@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2011-2012, 2014-2015, 2017, 2019, 2021-2025
+ * Copyright (C) 2011-2012, 2014-2015, 2017, 2019, 2021-2025
  *           D. R. Commander.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without

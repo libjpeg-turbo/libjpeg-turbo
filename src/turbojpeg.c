@@ -1,6 +1,6 @@
 /*
- * Copyright (C)2009-2025 D. R. Commander.  All Rights Reserved.
- * Copyright (C)2021 Alex Richardson.  All Rights Reserved.
+ * Copyright (C) 2009-2025 D. R. Commander.  All Rights Reserved.
+ * Copyright (C) 2021 Alex Richardson.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
