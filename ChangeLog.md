@@ -107,6 +107,12 @@ erroneously pass huge X or Y offsets to one of the compression, YUV encoding,
 decompression, or YUV decoding methods, leading to signed integer overflow in
 the JNI wrapper's buffer size checks that rendered those checks ineffective.
 
+16. Hardened the libjpeg API against hypothetical applications that may
+erroneously set one of the exposed quantization table values to 0 just before
+calling `jpeg_start_compress()`.  (This would never happen in a
+correctly-written program, because `jpeg_add_quant_table()` clamps all values
+less than 1.)
+
 
 2.1.5.1
 =======
