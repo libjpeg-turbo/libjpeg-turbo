@@ -438,6 +438,70 @@ endif()
 
 
 ###############################################################################
+# RISC-V 64-bit (Intrinsics)
+###############################################################################
+
+elseif(CPU_TYPE STREQUAL "riscv64")
+
+set(SIMD_ARCHITECTURE RISCV64 PARENT_SCOPE)
+
+set(CMAKE_REQUIRED_FLAGS -march=rv64gcv)
+
+check_c_source_compiles("
+  #include <riscv_vector.h>
+  int main(int argc, char **argv) {
+    size_t vl = __riscv_vsetvl_e32m8(32);
+    vuint32m8_t tmp0 = __riscv_vmv_v_x_u32m8(argc, vl);
+    vuint16m4_t tmp1 = __riscv_vnclipu_wx_u16m4(tmp0, 1, __RISCV_VXRM_RNU, vl);
+    vuint16m4_t tmp2 = __riscv_vnclipu_wx_u16m4(tmp0, 1, __RISCV_VXRM_RDN, vl);
+    vuint8m2_t tmp3 = __riscv_vmv_v_x_u8m2(argc, vl);
+    vuint8m2_t tmp4 = __riscv_vmv_v_x_u8m2(argc, vl);
+    vuint8m2x2_t tmp5 = __riscv_vcreate_v_u8m2x2(tmp3, tmp4);
+    return __riscv_vmv_x_s_u16m4_u16(tmp1) + __riscv_vmv_x_s_u16m4_u16(tmp2) +
+           __riscv_vmv_x_s_u8m2_u8(__riscv_vget_v_u8m2x2_u8m2(tmp5, 0)) +
+           __riscv_vmv_x_s_u8m2_u8(__riscv_vget_v_u8m2x2_u8m2(tmp5, 1));
+  }" HAVE_RVV)
+
+unset(CMAKE_REQUIRED_FLAGS)
+
+if(NOT HAVE_RVV)
+  simd_fail("SIMD extensions not available for this CPU")
+  return()
+endif()
+
+set(SIMD_SOURCES riscv64/jccolor-rvv.c riscv64/jcgray-rvv.c
+  riscv64/jcsample-rvv.c riscv64/jdcolor-rvv.c riscv64/jdmerge-rvv.c
+  riscv64/jdsample-rvv.c riscv64/jfdctfst-rvv.c riscv64/jfdctint-rvv.c
+  riscv64/jidctfst-rvv.c riscv64/jidctint-rvv.c riscv64/jquanti-rvv.c)
+
+enable_language(ASM)
+
+set_source_files_properties(${SIMD_SOURCES} PROPERTIES
+  COMPILE_FLAGS -march=rv64gcv)
+
+if(UNIX)
+  include(CheckSymbolExists)
+  check_symbol_exists(getauxval sys/auxv.h HAVE_GETAUXVAL)
+  if(HAVE_GETAUXVAL)
+    set_source_files_properties(riscv64/jsimdcpu.c PROPERTIES
+      COMPILE_DEFINITIONS HAVE_GETAUXVAL)
+  endif()
+  check_symbol_exists(elf_aux_info sys/auxv.h HAVE_ELF_AUX_INFO)
+  if(HAVE_ELF_AUX_INFO)
+    set_source_files_properties(riscv64/jsimdcpu.c PROPERTIES
+      COMPILE_DEFINITIONS HAVE_ELF_AUX_INFO)
+  endif()
+endif()
+
+add_library(simd OBJECT ${SIMD_SOURCES} jsimd.c riscv64/jsimdcpu.c
+  riscv64/jsimdcpu.S)
+
+if(CMAKE_POSITION_INDEPENDENT_CODE OR ENABLE_SHARED)
+  set_target_properties(simd PROPERTIES POSITION_INDEPENDENT_CODE 1)
+endif()
+
+
+###############################################################################
 # MIPS64 (Intrinsics)
 ###############################################################################
 

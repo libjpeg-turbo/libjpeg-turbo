@@ -1,12 +1,14 @@
 /*
  * Copyright 2009 Pierre Ossman <ossman@cendio.se> for Cendio AB
- * Copyright (C) 2009-2011, 2013-2014, 2016, 2018, 2020, 2022-2025,
+ * Copyright (C) 2009-2011, 2013-2014, 2016, 2018, 2020, 2022-2026,
  *           D. R. Commander.
  * Copyright (C) 2011, Nokia Corporation and/or its subsidiary(-ies).
  * Copyright (C) 2015-2016, 2018, 2022, Matthieu Darbois.
  * Copyright (C) 2016-2018, Loongson Technology Corporation Limited, BeiJing.
  * Copyright (C) 2019, Google LLC.
  * Copyright (C) 2020, Arm Limited.
+ * Copyright (C) 2025, Samsung Electronics Co., Ltd.
+ *                     Author:  Filip Wasil
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the authors be held liable for any damages
@@ -83,6 +85,9 @@ init_simd(j_common_ptr cinfo)
 #elif SIMD_ARCHITECTURE == ARM
   if (!GETENV_S(env, 2, "JSIMD_FORCENEON") && !strcmp(env, "1"))
     simd_support = JSIMD_NEON;
+#elif SIMD_ARCHITECTURE == RISCV64
+  if (!GETENV_S(env, 2, "JSIMD_FORCERVV") && !strcmp(env, "1"))
+    simd_support = JSIMD_RVV;
 #elif SIMD_ARCHITECTURE == MIPS64
   if (!GETENV_S(env, 2, "JSIMD_FORCEMMI") && !strcmp(env, "1"))
     simd_support = JSIMD_MMI;
@@ -144,6 +149,11 @@ jsimd_set_rgb_ycc(j_compress_ptr cinfo)
     SET_SIMD_EXTRGB_COLOR_CONVERTER(ycc, altivec);
     return JSIMD_ALTIVEC;
   }
+#elif SIMD_ARCHITECTURE == RISCV64
+  if (cinfo->master->simd_support & JSIMD_RVV) {
+    SET_SIMD_EXTRGB_COLOR_CONVERTER(ycc, rvv);
+    return JSIMD_RVV;
+  }
 #elif SIMD_ARCHITECTURE == MIPS64
   if (cinfo->master->simd_support & JSIMD_MMI) {
     SET_SIMD_EXTRGB_COLOR_CONVERTER(ycc, mmi);
@@ -195,6 +205,11 @@ jsimd_set_rgb_gray(j_compress_ptr cinfo)
   if (cinfo->master->simd_support & JSIMD_ALTIVEC) {
     SET_SIMD_EXTRGB_COLOR_CONVERTER(gray, altivec);
     return JSIMD_ALTIVEC;
+  }
+#elif SIMD_ARCHITECTURE == RISCV64
+  if (cinfo->master->simd_support & JSIMD_RVV) {
+    SET_SIMD_EXTRGB_COLOR_CONVERTER(gray, rvv);
+    return JSIMD_RVV;
   }
 #elif SIMD_ARCHITECTURE == MIPS64
   if (cinfo->master->simd_support & JSIMD_MMI) {
@@ -256,6 +271,11 @@ jsimd_set_ycc_rgb(j_decompress_ptr cinfo)
   if (cinfo->master->simd_support & JSIMD_ALTIVEC) {
     SET_SIMD_EXTRGB_COLOR_DECONVERTER(altivec);
     return JSIMD_ALTIVEC;
+  }
+#elif SIMD_ARCHITECTURE == RISCV64
+  if (cinfo->master->simd_support & JSIMD_RVV) {
+    SET_SIMD_EXTRGB_COLOR_DECONVERTER(rvv);
+    return JSIMD_RVV;
   }
 #elif SIMD_ARCHITECTURE == MIPS64
   if (cinfo->master->simd_support & JSIMD_MMI) {
@@ -338,6 +358,11 @@ jsimd_set_h2v1_downsample(j_compress_ptr cinfo)
     cinfo->downsample->h2v1_downsample_simd = jsimd_h2v1_downsample_altivec;
     return JSIMD_ALTIVEC;
   }
+#elif SIMD_ARCHITECTURE == RISCV64
+  if (cinfo->master->simd_support & JSIMD_RVV) {
+    cinfo->downsample->h2v1_downsample_simd = jsimd_h2v1_downsample_rvv;
+    return JSIMD_RVV;
+  }
 #endif
 
   return JSIMD_NONE;
@@ -392,6 +417,11 @@ jsimd_set_h2v2_downsample(j_compress_ptr cinfo)
   if (cinfo->master->simd_support & JSIMD_ALTIVEC) {
     cinfo->downsample->h2v2_downsample_simd = jsimd_h2v2_downsample_altivec;
     return JSIMD_ALTIVEC;
+  }
+#elif SIMD_ARCHITECTURE == RISCV64
+  if (cinfo->master->simd_support & JSIMD_RVV) {
+    cinfo->downsample->h2v2_downsample_simd = jsimd_h2v2_downsample_rvv;
+    return JSIMD_RVV;
   }
 #elif SIMD_ARCHITECTURE == MIPS64
   if (cinfo->master->simd_support & JSIMD_MMI) {
@@ -453,6 +483,11 @@ jsimd_set_h2v1_upsample(j_decompress_ptr cinfo)
     cinfo->upsample->h2v1_upsample_simd = jsimd_h2v1_upsample_altivec;
     return JSIMD_ALTIVEC;
   }
+#elif SIMD_ARCHITECTURE == RISCV64
+  if (cinfo->master->simd_support & JSIMD_RVV) {
+    cinfo->upsample->h2v1_upsample_simd = jsimd_h2v1_upsample_rvv;
+    return JSIMD_RVV;
+  }
 #endif
 
   return JSIMD_NONE;
@@ -505,6 +540,11 @@ jsimd_set_h2v2_upsample(j_decompress_ptr cinfo)
   if (cinfo->master->simd_support & JSIMD_ALTIVEC) {
     cinfo->upsample->h2v2_upsample_simd = jsimd_h2v2_upsample_altivec;
     return JSIMD_ALTIVEC;
+  }
+#elif SIMD_ARCHITECTURE == RISCV64
+  if (cinfo->master->simd_support & JSIMD_RVV) {
+    cinfo->upsample->h2v2_upsample_simd = jsimd_h2v2_upsample_rvv;
+    return JSIMD_RVV;
   }
 #endif
 
@@ -560,6 +600,11 @@ jsimd_set_h2v1_fancy_upsample(j_decompress_ptr cinfo)
   if (cinfo->master->simd_support & JSIMD_ALTIVEC) {
     cinfo->upsample->h2v1_upsample_simd = jsimd_h2v1_fancy_upsample_altivec;
     return JSIMD_ALTIVEC;
+  }
+#elif SIMD_ARCHITECTURE == RISCV64
+  if (cinfo->master->simd_support & JSIMD_RVV) {
+    cinfo->upsample->h2v1_upsample_simd = jsimd_h2v1_fancy_upsample_rvv;
+    return JSIMD_RVV;
   }
 #elif SIMD_ARCHITECTURE == MIPS64
   if (cinfo->master->simd_support & JSIMD_MMI) {
@@ -620,6 +665,11 @@ jsimd_set_h2v2_fancy_upsample(j_decompress_ptr cinfo)
   if (cinfo->master->simd_support & JSIMD_ALTIVEC) {
     cinfo->upsample->h2v2_upsample_simd = jsimd_h2v2_fancy_upsample_altivec;
     return JSIMD_ALTIVEC;
+  }
+#elif SIMD_ARCHITECTURE == RISCV64
+  if (cinfo->master->simd_support & JSIMD_RVV) {
+    cinfo->upsample->h2v2_upsample_simd = jsimd_h2v2_fancy_upsample_rvv;
+    return JSIMD_RVV;
   }
 #elif SIMD_ARCHITECTURE == MIPS64
   if (cinfo->master->simd_support & JSIMD_MMI) {
@@ -716,6 +766,11 @@ jsimd_set_h2v1_merged_upsample(j_decompress_ptr cinfo)
     SET_SIMD_EXTRGB_MERGED_UPSAMPLER(h2v1, altivec);
     return JSIMD_ALTIVEC;
   }
+#elif SIMD_ARCHITECTURE == RISCV64
+  if (cinfo->master->simd_support & JSIMD_RVV) {
+    SET_SIMD_EXTRGB_MERGED_UPSAMPLER(h2v1, rvv);
+    return JSIMD_RVV;
+  }
 #elif SIMD_ARCHITECTURE == MIPS64
   if (cinfo->master->simd_support & JSIMD_MMI) {
     SET_SIMD_EXTRGB_MERGED_UPSAMPLER(h2v1, mmi);
@@ -775,6 +830,11 @@ jsimd_set_h2v2_merged_upsample(j_decompress_ptr cinfo)
     SET_SIMD_EXTRGB_MERGED_UPSAMPLER(h2v2, altivec);
     return JSIMD_ALTIVEC;
   }
+#elif SIMD_ARCHITECTURE == RISCV64
+  if (cinfo->master->simd_support & JSIMD_RVV) {
+    SET_SIMD_EXTRGB_MERGED_UPSAMPLER(h2v2, rvv);
+    return JSIMD_RVV;
+  }
 #elif SIMD_ARCHITECTURE == MIPS64
   if (cinfo->master->simd_support & JSIMD_MMI) {
     SET_SIMD_EXTRGB_MERGED_UPSAMPLER(h2v2, mmi);
@@ -831,6 +891,11 @@ jsimd_set_convsamp(j_compress_ptr cinfo, convsamp_method_ptr *method)
   if (cinfo->master->simd_support & JSIMD_ALTIVEC) {
     *method = jsimd_convsamp_altivec;
     return JSIMD_ALTIVEC;
+  }
+#elif SIMD_ARCHITECTURE == RISCV64
+  if (cinfo->master->simd_support & JSIMD_RVV) {
+    *method = jsimd_convsamp_rvv;
+    return JSIMD_RVV;
   }
 #endif
 
@@ -907,6 +972,11 @@ jsimd_set_fdct_islow(j_compress_ptr cinfo, forward_DCT_method_ptr *method)
     *method = jsimd_fdct_islow_altivec;
     return JSIMD_ALTIVEC;
   }
+#elif SIMD_ARCHITECTURE == RISCV64
+  if (cinfo->master->simd_support & JSIMD_RVV) {
+    *method = jsimd_fdct_islow_rvv;
+    return JSIMD_RVV;
+  }
 #elif SIMD_ARCHITECTURE == MIPS64
   if (cinfo->master->simd_support & JSIMD_MMI) {
     *method = jsimd_fdct_islow_mmi;
@@ -947,6 +1017,11 @@ jsimd_set_fdct_ifast(j_compress_ptr cinfo, forward_DCT_method_ptr *method)
   if (cinfo->master->simd_support & JSIMD_ALTIVEC) {
     *method = jsimd_fdct_ifast_altivec;
     return JSIMD_ALTIVEC;
+  }
+#elif SIMD_ARCHITECTURE == RISCV64
+  if (cinfo->master->simd_support & JSIMD_RVV) {
+    *method = jsimd_fdct_ifast_rvv;
+    return JSIMD_RVV;
   }
 #elif SIMD_ARCHITECTURE == MIPS64
   if (cinfo->master->simd_support & JSIMD_MMI) {
@@ -1019,6 +1094,11 @@ jsimd_set_quantize(j_compress_ptr cinfo, quantize_method_ptr *method)
   if (cinfo->master->simd_support & JSIMD_ALTIVEC) {
     *method = jsimd_quantize_altivec;
     return JSIMD_ALTIVEC;
+  }
+#elif SIMD_ARCHITECTURE == RISCV64
+  if (cinfo->master->simd_support & JSIMD_RVV) {
+    *method = jsimd_quantize_rvv;
+    return JSIMD_RVV;
   }
 #elif SIMD_ARCHITECTURE == MIPS64
   if (cinfo->master->simd_support & JSIMD_MMI) {
@@ -1106,6 +1186,11 @@ jsimd_set_idct_islow(j_decompress_ptr cinfo)
     cinfo->idct->idct_simd = jsimd_idct_islow_altivec;
     return JSIMD_ALTIVEC;
   }
+#elif SIMD_ARCHITECTURE == RISCV64
+  if (cinfo->master->simd_support & JSIMD_RVV) {
+    cinfo->idct->idct_simd = jsimd_idct_islow_rvv;
+    return JSIMD_RVV;
+  }
 #elif SIMD_ARCHITECTURE == MIPS64
   if (cinfo->master->simd_support & JSIMD_MMI) {
     cinfo->idct->idct_simd = jsimd_idct_islow_mmi;
@@ -1166,6 +1251,11 @@ jsimd_set_idct_ifast(j_decompress_ptr cinfo)
   if (cinfo->master->simd_support & JSIMD_ALTIVEC) {
     cinfo->idct->idct_simd = jsimd_idct_ifast_altivec;
     return JSIMD_ALTIVEC;
+  }
+#elif SIMD_ARCHITECTURE == RISCV64
+  if (cinfo->master->simd_support & JSIMD_RVV) {
+    cinfo->idct->idct_simd = jsimd_idct_ifast_rvv;
+    return JSIMD_RVV;
   }
 #elif SIMD_ARCHITECTURE == MIPS64
   if (cinfo->master->simd_support & JSIMD_MMI) {

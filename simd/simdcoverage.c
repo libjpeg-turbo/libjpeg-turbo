@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025, D. R. Commander.
+ * Copyright (C) 2025-2026, D. R. Commander.
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the authors be held liable for any damages
@@ -37,6 +37,8 @@ static const char *instrset_name(int instrset) {
       return "SSE2";
     case JSIMD_NEON:
       return "Neon";
+    case JSIMD_RVV:
+      return "RVV";
     case JSIMD_ALTIVEC:
       return "AltiVec";
     case JSIMD_AVX2:

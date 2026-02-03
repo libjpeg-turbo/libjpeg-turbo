@@ -1,7 +1,9 @@
 /*
  * Copyright 2009 Pierre Ossman <ossman@cendio.se> for Cendio AB
- * Copyright (C) 2011, 2014, 2016, 2018, 2025, D. R. Commander.
+ * Copyright (C) 2011, 2014, 2016, 2018, 2025-2026, D. R. Commander.
  * Copyright (C) 2016-2017, Loongson Technology Corporation Limited, BeiJing.
+ * Copyright (C) 2025, Samsung Electronics Co., Ltd.
+ *                     Author:  Filip Wasil
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the authors be held liable for any damages
@@ -28,6 +30,7 @@
 #define ARM64    2
 #define ARM      3
 #define POWERPC  4
+#define RISCV64  5
 #define MIPS64   6
 
 /* Bitmask for supported SIMD instruction sets */
@@ -38,6 +41,7 @@
 #define JSIMD_SSE        0x04
 #define JSIMD_SSE2       0x08
 #define JSIMD_NEON       0x10
+#define JSIMD_RVV        0x20
 #define JSIMD_ALTIVEC    0x40
 #define JSIMD_AVX2       0x80
 #define JSIMD_MMI        0x100

@@ -54,6 +54,14 @@ could benefit from the DSPr2 SIMD extensions to near zero.  The DSPr2 SIMD
 extensions will continue to be maintained in the 3.1.x branch on a break/fix
 basis.
 
+6. Added RISC-V Vector (RVV) SIMD implementations of the colorspace conversion,
+chroma downsampling and upsampling, integer quantization and sample conversion,
+and integer DCT/IDCT algorithms.  When using the accurate integer DCT/IDCT
+algorithms, RGB-to-baseline JPEG compression is approximately 137-204% (avg.
+173%) faster relative to libjpeg-turbo 3.1.x, and baseline-to-RGB JPEG
+decompression is approximately 15-106% (avg. 65%) faster.  (Tested on a 1.6 GHz
+Ky X1 CPU.  Actual mileage may vary.)
+
 
 3.1.4
 =====
