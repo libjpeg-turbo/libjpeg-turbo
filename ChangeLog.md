@@ -14,6 +14,12 @@ decompressed image would be scaled down.
 available, to detect support for Neon and AltiVec instructions on AArch32 and
 PowerPC Linux, Android, and *BSD systems.
 
+3. Hardened the libjpeg API against hypothetical applications that may
+erroneously set one of the exposed quantization table values to 0 just before
+calling `jpeg_start_compress()`.  (This would never happen in a
+correctly-written program, because `jpeg_add_quant_table()` clamps all values
+less than 1.)
+
 
 3.1.3
 =====
