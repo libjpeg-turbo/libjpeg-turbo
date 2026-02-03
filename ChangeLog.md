@@ -120,6 +120,12 @@ in the same libjpeg instance.
 erroneously call `tjCompress*()` or `tjTransform()` with a reused JPEG
 destination buffer pointer while specifying a destination buffer size of 0.
 
+19. Hardened the libjpeg API against hypothetical applications that may
+erroneously set one of the exposed quantization table values to 0 just before
+calling `jpeg_start_compress()`.  (This would never happen in a
+correctly-written program, because `jpeg_add_quant_table()` clamps all values
+less than 1.)
+
 
 2.0.8 ESR
 =========
