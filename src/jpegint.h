@@ -7,7 +7,7 @@
  * Lossless JPEG Modifications:
  * Copyright (C) 1999, Ken Murchison.
  * libjpeg-turbo Modifications:
- * Copyright (C) 2015-2017, 2019, 2021-2022, 2024-2025, D. R. Commander.
+ * Copyright (C) 2015-2017, 2019, 2021-2022, 2024-2026, D. R. Commander.
  * Copyright (C) 2015, Google, Inc.
  * Copyright (C) 2021, Alex Richardson.
  * For conditions of distribution and use, see the accompanying README.ijg
@@ -103,7 +103,7 @@ struct jpeg_comp_master {
   unsigned int simd_huffman;
 
 #ifdef WITH_PROFILE
-  double start;
+  double start, total_start, total_elapsed;
   double cconvert_elapsed, cconvert_mpixels;
   double downsample_elapsed, downsample_msamples;
   double convsamp_elapsed, convsamp_msamples;
@@ -286,7 +286,8 @@ struct jpeg_decomp_master {
   unsigned int simd_huffman;
 
 #ifdef WITH_PROFILE
-  double start;
+  double start, total_start, total_elapsed;
+  double entropy_elapsed, entropy_mcoeffs;
   double idct_elapsed, idct_mcoeffs;
   double merged_upsample_elapsed, merged_upsample_mpixels;
   double upsample_elapsed, upsample_msamples;

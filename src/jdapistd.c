@@ -4,7 +4,7 @@
  * This file was part of the Independent JPEG Group's software:
  * Copyright (C) 1994-1996, Thomas G. Lane.
  * libjpeg-turbo Modifications:
- * Copyright (C) 2010, 2015-2020, 2022-2025, D. R. Commander.
+ * Copyright (C) 2010, 2015-2020, 2022-2026, D. R. Commander.
  * Copyright (C) 2015, Google, Inc.
  * For conditions of distribution and use, see the accompanying README.ijg
  * file.
@@ -30,6 +30,9 @@
 #include "jdmerge.h"
 #include "jdsample.h"
 #include "jmemsys.h"
+#ifdef WITH_PROFILE
+#include "tjutil.h"
+#endif
 
 #if BITS_IN_JSAMPLE == 8
 
@@ -631,7 +634,15 @@ _jpeg_skip_scanlines(j_decompress_ptr cinfo, JDIMENSION num_lines)
          */
         if (!cinfo->entropy->insufficient_data)
           cinfo->master->last_good_iMCU_row = cinfo->input_iMCU_row;
+#ifdef WITH_PROFILE
+        cinfo->master->start = getTime();
+#endif
         (*cinfo->entropy->decode_mcu) (cinfo, NULL);
+#ifdef WITH_PROFILE
+        cinfo->master->entropy_elapsed += getTime() - cinfo->master->start;
+        cinfo->master->entropy_mcoeffs +=
+          (double)cinfo->blocks_in_MCU * DCTSIZE2 / 1000000.;
+#endif
       }
     }
     cinfo->input_iMCU_row++;

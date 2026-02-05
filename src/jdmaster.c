@@ -24,6 +24,9 @@
 #include "jpeglib.h"
 #include "jpegapicomp.h"
 #include "jdmaster.h"
+#ifdef WITH_PROFILE
+#include "tjutil.h"
+#endif
 
 
 /*
@@ -882,6 +885,10 @@ GLOBAL(void)
 jinit_master_decompress(j_decompress_ptr cinfo)
 {
   my_master_ptr master = (my_master_ptr)cinfo->master;
+
+#ifdef WITH_PROFILE
+  master->pub.total_start = getTime();
+#endif
 
   master->pub.prepare_for_output_pass = prepare_for_output_pass;
   master->pub.finish_output_pass = finish_output_pass;

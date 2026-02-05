@@ -5,7 +5,7 @@
  * Copyright (C) 1994-1997, Thomas G. Lane.
  * libjpeg-turbo Modifications:
  * Copyright 2009 Pierre Ossman <ossman@cendio.se> for Cendio AB
- * Copyright (C) 2010, 2015-2016, 2019-2020, 2022-2025, D. R. Commander.
+ * Copyright (C) 2010, 2015-2016, 2019-2020, 2022-2026, D. R. Commander.
  * Copyright (C) 2015, 2020, Google, Inc.
  * For conditions of distribution and use, see the accompanying README.ijg
  * file.
@@ -108,12 +108,25 @@ decompress_onepass(j_decompress_ptr cinfo, _JSAMPIMAGE output_buf)
                 (size_t)(cinfo->blocks_in_MCU * sizeof(JBLOCK)));
       if (!cinfo->entropy->insufficient_data)
         cinfo->master->last_good_iMCU_row = cinfo->input_iMCU_row;
+#ifdef WITH_PROFILE
+      cinfo->master->start = getTime();
+#endif
       if (!(*cinfo->entropy->decode_mcu) (cinfo, coef->MCU_buffer)) {
         /* Suspension forced; update state counters and exit */
         coef->MCU_vert_offset = yoffset;
         coef->MCU_ctr = MCU_col_num;
+#ifdef WITH_PROFILE
+        cinfo->master->entropy_elapsed += getTime() - cinfo->master->start;
+        cinfo->master->entropy_mcoeffs +=
+          (double)cinfo->blocks_in_MCU * DCTSIZE2 / 1000000.;
+#endif
         return JPEG_SUSPENDED;
       }
+#ifdef WITH_PROFILE
+      cinfo->master->entropy_elapsed += getTime() - cinfo->master->start;
+      cinfo->master->entropy_mcoeffs +=
+        (double)cinfo->blocks_in_MCU * DCTSIZE2 / 1000000.;
+#endif
 
       /* Only perform the IDCT on blocks that are contained within the desired
        * cropping region.
@@ -244,12 +257,25 @@ consume_data(j_decompress_ptr cinfo)
       if (!cinfo->entropy->insufficient_data)
         cinfo->master->last_good_iMCU_row = cinfo->input_iMCU_row;
       /* Try to fetch the MCU. */
+#ifdef WITH_PROFILE
+      cinfo->master->start = getTime();
+#endif
       if (!(*cinfo->entropy->decode_mcu) (cinfo, coef->MCU_buffer)) {
         /* Suspension forced; update state counters and exit */
         coef->MCU_vert_offset = yoffset;
         coef->MCU_ctr = MCU_col_num;
+#ifdef WITH_PROFILE
+        cinfo->master->entropy_elapsed += getTime() - cinfo->master->start;
+        cinfo->master->entropy_mcoeffs +=
+          (double)cinfo->blocks_in_MCU * DCTSIZE2 / 1000000.;
+#endif
         return JPEG_SUSPENDED;
       }
+#ifdef WITH_PROFILE
+      cinfo->master->entropy_elapsed += getTime() - cinfo->master->start;
+      cinfo->master->entropy_mcoeffs +=
+        (double)cinfo->blocks_in_MCU * DCTSIZE2 / 1000000.;
+#endif
     }
     /* Completed an MCU row, but perhaps not an iMCU row */
     coef->MCU_ctr = 0;
