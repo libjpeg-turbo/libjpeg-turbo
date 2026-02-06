@@ -2711,6 +2711,10 @@ extern "C"
                             counter = sym2;
                             bit_buf >>= code_len;
                             num_bits -= code_len;
+                            if (code_len == 0)
+                            {
+                                TINFL_CR_RETURN_FOREVER(40, TINFL_STATUS_FAILED);
+                            }
                             if (counter & 256)
                                 break;
 
@@ -2734,6 +2738,10 @@ extern "C"
                             }
                             bit_buf >>= code_len;
                             num_bits -= code_len;
+                            if (code_len == 0)
+                            {
+                                TINFL_CR_RETURN_FOREVER(54, TINFL_STATUS_FAILED);
+                            }
 
                             pOut_buf_cur[0] = (mz_uint8)counter;
                             if (sym2 & 256)
