@@ -106,6 +106,7 @@ if [ "$PREFIX" = "@CMAKE_INSTALL_DEFAULT_PREFIX@" -a -h "$PREFIX/doc" ]; then
 	rm $PREFIX/doc 2>&1 || EXITSTATUS=-1
 fi
 rmdir $PREFIX 2>&1 || EXITSTATUS=-1
+rmdir /Library/Documentation/$PKGNAME/jna 2>&1 || EXITSTATUS=-1
 rmdir /Library/Documentation/$PKGNAME 2>&1 || EXITSTATUS=-1
 
 if [ -d $RECEIPT ]; then

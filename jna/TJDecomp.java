@@ -28,8 +28,8 @@
  */
 
 /*
- * This program demonstrates how to use the TurboJPEG Java API to approximate
- * the functionality of the IJG's djpeg program.  djpeg features that are not
+ * This program demonstrates how to use TurboJPEG/JNA to approximate the
+ * functionality of the IJG's djpeg program.  djpeg features that are not
  * covered:
  *
  * - OS/2 BMP, GIF, and Targa output file formats [legacy feature]
@@ -42,11 +42,13 @@
  */
 
 import java.io.*;
+import java.nio.*;
 import java.util.*;
-import org.libjpegturbo.turbojpeg.*;
+
+import com.sun.jna.*;
+import com.sun.jna.ptr.*;
 
 
-@SuppressWarnings("checkstyle:JavadocType")
 final class TJDecomp {
 
   private TJDecomp() {}
@@ -55,16 +57,16 @@ final class TJDecomp {
     new TJDecomp().getClass().getName();
 
 
-  private static boolean isCropped(java.awt.Rectangle cr) {
-    return (cr.x != 0 || cr.y != 0 || cr.width != 0 || cr.height != 0);
+  private static boolean isCropped(TJ.Region cr) {
+    return (cr.x != 0 || cr.y != 0 || cr.w != 0 || cr.h != 0);
   }
 
 
   private static String tjErrorMsg;
   private static int tjErrorCode = -1;
 
-  static void handleTJException(TJException e, int stopOnWarning)
-                                throws TJException {
+  static void handleTJException(TJ.Exception e, int stopOnWarning)
+                                throws TJ.Exception {
     String errorMsg = e.getMessage();
     int errorCode = e.getErrorCode();
 
@@ -80,10 +82,11 @@ final class TJDecomp {
   }
 
 
-  static void usage() {
-    TJScalingFactor[] scalingFactors = TJ.getScalingFactors();
-    int numScalingFactors = scalingFactors.length;
+  private static TJ.ScalingFactor[] scalingFactors;
+  private static int numScalingFactors = 0;
 
+
+  static void usage() {
     System.out.println("\nUSAGE: java [Java options] " + CLASS_NAME +
                        " [options] <JPEG image> <Output image>\n");
 
@@ -127,8 +130,8 @@ final class TJDecomp {
     System.out.println("    Scale the width/height of the JPEG image by a factor of M/N when");
     System.out.print("    decompressing it (M/N = ");
     for (int i = 0; i < numScalingFactors; i++) {
-      System.out.format("%d/%d", scalingFactors[i].getNum(),
-                        scalingFactors[i].getDenom());
+      System.out.format("%d/%d", scalingFactors[i].num,
+                        scalingFactors[i].denom);
       if (numScalingFactors == 2 && i != numScalingFactors - 1)
         System.out.print(" or ");
       else if (numScalingFactors > 2) {
@@ -165,12 +168,17 @@ final class TJDecomp {
       int colorspace, fastDCT = -1, fastUpsample = -1, maxMemory = -1,
         maxScans = -1, pixelFormat = TJ.PF_UNKNOWN, precision,
         stopOnWarning = -1, subsamp;
-      java.awt.Rectangle croppingRegion = TJ.UNCROPPED;
+      TJ.Region croppingRegion = TJ.UNCROPPED;
+      TJ.ScalingFactor scalingFactor = TJ.UNSCALED;
       String iccFilename = null;
-      TJScalingFactor scalingFactor = TJ.UNSCALED;
+      NativeLong jpegSize;
+      long sampleSize;
       int width, height;
-      byte[] jpegBuf, iccBuf = null;
-      Object dstBuf = null;
+      Pointer jpegBuf, dstBuf;
+      IntByReference numSF = new IntByReference();
+
+      scalingFactors = TJ.getScalingFactors(numSF);
+      numScalingFactors = numSF.getValue();
 
       for (i = 0; i < argv.length; i++) {
         if (matchArg(argv[i], "-crop", 2) && i < argv.length - 1) {
@@ -186,8 +194,8 @@ final class TJDecomp {
 
           if (tempWidth < 1 || tempHeight < 1 || tempX < 0 || tempY < 0)
             usage();
-          croppingRegion.width = tempWidth;
-          croppingRegion.height = tempHeight;
+          croppingRegion.w = tempWidth;
+          croppingRegion.h = tempHeight;
           croppingRegion.x = tempX;
           croppingRegion.y = tempY;
         } else if (matchArg(argv[i], "-dct", 2) && i < argv.length - 1) {
@@ -238,11 +246,10 @@ final class TJDecomp {
           if (tempNum < 1 || tempDenom < 1)
             usage();
 
-          TJScalingFactor[] scalingFactors = TJ.getScalingFactors();
-          for (int j = 0; j < scalingFactors.length; j++) {
+          for (int j = 0; j < numScalingFactors; j++) {
             if ((double)tempNum / (double)tempDenom ==
-                (double)scalingFactors[j].getNum() /
-                (double)scalingFactors[j].getDenom()) {
+                (double)scalingFactors[j].num /
+                (double)scalingFactors[j].denom) {
               scalingFactor = scalingFactors[j];
               match = true;  break;
             }
@@ -254,47 +261,58 @@ final class TJDecomp {
       if (i != argv.length - 2)
         usage();
 
-      try (TJDecompressor tjd = new TJDecompressor()) {
+      try (TJ.Handle tjInstance = new TJ.Handle(TJ.INIT_DECOMPRESS)) {
 
         if (stopOnWarning >= 0)
-          tjd.set(TJ.PARAM_STOPONWARNING, stopOnWarning);
+          TJ.set(tjInstance, TJ.PARAM_STOPONWARNING, stopOnWarning);
         if (fastUpsample >= 0)
-          tjd.set(TJ.PARAM_FASTUPSAMPLE, fastUpsample);
+          TJ.set(tjInstance, TJ.PARAM_FASTUPSAMPLE, fastUpsample);
         if (fastDCT >= 0)
-          tjd.set(TJ.PARAM_FASTDCT, fastDCT);
+          TJ.set(tjInstance, TJ.PARAM_FASTDCT, fastDCT);
         if (maxScans >= 0)
-          tjd.set(TJ.PARAM_SCANLIMIT, maxScans);
+          TJ.set(tjInstance, TJ.PARAM_SCANLIMIT, maxScans);
         if (maxMemory >= 0)
-          tjd.set(TJ.PARAM_MAXMEMORY, maxMemory);
+          TJ.set(tjInstance, TJ.PARAM_MAXMEMORY, maxMemory);
 
         File jpegFile = new File(argv[i++]);
-        int jpegSize;
         try (FileInputStream fis = new FileInputStream(jpegFile)) {
-          jpegSize = fis.available();
-          if (jpegSize < 1)
+          jpegSize = new NativeLong(fis.available());
+          if (jpegSize.longValue() < 1)
             throw new Exception("Input file contains no data");
-          jpegBuf = new byte[jpegSize];
-          fis.read(jpegBuf);
+          jpegBuf = new Memory(jpegSize.longValue());
+          fis.getChannel().read(jpegBuf.getByteBuffer(0,
+                                                      jpegSize.longValue()));
         }
 
         try {
-          tjd.setSourceImage(jpegBuf, jpegSize);
-        } catch (TJException e) { handleTJException(e, stopOnWarning); }
-        subsamp = tjd.get(TJ.PARAM_SUBSAMP);
-        width = tjd.get(TJ.PARAM_JPEGWIDTH);
-        height = tjd.get(TJ.PARAM_JPEGHEIGHT);
-        precision = tjd.get(TJ.PARAM_PRECISION);
-        colorspace = tjd.get(TJ.PARAM_COLORSPACE);
+          TJ.decompressHeader(tjInstance, jpegBuf, jpegSize);
+        } catch (TJ.Exception e) { handleTJException(e, stopOnWarning); }
+        subsamp = TJ.get(tjInstance, TJ.PARAM_SUBSAMP);
+        width = TJ.get(tjInstance, TJ.PARAM_JPEGWIDTH);
+        height = TJ.get(tjInstance, TJ.PARAM_JPEGHEIGHT);
+        precision = TJ.get(tjInstance, TJ.PARAM_PRECISION);
+        sampleSize = (precision <= 8 ? 1 : 2);
+        colorspace = TJ.get(tjInstance, TJ.PARAM_COLORSPACE);
 
         if (iccFilename != null) {
+          NativeLongByReference iccSize = new NativeLongByReference();
+          PointerByReference iccBuf = new PointerByReference();
+
           try {
-            iccBuf = tjd.getICCProfile();
-          } catch (TJException e) { handleTJException(e, stopOnWarning); }
-          if (iccBuf != null) {
-            File iccFile = new File(iccFilename);
-            try (FileOutputStream fos = new FileOutputStream(iccFile)) {
-              fos.write(iccBuf, 0, iccBuf.length);
+            try {
+              TJ.getICCProfile(tjInstance, iccBuf, iccSize);
+            } catch (TJ.Exception e) { handleTJException(e, stopOnWarning); }
+            if (iccBuf.getValue() != null) {
+              File iccFile = new File(iccFilename);
+              try (FileOutputStream fos = new FileOutputStream(iccFile)) {
+                Pointer iccPtr = iccBuf.getValue();
+                ByteBuffer bb =
+                  iccPtr.getByteBuffer(0, iccSize.getValue().longValue());
+                fos.getChannel().write(bb);
+              }
             }
+          } finally {
+            TJ.free(iccBuf.getValue());
           }
         }
 
@@ -307,43 +325,52 @@ final class TJDecomp {
             pixelFormat = TJ.PF_RGB;
         }
 
-        if (tjd.get(TJ.PARAM_LOSSLESS) == 0) {
-          tjd.setScalingFactor(scalingFactor);
-          width = scalingFactor.getScaled(width);
-          height = scalingFactor.getScaled(height);
+        if (TJ.get(tjInstance, TJ.PARAM_LOSSLESS) == 0) {
+          TJ.setScalingFactor(tjInstance, scalingFactor);
+          width = TJ.scaled(width, scalingFactor);
+          height = TJ.scaled(height, scalingFactor);
 
           if (isCropped(croppingRegion)) {
             int adjustment;
 
             if (subsamp == TJ.SAMP_UNKNOWN)
               throw new Exception("Could not determine subsampling level of JPEG image");
-            adjustment = croppingRegion.x %
-                         scalingFactor.getScaled(TJ.getMCUWidth(subsamp));
+            adjustment = croppingRegion.x % TJ.scaled(TJ.MCU_WIDTH[subsamp],
+                                                      scalingFactor);
             croppingRegion.x -= adjustment;
-            croppingRegion.width += adjustment;
-            tjd.setCroppingRegion(croppingRegion);
-            width = croppingRegion.width;
-            height = croppingRegion.height;
+            croppingRegion.w += adjustment;
+            TJ.setCroppingRegion(tjInstance, croppingRegion);
+            width = croppingRegion.w;
+            height = croppingRegion.h;
           }
         }
 
-        if (precision <= 8)
-          dstBuf = new byte[width * height * TJ.getPixelSize(pixelFormat)];
-        else
-          dstBuf = new short[width * height * TJ.getPixelSize(pixelFormat)];
+        dstBuf =
+          new Memory(width * height * TJ.PIXEL_SIZE[pixelFormat] * sampleSize);
 
         try {
           if (precision <= 8)
-            tjd.decompress8((byte[])dstBuf, 0, 0, 0, pixelFormat);
+            TJ.decompress8(tjInstance, jpegBuf, jpegSize, dstBuf, 0,
+                           pixelFormat);
           else if (precision <= 12)
-            tjd.decompress12((short[])dstBuf, 0, 0, 0, pixelFormat);
+            TJ.decompress12(tjInstance, jpegBuf, jpegSize, dstBuf, 0,
+                            pixelFormat);
           else
-            tjd.decompress16((short[])dstBuf, 0, 0, 0, pixelFormat);
-        } catch (TJException e) { handleTJException(e, stopOnWarning); }
+            TJ.decompress16(tjInstance, jpegBuf, jpegSize, dstBuf, 0,
+                            pixelFormat);
+        } catch (TJ.Exception e) { handleTJException(e, stopOnWarning); }
 
-        tjd.saveImage(argv[i], dstBuf, 0, 0, width, 0, height, pixelFormat);
+        if (precision <= 8)
+          TJ.saveImage8(tjInstance, argv[i], dstBuf, width, 0, height,
+                        pixelFormat);
+        else if (precision <= 12)
+          TJ.saveImage12(tjInstance, argv[i], dstBuf, width, 0, height,
+                         pixelFormat);
+        else
+          TJ.saveImage16(tjInstance, argv[i], dstBuf, width, 0, height,
+                         pixelFormat);
 
-      }  // try (tjd)
+      }  // try (tjInstance)
 
     } catch (Exception e) {
       e.printStackTrace();

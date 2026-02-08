@@ -16,7 +16,8 @@ onexit()
 runme()
 {
 	echo \*\*\* $* | sed "s@$EXEDIR@\$EXEDIR@g" | sed "s@$IMGDIR@\$IMGDIR@g" |
-		sed "s@$JAVA@\$JAVA@g" | sed "s@$OUTDIR@\$OUTDIR@g"
+		sed "s@$JAVA@\$JAVA@g" | sed "s@:@WITH_JNA@@@g" |
+		sed "s@$OUTDIR@\$OUTDIR@g"
 	"$@"
 }
 
@@ -27,7 +28,7 @@ JAVA="@Java_JAVA_EXECUTABLE@"
 if [ -z "$JAVA" ]; then
 	JAVA=java
 fi
-JAVAARGS="-cp $EXEDIR/java/turbojpeg.jar -Djava.library.path=$EXEDIR"
+JNAARGS="-cp $EXEDIR/jna/turbojpeg-jna.jar:@WITH_JNA@ -Djna.library.path=$EXEDIR"
 TJTRAN=$EXEDIR/tjtran
 JAVAARG=
 
@@ -38,9 +39,9 @@ mkdir -p $OUTDIR
 
 while [ $# -gt 0 ]; do
 	case "$1" in
-	-java)
-		JAVAARG=-java
-		TJTRAN="$JAVA $JAVAARGS TJTran"
+	-jna)
+		JAVAARG=-jna
+		TJTRAN="$JAVA $JNAARGS TJTran"
 		;;
 	esac
 	shift

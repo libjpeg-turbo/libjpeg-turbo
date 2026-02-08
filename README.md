@@ -12,8 +12,7 @@ performance of libjpeg-turbo rivals that of proprietary high-speed JPEG codecs.
 libjpeg-turbo implements both the traditional libjpeg API as well as the less
 powerful but more straightforward TurboJPEG API.  libjpeg-turbo also features
 colorspace extensions that allow it to compress from/decompress to 32-bit and
-big-endian pixel buffers (RGBX, XBGR, etc.), as well as a full-featured Java
-interface.
+big-endian pixel buffers (RGBX, XBGR, etc.)
 
 libjpeg-turbo was originally based on libjpeg/SIMD, an MMX-accelerated
 derivative of libjpeg v6b developed by Miyasaka Masaru.  The TigerVNC and
@@ -66,12 +65,11 @@ JPEG images:
   JPEG images in memory.  It also provides some functionality that would not be
   straightforward to achieve using the underlying libjpeg API, such as
   generating planar YUV images and performing multiple simultaneous lossless
-  transforms on an image.  The Java interface for libjpeg-turbo is written on
-  top of the TurboJPEG API.  The TurboJPEG API is recommended for first-time
+  transforms on an image.  The TurboJPEG API is recommended for first-time
   users of libjpeg-turbo.  Refer to [tjcomp.c](src/tjcomp.c),
   [tjdecomp.c](src/tjdecomp.c), [tjtran.c](src/tjtran.c),
-  [TJComp.java](java/TJComp.java), [TJDecomp.java](java/TJDecomp.java), and
-  [TJTran.java](java/TJTran.java) for examples of its usage and to
+  [TJComp.java](jna/TJComp.java), [TJDecomp.java](jna/TJDecomp.java), and
+  [TJTran.java](jna/TJTran.java) for examples of its usage and to
   <https://libjpeg-turbo.org/Documentation/Documentation> for API
   documentation.
 

@@ -28,9 +28,9 @@
  */
 
 /*
- * This program demonstrates how to use the TurboJPEG Java API to approximate
- * the functionality of the IJG's jpegtran program.  jpegtran features that are
- * not covered:
+ * This program demonstrates how to use TurboJPEG/JNA to approximate the
+ * functionality of the IJG's jpegtran program.  jpegtran features that are not
+ * covered:
  *
  * - Scan scripts
  * - Expanding the input image when cropping
@@ -42,11 +42,13 @@
  */
 
 import java.io.*;
+import java.nio.*;
 import java.util.*;
-import org.libjpegturbo.turbojpeg.*;
+
+import com.sun.jna.*;
+import com.sun.jna.ptr.*;
 
 
-@SuppressWarnings("checkstyle:JavadocType")
 final class TJTran {
 
   private TJTran() {}
@@ -55,8 +57,28 @@ final class TJTran {
     new TJTran().getClass().getName();
 
 
-  private static boolean isCropped(java.awt.Rectangle cr) {
-    return (cr.x != 0 || cr.y != 0 || cr.width != 0 || cr.height != 0);
+  private static boolean isCropped(TJ.Region cr) {
+    return (cr.x != 0 || cr.y != 0 || cr.w != 0 || cr.h != 0);
+  }
+
+
+  private static String tjErrorMsg;
+  private static int tjErrorCode = -1;
+
+  static void handleTJException(TJ.Exception e, int stopOnWarning)
+                                throws TJ.Exception {
+    String errorMsg = e.getMessage();
+    int errorCode = e.getErrorCode();
+
+    if (stopOnWarning != 1 && errorCode == TJ.ERR_WARNING) {
+      if (tjErrorMsg == null || !tjErrorMsg.equals(errorMsg) ||
+          tjErrorCode != errorCode) {
+        tjErrorMsg = errorMsg;
+        tjErrorCode = errorCode;
+        System.out.println("WARNING: " + errorMsg);
+      }
+    } else
+      throw e;
   }
 
 
@@ -139,19 +161,22 @@ final class TJTran {
 
   public static void main(String[] argv) {
     int exitStatus = 0;
+    TJ.PointerReference[] dstBuf =
+      (TJ.PointerReference[])(new TJ.PointerReference().toArray(1));
 
     try {
 
       int i;
       int arithmetic = 0, maxMemory = -1, maxScans = -1, optimize = -1,
         progressive = 0, restartIntervalBlocks = -1, restartIntervalRows = -1,
-        saveMarkers = 1, subsamp;
-      TJTransform[] xform = new TJTransform[1];
-      xform[0] = new TJTransform();
+        saveMarkers = 1, stopOnWarning = -1, subsamp;
+      TJ.Transform[] xform = (TJ.Transform[])(new TJ.Transform().toArray(1));
       String iccFilename = null;
-      byte[] srcBuf, iccBuf;
+      NativeLong srcSize;
+      TJ.NativeLongReference[] dstSize =
+        (TJ.NativeLongReference[])(new TJ.NativeLongReference().toArray(1));
+      Pointer srcBuf, iccBuf;
       int iccSize = 0;
-      byte[][] dstBuf;
 
       for (i = 0; i < argv.length; i++) {
         if (matchArg(argv[i], "-arithmetic", 2))
@@ -169,11 +194,11 @@ final class TJTran {
 
           if (tempWidth < 1 || tempHeight < 1 || tempX < 0 || tempY < 0)
             usage();
-          xform[0].options |= TJTransform.OPT_CROP;
-          xform[0].width = tempWidth;
-          xform[0].height = tempHeight;
-          xform[0].x = tempX;
-          xform[0].y = tempY;
+          xform[0].options |= TJ.XOPT_CROP;
+          xform[0].r.w = tempWidth;
+          xform[0].r.h = tempHeight;
+          xform[0].r.x = tempX;
+          xform[0].r.y = tempY;
         } else if (matchArg(argv[i], "-copy", 2) && i < argv.length - 1) {
           i++;
           if (matchArg(argv[i], "all", 1))
@@ -187,14 +212,14 @@ final class TJTran {
         } else if (matchArg(argv[i], "-flip", 2) && i < argv.length - 1) {
           i++;
           if (matchArg(argv[i], "horizontal", 1))
-            xform[0].op = TJTransform.OP_HFLIP;
+            xform[0].op = TJ.XOP_HFLIP;
           else if (matchArg(argv[i], "vertical", 1))
-            xform[0].op = TJTransform.OP_VFLIP;
+            xform[0].op = TJ.XOP_VFLIP;
           else
             usage();
         } else if (matchArg(argv[i], "-grayscale", 2) ||
                    matchArg(argv[i], "-greyscale", 2))
-          xform[0].options |= TJTransform.OPT_GRAY;
+          xform[0].options |= TJ.XOPT_GRAY;
         else if (matchArg(argv[i], "-icc", 2) && i < argv.length - 1)
           iccFilename = argv[++i];
         else if (matchArg(argv[i], "-maxscans", 5) && i < argv.length - 1) {
@@ -219,17 +244,17 @@ final class TJTran {
                    matchArg(argv[i], "-optimise", 2))
           optimize = 1;
         else if (matchArg(argv[i], "-perfect", 3))
-          xform[0].options |= TJTransform.OPT_PERFECT;
+          xform[0].options |= TJ.XOPT_PERFECT;
         else if (matchArg(argv[i], "-progressive", 2))
           progressive = 1;
         else if (matchArg(argv[i], "-rotate", 3) && i < argv.length - 1) {
           i++;
           if (matchArg(argv[i], "90", 2))
-            xform[0].op = TJTransform.OP_ROT90;
+            xform[0].op = TJ.XOP_ROT90;
           else if (matchArg(argv[i], "180", 3))
-            xform[0].op = TJTransform.OP_ROT180;
+            xform[0].op = TJ.XOP_ROT180;
           else if (matchArg(argv[i], "270", 3))
-            xform[0].op = TJTransform.OP_ROT270;
+            xform[0].op = TJ.XOP_ROT270;
           else
             usage();
         } else if (matchArg(argv[i], "-restart", 2) && i < argv.length - 1) {
@@ -248,11 +273,11 @@ final class TJTran {
           else
             restartIntervalRows = temp;
         } else if (matchArg(argv[i], "-transverse", 7))
-          xform[0].op = TJTransform.OP_TRANSVERSE;
+          xform[0].op = TJ.XOP_TRANSVERSE;
         else if (matchArg(argv[i], "-trim", 4))
-          xform[0].options |= TJTransform.OPT_TRIM;
+          xform[0].options |= TJ.XOPT_TRIM;
         else if (matchArg(argv[i], "-transpose", 2))
-          xform[0].op = TJTransform.OP_TRANSPOSE;
+          xform[0].op = TJ.XOP_TRANSPOSE;
         else break;
       }
 
@@ -264,38 +289,38 @@ final class TJTran {
         else if (saveMarkers == 4) saveMarkers = 0;
       }
 
-      try (TJTransformer tjt = new TJTransformer()) {
+      try (TJ.Handle tjInstance = new TJ.Handle(TJ.INIT_TRANSFORM)) {
 
         if (optimize >= 0)
-          tjt.set(TJ.PARAM_OPTIMIZE, optimize);
+          TJ.set(tjInstance, TJ.PARAM_OPTIMIZE, optimize);
         if (maxScans >= 0)
-          tjt.set(TJ.PARAM_SCANLIMIT, maxScans);
+          TJ.set(tjInstance, TJ.PARAM_SCANLIMIT, maxScans);
         if (restartIntervalBlocks >= 0)
-          tjt.set(TJ.PARAM_RESTARTBLOCKS, restartIntervalBlocks);
+          TJ.set(tjInstance, TJ.PARAM_RESTARTBLOCKS, restartIntervalBlocks);
         if (restartIntervalRows >= 0)
-          tjt.set(TJ.PARAM_RESTARTROWS, restartIntervalRows);
+          TJ.set(tjInstance, TJ.PARAM_RESTARTROWS, restartIntervalRows);
         if (maxMemory >= 0)
-          tjt.set(TJ.PARAM_MAXMEMORY, maxMemory);
-        tjt.set(TJ.PARAM_SAVEMARKERS, saveMarkers);
+          TJ.set(tjInstance, TJ.PARAM_MAXMEMORY, maxMemory);
+        TJ.set(tjInstance, TJ.PARAM_SAVEMARKERS, saveMarkers);
 
         File inFile = new File(argv[i++]);
-        int srcSize;
         try (FileInputStream fis = new FileInputStream(inFile)) {
-          srcSize = fis.available();
-          if (srcSize < 1)
+          srcSize = new NativeLong(fis.available());
+          if (srcSize.longValue() < 1)
             throw new Exception("Input file contains no data");
-          srcBuf = new byte[srcSize];
-          fis.read(srcBuf);
+          srcBuf = new Memory(srcSize.longValue());
+          fis.getChannel().read(srcBuf.getByteBuffer(0, srcSize.longValue()));
         }
 
-        tjt.setSourceImage(srcBuf, srcSize);
-        subsamp = tjt.get(TJ.PARAM_SUBSAMP);
-        if ((xform[0].options & TJTransform.OPT_GRAY) != 0)
+        try {
+          TJ.decompressHeader(tjInstance, srcBuf, srcSize);
+        } catch (TJ.Exception e) { handleTJException(e, stopOnWarning); }
+        subsamp = TJ.get(tjInstance, TJ.PARAM_SUBSAMP);
+        if ((xform[0].options & TJ.XOPT_GRAY) != 0)
           subsamp = TJ.SAMP_GRAY;
-        if (xform[0].op == TJTransform.OP_TRANSPOSE ||
-            xform[0].op == TJTransform.OP_TRANSVERSE ||
-            xform[0].op == TJTransform.OP_ROT90 ||
-            xform[0].op == TJTransform.OP_ROT270) {
+        if (xform[0].op == TJ.XOP_TRANSPOSE ||
+            xform[0].op == TJ.XOP_TRANSVERSE ||
+            xform[0].op == TJ.XOP_ROT90 || xform[0].op == TJ.XOP_ROT270) {
           if (subsamp == TJ.SAMP_422)
             subsamp = TJ.SAMP_440;
           else if (subsamp == TJ.SAMP_440)
@@ -307,21 +332,21 @@ final class TJTran {
         }
 
         if (progressive >= 0)
-          tjt.set(TJ.PARAM_PROGRESSIVE, progressive);
+          TJ.set(tjInstance, TJ.PARAM_PROGRESSIVE, progressive);
         if (arithmetic >= 0)
-          tjt.set(TJ.PARAM_ARITHMETIC, arithmetic);
+          TJ.set(tjInstance, TJ.PARAM_ARITHMETIC, arithmetic);
 
-        if (isCropped(xform[0])) {
+        if (isCropped(xform[0].r)) {
           int xAdjust, yAdjust;
 
           if (subsamp == TJ.SAMP_UNKNOWN)
             throw new Exception("Could not determine subsampling level of input image");
-          xAdjust = xform[0].x % TJ.getMCUWidth(subsamp);
-          yAdjust = xform[0].y % TJ.getMCUHeight(subsamp);
-          xform[0].x -= xAdjust;
-          xform[0].width += xAdjust;
-          xform[0].y -= yAdjust;
-          xform[0].height += yAdjust;
+          xAdjust = xform[0].r.x % TJ.MCU_WIDTH[subsamp];
+          yAdjust = xform[0].r.y % TJ.MCU_HEIGHT[subsamp];
+          xform[0].r.x -= xAdjust;
+          xform[0].r.w += xAdjust;
+          xform[0].r.y -= yAdjust;
+          xform[0].r.h += yAdjust;
         }
 
         if (iccFilename != null) {
@@ -330,24 +355,29 @@ final class TJTran {
             iccSize = fis.available();
             if (iccSize < 1)
               throw new Exception("ICC profile contains no data");
-            iccBuf = new byte[iccSize];
-            fis.read(iccBuf);
+            iccBuf = new Memory(iccSize);
+            fis.getChannel().read(iccBuf.getByteBuffer(0, iccSize));
           }
-          tjt.setICCProfile(iccBuf);
+          TJ.setICCProfile(tjInstance, iccBuf, new NativeLong(iccSize));
         }
 
-        TJDecompressor[] tjd = tjt.transform(xform);
+        try {
+          TJ.transform(tjInstance, srcBuf, srcSize, 1, dstBuf, dstSize, xform);
+        } catch (TJ.Exception e) { handleTJException(e, stopOnWarning); }
 
-        File outFile = new File(argv[i]);
-        try (FileOutputStream fos = new FileOutputStream(outFile)) {
-          fos.write(tjd[0].getJPEGBuf(), 0, tjd[0].getJPEGSize());
-        }
+      }  // try (tjInstance)
 
-      }  // try (tjt)
-
+      File outFile = new File(argv[i]);
+      try (FileOutputStream fos = new FileOutputStream(outFile)) {
+        ByteBuffer bb =
+          dstBuf[0].pointer.getByteBuffer(0, dstSize[0].value.longValue());
+        fos.getChannel().write(bb);
+      }
     } catch (Exception e) {
       e.printStackTrace();
       exitStatus = -1;
+    } finally {
+      TJ.free(dstBuf[0].pointer);
     }
 
     System.exit(exitStatus);

@@ -25,7 +25,7 @@ IMGDIR=@CMAKE_SOURCE_DIR@/testimages
 OUTDIR=`mktemp -d /tmp/__tjbenchtest_output.XXXXXX`
 EXEDIR=@CMAKE_BINARY_DIR@
 JAVA="@Java_JAVA_EXECUTABLE@"
-JAVAARGS="-cp $EXEDIR/java/turbojpeg.jar -Djava.library.path=$EXEDIR"
+JNAARGS="-cp $EXEDIR/jna/turbojpeg-jna.jar:@WITH_JNA@ -Djna.library.path=$EXEDIR"
 TJBENCH=$EXEDIR/tjbench
 BMPARG=
 NSARG=
@@ -76,9 +76,9 @@ while [ $# -gt 0 ]; do
 		ALLOCARG=-alloc
 		ALLOC=1
 		;;
-	-java)
-		JAVAARG=-java
-		TJBENCH="$JAVA $JAVAARGS TJBench"
+	-jna)
+		JAVAARG=-jna
+		TJBENCH="$JAVA $JNAARGS TJBench"
 		;;
 	-optimize)
 		ENTROPYARG=-optimize

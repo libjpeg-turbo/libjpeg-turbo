@@ -62,6 +62,43 @@ algorithms, RGB-to-baseline JPEG compression is approximately 131-221% (avg.
 decompression is approximately 29-144% (avg. 87%) faster.  (Tested on a 1.6 GHz
 Ky X1 CPU.  Actual mileage may vary.)
 
+7. The TurboJPEG Java API has been moved to a
+[dedicated repository](https://github.com/libjpeg-turbo/turbojpeg-java) where
+it can evolve independently of the TurboJPEG C API, based on demand.
+Justifications:
+
+     - The TurboJPEG Java API was designed around the needs of Java Web Start,
+an obsolete "zero-install" method of Java application deployment.  The idea was
+that JWS applications could be deployed along with JAR files containing the
+TurboJPEG Java API and TurboJPEG API library, which contained Java Native
+Interface (JNI) bindings to support the former.  It made sense for our project
+to package those resources so downstream developers could easily sign and
+deploy them via JWS.  These days, however, Java applications are more
+frequently deployed as standalone applications.
+     - The TurboJPEG Java API was designed at a time when libjpeg-turbo was not
+ubiquitous and JNA was nascent.  These days, libjpeg-turbo is used by most
+operating systems, so there is less of a need for us to package an end-to-end
+solution for high-speed JPEG support in Java.
+     - The Java-friendly design of the TurboJPEG Java API (specifically, the
+requirement that it work directly with Java arrays rather than NIO buffers)
+necessitated allocating all buffers on the Java heap in order to avoid buffer
+copies.  That necessitated using fixed-size JPEG buffers (the equivalent of
+`TJPARAM_NOREALLOC`), which meant that all JPEG buffers had to be big enough to
+account for the size of the ICC profile and the possibility of zero
+compression.  Some of the proposed new TurboJPEG API features would have been
+impossible to implement in the TurboJPEG Java API without completely
+redesigning it.
+     - The Java-friendly design of the TurboJPEG Java API made it
+more difficult to maintain, document, and extend than the C API, which reduced
+our ability to add needed features in a timely manner.
+
+    Example code (TurboJPEG/JNA) demonstrating how to use the TurboJPEG C API
+through Java Native Access (JNA) has been added to the source tree and can be
+built, tested, and installed by setting the `WITH_JNA` CMake variable.
+TurboJPEG/JNA generally performs as well as the TurboJPEG C API, whereas
+compressing JPEG images with the TurboJPEG Java API was slower on some
+platforms.
+
 
 3.1.4
 =====

@@ -246,12 +246,13 @@ option(WITH_ARITH_ENC
   TRUE)
 boolean_number(WITH_ARITH_ENC)
 if(CMAKE_C_COMPILER_ABI MATCHES "ELF X32")
-  set(WITH_JAVA 0)
+  unset(WITH_JNA)
 else()
-  option(WITH_JAVA
-    "Build TurboJPEG Java API and JNI wrapper for the TurboJPEG API library (implies ENABLE_SHARED=1 and WITH_TURBOJPEG=1)"
-    FALSE)
-  boolean_number(WITH_JAVA)
+  set(WITH_JNA "" CACHE PATH
+    "Build TurboJPEG Java Native Access interfaces (TurboJPEG/JNA) using the specified JNA JAR path (implies ENABLE_SHARED=1 and WITH_TURBOJPEG=1)")
+  if(WITH_JNA AND NOT EXISTS ${WITH_JNA})
+    message(FATAL_ERROR "${WITH_JNA} does not exist.")
+  endif()
 endif()
 option(WITH_JPEG7
   "Emulate libjpeg v7 API/ABI (this makes ${CMAKE_PROJECT_NAME} backward-incompatible with libjpeg v6b)"
@@ -283,13 +284,19 @@ option(WITH_PROFILE "Enable low-level JPEG algorithm performance profiling (usef
 
 macro(report_option var desc)
   if(${var})
-    message(STATUS "${desc} enabled (${var} = ${${var}})")
+    set(ENABLED enabled)
   else()
-    message(STATUS "${desc} disabled (${var} = ${${var}})")
+    set(ENABLED disabled)
   endif()
+  set(OPTION_REPORT "${desc} ${ENABLED} (${var} = ${${var}})")
+  string(LENGTH ${OPTION_REPORT} OPTION_REPORT_LENGTH)
+  if(OPTION_REPORT_LENGTH GREATER 76)
+    set(OPTION_REPORT "${desc} ${ENABLED}\n   (${var} = ${${var}})")
+  endif()
+  message(STATUS "${OPTION_REPORT}")
 endmacro()
 
-if(WITH_JAVA)
+if(WITH_JNA)
   set(ENABLE_SHARED 1)
   set(WITH_TURBOJPEG 1)
 endif()
@@ -327,7 +334,7 @@ endif()
 report_option(WITH_ARITH_ENC "Arithmetic encoding support")
 
 report_option(WITH_TURBOJPEG "TurboJPEG API library")
-report_option(WITH_JAVA "TurboJPEG Java API")
+report_option(WITH_JNA "TurboJPEG Java Native Access interfaces (TurboJPEG/JNA)")
 report_option(WITH_TOOLS "Command-line tools")
 report_option(WITH_TESTS "Regression tests")
 
@@ -710,8 +717,8 @@ if(WITH_SIMD)
   set(SIMD_TARGET_OBJECTS $<TARGET_OBJECTS:simd>)
 endif()
 
-if(WITH_JAVA)
-  add_subdirectory(java)
+if(WITH_JNA)
+  add_subdirectory(jna)
 endif()
 
 if(ENABLE_SHARED)
@@ -735,11 +742,6 @@ if(WITH_TURBOJPEG)
     src/wrapper/wrppm-8.c src/wrapper/wrppm-12.c src/wrapper/wrppm-16.c)
   if(ENABLE_SHARED)
     set(TJMAPFILE ${CMAKE_CURRENT_SOURCE_DIR}/src/turbojpeg-mapfile)
-    if(WITH_JAVA)
-      set(TURBOJPEG_SOURCES ${TURBOJPEG_SOURCES} java/turbojpeg-jni.c)
-      include_directories(${JAVA_INCLUDE_PATH} ${JAVA_INCLUDE_PATH2})
-      set(TJMAPFILE ${CMAKE_CURRENT_SOURCE_DIR}/src/turbojpeg-mapfile.jni)
-    endif()
     if(MSVC_LIKE)
       configure_file(${CMAKE_SOURCE_DIR}/win/turbojpeg.rc.in
         ${CMAKE_BINARY_DIR}/win/turbojpeg.rc)
@@ -891,55 +893,62 @@ endif()
 
 enable_testing()
 
-if(WITH_JAVA)
+if(WITH_JNA)
   add_test(NAME TJUnitTest
-    COMMAND ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
-      -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
-      TJUnitTest)
+    COMMAND ${Java_JAVA_EXECUTABLE} ${JAVAARGS}
+      -Djna.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
+      -cp jna/turbojpeg-jna.jar:${WITH_JNA} TJUnitTest)
+  add_test(NAME TJUnitTest-alloc
+    COMMAND ${Java_JAVA_EXECUTABLE} ${JAVAARGS}
+      -Djna.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
+      -cp jna/turbojpeg-jna.jar:${WITH_JNA} TJUnitTest -alloc)
   add_test(NAME TJUnitTest-yuv
-    COMMAND ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
-      -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
-      TJUnitTest -yuv)
+    COMMAND ${Java_JAVA_EXECUTABLE} ${JAVAARGS}
+      -Djna.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
+      -cp jna/turbojpeg-jna.jar:${WITH_JNA} TJUnitTest -yuv)
+  add_test(NAME TJUnitTest-yuv-alloc
+    COMMAND ${Java_JAVA_EXECUTABLE} ${JAVAARGS}
+      -Djna.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
+      -cp jna/turbojpeg-jna.jar:${WITH_JNA} TJUnitTest -yuv -alloc)
   add_test(NAME TJUnitTest-yuv-nopad
-    COMMAND ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
-      -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
-      TJUnitTest -yuv -noyuvpad)
+    COMMAND ${Java_JAVA_EXECUTABLE} ${JAVAARGS}
+      -Djna.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
+      -cp jna/turbojpeg-jna.jar:${WITH_JNA} TJUnitTest -yuv -noyuvpad)
   add_test(NAME TJUnitTest-lossless
-    COMMAND ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
-      -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
-      TJUnitTest -lossless)
-  add_test(NAME TJUnitTest-bi
-    COMMAND ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
-      -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
-      TJUnitTest -bi)
-  add_test(NAME TJUnitTest-bi-yuv
-    COMMAND ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
-      -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
-      TJUnitTest -bi -yuv)
-  add_test(NAME TJUnitTest-bi-yuv-nopad
-    COMMAND ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
-      -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
-      TJUnitTest -bi -yuv -noyuvpad)
-  add_test(NAME TJUnitTest-bi-lossless
-    COMMAND ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
-      -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
-      TJUnitTest -bi -lossless)
+    COMMAND ${Java_JAVA_EXECUTABLE} ${JAVAARGS}
+      -Djna.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
+      -cp jna/turbojpeg-jna.jar:${WITH_JNA} TJUnitTest -lossless)
+  add_test(NAME TJUnitTest-lossless-alloc
+    COMMAND ${Java_JAVA_EXECUTABLE} ${JAVAARGS}
+      -Djna.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
+      -cp jna/turbojpeg-jna.jar:${WITH_JNA} TJUnitTest -lossless -alloc)
   add_test(NAME TJUnitTest-bmp
-    COMMAND ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
-      -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
-      TJUnitTest -bmp)
+    COMMAND ${Java_JAVA_EXECUTABLE} ${JAVAARGS}
+      -Djna.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
+      -cp jna/turbojpeg-jna.jar:${WITH_JNA} TJUnitTest -bmp)
   add_test(NAME TJUnitTest12
-    COMMAND ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
-      -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
-      TJUnitTest -precision 12)
+    COMMAND ${Java_JAVA_EXECUTABLE} ${JAVAARGS}
+      -Djna.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
+      -cp jna/turbojpeg-jna.jar:${WITH_JNA} TJUnitTest -precision 12)
+  add_test(NAME TJUnitTest12-alloc
+    COMMAND ${Java_JAVA_EXECUTABLE} ${JAVAARGS}
+      -Djna.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
+      -cp jna/turbojpeg-jna.jar:${WITH_JNA} TJUnitTest -precision 12 -alloc)
   foreach(sample_bits 2 3 4 5 6 7 9 10 11 12 13 14 15 16)
     add_test(NAME TJUnitTest${sample_bits}-lossless
-      COMMAND ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
-        -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
+      COMMAND ${Java_JAVA_EXECUTABLE} ${JAVAARGS}
+        -Djna.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
+        -cp jna/turbojpeg-jna.jar:${WITH_JNA}
         TJUnitTest -precision ${sample_bits} -lossless)
+    add_test(NAME TJUnitTest${sample_bits}-lossless-alloc
+      COMMAND ${Java_JAVA_EXECUTABLE} ${JAVAARGS}
+        -Djna.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
+        -cp jna/turbojpeg-jna.jar:${WITH_JNA}
+        TJUnitTest -precision ${sample_bits} -lossless -alloc)
     add_test(NAME TJUnitTest${sample_bits}-bmp
-      COMMAND ${Java_JAVA_EXECUTABLE} ${JAVAARGS} -cp java/turbojpeg.jar
-        -Djava.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
+      COMMAND ${Java_JAVA_EXECUTABLE} ${JAVAARGS}
+        -Djna.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
+        -cp jna/turbojpeg-jna.jar:${WITH_JNA}
         TJUnitTest -precision ${sample_bits} -bmp)
   endforeach()
 endif()
@@ -1767,44 +1776,44 @@ if(WITH_TURBOJPEG)
   if(WIN32)
     set(BASH bash)
   endif()
-  add_custom_target(tjtest COMMAND ${CMAKE_COMMAND} -DWITH_JAVA=${WITH_JAVA}
+  add_custom_target(tjtest COMMAND ${CMAKE_COMMAND} -DWITH_JNA=${WITH_JNA}
     -DPRECISION=8 -P ${CMAKE_SOURCE_DIR}/cmakescripts/tjbenchtest.cmake
     DEPENDS ${CMAKE_SOURCE_DIR}/cmakescripts/tjbenchtest.cmake
       ${CMAKE_CURRENT_BINARY_DIR}/test/tjbenchtest)
-  add_custom_target(tjtest12 COMMAND ${CMAKE_COMMAND} -DWITH_JAVA=${WITH_JAVA}
+  add_custom_target(tjtest12 COMMAND ${CMAKE_COMMAND} -DWITH_JNA=${WITH_JNA}
     -DPRECISION=12 -P ${CMAKE_SOURCE_DIR}/cmakescripts/tjbenchtest.cmake
     DEPENDS ${CMAKE_SOURCE_DIR}/cmakescripts/tjbenchtest.cmake
       ${CMAKE_CURRENT_BINARY_DIR}/test/tjbenchtest)
-  add_custom_target(tjtest16 COMMAND ${CMAKE_COMMAND} -DWITH_JAVA=${WITH_JAVA}
+  add_custom_target(tjtest16 COMMAND ${CMAKE_COMMAND} -DWITH_JNA=${WITH_JNA}
     -DPRECISION=2 -P ${CMAKE_SOURCE_DIR}/cmakescripts/tjbenchtest.cmake
-    COMMAND ${CMAKE_COMMAND} -DWITH_JAVA=${WITH_JAVA}
+    COMMAND ${CMAKE_COMMAND} -DWITH_JNA=${WITH_JNA}
     -DPRECISION=3 -P ${CMAKE_SOURCE_DIR}/cmakescripts/tjbenchtest.cmake
-    COMMAND ${CMAKE_COMMAND} -DWITH_JAVA=${WITH_JAVA}
+    COMMAND ${CMAKE_COMMAND} -DWITH_JNA=${WITH_JNA}
     -DPRECISION=4 -P ${CMAKE_SOURCE_DIR}/cmakescripts/tjbenchtest.cmake
-    COMMAND ${CMAKE_COMMAND} -DWITH_JAVA=${WITH_JAVA}
+    COMMAND ${CMAKE_COMMAND} -DWITH_JNA=${WITH_JNA}
     -DPRECISION=5 -P ${CMAKE_SOURCE_DIR}/cmakescripts/tjbenchtest.cmake
-    COMMAND ${CMAKE_COMMAND} -DWITH_JAVA=${WITH_JAVA}
+    COMMAND ${CMAKE_COMMAND} -DWITH_JNA=${WITH_JNA}
     -DPRECISION=6 -P ${CMAKE_SOURCE_DIR}/cmakescripts/tjbenchtest.cmake
-    COMMAND ${CMAKE_COMMAND} -DWITH_JAVA=${WITH_JAVA}
+    COMMAND ${CMAKE_COMMAND} -DWITH_JNA=${WITH_JNA}
     -DPRECISION=7 -P ${CMAKE_SOURCE_DIR}/cmakescripts/tjbenchtest.cmake
-    COMMAND ${CMAKE_COMMAND} -DWITH_JAVA=${WITH_JAVA}
+    COMMAND ${CMAKE_COMMAND} -DWITH_JNA=${WITH_JNA}
     -DPRECISION=9 -P ${CMAKE_SOURCE_DIR}/cmakescripts/tjbenchtest.cmake
-    COMMAND ${CMAKE_COMMAND} -DWITH_JAVA=${WITH_JAVA}
+    COMMAND ${CMAKE_COMMAND} -DWITH_JNA=${WITH_JNA}
     -DPRECISION=10 -P ${CMAKE_SOURCE_DIR}/cmakescripts/tjbenchtest.cmake
-    COMMAND ${CMAKE_COMMAND} -DWITH_JAVA=${WITH_JAVA}
+    COMMAND ${CMAKE_COMMAND} -DWITH_JNA=${WITH_JNA}
     -DPRECISION=11 -P ${CMAKE_SOURCE_DIR}/cmakescripts/tjbenchtest.cmake
-    COMMAND ${CMAKE_COMMAND} -DWITH_JAVA=${WITH_JAVA}
+    COMMAND ${CMAKE_COMMAND} -DWITH_JNA=${WITH_JNA}
     -DPRECISION=13 -P ${CMAKE_SOURCE_DIR}/cmakescripts/tjbenchtest.cmake
-    COMMAND ${CMAKE_COMMAND} -DWITH_JAVA=${WITH_JAVA}
+    COMMAND ${CMAKE_COMMAND} -DWITH_JNA=${WITH_JNA}
     -DPRECISION=14 -P ${CMAKE_SOURCE_DIR}/cmakescripts/tjbenchtest.cmake
-    COMMAND ${CMAKE_COMMAND} -DWITH_JAVA=${WITH_JAVA}
+    COMMAND ${CMAKE_COMMAND} -DWITH_JNA=${WITH_JNA}
     -DPRECISION=15 -P ${CMAKE_SOURCE_DIR}/cmakescripts/tjbenchtest.cmake
-    COMMAND ${CMAKE_COMMAND} -DWITH_JAVA=${WITH_JAVA}
+    COMMAND ${CMAKE_COMMAND} -DWITH_JNA=${WITH_JNA}
     -DPRECISION=16 -P ${CMAKE_SOURCE_DIR}/cmakescripts/tjbenchtest.cmake
     DEPENDS ${CMAKE_SOURCE_DIR}/cmakescripts/tjbenchtest.cmake
       ${CMAKE_CURRENT_BINARY_DIR}/test/tjbenchtest)
   add_custom_target(tjexampletest COMMAND ${CMAKE_COMMAND}
-    -DWITH_JAVA=${WITH_JAVA}
+    -DWITH_JNA=${WITH_JNA}
     -P ${CMAKE_SOURCE_DIR}/cmakescripts/tjexampletest.cmake
     DEPENDS ${CMAKE_SOURCE_DIR}/cmakescripts/tjexampletest.cmake
       ${CMAKE_CURRENT_BINARY_DIR}/test/tjcomptest
@@ -1903,11 +1912,12 @@ if(WITH_TURBOJPEG)
     ${CMAKE_CURRENT_SOURCE_DIR}/src/tjtran.c
     DESTINATION ${CMAKE_INSTALL_FULL_DOCDIR} COMPONENT doc)
 endif()
-if(WITH_JAVA)
-  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/java/TJComp.java
-    ${CMAKE_CURRENT_SOURCE_DIR}/java/TJDecomp.java
-    ${CMAKE_CURRENT_SOURCE_DIR}/java/TJTran.java
-    DESTINATION ${CMAKE_INSTALL_FULL_DOCDIR} COMPONENT doc)
+if(WITH_JNA)
+  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/jna/TJ.java
+    ${CMAKE_CURRENT_SOURCE_DIR}/jna/TJComp.java
+    ${CMAKE_CURRENT_SOURCE_DIR}/jna/TJDecomp.java
+    ${CMAKE_CURRENT_SOURCE_DIR}/jna/TJTran.java
+    DESTINATION ${CMAKE_INSTALL_FULL_DOCDIR}/jna COMPONENT doc)
 endif()
 
 if(UNIX OR MINGW)

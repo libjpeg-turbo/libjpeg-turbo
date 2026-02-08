@@ -28,8 +28,8 @@
  */
 
 /*
- * This program demonstrates how to use the TurboJPEG Java API to approximate
- * the functionality of the IJG's cjpeg program.  cjpeg features that are not
+ * This program demonstrates how to use TurboJPEG/JNA to approximate the
+ * functionality of the IJG's cjpeg program.  cjpeg features that are not
  * covered:
  *
  * - GIF and Targa input file formats [legacy feature]
@@ -45,11 +45,13 @@
  */
 
 import java.io.*;
+import java.nio.*;
 import java.util.*;
-import org.libjpegturbo.turbojpeg.*;
+
+import com.sun.jna.*;
+import com.sun.jna.ptr.*;
 
 
-@SuppressWarnings("checkstyle:JavadocType")
 final class TJComp {
 
   private TJComp() {}
@@ -137,16 +139,21 @@ final class TJComp {
 
   public static void main(String[] argv) {
     int exitStatus = 0;
+    Pointer srcBuf = null;
+    PointerByReference jpegBuf = new PointerByReference();
 
     try {
       int i;
       int arithmetic = -1, colorspace = -1, fastDCT = -1, losslessPSV = -1,
-        losslessPt = -1, maxMemory = -1, optimize = -1,
-        pixelFormat = TJ.PF_UNKNOWN, precision = 8, progressive = -1,
-        quality = DEFAULT_QUALITY, restartIntervalBlocks = -1,
-        restartIntervalRows = -1, subsamp = DEFAULT_SUBSAMP;
+        losslessPt = -1, maxMemory = -1, optimize = -1, precision = 8,
+        progressive = -1, quality = DEFAULT_QUALITY,
+        restartIntervalBlocks = -1, restartIntervalRows = -1,
+        subsamp = DEFAULT_SUBSAMP;
       String iccFilename = null;
-      byte[] iccBuf, jpegBuf;
+      IntByReference width = new IntByReference(),
+        height = new IntByReference(),
+        pixelFormat = new IntByReference(TJ.PF_UNKNOWN);
+      NativeLongByReference jpegSize = new NativeLongByReference();
 
       for (i = 0; i < argv.length; i++) {
         if (matchArg(argv[i], "-arithmetic", 2))
@@ -247,39 +254,46 @@ final class TJComp {
       if (losslessPSV == -1 && precision != 8 && precision != 12)
         usage();
 
-      try (TJCompressor tjc = new TJCompressor()) {
+      try (TJ.Handle tjInstance = new TJ.Handle(TJ.INIT_COMPRESS)) {
 
-        tjc.set(TJ.PARAM_QUALITY, quality);
-        tjc.set(TJ.PARAM_SUBSAMP, subsamp);
-        tjc.set(TJ.PARAM_PRECISION, precision);
+        TJ.set(tjInstance, TJ.PARAM_QUALITY, quality);
+        TJ.set(tjInstance, TJ.PARAM_SUBSAMP, subsamp);
+        TJ.set(tjInstance, TJ.PARAM_PRECISION, precision);
         if (fastDCT >= 0)
-          tjc.set(TJ.PARAM_FASTDCT, fastDCT);
+          TJ.set(tjInstance, TJ.PARAM_FASTDCT, fastDCT);
         if (optimize >= 0)
-          tjc.set(TJ.PARAM_OPTIMIZE, optimize);
+          TJ.set(tjInstance, TJ.PARAM_OPTIMIZE, optimize);
         if (progressive >= 0)
-          tjc.set(TJ.PARAM_PROGRESSIVE, progressive);
+          TJ.set(tjInstance, TJ.PARAM_PROGRESSIVE, progressive);
         if (arithmetic >= 0)
-          tjc.set(TJ.PARAM_ARITHMETIC, arithmetic);
+          TJ.set(tjInstance, TJ.PARAM_ARITHMETIC, arithmetic);
         if (losslessPSV >= 1 && losslessPSV <= 7) {
-          tjc.set(TJ.PARAM_LOSSLESS, 1);
-          tjc.set(TJ.PARAM_LOSSLESSPSV, losslessPSV);
+          TJ.set(tjInstance, TJ.PARAM_LOSSLESS, 1);
+          TJ.set(tjInstance, TJ.PARAM_LOSSLESSPSV, losslessPSV);
           if (losslessPt >= 0)
-            tjc.set(TJ.PARAM_LOSSLESSPT, losslessPt);
+            TJ.set(tjInstance, TJ.PARAM_LOSSLESSPT, losslessPt);
         }
         if (restartIntervalBlocks >= 0)
-          tjc.set(TJ.PARAM_RESTARTBLOCKS, restartIntervalBlocks);
+          TJ.set(tjInstance, TJ.PARAM_RESTARTBLOCKS, restartIntervalBlocks);
         if (restartIntervalRows >= 0)
-          tjc.set(TJ.PARAM_RESTARTROWS, restartIntervalRows);
+          TJ.set(tjInstance, TJ.PARAM_RESTARTROWS, restartIntervalRows);
         if (maxMemory >= 0)
-          tjc.set(TJ.PARAM_MAXMEMORY, maxMemory);
+          TJ.set(tjInstance, TJ.PARAM_MAXMEMORY, maxMemory);
 
-        tjc.loadSourceImage(argv[i], 1, pixelFormat);
-        pixelFormat = tjc.getPixelFormat();
+        if (precision <= 8)
+          srcBuf = TJ.loadImage8(tjInstance, argv[i], width, 1, height,
+                                 pixelFormat);
+        else if (precision <= 12)
+          srcBuf = TJ.loadImage12(tjInstance, argv[i], width, 1, height,
+                                  pixelFormat);
+        else
+          srcBuf = TJ.loadImage16(tjInstance, argv[i], width, 1, height,
+                                  pixelFormat);
 
-        if (pixelFormat == TJ.PF_GRAY && colorspace < 0)
+        if (pixelFormat.getValue() == TJ.PF_GRAY && colorspace < 0)
           colorspace = TJ.CS_GRAY;
         if (colorspace >= 0)
-          tjc.set(TJ.PARAM_COLORSPACE, colorspace);
+          TJ.set(tjInstance, TJ.PARAM_COLORSPACE, colorspace);
 
         if (iccFilename != null) {
           File iccFile = new File(iccFilename);
@@ -287,24 +301,40 @@ final class TJComp {
             int iccSize = fis.available();
             if (iccSize < 1)
               throw new Exception("ICC profile contains no data");
-            iccBuf = new byte[iccSize];
-            fis.read(iccBuf);
+            try (Memory iccBuf = new Memory(iccSize)) {
+              fis.getChannel().read(iccBuf.getByteBuffer(0, iccSize));
+              TJ.setICCProfile(tjInstance, iccBuf, new NativeLong(iccSize));
+            }
           }
-          tjc.setICCProfile(iccBuf);
         }
 
-        jpegBuf = tjc.compress();
+        if (precision <= 8)
+          TJ.compress8(tjInstance, srcBuf, width.getValue(), 0,
+                       height.getValue(), pixelFormat.getValue(), jpegBuf,
+                       jpegSize);
+        else if (precision <= 12)
+          TJ.compress12(tjInstance, srcBuf, width.getValue(), 0,
+                        height.getValue(), pixelFormat.getValue(), jpegBuf,
+                        jpegSize);
+        else
+          TJ.compress16(tjInstance, srcBuf, width.getValue(), 0,
+                        height.getValue(), pixelFormat.getValue(), jpegBuf,
+                        jpegSize);
 
-        File outFile = new File(argv[++i]);
-        try (FileOutputStream fos = new FileOutputStream(outFile)) {
-          fos.write(jpegBuf, 0, tjc.getCompressedSize());
-        }
+      }  // try (tjInstance)
 
-      }  // try (tjc)
-
+      File outFile = new File(argv[++i]);
+      try (FileOutputStream fos = new FileOutputStream(outFile)) {
+        ByteBuffer bb =
+          jpegBuf.getValue().getByteBuffer(0, jpegSize.getValue().longValue());
+        fos.getChannel().write(bb);
+      }
     } catch (Exception e) {
       e.printStackTrace();
       exitStatus = -1;
+    } finally {
+      TJ.free(srcBuf);
+      TJ.free(jpegBuf.getValue());
     }
 
     System.exit(exitStatus);

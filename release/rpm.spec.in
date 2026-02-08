@@ -8,7 +8,7 @@
 %define _enable_static  @ENABLE_STATIC@
 %define _enable_shared  @ENABLE_SHARED@
 %define _with_turbojpeg  @WITH_TURBOJPEG@
-%define _with_java  @WITH_JAVA@
+%define _with_jna  @WITH_JNA@
 
 %if "%{?__isa_bits:1}" == "1"
 %define _bits  %{__isa_bits}
@@ -70,8 +70,7 @@ performance of libjpeg-turbo rivals that of proprietary high-speed JPEG codecs.
 libjpeg-turbo implements both the traditional libjpeg API as well as the less
 powerful but more straightforward TurboJPEG API.  libjpeg-turbo also features
 colorspace extensions that allow it to compress from/decompress to 32-bit and
-big-endian pixel buffers (RGBX, XBGR, etc.), as well as a full-featured Java
-interface.
+big-endian pixel buffers (RGBX, XBGR, etc.)
 
 libjpeg-turbo was originally based on libjpeg/SIMD, an MMX-accelerated
 derivative of libjpeg v6b developed by Miyasaka Masaru.  The TigerVNC and
@@ -102,7 +101,7 @@ reference implementation of the JPEG standard.
 #-->  -DJPEG_LIB_VERSION=@JPEG_LIB_VERSION@ \
 #-->  -DREQUIRE_SIMD=@REQUIRE_SIMD@ \
 #-->  -DWITH_ARITH_DEC=@WITH_ARITH_DEC@ -DWITH_ARITH_ENC=@WITH_ARITH_ENC@ \
-#-->  -DWITH_JAVA=@WITH_JAVA@ \
+#-->  -DWITH_JNA=@WITH_JNA@ \
 #-->  -DWITH_JPEG7=@WITH_JPEG7@ -DWITH_JPEG8=@WITH_JPEG8@ \
 #-->  -DWITH_SIMD=@WITH_SIMD@ -DWITH_TURBOJPEG=@WITH_TURBOJPEG@ .
 #-->make DESTDIR=$RPM_BUILD_ROOT
@@ -167,6 +166,10 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 %dir %{_docdir}
 %doc %{_docdir}/*
+%if "%{_with_jna}" != ""
+	%dir %{_docdir}/jna
+	%doc %{_docdir}/jna/*
+%endif
 %dir %{_prefix}
 %if "%{_prefix}" == "@CMAKE_INSTALL_DEFAULT_PREFIX@" && "%{_docdir}" != "%{_prefix}/doc"
 	%{_prefix}/doc
@@ -197,7 +200,7 @@ rm -rf $RPM_BUILD_ROOT
 %dir %{_libdir}/cmake/@CMAKE_PROJECT_NAME@
 %{_libdir}/cmake/@CMAKE_PROJECT_NAME@
 %if "%{_with_turbojpeg}" == "1"
-	%if "%{_enable_shared}" == "1" || "%{_with_java}" == "1"
+	%if "%{_enable_shared}" == "1" || "%{_with_jna}" != ""
 		%{_libdir}/libturbojpeg.so.@TURBOJPEG_SO_VERSION@
 		%{_libdir}/libturbojpeg.so.@TURBOJPEG_SO_MAJOR_VERSION@
 		%{_libdir}/libturbojpeg.so
@@ -225,9 +228,9 @@ rm -rf $RPM_BUILD_ROOT
 %if "%{_prefix}" != "%{_datarootdir}"
 	%dir %{_datarootdir}
 %endif
-%if "%{_with_java}" == "1"
+%if "%{_with_jna}" != ""
 	%dir %{_javadir}
-	%{_javadir}/turbojpeg.jar
+	%{_javadir}/turbojpeg-jna.jar
 %endif
 
 %changelog

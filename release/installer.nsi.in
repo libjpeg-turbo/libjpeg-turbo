@@ -76,9 +76,9 @@ Section "@CMAKE_PROJECT_NAME@ SDK for @INST_PLATFORM@ (required)"
 	File "@CMAKE_CURRENT_BINARY_DIR@\pkgscripts\@CMAKE_PROJECT_NAME@ConfigVersion.cmake"
 	File "@CMAKE_CURRENT_BINARY_DIR@\win\@CMAKE_PROJECT_NAME@Targets.cmake"
 	File "@CMAKE_CURRENT_BINARY_DIR@\win\@CMAKE_PROJECT_NAME@Targets-release.cmake"
-!ifdef JAVA
+!ifdef JNA
 	SetOutPath $INSTDIR\classes
-	File "@CMAKE_CURRENT_BINARY_DIR@\java\turbojpeg.jar"
+	File "@CMAKE_CURRENT_BINARY_DIR@\jna\turbojpeg-jna.jar"
 !endif
 	SetOutPath $INSTDIR\include
 	File "@CMAKE_CURRENT_BINARY_DIR@\jconfig.h"
@@ -98,9 +98,11 @@ Section "@CMAKE_PROJECT_NAME@ SDK for @INST_PLATFORM@ (required)"
 	File "@CMAKE_CURRENT_SOURCE_DIR@\src\tjcomp.c"
 	File "@CMAKE_CURRENT_SOURCE_DIR@\src\tjdecomp.c"
 	File "@CMAKE_CURRENT_SOURCE_DIR@\src\tjtran.c"
-	File "@CMAKE_CURRENT_SOURCE_DIR@\java\TJComp.java"
-	File "@CMAKE_CURRENT_SOURCE_DIR@\java\TJDecomp.java"
-	File "@CMAKE_CURRENT_SOURCE_DIR@\java\TJTran.java"
+	SetOutPath $INSTDIR\doc\jna
+	File "@CMAKE_CURRENT_SOURCE_DIR@\jna\TJ.java"
+	File "@CMAKE_CURRENT_SOURCE_DIR@\jna\TJComp.java"
+	File "@CMAKE_CURRENT_SOURCE_DIR@\jna\TJDecomp.java"
+	File "@CMAKE_CURRENT_SOURCE_DIR@\jna\TJTran.java"
 !ifdef GCC
 	SetOutPath $INSTDIR\man\man1
 	File "@CMAKE_CURRENT_SOURCE_DIR@\doc\cjpeg.1"
@@ -154,8 +156,8 @@ Section "Uninstall"
 	Delete $INSTDIR\lib\cmake\@CMAKE_PROJECT_NAME@\@CMAKE_PROJECT_NAME@ConfigVersion.cmake
 	Delete $INSTDIR\lib\cmake\@CMAKE_PROJECT_NAME@\@CMAKE_PROJECT_NAME@Targets.cmake
 	Delete $INSTDIR\lib\cmake\@CMAKE_PROJECT_NAME@\@CMAKE_PROJECT_NAME@Targets-release.cmake
-!ifdef JAVA
-	Delete $INSTDIR\classes\turbojpeg.jar
+!ifdef JNA
+	Delete $INSTDIR\classes\turbojpeg-jna.jar
 !endif
 	Delete $INSTDIR\bin\cjpeg.exe
 	Delete $INSTDIR\bin\djpeg.exe
@@ -180,9 +182,10 @@ Section "Uninstall"
 	Delete $INSTDIR\doc\tjcomp.c
 	Delete $INSTDIR\doc\tjdecomp.c
 	Delete $INSTDIR\doc\tjtran.c
-	Delete $INSTDIR\doc\TJComp.java
-	Delete $INSTDIR\doc\TJDecomp.java
-	Delete $INSTDIR\doc\TJTran.java
+	Delete $INSTDIR\doc\jna\TJ.java
+	Delete $INSTDIR\doc\jna\TJComp.java
+	Delete $INSTDIR\doc\jna\TJDecomp.java
+	Delete $INSTDIR\doc\jna\TJTran.java
 !ifdef GCC
 	Delete $INSTDIR\man\man1\cjpeg.1
 	Delete $INSTDIR\man\man1\djpeg.1
@@ -196,12 +199,13 @@ Section "Uninstall"
 	RMDir "$INSTDIR\lib\cmake\@CMAKE_PROJECT_NAME@"
 	RMDir "$INSTDIR\lib\cmake"
 	RMDir "$INSTDIR\lib"
+	RMDir "$INSTDIR\doc\jna"
 	RMDir "$INSTDIR\doc"
 !ifdef GCC
 	RMDir "$INSTDIR\man\man1"
 	RMDir "$INSTDIR\man"
 !endif
-!ifdef JAVA
+!ifdef JNA
 	RMDir "$INSTDIR\classes"
 !endif
 	RMDir "$INSTDIR\bin"
