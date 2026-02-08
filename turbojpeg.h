@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009-2015, 2017, 2020-2025 D. R. Commander.
+ * Copyright (C) 2009-2015, 2017, 2020-2026 D. R. Commander.
  *                                          All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -466,8 +466,8 @@ enum TJCS {
    * portion of the original image, and the Cb and Cr (chrominance) components
    * represent the color portion of the original image.  Historically, the
    * analog equivalent of this transformation allowed the same signal to be
-   * displayed to both black & white and color televisions, but JPEG images use
-   * YCbCr primarily because it allows the color data to be optionally
+   * displayed to both black & white and color televisions, but JPEG images
+   * primarily use YCbCr because it optionally allows the color data to be
    * subsampled in order to reduce network and disk usage.  YCbCr is the most
    * common JPEG colorspace, and YCbCr JPEG images can be generated from and
    * decompressed to packed-pixel images with any of the extended RGB or
