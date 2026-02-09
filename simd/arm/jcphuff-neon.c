@@ -1,9 +1,9 @@
 /*
  * Data Preparation for Progressive Huffman Encoding (Arm Neon)
  *
- * Copyright (C) 2020-2021, Arm Limited.  All Rights Reserved.
- * Copyright (C) 2022, Matthieu Darbois.  All Rights Reserved.
- * Copyright (C) 2022, 2024-2025, D. R. Commander.  All Rights Reserved.
+ * Copyright (C) 2020-2021, Arm Limited.
+ * Copyright (C) 2022, Matthieu Darbois.
+ * Copyright (C) 2022, 2024-2025, D. R. Commander.
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the authors be held liable for any damages
