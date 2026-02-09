@@ -4,7 +4,7 @@
  * This file was part of the Independent JPEG Group's software:
  * Copyright (C) 1991-1997, Thomas G. Lane.
  * libjpeg-turbo Modifications:
- * Copyright (C) 2009, 2018, 2021, 2025, D. R. Commander.
+ * Copyright (C) 2009, 2018, 2021, 2025-2026, D. R. Commander.
  * Copyright (C) 2018, Matthias Räncker.
  * Copyright (C) 2020-2021, Arm Limited.
  * For conditions of distribution and use, see the accompanying README.ijg
@@ -74,7 +74,7 @@ typedef struct {
 
 #else
 
-#if defined(_MSC_VER) && !defined(__clang__)
+#if (defined(_MSC_VER) && !defined(__clang__)) || defined(__EMSCRIPTEN__)
 #define SPLAT() { \
   buffer[0] = (JOCTET)(put_buffer >> 24); \
   buffer[1] = (JOCTET)(put_buffer >> 16); \

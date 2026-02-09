@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020, 2024-2025, D. R. Commander.
+ * Copyright (C) 2020, 2024-2026, D. R. Commander.
  * Copyright (C) 2020-2021, Arm Limited.
  *
  * This software is provided 'as-is', without any express or implied
@@ -24,7 +24,7 @@
 #cmakedefine HAVE_VLD1Q_U8_X4
 #cmakedefine WITH_SIMDE
 
-#ifdef WITH_SIMDE
+#if defined(WITH_SIMDE) && !defined(__EMSCRIPTEN__)
 #define SIMDE_ENABLE_NATIVE_ALIASES
 #include <simde/arm/neon.h>
 #else

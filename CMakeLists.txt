@@ -702,7 +702,7 @@ configure_file(src/jconfig.h.in jconfig.h)
 configure_file(src/jconfigint.h.in jconfigint.h)
 
 if(WITH_SIMD)
-  message(STATUS "SIMD extensions: ${CPU_TYPE} (WITH_SIMD = ${WITH_SIMD})")
+  message(STATUS "SIMD extensions: ${SIMD_ARCHITECTURE} (WITH_SIMD = ${WITH_SIMD})")
   if(MSVC_IDE OR XCODE)
     set_source_files_properties(${SIMD_OBJS} PROPERTIES GENERATED 1)
   endif()

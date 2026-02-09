@@ -10,7 +10,7 @@ macro(simd_fail message)
 endmacro()
 
 
-option(WITH_SIMDE "Use SIMD Everywhere to translate Arm/Neon intrinsics into SIMD intrinsics for other platforms (Experimental)"
+option(WITH_SIMDE "Use SIMD Everywhere or Emscripten to translate Arm/Neon intrinsics into SIMD intrinsics for other platforms (Experimental)"
   FALSE)
 
 
