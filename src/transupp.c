@@ -110,8 +110,11 @@ dequant_comp(j_decompress_ptr cinfo, jpeg_component_info *compptr,
       for (blk_x = 0; blk_x < compptr->width_in_blocks; blk_x++) {
         ptr = block[blk_x];
         for (k = 0; k < DCTSIZE2; k++)
-          if (qtblptr->quantval[k] != qtblptr1->quantval[k])
-            ptr[k] *= qtblptr->quantval[k] / qtblptr1->quantval[k];
+          if (qtblptr->quantval[k] != qtblptr1->quantval[k]) {
+            ptr[k] *= qtblptr->quantval[k];
+            if (qtblptr1->quantval[k] != 0)
+              ptr[k] /= qtblptr1->quantval[k];
+          }
       }
     }
   }
@@ -176,6 +179,9 @@ LOCAL(JCOEF)
 largest_common_denominator(JCOEF a, JCOEF b)
 {
   JCOEF c;
+
+  if (a == 0) return b;
+  if (b == 0) return a;
 
   do {
     c = a % b;
