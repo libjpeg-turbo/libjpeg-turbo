@@ -105,6 +105,7 @@ static void my_emit_message(j_common_ptr cinfo, int msg_level)
 enum { COMPRESS = 1, DECOMPRESS = 2 };
 
 typedef struct _tjinstance {
+  unsigned int magic;
   struct jpeg_compress_struct cinfo;
   struct jpeg_decompress_struct dinfo;
   struct my_error_mgr jerr;
@@ -141,6 +142,7 @@ typedef struct _tjinstance {
   int saveMarkers;
   unsigned char *iccBuf, *tempICCBuf;
   size_t iccSize, tempICCSize;
+#define TJINSTANCE_MAGIC  0x544A4942  /* "TJIB" (TurboJPEG Instance Block) */
 } tjinstance;
 
 static tjhandle _tjInitCompress(tjinstance *this);
@@ -269,7 +271,7 @@ static int cs2pf[JPEG_NUMCS] = {
   j_compress_ptr cinfo = NULL; \
   j_decompress_ptr dinfo = NULL; \
   \
-  if (!this) { \
+  if (!this || this->magic != TJINSTANCE_MAGIC) { \
     SNPRINTF(errStr, JMSG_LENGTH_MAX, "%s(): Invalid handle", FUNCTION_NAME); \
     return -1; \
   } \
@@ -281,7 +283,7 @@ static int cs2pf[JPEG_NUMCS] = {
   tjinstance *this = (tjinstance *)handle; \
   j_compress_ptr cinfo = NULL; \
   \
-  if (!this) { \
+  if (!this || this->magic != TJINSTANCE_MAGIC) { \
     SNPRINTF(errStr, JMSG_LENGTH_MAX, "%s(): Invalid handle", FUNCTION_NAME); \
     return -1; \
   } \
@@ -293,7 +295,7 @@ static int cs2pf[JPEG_NUMCS] = {
   tjinstance *this = (tjinstance *)handle; \
   j_decompress_ptr dinfo = NULL; \
   \
-  if (!this) { \
+  if (!this || this->magic != TJINSTANCE_MAGIC) { \
     SNPRINTF(errStr, JMSG_LENGTH_MAX, "%s(): Invalid handle", FUNCTION_NAME); \
     return -1; \
   } \
@@ -304,7 +306,7 @@ static int cs2pf[JPEG_NUMCS] = {
 #define GET_TJINSTANCE(handle, errorReturn) \
   tjinstance *this = (tjinstance *)handle; \
   \
-  if (!this) { \
+  if (!this || this->magic != TJINSTANCE_MAGIC) { \
     SNPRINTF(errStr, JMSG_LENGTH_MAX, "%s(): Invalid handle", FUNCTION_NAME); \
     return errorReturn; \
   } \
@@ -547,6 +549,7 @@ DLLEXPORT tjhandle tj3Init(int initType)
   if ((this = (tjinstance *)malloc(sizeof(tjinstance))) == NULL)
     THROWG("Memory allocation failure", NULL);
   memset(this, 0, sizeof(tjinstance));
+  this->magic = TJINSTANCE_MAGIC;
   SNPRINTF(this->errStr, JMSG_LENGTH_MAX, "No error");
 
   this->quality = -1;
@@ -583,8 +586,9 @@ DLLEXPORT void tj3Destroy(tjhandle handle)
   j_compress_ptr cinfo = NULL;
   j_decompress_ptr dinfo = NULL;
 
-  if (!this) return;
+  if (!this || this->magic != TJINSTANCE_MAGIC) return;
 
+  this->magic = 0;
   cinfo = &this->cinfo;  dinfo = &this->dinfo;
   this->jerr.warning = FALSE;
   this->isInstanceError = FALSE;

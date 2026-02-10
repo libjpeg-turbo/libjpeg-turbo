@@ -372,6 +372,7 @@ encode_mcu_DC_first(j_compress_ptr cinfo, JBLOCKROW *MCU_data)
   unsigned char *st;
   int blkn, ci, tbl;
   int v, v2, m;
+  int max_coef_bits = cinfo->data_precision + 2;
   ISHIFT_TEMPS
 
   /* Emit restart marker if needed */
@@ -420,6 +421,11 @@ encode_mcu_DC_first(j_compress_ptr cinfo, JBLOCKROW *MCU_data)
         st += 3;                        /* Table F.4: SN = S0 + 3 */
         entropy->dc_context[ci] = 8;    /* small negative diff category */
       }
+      /* Check for out-of-range coefficient values.
+       * Since we're encoding a difference, the range limit is twice as much.
+       */
+      if (v >= (1 << (max_coef_bits + 1)))
+        ERREXIT(cinfo, JERR_BAD_DCT_COEF);
       /* Figure F.8: Encoding the magnitude category of v */
       m = 0;
       if (v -= 1) {
@@ -463,6 +469,7 @@ encode_mcu_AC_first(j_compress_ptr cinfo, JBLOCKROW *MCU_data)
   unsigned char *st;
   int tbl, k, ke;
   int v, v2, m;
+  int max_coef_bits = cinfo->data_precision + 2;
 
   /* Emit restart marker if needed */
   if (cinfo->restart_interval) {
@@ -516,6 +523,9 @@ encode_mcu_AC_first(j_compress_ptr cinfo, JBLOCKROW *MCU_data)
       arith_encode(cinfo, st + 1, 0);  st += 3;  k++;
     }
     st += 2;
+    /* Check for out-of-range coefficient values */
+    if (v >= (1 << max_coef_bits))
+      ERREXIT(cinfo, JERR_BAD_DCT_COEF);
     /* Figure F.8: Encoding the magnitude category of v */
     m = 0;
     if (v -= 1) {
@@ -691,6 +701,7 @@ encode_mcu(j_compress_ptr cinfo, JBLOCKROW *MCU_data)
   unsigned char *st;
   int blkn, ci, tbl, k, ke;
   int v, v2, m;
+  int max_coef_bits = cinfo->data_precision + 2;
 
   /* Emit restart marker if needed */
   if (cinfo->restart_interval) {
@@ -735,6 +746,11 @@ encode_mcu(j_compress_ptr cinfo, JBLOCKROW *MCU_data)
         st += 3;                        /* Table F.4: SN = S0 + 3 */
         entropy->dc_context[ci] = 8;    /* small negative diff category */
       }
+      /* Check for out-of-range coefficient values.
+       * Since we're encoding a difference, the range limit is twice as much.
+       */
+      if (v >= (1 << (max_coef_bits + 1)))
+        ERREXIT(cinfo, JERR_BAD_DCT_COEF);
       /* Figure F.8: Encoding the magnitude category of v */
       m = 0;
       if (v -= 1) {
@@ -785,6 +801,9 @@ encode_mcu(j_compress_ptr cinfo, JBLOCKROW *MCU_data)
         arith_encode(cinfo, entropy->fixed_bin, 1);
       }
       st += 2;
+      /* Check for out-of-range coefficient values */
+      if (v >= (1 << max_coef_bits))
+        ERREXIT(cinfo, JERR_BAD_DCT_COEF);
       /* Figure F.8: Encoding the magnitude category of v */
       m = 0;
       if (v -= 1) {

@@ -92,6 +92,8 @@ empty_mem_output_buffer(j_compress_ptr cinfo)
   if (!dest->alloc) ERREXIT(cinfo, JERR_BUFFER_SIZE);
 
   /* Try to allocate new buffer with double size */
+  if (dest->bufsize > SIZE_MAX / 2)
+    ERREXIT1(cinfo, JERR_OUT_OF_MEMORY, 10);
   nextsize = dest->bufsize * 2;
   nextbuffer = (JOCTET *)MALLOC(nextsize);
 
