@@ -20,6 +20,11 @@ calling `jpeg_start_compress()`.  (This would never happen in a
 correctly-written program, because `jpeg_add_quant_table()` clamps all values
 less than 1.)
 
+4. Fixed a division-by-zero error that occurred when attempting to use the
+jpegtran `-drop` option with a specially-crafted malformed drop image
+(specifically an image in which one or more of the quantization table values
+was 0.)
+
 
 3.1.3
 =====
