@@ -24,6 +24,7 @@
 
 #include "../jsimdint.h"
 #include <riscv_vector.h>
+#include "jsimd_rvv.h"
 
 
 #define F_0_382  98   /* FIX(0.382683433) */
@@ -91,24 +92,22 @@ jsimd_fdct_ifast_rvv(DCTELEM *data)
   /* The minimum register width (VLEN) for standard CPUs in RVV 1.0 is
    * 128 bits.  Thus, this should always be 8.
    */
-  size_t vl = __riscv_vsetvl_e16m1(DCTSIZE),
-    col_stride = DCTSIZE * sizeof(DCTELEM);
+  size_t vl = __riscv_vsetvl_e16m1(DCTSIZE);
 
   /* Pass 1: process rows */
 
-  /* Load column vectors.  We would normally load the row vectors directly and
-   * transpose them, to avoid non-contiguous memory accesses, but using a
-   * strided load is currently faster with RVV than an in-register matrix
-   * transpose.
-   */
-  col0 = __riscv_vlse16_v_i16m1(data + 0, col_stride, vl);
-  col1 = __riscv_vlse16_v_i16m1(data + 1, col_stride, vl);
-  col2 = __riscv_vlse16_v_i16m1(data + 2, col_stride, vl);
-  col3 = __riscv_vlse16_v_i16m1(data + 3, col_stride, vl);
-  col4 = __riscv_vlse16_v_i16m1(data + 4, col_stride, vl);
-  col5 = __riscv_vlse16_v_i16m1(data + 5, col_stride, vl);
-  col6 = __riscv_vlse16_v_i16m1(data + 6, col_stride, vl);
-  col7 = __riscv_vlse16_v_i16m1(data + 7, col_stride, vl);
+  /* Load row vectors. */
+  row0 = __riscv_vle16_v_i16m1(data + 0 * DCTSIZE, vl);
+  row1 = __riscv_vle16_v_i16m1(data + 1 * DCTSIZE, vl);
+  row2 = __riscv_vle16_v_i16m1(data + 2 * DCTSIZE, vl);
+  row3 = __riscv_vle16_v_i16m1(data + 3 * DCTSIZE, vl);
+  row4 = __riscv_vle16_v_i16m1(data + 4 * DCTSIZE, vl);
+  row5 = __riscv_vle16_v_i16m1(data + 5 * DCTSIZE, vl);
+  row6 = __riscv_vle16_v_i16m1(data + 6 * DCTSIZE, vl);
+  row7 = __riscv_vle16_v_i16m1(data + 7 * DCTSIZE, vl);
+
+  /* Transpose row vectors to column vectors. */
+  TRANSPOSE_8x8(row, col);
 
   tmp0 = __riscv_vadd_vv_i16m1(col0, col7, vl);
   tmp7 = __riscv_vsub_vv_i16m1(col0, col7, vl);
@@ -121,27 +120,10 @@ jsimd_fdct_ifast_rvv(DCTELEM *data)
 
   DO_FDCT();
 
-  /* Store column vectors. */
-  __riscv_vsse16_v_i16m1(data + 0, col_stride, out0, vl);
-  __riscv_vsse16_v_i16m1(data + 1, col_stride, out1, vl);
-  __riscv_vsse16_v_i16m1(data + 2, col_stride, out2, vl);
-  __riscv_vsse16_v_i16m1(data + 3, col_stride, out3, vl);
-  __riscv_vsse16_v_i16m1(data + 4, col_stride, out4, vl);
-  __riscv_vsse16_v_i16m1(data + 5, col_stride, out5, vl);
-  __riscv_vsse16_v_i16m1(data + 6, col_stride, out6, vl);
-  __riscv_vsse16_v_i16m1(data + 7, col_stride, out7, vl);
-
   /* Pass 2: process columns */
 
-  /* Load row vectors. */
-  row0 = __riscv_vle16_v_i16m1(data + 0 * DCTSIZE, vl);
-  row1 = __riscv_vle16_v_i16m1(data + 1 * DCTSIZE, vl);
-  row2 = __riscv_vle16_v_i16m1(data + 2 * DCTSIZE, vl);
-  row3 = __riscv_vle16_v_i16m1(data + 3 * DCTSIZE, vl);
-  row4 = __riscv_vle16_v_i16m1(data + 4 * DCTSIZE, vl);
-  row5 = __riscv_vle16_v_i16m1(data + 5 * DCTSIZE, vl);
-  row6 = __riscv_vle16_v_i16m1(data + 6 * DCTSIZE, vl);
-  row7 = __riscv_vle16_v_i16m1(data + 7 * DCTSIZE, vl);
+  /* Transpose column vectors to row vectors. */
+  TRANSPOSE_8x8(out, row);
 
   tmp0 = __riscv_vadd_vv_i16m1(row0, row7, vl);
   tmp7 = __riscv_vsub_vv_i16m1(row0, row7, vl);

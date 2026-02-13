@@ -4,6 +4,7 @@
  * Copyright (C) 2014, 2026, D. R. Commander.
  * Copyright (C) 2022-2023, Institute of Software, Chinese Academy of Sciences.
  *                          Author:  Zhiyuan Tan
+ * Copyright (C) 2026, Olaf Bernstein.
  *
  * This software is provided 'as-is', without any express or implied
  * warranty.  In no event will the authors be held liable for any damages
@@ -24,6 +25,7 @@
 
 #include "../jsimdint.h"
 #include <riscv_vector.h>
+#include "jsimd_rvv.h"
 
 
 #define F_0_298  2446   /* FIX(0.298631336) */
@@ -131,7 +133,6 @@ jsimd_idct_islow_rvv(void *dct_table, JCOEFPTR coef_block,
                      JSAMPARRAY output_buf, JDIMENSION output_col)
 {
   ISLOW_MULT_TYPE *quantptr = dct_table;
-  DCTELEM workspace[DCTSIZE2];
 
   vuint8mf2_t dst0, dst1, dst2, dst3, dst4, dst5, dst6, dst7;
   vint16m1_t row0, row1, row2, row3, row4, row5, row6, row7,
@@ -141,13 +142,11 @@ jsimd_idct_islow_rvv(void *dct_table, JCOEFPTR coef_block,
   vint32m2_t tmp0, tmp1, tmp2, tmp3, tmp10, tmp11, tmp12, tmp13,
     z1, z2, z3, z4, z5,
     out0_32, out1_32, out2_32, out3_32, out4_32, out5_32, out6_32, out7_32;
-  vbool16_t mask;
 
   /* The minimum register width (VLEN) for standard CPUs in RVV 1.0 is
    * 128 bits.  Thus, this should always be 8.
    */
-  size_t vl = __riscv_vsetvl_e16m1(DCTSIZE),
-    col_stride = DCTSIZE * sizeof(DCTELEM);
+  size_t vl = __riscv_vsetvl_e16m1(DCTSIZE);
 
   /* Pass 1: process columns from input, store into work array. */
 
@@ -182,108 +181,47 @@ jsimd_idct_islow_rvv(void *dct_table, JCOEFPTR coef_block,
 
   DO_IDCT(row, 1);
 
-  /* Store row vectors. */
-  __riscv_vse16_v_i16m1(workspace + 0 * DCTSIZE, out0, vl);
-  __riscv_vse16_v_i16m1(workspace + 1 * DCTSIZE, out1, vl);
-  __riscv_vse16_v_i16m1(workspace + 2 * DCTSIZE, out2, vl);
-  __riscv_vse16_v_i16m1(workspace + 3 * DCTSIZE, out3, vl);
-  __riscv_vse16_v_i16m1(workspace + 4 * DCTSIZE, out4, vl);
-  __riscv_vse16_v_i16m1(workspace + 5 * DCTSIZE, out5, vl);
-  __riscv_vse16_v_i16m1(workspace + 6 * DCTSIZE, out6, vl);
-  __riscv_vse16_v_i16m1(workspace + 7 * DCTSIZE, out7, vl);
-
   /* Pass 2: process rows from work array, store into output array. */
 
-  /* Load column vectors.  We would normally load the row vectors directly and
-   * transpose them, to avoid non-contiguous memory accesses, but using a
-   * segmented load is currently faster with RVV than an in-register matrix
-   * transpose.
-   */
-  col0 = __riscv_vlse16_v_i16m1(workspace + 0, col_stride, vl);
-  col1 = __riscv_vlse16_v_i16m1(workspace + 1, col_stride, vl);
-  col2 = __riscv_vlse16_v_i16m1(workspace + 2, col_stride, vl);
-  col3 = __riscv_vlse16_v_i16m1(workspace + 3, col_stride, vl);
-  col4 = __riscv_vlse16_v_i16m1(workspace + 4, col_stride, vl);
-  col5 = __riscv_vlse16_v_i16m1(workspace + 5, col_stride, vl);
-  col6 = __riscv_vlse16_v_i16m1(workspace + 6, col_stride, vl);
-  col7 = __riscv_vlse16_v_i16m1(workspace + 7, col_stride, vl);
+  /* Transpose row vectors to column vectors. */
+  TRANSPOSE_8x8(out, col);
 
   DO_IDCT(col, 2);
 
-  /* Store column vectors. */
-  __riscv_vsse16_v_i16m1(workspace + 0, col_stride, out0, vl);
-  __riscv_vsse16_v_i16m1(workspace + 1, col_stride, out1, vl);
-  __riscv_vsse16_v_i16m1(workspace + 2, col_stride, out2, vl);
-  __riscv_vsse16_v_i16m1(workspace + 3, col_stride, out3, vl);
-  __riscv_vsse16_v_i16m1(workspace + 4, col_stride, out4, vl);
-  __riscv_vsse16_v_i16m1(workspace + 5, col_stride, out5, vl);
-  __riscv_vsse16_v_i16m1(workspace + 6, col_stride, out6, vl);
-  __riscv_vsse16_v_i16m1(workspace + 7, col_stride, out7, vl);
-
-  out0 = __riscv_vle16_v_i16m1(workspace + 0 * DCTSIZE, vl);
-  out1 = __riscv_vle16_v_i16m1(workspace + 1 * DCTSIZE, vl);
-  out2 = __riscv_vle16_v_i16m1(workspace + 2 * DCTSIZE, vl);
-  out3 = __riscv_vle16_v_i16m1(workspace + 3 * DCTSIZE, vl);
-  out4 = __riscv_vle16_v_i16m1(workspace + 4 * DCTSIZE, vl);
-  out5 = __riscv_vle16_v_i16m1(workspace + 5 * DCTSIZE, vl);
-  out6 = __riscv_vle16_v_i16m1(workspace + 6 * DCTSIZE, vl);
-  out7 = __riscv_vle16_v_i16m1(workspace + 7 * DCTSIZE, vl);
+  /* Transpose column vectors back to row vectors. */
+  TRANSPOSE_8x8(out, out);
 
   out0 = __riscv_vadd_vx_i16m1(out0, CENTERJSAMPLE, vl);
-  /* Range limit */
-  mask = __riscv_vmslt_vx_i16m1_b16(out0, 0, vl);
-  out0 = __riscv_vmerge_vxm_i16m1(out0, 0, mask, vl);
-  mask = __riscv_vmsgt_vx_i16m1_b16(out0, MAXJSAMPLE, vl);
-  out0 = __riscv_vmerge_vxm_i16m1(out0, MAXJSAMPLE, mask, vl);
+  out0  = __riscv_vmax_vx_i16m1(out0, 0, vl);
+  out0 = __riscv_vmin_vx_i16m1(out0, MAXJSAMPLE, vl);
 
   out1 = __riscv_vadd_vx_i16m1(out1, CENTERJSAMPLE, vl);
-  /* Range limit */
-  mask = __riscv_vmslt_vx_i16m1_b16(out1, 0, vl);
-  out1 = __riscv_vmerge_vxm_i16m1(out1, 0, mask, vl);
-  mask = __riscv_vmsgt_vx_i16m1_b16(out1, MAXJSAMPLE, vl);
-  out1 = __riscv_vmerge_vxm_i16m1(out1, MAXJSAMPLE, mask, vl);
+  out1  = __riscv_vmax_vx_i16m1(out1, 0, vl);
+  out1 = __riscv_vmin_vx_i16m1(out1, MAXJSAMPLE, vl);
 
   out2 = __riscv_vadd_vx_i16m1(out2, CENTERJSAMPLE, vl);
-  /* Range limit */
-  mask = __riscv_vmslt_vx_i16m1_b16(out2, 0, vl);
-  out2 = __riscv_vmerge_vxm_i16m1(out2, 0, mask, vl);
-  mask = __riscv_vmsgt_vx_i16m1_b16(out2, MAXJSAMPLE, vl);
-  out2 = __riscv_vmerge_vxm_i16m1(out2, MAXJSAMPLE, mask, vl);
+  out2  = __riscv_vmax_vx_i16m1(out2, 0, vl);
+  out2 = __riscv_vmin_vx_i16m1(out2, MAXJSAMPLE, vl);
 
   out3 = __riscv_vadd_vx_i16m1(out3, CENTERJSAMPLE, vl);
-  /* Range limit */
-  mask = __riscv_vmslt_vx_i16m1_b16(out3, 0, vl);
-  out3 = __riscv_vmerge_vxm_i16m1(out3, 0, mask, vl);
-  mask = __riscv_vmsgt_vx_i16m1_b16(out3, MAXJSAMPLE, vl);
-  out3 = __riscv_vmerge_vxm_i16m1(out3, MAXJSAMPLE, mask, vl);
+  out3  = __riscv_vmax_vx_i16m1(out3, 0, vl);
+  out3 = __riscv_vmin_vx_i16m1(out3, MAXJSAMPLE, vl);
 
   out4 = __riscv_vadd_vx_i16m1(out4, CENTERJSAMPLE, vl);
-  /* Range limit */
-  mask = __riscv_vmslt_vx_i16m1_b16(out4, 0, vl);
-  out4 = __riscv_vmerge_vxm_i16m1(out4, 0, mask, vl);
-  mask = __riscv_vmsgt_vx_i16m1_b16(out4, MAXJSAMPLE, vl);
-  out4 = __riscv_vmerge_vxm_i16m1(out4, MAXJSAMPLE, mask, vl);
+  out4  = __riscv_vmax_vx_i16m1(out4, 0, vl);
+  out4 = __riscv_vmin_vx_i16m1(out4, MAXJSAMPLE, vl);
 
   out5 = __riscv_vadd_vx_i16m1(out5, CENTERJSAMPLE, vl);
-  /* Range limit */
-  mask = __riscv_vmslt_vx_i16m1_b16(out5, 0, vl);
-  out5 = __riscv_vmerge_vxm_i16m1(out5, 0, mask, vl);
-  mask = __riscv_vmsgt_vx_i16m1_b16(out5, MAXJSAMPLE, vl);
-  out5 = __riscv_vmerge_vxm_i16m1(out5, MAXJSAMPLE, mask, vl);
+  out5  = __riscv_vmax_vx_i16m1(out5, 0, vl);
+  out5 = __riscv_vmin_vx_i16m1(out5, MAXJSAMPLE, vl);
 
   out6 = __riscv_vadd_vx_i16m1(out6, CENTERJSAMPLE, vl);
-  /* Range limit */
-  mask = __riscv_vmslt_vx_i16m1_b16(out6, 0, vl);
-  out6 = __riscv_vmerge_vxm_i16m1(out6, 0, mask, vl);
-  mask = __riscv_vmsgt_vx_i16m1_b16(out6, MAXJSAMPLE, vl);
-  out6 = __riscv_vmerge_vxm_i16m1(out6, MAXJSAMPLE, mask, vl);
+  out6  = __riscv_vmax_vx_i16m1(out6, 0, vl);
+  out6 = __riscv_vmin_vx_i16m1(out6, MAXJSAMPLE, vl);
 
   out7 = __riscv_vadd_vx_i16m1(out7, CENTERJSAMPLE, vl);
-  /* Range limit */
-  mask = __riscv_vmslt_vx_i16m1_b16(out7, 0, vl);
-  out7 = __riscv_vmerge_vxm_i16m1(out7, 0, mask, vl);
-  mask = __riscv_vmsgt_vx_i16m1_b16(out7, MAXJSAMPLE, vl);
-  out7 = __riscv_vmerge_vxm_i16m1(out7, MAXJSAMPLE, mask, vl);
+  out7  = __riscv_vmax_vx_i16m1(out7, 0, vl);
+  out7 = __riscv_vmin_vx_i16m1(out7, MAXJSAMPLE, vl);
 
   dst0 =
     __riscv_vreinterpret_v_i8mf2_u8mf2(__riscv_vnsra_wx_i8mf2(out0, 0, vl));

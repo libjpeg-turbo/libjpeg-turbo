@@ -67,7 +67,7 @@ jsimd_h2v1_fancy_upsample_rvv(int max_v_samp_factor,
        * 8-bit-element register groups.
        */
       samples = __riscv_vle8_v_u8m4(inptr, vl);
-      samplesa = __riscv_vle8_v_u8m4(inptr + 1, vl);
+      samplesa = __riscv_vslide1down_vx_u8m4(samples, inptr[vl], vl);
 
       /* Each sample is blended with a neighboring sample to make a 2x1 grid of
        * upsampled components, as follows:
@@ -171,11 +171,11 @@ jsimd_h2v2_fancy_upsample_rvv(int max_v_samp_factor,
        * groups.
        */
       samples_1 = __riscv_vle8_v_u8m2(inptr_1, vl);
-      samples_1a = __riscv_vle8_v_u8m2(inptr_1 + 1, vl);
+      samples_1a = __riscv_vslide1down_vx_u8m2(samples_1, inptr_1[vl], vl);
       samples0 = __riscv_vle8_v_u8m2(inptr0, vl);
-      samples0a = __riscv_vle8_v_u8m2(inptr0 + 1, vl);
+      samples0a = __riscv_vslide1down_vx_u8m2(samples0, inptr0[vl], vl);
       samples1 = __riscv_vle8_v_u8m2(inptr1, vl);
-      samples1a = __riscv_vle8_v_u8m2(inptr1 + 1, vl);
+      samples1a = __riscv_vslide1down_vx_u8m2(samples1, inptr1[vl], vl);
 
       /* Each sample is blended with neighboring samples to make a 2x2 grid of
        * upsampled components, as follows:
