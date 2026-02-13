@@ -26,115 +26,115 @@
   vint64m1_t r04l, r04h, r15l, r15h, r26l, r26h, r37l, r37h; \
   vint32m1_t c01e, c01o, c23e, c23o, c45e, c45o, c67e, c67o; \
   \
-  /* row##0 = 0A 0B 0C 0D 0E 0F 0G 0H \
-   * row##1 = 1A 1B 1C 1D 1E 1F 1G 1H \
-   * row##2 = 2A 2B 2C 2D 2E 2F 2G 2H \
-   * row##3 = 3A 3B 3C 3D 3E 3F 3G 3H \
-   * row##4 = 4A 4B 4C 4D 4E 4F 4G 4H \
-   * row##5 = 5A 5B 5C 5D 5E 5F 5G 5H \
-   * row##6 = 6A 6B 6C 6D 6E 6F 6G 6H \
-   * row##7 = 7A 7B 7C 7D 7E 7F 7G 7H \
+  /* row##0 = 00 01 02 03 04 05 06 07 \
+   * row##1 = 10 11 12 13 14 15 16 17 \
+   * row##2 = 20 21 22 23 24 25 26 27 \
+   * row##3 = 30 31 32 33 34 35 36 37 \
+   * row##4 = 40 41 42 43 44 45 46 47 \
+   * row##5 = 50 51 52 53 54 55 56 57 \
+   * row##6 = 60 61 62 63 64 65 66 67 \
+   * row##7 = 70 71 72 73 74 75 76 77 \
    */ \
   \
   VL = __riscv_vsetvlmax_e64m1(); \
   r04l = __riscv_vslide1up_mu(__riscv_vreinterpret_b64(veven), \
                               __riscv_vreinterpret_i64m1(row##0), \
                               __riscv_vreinterpret_i64m1(row##4), 0, VL); \
-                                              /* 0A 0B 0C 0D | 4A 4B 4C 4D */ \
+                                              /* 00 01 02 03 | 40 41 42 43 */ \
   r15l = __riscv_vslide1up_mu(__riscv_vreinterpret_b64(veven), \
                               __riscv_vreinterpret_i64m1(row##1), \
                               __riscv_vreinterpret_i64m1(row##5), 0, VL); \
-                                              /* 1A 1B 1C 1D | 5A 5B 5C 5D */ \
+                                              /* 10 11 12 13 | 50 51 52 53 */ \
   r26l = __riscv_vslide1up_mu(__riscv_vreinterpret_b64(veven), \
                               __riscv_vreinterpret_i64m1(row##2), \
                               __riscv_vreinterpret_i64m1(row##6), 0, VL); \
-                                              /* 2A 2B 2C 2D | 6A 6B 6C 6D */ \
+                                              /* 20 21 22 23 | 60 61 62 63 */ \
   r37l = __riscv_vslide1up_mu(__riscv_vreinterpret_b64(veven), \
                               __riscv_vreinterpret_i64m1(row##3), \
                               __riscv_vreinterpret_i64m1(row##7), 0, VL); \
-                                              /* 3A 3B 3C 3D | 7A 7B 7C 7D */ \
+                                              /* 30 31 32 33 | 70 71 72 73 */ \
   r04h = __riscv_vslide1down_mu(__riscv_vreinterpret_b64(vodd), \
                                 __riscv_vreinterpret_i64m1(row##4), \
                                 __riscv_vreinterpret_i64m1(row##0), 0, VL); \
-                                              /* 0E 0F 0G 0H | 4E 4F 4G 4H */ \
+                                              /* 04 05 06 07 | 44 45 46 47 */ \
   r15h = __riscv_vslide1down_mu(__riscv_vreinterpret_b64(vodd), \
                                 __riscv_vreinterpret_i64m1(row##5), \
                                 __riscv_vreinterpret_i64m1(row##1), 0, VL); \
-                                              /* 1E 1F 1G 1H | 5E 5F 5G 5H */ \
+                                              /* 14 15 16 17 | 54 55 56 57 */ \
   r26h = __riscv_vslide1down_mu(__riscv_vreinterpret_b64(vodd), \
                                 __riscv_vreinterpret_i64m1(row##6), \
                                 __riscv_vreinterpret_i64m1(row##2), 0, VL); \
-                                              /* 2E 2F 2G 2H | 6E 6F 6G 6H */ \
+                                              /* 24 25 26 27 | 64 65 66 67 */ \
   r37h = __riscv_vslide1down_mu(__riscv_vreinterpret_b64(vodd), \
                                 __riscv_vreinterpret_i64m1(row##7), \
                                 __riscv_vreinterpret_i64m1(row##3), 0, VL); \
-                                              /* 3E 3F 3G 3H | 7E 7F 7G 7H */ \
+                                              /* 34 35 36 37 | 74 75 76 77 */ \
   \
   VL = __riscv_vsetvlmax_e32m1(); \
   c23e = __riscv_vslide1down_mu(__riscv_vreinterpret_b32(vodd), \
                                 __riscv_vreinterpret_i32m1(r26l), \
                                 __riscv_vreinterpret_i32m1(r04l), 0, VL); \
-                                          /* 0C 0D | 2C 2D | 4C 4D | 6C 6D */ \
+                                          /* 02 03 | 22 23 | 42 43 | 62 63 */ \
   c23o = __riscv_vslide1down_mu(__riscv_vreinterpret_b32(vodd), \
                                 __riscv_vreinterpret_i32m1(r37l), \
                                 __riscv_vreinterpret_i32m1(r15l), 0, VL); \
-                                          /* 1C 1D | 3C 3D | 5C 5D | 7C 7D */ \
+                                          /* 12 13 | 32 33 | 52 53 | 72 73 */ \
   c67e = __riscv_vslide1down_mu(__riscv_vreinterpret_b32(vodd), \
                                 __riscv_vreinterpret_i32m1(r26h), \
                                 __riscv_vreinterpret_i32m1(r04h), 0, VL); \
-                                          /* 0G 0H | 2G 2H | 4G 4H | 6G 6H */ \
+                                          /* 06 07 | 26 27 | 46 47 | 66 67 */ \
   c67o = __riscv_vslide1down_mu(__riscv_vreinterpret_b32(vodd), \
                                 __riscv_vreinterpret_i32m1(r37h), \
                                 __riscv_vreinterpret_i32m1(r15h), 0, VL); \
-                                          /* 1G 1H | 3G 3H | 5G 5H | 7G 7H */ \
+                                          /* 16 17 | 36 37 | 56 57 | 76 77 */ \
   c01e = __riscv_vslide1up_mu(__riscv_vreinterpret_b32(veven), \
                               __riscv_vreinterpret_i32m1(r04l), \
                               __riscv_vreinterpret_i32m1(r26l), 0, VL); \
-                                          /* 0A 0B | 2A 2B | 4A 4B | 6A 6B */ \
+                                          /* 00 01 | 20 21 | 40 41 | 60 61 */ \
   c01o = __riscv_vslide1up_mu(__riscv_vreinterpret_b32(veven), \
                               __riscv_vreinterpret_i32m1(r15l), \
                               __riscv_vreinterpret_i32m1(r37l), 0, VL); \
-                                          /* 1A 1B | 3A 3B | 5A 5B | 7A 7B */ \
+                                          /* 10 11 | 30 31 | 50 51 | 70 71 */ \
   c45e = __riscv_vslide1up_mu(__riscv_vreinterpret_b32(veven), \
                               __riscv_vreinterpret_i32m1(r04h), \
                               __riscv_vreinterpret_i32m1(r26h), 0, VL); \
-                                          /* 0E 0F | 2E 2F | 4E 4F | 6E 6F */ \
+                                          /* 04 05 | 24 25 | 44 45 | 64 65 */ \
   c45o = __riscv_vslide1up_mu(__riscv_vreinterpret_b32(veven), \
                               __riscv_vreinterpret_i32m1(r15h), \
                               __riscv_vreinterpret_i32m1(r37h), 0, VL); \
-                                          /* 1E 1F | 3E 3F | 5E 5F | 7E 7F */ \
+                                          /* 14 15 | 34 35 | 54 55 | 74 75 */ \
   \
   VL = __riscv_vsetvlmax_e16m1(); \
   col##0 = __riscv_vslide1up_mu(__riscv_vreinterpret_b16(veven), \
                                 __riscv_vreinterpret_i16m1(c01e), \
                                 __riscv_vreinterpret_i16m1(c01o), 0, VL); \
-                                                /* 0A 1A 2A 3A 4A 5A 6A 7A */ \
+                                                /* 00 10 20 30 40 50 60 70 */ \
   col##2 = __riscv_vslide1up_mu(__riscv_vreinterpret_b16(veven), \
                                 __riscv_vreinterpret_i16m1(c23e), \
                                 __riscv_vreinterpret_i16m1(c23o), 0, VL); \
-                                                /* 0C 1C 2C 3C 4C 5C 6C 7C */ \
+                                                /* 02 12 22 32 42 52 62 72 */ \
   col##4 = __riscv_vslide1up_mu(__riscv_vreinterpret_b16(veven), \
                                 __riscv_vreinterpret_i16m1(c45e), \
                                 __riscv_vreinterpret_i16m1(c45o), 0, VL); \
-                                                /* 0E 1E 2E 3E 4E 5E 6E 7E */ \
+                                                /* 04 14 24 34 44 54 64 74 */ \
   col##6 = __riscv_vslide1up_mu(__riscv_vreinterpret_b16(veven), \
                                 __riscv_vreinterpret_i16m1(c67e), \
                                 __riscv_vreinterpret_i16m1(c67o), 0, VL); \
-                                                /* 0G 1G 2G 3G 4G 5G 6G 7G */ \
+                                                /* 06 16 26 36 46 56 66 76 */ \
   col##1 = __riscv_vslide1down_mu(__riscv_vreinterpret_b16(vodd), \
                                   __riscv_vreinterpret_i16m1(c01o), \
                                   __riscv_vreinterpret_i16m1(c01e), 0, VL); \
-                                                /* 0B 1B 2B 3B 4B 5B 6B 7B */ \
+                                                /* 01 11 21 31 41 51 61 71 */ \
   col##3 = __riscv_vslide1down_mu(__riscv_vreinterpret_b16(vodd), \
                                   __riscv_vreinterpret_i16m1(c23o), \
                                   __riscv_vreinterpret_i16m1(c23e), 0, VL); \
-                                                /* 0D 1D 2D 3D 4D 5D 6D 7D */ \
+                                                /* 03 13 23 33 43 53 63 73 */ \
   col##5 = __riscv_vslide1down_mu(__riscv_vreinterpret_b16(vodd), \
                                   __riscv_vreinterpret_i16m1(c45o), \
                                   __riscv_vreinterpret_i16m1(c45e), 0, VL); \
-                                                /* 0F 1F 2F 3F 4F 5F 6F 7F */ \
+                                                /* 05 15 25 35 45 55 65 75 */ \
   col##7 = __riscv_vslide1down_mu(__riscv_vreinterpret_b16(vodd), \
                                   __riscv_vreinterpret_i16m1(c67o), \
                                   __riscv_vreinterpret_i16m1(c67e), 0, VL); \
-                                                /* 0H 1H 2H 3H 4H 5H 6H 7H */ \
+                                                /* 07 17 27 37 47 57 67 77 */ \
 }
