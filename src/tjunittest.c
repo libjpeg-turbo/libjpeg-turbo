@@ -209,7 +209,7 @@ static int getVal(void *buf, int index, int targetPrecision)
     return ((unsigned short *)buf)[index];
 }
 
-static int checkBuf(void *buf, int w, int h, int pf,  int subsamp,
+static int checkBuf(void *buf, int w, int h, int pf, int subsamp,
                     tjscalingfactor sf, int bottomUp)
 {
   int roffset = tjRedOffset[pf];
