@@ -419,7 +419,6 @@ static void compTest(tjhandle handle, unsigned char **dstBuf, size_t *dstSize,
 
   if (doYUV) {
     size_t yuvSize = tj3YUVBufSize(w, yuvAlign, h, subsamp);
-    tjscalingfactor sf = { 1, 1 };
 
     if ((handle2 = tj3Init(TJINIT_COMPRESS)) == NULL)
       THROW_TJ(NULL);
@@ -438,7 +437,7 @@ static void compTest(tjhandle handle, unsigned char **dstBuf, size_t *dstSize,
     TRY_TJ(handle2, tj3EncodeYUV8(handle2, (unsigned char *)srcBuf, w, 0, h,
                                   pf, yuvBuf, yuvAlign));
     tj3Destroy(handle2);  handle2 = NULL;
-    if (checkBufYUV(yuvBuf, w, h, subsamp, sf)) printf("Passed.\n");
+    if (checkBufYUV(yuvBuf, w, h, subsamp, TJUNSCALED)) printf("Passed.\n");
     else printf("FAILED!\n");
 
     printf("YUV %s %s -> JPEG Q%d ... ", subNameLong[subsamp], buStrLong,

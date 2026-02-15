@@ -714,7 +714,7 @@ final class TJUnitTest {
                         SUBNAME_LONG[subsamp]);
       YUVImage yuvImage = tjc.encodeYUV(yuvAlign);
       if (checkBufYUV(yuvImage.getBuf(), yuvImage.getSize(), w, h, subsamp,
-                      new TJScalingFactor(1, 1)))
+                      TJ.UNSCALED))
         System.out.print("Passed.\n");
       else {
         System.out.print("FAILED!\n");
