@@ -56,7 +56,8 @@ final class TJUnitTest {
     System.out.println("-precision N = test N-bit data precision (N is 8, 12, or 16; default is 8; if N");
     System.out.println("               is 16, then -lossless is implied)");
     System.out.println("-lossless = test lossless JPEG compression/decompression");
-    System.out.println("-bi = test BufferedImage I/O (8-bit data precision only)\n");
+    System.out.println("-bi = test BufferedImage I/O (8-bit data precision only)");
+    System.out.println("-bmp = test packed-pixel image I/O\n");
     System.exit(1);
   }
 
