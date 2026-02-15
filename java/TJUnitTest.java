@@ -56,7 +56,8 @@ final class TJUnitTest {
     System.out.println("-precision N = test N-bit data precision (N=2..16; default is 8; if N is not 8");
     System.out.println("               or 12, then -lossless is implied)");
     System.out.println("-lossless = test lossless JPEG compression/decompression");
-    System.out.println("-bi = test BufferedImage I/O (8-bit data precision only)\n");
+    System.out.println("-bi = test BufferedImage I/O (8-bit data precision only)");
+    System.out.println("-bmp = test packed-pixel image I/O\n");
     System.exit(1);
   }
 
@@ -714,7 +715,7 @@ final class TJUnitTest {
                         SUBNAME_LONG[subsamp]);
       YUVImage yuvImage = tjc.encodeYUV(yuvAlign);
       if (checkBufYUV(yuvImage.getBuf(), yuvImage.getSize(), w, h, subsamp,
-                      new TJScalingFactor(1, 1)))
+                      TJ.UNSCALED))
         System.out.print("Passed.\n");
       else {
         System.out.print("FAILED!\n");

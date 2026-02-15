@@ -208,7 +208,7 @@ static int getVal(void *buf, int index, int targetPrecision)
     return ((unsigned short *)buf)[index];
 }
 
-static int checkBuf(void *buf, int w, int h, int pf,  int subsamp,
+static int checkBuf(void *buf, int w, int h, int pf, int subsamp,
                     tjscalingfactor sf, int bottomUp)
 {
   int roffset = tjRedOffset[pf];
@@ -408,6 +408,7 @@ static void compTest(tjhandle handle, unsigned char **dstBuf, size_t *dstSize,
   int jpegQual = tj3Get(handle, TJPARAM_QUALITY);
   const char *buStrLong = bottomUp ? "Bottom-Up" : "Top-Down ";
   const char *buStr = bottomUp ? "BU" : "TD";
+  tjhandle handle2 = NULL;
 
   if ((srcBuf = malloc(w * h * tjPixelSize[pf] * sampleSize)) == NULL)
       THROW("Memory allocation failure");
@@ -417,8 +418,6 @@ static void compTest(tjhandle handle, unsigned char **dstBuf, size_t *dstSize,
 
   if (doYUV) {
     size_t yuvSize = tj3YUVBufSize(w, yuvAlign, h, subsamp);
-    tjscalingfactor sf = { 1, 1 };
-    tjhandle handle2 = NULL;
 
     if ((handle2 = tj3Init(TJINIT_COMPRESS)) == NULL)
       THROW_TJ(NULL);
@@ -436,8 +435,8 @@ static void compTest(tjhandle handle, unsigned char **dstBuf, size_t *dstSize,
     TRY_TJ(handle2, tj3Set(handle2, TJPARAM_COLORSPACE, TJCS_RGB));
     TRY_TJ(handle2, tj3EncodeYUV8(handle2, (unsigned char *)srcBuf, w, 0, h,
                                   pf, yuvBuf, yuvAlign));
-    tj3Destroy(handle2);
-    if (checkBufYUV(yuvBuf, w, h, subsamp, sf)) printf("Passed.\n");
+    tj3Destroy(handle2);  handle2 = NULL;
+    if (checkBufYUV(yuvBuf, w, h, subsamp, TJUNSCALED)) printf("Passed.\n");
     else printf("FAILED!\n");
 
     printf("YUV %s %s -> JPEG Q%d ... ", subNameLong[subsamp], buStrLong,
@@ -477,6 +476,7 @@ static void compTest(tjhandle handle, unsigned char **dstBuf, size_t *dstSize,
   printf("Done.\n  Result in %s\n", tempStr);
 
 bailout:
+  tj3Destroy(handle2);
   free(yuvBuf);
   free(srcBuf);
 }
@@ -493,6 +493,7 @@ static void _decompTest(tjhandle handle, unsigned char *jpegBuf,
   int scaledHeight = TJSCALED(h, sf);
   size_t dstSize = 0;
   int bottomUp = tj3Get(handle, TJPARAM_BOTTOMUP);
+  tjhandle handle2 = NULL;
 
   TRY_TJ(handle, tj3SetScalingFactor(handle, sf));
 
@@ -513,7 +514,6 @@ static void _decompTest(tjhandle handle, unsigned char *jpegBuf,
   if (doYUV) {
     size_t yuvSize = tj3YUVBufSize(scaledWidth, yuvAlign, scaledHeight,
                                    subsamp);
-    tjhandle handle2 = NULL;
 
     if ((handle2 = tj3Init(TJINIT_DECOMPRESS)) == NULL)
       THROW_TJ(NULL);
@@ -539,7 +539,7 @@ static void _decompTest(tjhandle handle, unsigned char *jpegBuf,
     TRY_TJ(handle2, tj3DecodeYUV8(handle2, yuvBuf, yuvAlign,
                                   (unsigned char *)dstBuf, scaledWidth, 0,
                                   scaledHeight, pf));
-    tj3Destroy(handle2);
+    tj3Destroy(handle2);  handle2 = NULL;
   } else {
     printf("JPEG -> %s %s ", pixFormatStr[pf],
            bottomUp ? "Bottom-Up" : "Top-Down ");
@@ -564,6 +564,7 @@ static void _decompTest(tjhandle handle, unsigned char *jpegBuf,
   printf("\n");
 
 bailout:
+  tj3Destroy(handle2);
   free(yuvBuf);
   free(dstBuf);
 }
