@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2011-2018, 2022-2023 D. R. Commander.  All Rights Reserved.
+ * Copyright (C) 2011-2018, 2022-2023, 2026 D. R. Commander.
+ *                                          All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -705,7 +706,7 @@ final class TJUnitTest {
                         SUBNAME_LONG[subsamp]);
       YUVImage yuvImage = tjc.encodeYUV(yuvAlign);
       if (checkBufYUV(yuvImage.getBuf(), yuvImage.getSize(), w, h, subsamp,
-                      new TJScalingFactor(1, 1)) == 1)
+                      TJ.UNSCALED) == 1)
         System.out.print("Passed.\n");
       else {
         System.out.print("FAILED!\n");
