@@ -5,7 +5,7 @@
  *                          Author:  Zhiyuan Tan
  * Copyright (C) 2025, Samsung Electronics Co., Ltd.
  *                     Author:  Filip Wasil
- * Copyright (C) 2025, Olaf Bernstein.
+ * Copyright (C) 2025-2026, Olaf Bernstein.
  * Copyright (C) 2026, D. R. Commander.
  *
  * This software is provided 'as-is', without any express or implied
@@ -107,26 +107,26 @@ jsimd_rgb_ycc_convert_rvv(JDIMENSION img_width, JSAMPARRAY input_buf,
       __riscv_vse8_v_u8m1(outptr0, y, vl);
 
       cb32 = __riscv_vwmulu_vx_u32m4(b16, F_0_500, vl);
-      cb32 = __riscv_vadd_vx_u32m4(cb32, SCALED_CENTERJSAMPLE, vl);
+      cb32 = __riscv_vadd_vx_u32m4(cb32, SCALED_CENTERJSAMPLE + ONE_HALF - 1,
+                                   vl);
       tmp = __riscv_vwmulu_vx_u32m4(g16, F_0_331, vl);
       cb32 = __riscv_vsub_vv_u32m4(cb32, tmp, vl);
       tmp = __riscv_vwmulu_vx_u32m4(r16, F_0_168, vl);
       cb32 = __riscv_vsub_vv_u32m4(cb32, tmp, vl);
       /* Narrow to 16-bit and round. */
-      cb32 = __riscv_vadd_vx_u32m4(cb32, ONE_HALF - 1, vl);
       cb16 = __riscv_vnsrl_wx_u16m2(cb32, SCALEBITS, vl);
       /* Narrow to 8-bit and store to memory. */
       cb = __riscv_vncvt_x_x_w_u8m1(cb16, vl);
       __riscv_vse8_v_u8m1(outptr1, cb, vl);
 
       cr32 = __riscv_vwmulu_vx_u32m4(r16, F_0_500, vl);
-      cr32 = __riscv_vadd_vx_u32m4(cr32, SCALED_CENTERJSAMPLE, vl);
+      cr32 = __riscv_vadd_vx_u32m4(cr32, SCALED_CENTERJSAMPLE + ONE_HALF - 1,
+                                   vl);
       tmp = __riscv_vwmulu_vx_u32m4(g16, F_0_418, vl);
       cr32 = __riscv_vsub_vv_u32m4(cr32, tmp, vl);
       tmp = __riscv_vwmulu_vx_u32m4(b16, F_0_081, vl);
       cr32 = __riscv_vsub_vv_u32m4(cr32, tmp, vl);
       /* Narrow to 16-bit and round. */
-      cr32 = __riscv_vadd_vx_u32m4(cr32, ONE_HALF - 1, vl);
       cr16 = __riscv_vnsrl_wx_u16m2(cr32, SCALEBITS, vl);
       /* Narrow to 8-bit and store to memory. */
       cr = __riscv_vncvt_x_x_w_u8m1(cr16, vl);

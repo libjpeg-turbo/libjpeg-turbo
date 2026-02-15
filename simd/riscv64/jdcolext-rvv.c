@@ -5,7 +5,7 @@
  *                          Author:  Zhiyuan Tan
  * Copyright (C) 2025, Samsung Electronics Co., Ltd.
  *                     Author:  Filip Wasil
- * Copyright (C) 2025, Olaf Bernstein.
+ * Copyright (C) 2025-2026, Olaf Bernstein.
  * Copyright (C) 2026, D. R. Commander.
  *
  * This software is provided 'as-is', without any express or implied
@@ -36,7 +36,7 @@ jsimd_ycc_rgb_convert_rvv(JDIMENSION out_width, JSAMPIMAGE input_buf,
   JSAMPROW outptr, inptr0, inptr1, inptr2;
 
   vuint8m2_t y, cb, cr;
-  vint16m4_t y16, cb16, cr16, r16, g16, b16;
+  vint16m4_t y16, cb16, cb16_2, cr16, r16, g16, b16;
   vint32m8_t g32;
   vuint8m2_t r, g, b;
 #if RGB_PIXELSIZE == 3
@@ -103,14 +103,13 @@ jsimd_ycc_rgb_convert_rvv(JDIMENSION out_width, JSAMPIMAGE input_buf,
       r = __riscv_vnclipu_wx_u8m2(__riscv_vreinterpret_v_i16m4_u16m4(r16), 0,
                                   __RISCV_VXRM_RDN, vl);
 
-      b16 = __riscv_vsll_vx_i16m4(cb16, 1, vl);                    /* 2 * Cb */
-      b16 = __riscv_vmulh_vx_i16m4(b16, -F_0_228, vl);
+      cb16_2 = __riscv_vsll_vx_i16m4(cb16, 1, vl);                 /* 2 * Cb */
+      b16 = __riscv_vmulh_vx_i16m4(cb16_2, -F_0_228, vl);
                                                      /* 2 * Cb * -FIX(0.228) */
       b16 = __riscv_vadd_vx_i16m4(b16, 1, vl);
                                                  /* 2 * Cb * -FIX(0.228) + 1 */
       b16 = __riscv_vsra_vx_i16m4(b16, 1, vl);           /* Cb * -FIX(0.228) */
-      b16 = __riscv_vadd_vv_i16m4(b16, cb16, vl);         /* Cb * FIX(0.772) */
-      b16 = __riscv_vadd_vv_i16m4(b16, cb16, vl);         /* Cb * FIX(1.772) */
+      b16 = __riscv_vadd_vv_i16m4(b16, cb16_2, vl);       /* Cb * FIX(1.772) */
       b16 = __riscv_vadd_vv_i16m4(b16, y16, vl);      /* Y + Cb * FIX(1.772) */
       /* Range limit and narrow to 8-bit. */
       b16 = __riscv_vmax_vx_i16m4(b16, 0, vl);
