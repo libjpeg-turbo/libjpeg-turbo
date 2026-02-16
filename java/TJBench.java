@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2009-2014, 2016-2019, 2021-2024 D. R. Commander.
- *                                               All Rights Reserved.
+ * Copyright (C) 2009-2014, 2016-2019, 2021-2024, 2026 D. R. Commander.
+ *                                                     All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -41,11 +41,11 @@ final class TJBench {
 
   private static boolean stopOnWarning, bottomUp, fastUpsample, fastDCT,
     optimize, progressive, limitScans, arithmetic, lossless;
-  private static int maxMemory = 0, maxPixels = 0, precision = 8, quiet = 0,
-    pf = TJ.PF_BGR, yuvAlign = 1, restartIntervalBlocks = 0,
-    restartIntervalRows = 0;
-  private static boolean compOnly, decompOnly, doTile, doYUV, write = true,
-    bmp = false;
+  private static int precision = 8, restartIntervalBlocks = 0,
+    restartIntervalRows = 0, maxMemory = 0, maxPixels = 0;
+  private static boolean bmp = false, compOnly, decompOnly, write = true,
+    doTile, doYUV;
+  private static int pf = TJ.PF_BGR, quiet = 0, yuvAlign = 1;
 
   static final String[] PIXFORMATSTR = {
     "RGB", "BGR", "RGBX", "BGRX", "XBGR", "XRGB", "GRAY", "", "", "", "",
