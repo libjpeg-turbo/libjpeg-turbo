@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009-2019, 2021-2025 D. R. Commander.  All Rights Reserved.
+ * Copyright (C) 2009-2019, 2021-2026 D. R. Commander.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -94,13 +94,13 @@ static int tjErrorLine = -1, tjErrorCode = -1;
   (IS_CROPPED(cr) ? (cr.h != 0 ? cr.h : TJSCALED(height, sf) - cr.y) : \
                     TJSCALED(height, sf))
 
-static int stopOnWarning = 0, bottomUp = 0, noRealloc = 1, fastUpsample = 0,
-  fastDCT = 0, optimize = 0, progressive = 0, maxMemory = 0, maxPixels = 0,
-  maxScans = 0, arithmetic = 0, lossless = 0, restartIntervalBlocks = 0,
-  restartIntervalRows = 0;
-static int precision = 8, sampleSize, compOnly = 0, decompOnly = 0, doYUV = 0,
-  quiet = 0, doTile = 0, pf = TJPF_BGR, yuvAlign = 1, doWrite = 1;
+static int stopOnWarning = 0, bottomUp = 0, noRealloc = 1, precision = 8,
+  fastUpsample = 0, fastDCT = 0, optimize = 0, progressive = 0, maxScans = 0,
+  arithmetic = 0, lossless = 0, restartIntervalBlocks = 0,
+  restartIntervalRows = 0, maxMemory = 0, maxPixels = 0;
 static char *ext = "ppm";
+static int sampleSize, compOnly = 0, decompOnly = 0, doWrite = 1,
+  pf = TJPF_BGR, quiet = 0, doTile = 0, doYUV = 0, yuvAlign = 1;
 static const char *pixFormatStr[TJ_NUMPF] = {
   "RGB", "BGR", "RGBX", "BGRX", "XBGR", "XRGB", "GRAY", "", "", "", "", "CMYK"
 };
