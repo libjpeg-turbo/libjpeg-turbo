@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2025 D. R. Commander.  All Rights Reserved.
+ * Copyright (C) 2011-2026 D. R. Commander.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -1220,7 +1220,7 @@ bailout:
   return -1;
 }
 
-/* TurboJPEG 3.1.x: TJTransformed.bufSize() */
+/* TurboJPEG 3.1.x: TJTransformer.bufSize() */
 JNIEXPORT jint JNICALL Java_org_libjpegturbo_turbojpeg_TJTransformer_bufSize
   (JNIEnv *env, jobject obj, jobject tobj)
 {
