@@ -198,6 +198,7 @@ jobs:
         uses: actions/checkout@v4
       - name: Set up build
         run: |
+          sudo apt update
           sudo apt -y install gcc-11 nasm
       - name: Build
         env:
