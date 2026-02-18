@@ -119,8 +119,8 @@ instance, and setting `TJPARAM_LOSSLESS`/`TJ.PARAM_LOSSLESS` to `0` now
 disables lossless JPEG compression in a TurboJPEG instance.
 
 
-3.1 beta1
-=========
+3.0.90 (3.1 beta1)
+==================
 
 ### Significant changes relative to 3.0.4:
 
