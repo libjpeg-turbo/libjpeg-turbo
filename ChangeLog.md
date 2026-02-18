@@ -2255,8 +2255,8 @@ be used to build both OS X and iOS applications.
 
 ### Significant changes relative to 1.1.1:
 
-1. Added a Java wrapper for the TurboJPEG API.  See [java/README](java/README)
-for more details.
+1. Added a Java wrapper for the TurboJPEG API.  See
+[java/README.md](java/README.md) for more details.
 
 2. The TurboJPEG API can now be used to scale down images during
 decompression.

@@ -306,8 +306,8 @@ disable encoding or decoding (respectively.)
 Add `-DWITH_JAVA=1` to the CMake command line to incorporate an optional Java
 Native Interface (JNI) wrapper into the TurboJPEG shared library and build the
 Java front-end classes to support it.  This allows the TurboJPEG shared library
-to be used directly from Java applications.  See [java/README](java/README) for
-more details.
+to be used directly from Java applications.  See
+[java/README.md](java/README.md) for more details.
 
 If Java is not in your `PATH`, or if you wish to use an alternate JDK to
 build/test libjpeg-turbo, then (prior to running CMake) set the `JAVA_HOME`
