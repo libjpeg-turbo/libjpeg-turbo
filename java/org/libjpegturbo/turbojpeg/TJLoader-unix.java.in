@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2011-2013, 2016, 2020 D. R. Commander.  All Rights Reserved.
+ * Copyright (C) 2011-2013, 2016, 2020, 2026 D. R. Commander.
+ *                                           All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -33,24 +34,21 @@ final class TJLoader {
     try {
       System.loadLibrary("turbojpeg");
     } catch (java.lang.UnsatisfiedLinkError e) {
-      String os = System.getProperty("os.name").toLowerCase();
-      if (os.indexOf("mac") >= 0) {
-        try {
-          System.load("@CMAKE_INSTALL_FULL_LIBDIR@/libturbojpeg.dylib");
-        } catch (java.lang.UnsatisfiedLinkError e2) {
-          System.load("/usr/lib/libturbojpeg.dylib");
-        }
-      } else {
-        try {
-          System.load("@CMAKE_INSTALL_FULL_LIBDIR@/libturbojpeg.so");
-        } catch (java.lang.UnsatisfiedLinkError e3) {
+      try {
+        System.load("@CMAKE_INSTALL_FULL_LIBDIR@/" +
+                    System.mapLibraryName("turbojpeg"));
+      } catch (java.lang.UnsatisfiedLinkError e2) {
+        String os = System.getProperty("os.name").toLowerCase();
+        if (os.indexOf("mac") < 0) {
           String libdir = "@CMAKE_INSTALL_FULL_LIBDIR@";
           if (libdir.equals("@CMAKE_INSTALL_DEFAULT_PREFIX@/lib64")) {
-            System.load("@CMAKE_INSTALL_DEFAULT_PREFIX@/lib32/libturbojpeg.so");
+            System.load("@CMAKE_INSTALL_DEFAULT_PREFIX@/lib32/" +
+                        System.mapLibraryName("turbojpeg"));
           } else if (libdir.equals("@CMAKE_INSTALL_DEFAULT_PREFIX@/lib32")) {
-            System.load("@CMAKE_INSTALL_DEFAULT_PREFIX@/lib64/libturbojpeg.so");
+            System.load("@CMAKE_INSTALL_DEFAULT_PREFIX@/lib64/" +
+                        System.mapLibraryName("turbojpeg"));
           } else {
-            throw e3;
+            throw e2;
           }
         }
       }
