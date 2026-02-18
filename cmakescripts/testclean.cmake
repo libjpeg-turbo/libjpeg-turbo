@@ -1,5 +1,6 @@
 file(GLOB FILES
   testout*
+  test_bmp*
   *_GRAY_*.bmp
   *_GRAY_*.png
   *_GRAY_*.ppm
