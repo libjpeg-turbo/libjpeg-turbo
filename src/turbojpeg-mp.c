@@ -499,7 +499,7 @@ DLLEXPORT int GET_NAME(tj3SaveImage, BITS_IN_JSAMPLE)
   j_decompress_ptr dinfo = NULL;
   djpeg_dest_ptr dst;
   FILE *file = NULL;
-  char *ptr = NULL;
+  const char *ptr = NULL;
   boolean invert;
 
   GET_TJINSTANCE(handle, -1)
