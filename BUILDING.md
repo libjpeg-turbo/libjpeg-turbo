@@ -309,7 +309,7 @@ build/test libjpeg-turbo, then (prior to running CMake) set the `JAVA_HOME`
 environment variable to the location of the JDK that you wish to use.  The
 `Java_JAVAC_EXECUTABLE`, `Java_JAVA_EXECUTABLE`, and `Java_JAR_EXECUTABLE`
 CMake variables can also be used to specify alternate commands or locations for
-javac, jar, and java (respectively.)  You can also set the
+javac, java, and jar (respectively.)  You can also set the
 `CMAKE_JAVA_COMPILE_FLAGS` CMake variable or the `JAVAFLAGS` environment
 variable to specify arguments that should be passed to the Java compiler when
 building the TurboJPEG classes, and the `JAVAARGS` CMake variable to specify
