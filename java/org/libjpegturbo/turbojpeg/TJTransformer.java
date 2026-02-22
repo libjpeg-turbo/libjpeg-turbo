@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2011, 2013-2015, 2023 D. R. Commander.  All Rights Reserved.
+ * Copyright (C) 2011, 2013-2015, 2023, 2026 D. R. Commander.
+ *                                           All Rights Reserved.
  * Copyright (C) 2015 Viktor Szathmáry.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -86,7 +87,7 @@ public class TJTransformer extends TJDecompressor {
    * Returns the maximum size of the buffer (in bytes) required to hold a JPEG
    * image transformed, with the given transform parameters and/or cropping
    * region, from the JPEG source image associated with this transformer
-   * instance.  This function is a wrapper for {@link TJ#bufSize TJ.bufSize()}
+   * instance.  This method is a wrapper for {@link TJ#bufSize TJ.bufSize()}
    * that takes into account cropping, transposition of the width and height
    * (which affects the destination image dimensions and level of chrominance
    * subsampling), grayscale conversion, and the ICC profile (if any) that was
