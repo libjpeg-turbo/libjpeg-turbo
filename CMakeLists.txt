@@ -249,7 +249,7 @@ if(CMAKE_C_COMPILER_ABI MATCHES "ELF X32")
   set(WITH_JAVA 0)
 else()
   option(WITH_JAVA
-    "Build Java wrapper for the TurboJPEG API library (implies ENABLE_SHARED=1)"
+    "Build TurboJPEG Java API and JNI wrapper for the TurboJPEG API library (implies ENABLE_SHARED=1)"
     FALSE)
   boolean_number(WITH_JAVA)
 endif()
@@ -324,7 +324,7 @@ endif()
 report_option(WITH_ARITH_ENC "Arithmetic encoding support")
 
 report_option(WITH_TURBOJPEG "TurboJPEG API library")
-report_option(WITH_JAVA "TurboJPEG Java wrapper")
+report_option(WITH_JAVA "TurboJPEG Java API")
 report_option(WITH_TOOLS "Command-line tools")
 report_option(WITH_TESTS "Regression tests")
 
