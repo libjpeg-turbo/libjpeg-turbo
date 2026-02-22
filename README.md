@@ -368,8 +368,11 @@ Memory Debugger Pitfalls
 
 Valgrind and Memory Sanitizer (MSan) can generate false positives
 (specifically, incorrect reports of uninitialized memory accesses) when used
-with libjpeg-turbo's SIMD extensions.  It is generally recommended that the
-SIMD extensions be disabled, either by passing an argument of `-DWITH_SIMD=0`
-to `cmake` when configuring the build or by setting the environment variable
-`JSIMD_FORCENONE` to `1` at run time, when testing libjpeg-turbo with Valgrind,
-MSan, or other memory debuggers.
+with libjpeg-turbo's SIMD extensions.  There are two ways to work around this
+when testing libjpeg-turbo with Valgrind, MSan, or other memory debuggers:
+
+1. Disable the SIMD extensions, either by passing an argument of
+   `-DWITH_SIMD=0` to `cmake` when configuring the build or by setting the
+   environment variable `JSIMD_FORCENONE` to `1` at run time.
+2. Define the `ZERO_BUFFERS` preprocessor macro (for instance, by adding
+   `-DZERO_BUFFERS=1` to `CMAKE_C_FLAGS`.)
