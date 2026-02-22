@@ -28,9 +28,9 @@
  */
 
 /*
- * This program demonstrates how to use the TurboJPEG C API to approximate the
- * functionality of the IJG's jpegtran program.  jpegtran features that are not
- * covered:
+ * This program demonstrates how to use the TurboJPEG Java API to approximate
+ * the functionality of the IJG's jpegtran program.  jpegtran features that are
+ * not covered:
  *
  * - Scan scripts
  * - Expanding the input image when cropping
