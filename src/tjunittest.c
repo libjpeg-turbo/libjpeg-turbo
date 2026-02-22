@@ -27,7 +27,7 @@
  */
 
 /*
- * This program tests the various code paths in the TurboJPEG C Wrapper
+ * This program tests the various code paths in the TurboJPEG C API
  */
 
 #ifdef _MSC_VER
