@@ -27,8 +27,8 @@
  */
 
 /*
- * This program demonstrates how to use the TurboJPEG C API to approximate the
- * functionality of the IJG's djpeg program.  djpeg features that are not
+ * This program demonstrates how to use the TurboJPEG Java API to approximate
+ * the functionality of the IJG's djpeg program.  djpeg features that are not
  * covered:
  *
  * - OS/2 BMP, GIF, and Targa output file formats [legacy feature]

@@ -27,9 +27,9 @@
  */
 
 /*
- * This program demonstrates how to use the TurboJPEG C API to approximate the
- * functionality of the IJG's jpegtran program.  jpegtran features that are not
- * covered:
+ * This program demonstrates how to use the TurboJPEG Java API to approximate
+ * the functionality of the IJG's jpegtran program.  jpegtran features that are
+ * not covered:
  *
  * - Scan scripts
  * - Expanding the input image when cropping
@@ -60,10 +60,6 @@ final class TJTran {
 
 
   static void usage() {
-    int i;
-    TJScalingFactor[] scalingFactors = TJ.getScalingFactors();
-    int numScalingFactors = scalingFactors.length;
-
     System.out.println("\nUSAGE: java [Java options] " + CLASS_NAME +
                        " [options] <JPEG input image> <JPEG output image>\n");
 
@@ -156,7 +152,7 @@ final class TJTran {
       xform[0] = new TJTransform();
       String iccFilename = null;
       byte[] srcBuf, iccBuf;
-      int width, height, iccSize = 0;
+      int iccSize = 0;
       byte[][] dstBuf;
 
       for (i = 0; i < argv.length; i++) {
@@ -301,8 +297,6 @@ final class TJTran {
           xform[0].op == TJTransform.OP_TRANSVERSE ||
           xform[0].op == TJTransform.OP_ROT90 ||
           xform[0].op == TJTransform.OP_ROT270) {
-        width = tjt.get(TJ.PARAM_JPEGHEIGHT);
-        height = tjt.get(TJ.PARAM_JPEGWIDTH);
         if (subsamp == TJ.SAMP_422)
           subsamp = TJ.SAMP_440;
         else if (subsamp == TJ.SAMP_440)
@@ -311,9 +305,6 @@ final class TJTran {
           subsamp = TJ.SAMP_441;
         else if (subsamp == TJ.SAMP_441)
           subsamp = TJ.SAMP_411;
-      } else {
-        width = tjt.get(TJ.PARAM_JPEGWIDTH);
-        height = tjt.get(TJ.PARAM_JPEGHEIGHT);
       }
 
       if (progressive >= 0)

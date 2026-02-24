@@ -126,8 +126,11 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
     if (tj3Get(handle, TJPARAM_NOREALLOC)) {
       if ((dstBuf = (unsigned char *)tj3Alloc(dstSize)) == NULL)
         goto bailout;
-    } else
-      dstBuf = NULL;
+    } else if (dstBuf == NULL) {
+      if ((dstBuf = (unsigned char *)tj3Alloc(100)) == NULL)
+        goto bailout;
+      dstSize = 100;
+    }
 
     if (size >= 34)
       tj3SetICCProfile(handle, (unsigned char *)&data[2], 32);

@@ -249,7 +249,7 @@ if(CMAKE_C_COMPILER_ABI MATCHES "ELF X32")
   set(WITH_JAVA 0)
 else()
   option(WITH_JAVA
-    "Build TurboJPEG Java API and JNI wrapper for the TurboJPEG API library (implies ENABLE_SHARED=1)"
+    "Build TurboJPEG Java API and JNI wrapper for the TurboJPEG API library (implies ENABLE_SHARED=1 and WITH_TURBOJPEG=1)"
     FALSE)
   boolean_number(WITH_JAVA)
 endif()
@@ -291,6 +291,7 @@ endmacro()
 
 if(WITH_JAVA)
   set(ENABLE_SHARED 1)
+  set(WITH_TURBOJPEG 1)
 endif()
 
 # Explicitly setting CMAKE_POSITION_INDEPENDENT_CODE=FALSE disables PIC for all
