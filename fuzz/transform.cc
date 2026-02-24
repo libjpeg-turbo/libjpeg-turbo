@@ -35,10 +35,10 @@
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 {
   tjhandle handle = NULL;
-  unsigned char *dstBufs[1] = { NULL };
-  size_t dstSizes[1] = { 0 }, maxBufSize, i;
+  unsigned char *dstBufs[2] = { NULL, NULL };
+  size_t dstSizes[2] = { 0, 0 }, maxBufSize, i;
   int width = 0, height = 0, jpegSubsamp, dstSubsamp;
-  tjtransform transforms[1];
+  tjtransform transforms[2];
 
   if ((handle = tj3Init(TJINIT_TRANSFORM)) == NULL)
     goto bailout;
@@ -65,7 +65,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
   if (jpegSubsamp < 0 || jpegSubsamp >= TJ_NUMSAMP)
     jpegSubsamp = TJSAMP_444;
 
-  memset(&transforms[0], 0, sizeof(tjtransform));
+  memset(&transforms[0], 0, sizeof(tjtransform) * 2);
 
   transforms[0].op = TJXOP_NONE;
   transforms[0].options = TJXOPT_PROGRESSIVE | TJXOPT_COPYNONE;
@@ -159,15 +159,27 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 
   transforms[0].op = TJXOP_NONE;
   transforms[0].options = TJXOPT_PROGRESSIVE;
-  dstSizes[0] = 0;
+  if ((dstBufs[0] = (unsigned char *)tj3Alloc(100)) == NULL)
+    goto bailout;
+  dstSizes[0] = 100;
+
+  transforms[1].op = TJXOP_ROT180;
+  transforms[1].options = TJXOPT_TRIM;
+  if ((dstBufs[1] = (unsigned char *)tj3Alloc(50)) == NULL)
+    goto bailout;
+  dstSizes[1] = 50;
+
+  maxBufSize = dstSizes[0] + dstSizes[1];
 
   tj3Set(handle, TJPARAM_NOREALLOC, 0);
-  if (tj3Transform(handle, data, size, 1, dstBufs, dstSizes,
+  if (tj3Transform(handle, data, size, 2, dstBufs, dstSizes,
                    transforms) == 0) {
     size_t sum = 0;
 
     for (i = 0; i < dstSizes[0]; i++)
       sum += dstBufs[0][i];
+    for (i = 0; i < dstSizes[1]; i++)
+      sum += dstBufs[1][i];
 
     if (sum > 255 * maxBufSize)
       goto bailout;
@@ -177,6 +189,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 
 bailout:
   tj3Free(dstBufs[0]);
+  tj3Free(dstBufs[1]);
   tj3Destroy(handle);
   return 0;
 }
