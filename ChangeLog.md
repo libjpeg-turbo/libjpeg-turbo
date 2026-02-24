@@ -25,6 +25,18 @@ jpegtran `-drop` option with a specially-crafted malformed drop image
 (specifically an image in which one or more of the quantization table values
 was 0.)
 
+5. Fixed an issue in the TurboJPEG API library's data destination manager that
+manifested as:
+
+     - a memory leak that occurred if a pre-allocated JPEG destination buffer
+was passed to `tj3Compress*()` or `tj3Transform()`, `TJPARAM_NOREALLOC` was
+unset, and it was necessary for the library to re-allocate the buffer to
+accommodate the destination image, and
+     - a potential caller double free that occurred if pre-allocated JPEG
+destination buffers were passed to `tj3Transform()`, multiple lossless
+transform operations were performed, and it was necessary for the library to
+re-allocate the second buffer to accommodate the second destination image.
+
 
 3.1.3
 =====
