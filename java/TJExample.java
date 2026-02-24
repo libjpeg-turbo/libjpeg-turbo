@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2012, 2014-2015, 2017-2018, 2022-2024
+ * Copyright (C) 2011-2012, 2014-2015, 2017-2018, 2022-2024, 2026
  *           D. R. Commander.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -268,26 +268,27 @@ class TJExample implements TJCustomFilter {
 
         /* Read the JPEG file into memory. */
         File jpegFile = new File(argv[0]);
-        FileInputStream fis = new FileInputStream(jpegFile);
-        int jpegSize = fis.available();
-        if (jpegSize < 1) {
-          System.out.println("Input file contains no data");
-          System.exit(1);
+        byte[] jpegBuf;
+        try (FileInputStream fis = new FileInputStream(jpegFile)) {
+          int jpegSize = fis.available();
+          if (jpegSize < 1) {
+            System.out.println("Input file contains no data");
+            System.exit(1);
+          }
+          jpegBuf = new byte[jpegSize];
+          fis.read(jpegBuf);
         }
-        byte[] jpegBuf = new byte[jpegSize];
-        fis.read(jpegBuf);
-        fis.close();
 
         TJDecompressor tjd;
         if (doTransform) {
           /* Transform it. */
-          TJTransformer tjt = new TJTransformer(jpegBuf);
-          TJTransform[] xforms = new TJTransform[1];
-          xforms[0] = xform;
-          xforms[0].options |= TJTransform.OPT_TRIM;
-          TJDecompressor[] tjds = tjt.transform(xforms);
-          tjd = tjds[0];
-          tjt.close();
+          try (TJTransformer tjt = new TJTransformer(jpegBuf)) {
+            TJTransform[] xforms = new TJTransform[1];
+            xforms[0] = xform;
+            xforms[0].options |= TJTransform.OPT_TRIM;
+            TJDecompressor[] tjds = tjt.transform(xforms);
+            tjd = tjds[0];
+          }
         } else
           tjd = new TJDecompressor(jpegBuf);
         tjd.set(TJ.PARAM_FASTUPSAMPLE, fastUpsample ? 1 : 0);
@@ -312,9 +313,9 @@ class TJExample implements TJCustomFilter {
              have been selected.  Write the transformed image to disk and
              exit. */
           File outFile = new File(argv[1]);
-          FileOutputStream fos = new FileOutputStream(outFile);
-          fos.write(tjd.getJPEGBuf(), 0, tjd.getJPEGSize());
-          fos.close();
+          try (FileOutputStream fos = new FileOutputStream(outFile)) {
+            fos.write(tjd.getJPEGBuf(), 0, tjd.getJPEGSize());
+          }
           System.exit(0);
         }
 
@@ -366,23 +367,25 @@ class TJExample implements TJCustomFilter {
         System.out.println(", " + SUBSAMP_NAME[outSubsamp] +
                            " subsampling, quality = " + outQual);
 
-        TJCompressor tjc = new TJCompressor();
-        tjc.set(TJ.PARAM_SUBSAMP, outSubsamp);
-        tjc.set(TJ.PARAM_QUALITY, outQual);
-        tjc.set(TJ.PARAM_FASTDCT, fastDCT ? 1 : 0);
-        if (img != null)
-          tjc.setSourceImage(img, 0, 0, 0, 0);
-        else
-          tjc.setSourceImage(imgBuf, 0, 0, width, 0, height, TJ.PF_BGRX);
-        byte[] jpegBuf = tjc.compress();
-        int jpegSize = tjc.getCompressedSize();
-        tjc.close();
+        byte[] jpegBuf;
+        int jpegSize;
+        try (TJCompressor tjc = new TJCompressor()) {
+          tjc.set(TJ.PARAM_SUBSAMP, outSubsamp);
+          tjc.set(TJ.PARAM_QUALITY, outQual);
+          tjc.set(TJ.PARAM_FASTDCT, fastDCT ? 1 : 0);
+          if (img != null)
+            tjc.setSourceImage(img, 0, 0, 0, 0);
+          else
+            tjc.setSourceImage(imgBuf, 0, 0, width, 0, height, TJ.PF_BGRX);
+          jpegBuf = tjc.compress();
+          jpegSize = tjc.getCompressedSize();
+        }
 
         /* Write the JPEG image to disk. */
         File outFile = new File(argv[1]);
-        FileOutputStream fos = new FileOutputStream(outFile);
-        fos.write(jpegBuf, 0, jpegSize);
-        fos.close();
+        try (FileOutputStream fos = new FileOutputStream(outFile)) {
+          fos.write(jpegBuf, 0, jpegSize);
+        }
       } else {
         /* Output image format is not JPEG.  Save the uncompressed image
            directly to disk. */

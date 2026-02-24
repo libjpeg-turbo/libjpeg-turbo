@@ -650,9 +650,9 @@ final class TJUnitTest {
   static void writeJPEG(byte[] jpegBuf, int jpegBufSize, String filename)
                         throws Exception {
     File file = new File(filename);
-    FileOutputStream fos = new FileOutputStream(file);
-    fos.write(jpegBuf, 0, jpegBufSize);
-    fos.close();
+    try (FileOutputStream fos = new FileOutputStream(file)) {
+      fos.write(jpegBuf, 0, jpegBufSize);
+    }
   }
 
   static int compTest(TJCompressor tjc, byte[] dstBuf, int w, int h, int pf,
@@ -847,8 +847,6 @@ final class TJUnitTest {
 
   static void doTest(int w, int h, int[] formats, int subsamp, String baseName)
                      throws Exception {
-    TJCompressor tjc = null;
-    TJDecompressor tjd = null;
     int size;
     byte[] dstBuf;
 
@@ -857,10 +855,8 @@ final class TJUnitTest {
 
     dstBuf = new byte[TJ.bufSize(w, h, subsamp)];
 
-    try {
-      tjc = new TJCompressor();
-      tjd = new TJDecompressor();
-
+    try (TJCompressor tjc = new TJCompressor();
+         TJDecompressor tjd = new TJDecompressor()) {
       if (lossless) {
         tjc.set(TJ.PARAM_LOSSLESS, 1);
         tjc.set(TJ.PARAM_LOSSLESSPSV, ((psv++ - 1) % 7) + 1);
@@ -889,13 +885,7 @@ final class TJUnitTest {
         }
       }
       System.out.print("--------------------\n\n");
-    } catch (Exception e) {
-      if (tjc != null) tjc.close();
-      if (tjd != null) tjd.close();
-      throw e;
     }
-    if (tjc != null) tjc.close();
-    if (tjd != null) tjd.close();
   }
 
   static void overflowTest() throws Exception {
@@ -951,12 +941,9 @@ final class TJUnitTest {
     int w, h, i, subsamp, numSamp = TJ.NUMSAMP;
     byte[] srcBuf, dstBuf = null;
     YUVImage dstImage = null;
-    TJCompressor tjc = null;
     Random r = new Random();
 
-    try {
-      tjc = new TJCompressor();
-
+    try (TJCompressor tjc = new TJCompressor()) {
       if (lossless) {
         tjc.set(TJ.PARAM_LOSSLESS, 1);
         tjc.set(TJ.PARAM_LOSSLESSPSV, ((psv++ - 1) % 7) + 1);
@@ -1006,11 +993,7 @@ final class TJUnitTest {
         }
       }
       System.out.println("Done.      ");
-    } catch (Exception e) {
-      if (tjc != null) tjc.close();
-      throw e;
     }
-    if (tjc != null) tjc.close();
   }
 
   public static void main(String[] argv) {
