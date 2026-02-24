@@ -342,7 +342,9 @@ final class TJTran {
         try (FileOutputStream fos = new FileOutputStream(outFile)) {
           fos.write(tjd[0].getJPEGBuf(), 0, tjd[0].getJPEGSize());
         }
-      }
+
+      }  // try (tjt)
+
     } catch (Exception e) {
       e.printStackTrace();
       exitStatus = -1;
