@@ -162,7 +162,6 @@ final class TJBench {
                      int h, int subsamp, int jpegQual, String fileName,
                      int tilew, int tileh) throws Exception {
     String qualStr = new String(""), sizeStr, tempStr;
-    TJDecompressor tjd;
     double elapsed, elapsedDecode;
     int ps = TJ.getPixelSize(pf), i, iter = 0;
     int scaledw, scaledh, pitch;
@@ -177,154 +176,155 @@ final class TJBench {
     if (jpegQual > 0)
       qualStr = new String((lossless ? "_PSV" : "_Q") + jpegQual);
 
-    tjd = new TJDecompressor();
-    tjd.set(TJ.PARAM_STOPONWARNING, stopOnWarning ? 1 : 0);
-    tjd.set(TJ.PARAM_BOTTOMUP, bottomUp ? 1 : 0);
-    tjd.set(TJ.PARAM_FASTUPSAMPLE, fastUpsample ? 1 : 0);
-    tjd.set(TJ.PARAM_FASTDCT, fastDCT ? 1 : 0);
-    tjd.set(TJ.PARAM_SCANLIMIT, maxScans);
-    tjd.set(TJ.PARAM_MAXMEMORY, maxMemory);
-    tjd.set(TJ.PARAM_MAXPIXELS, maxPixels);
+    try (TJDecompressor tjd = new TJDecompressor()) {
+      tjd.set(TJ.PARAM_STOPONWARNING, stopOnWarning ? 1 : 0);
+      tjd.set(TJ.PARAM_BOTTOMUP, bottomUp ? 1 : 0);
+      tjd.set(TJ.PARAM_FASTUPSAMPLE, fastUpsample ? 1 : 0);
+      tjd.set(TJ.PARAM_FASTDCT, fastDCT ? 1 : 0);
+      tjd.set(TJ.PARAM_SCANLIMIT, maxScans);
+      tjd.set(TJ.PARAM_MAXMEMORY, maxMemory);
+      tjd.set(TJ.PARAM_MAXPIXELS, maxPixels);
 
-    if (isCropped(cr)) {
-      try {
-        tjd.setSourceImage(jpegBufs[0], jpegSizes[0]);
-      } catch (TJException e) { handleTJException(e); }
-    }
-    tjd.setScalingFactor(sf);
-    tjd.setCroppingRegion(cr);
-    if (isCropped(cr)) {
-      scaledw = cr.width != 0 ? cr.width : scaledw - cr.x;
-      scaledh = cr.height != 0 ? cr.height : scaledh - cr.y;
-    }
-    pitch = scaledw * ps;
+      if (isCropped(cr)) {
+        try {
+          tjd.setSourceImage(jpegBufs[0], jpegSizes[0]);
+        } catch (TJException e) { handleTJException(e); }
+      }
+      tjd.setScalingFactor(sf);
+      tjd.setCroppingRegion(cr);
+      if (isCropped(cr)) {
+        scaledw = cr.width != 0 ? cr.width : scaledw - cr.x;
+        scaledh = cr.height != 0 ? cr.height : scaledh - cr.y;
+      }
+      pitch = scaledw * ps;
 
-    if (dstBuf == null) {
-      if ((long)pitch * (long)scaledh > (long)Integer.MAX_VALUE)
-        throw new Exception("Image is too large");
+      if (dstBuf == null) {
+        if ((long)pitch * (long)scaledh > (long)Integer.MAX_VALUE)
+          throw new Exception("Image is too large");
+        if (precision <= 8)
+          dstBuf = new byte[pitch * scaledh];
+        else
+          dstBuf = new short[pitch * scaledh];
+      }
+
+      /* Set the destination buffer to gray so we know whether the decompressor
+         attempted to write to it */
       if (precision <= 8)
-        dstBuf = new byte[pitch * scaledh];
+        Arrays.fill((byte[])dstBuf, (byte)127);
+      else if (precision <= 12)
+        Arrays.fill((short[])dstBuf, (short)2047);
       else
-        dstBuf = new short[pitch * scaledh];
-    }
+        Arrays.fill((short[])dstBuf, (short)32767);
 
-    /* Set the destination buffer to gray so we know whether the decompressor
-       attempted to write to it */
-    if (precision <= 8)
-      Arrays.fill((byte[])dstBuf, (byte)127);
-    else if (precision <= 12)
-      Arrays.fill((short[])dstBuf, (short)2047);
-    else
-      Arrays.fill((short[])dstBuf, (short)32767);
+      if (doYUV) {
+        int width = doTile ? tilew : scaledw;
+        int height = doTile ? tileh : scaledh;
 
-    if (doYUV) {
-      int width = doTile ? tilew : scaledw;
-      int height = doTile ? tileh : scaledh;
+        yuvImage = new YUVImage(width, yuvAlign, height, subsamp);
+        Arrays.fill(yuvImage.getBuf(), (byte)127);
+      }
 
-      yuvImage = new YUVImage(width, yuvAlign, height, subsamp);
-      Arrays.fill(yuvImage.getBuf(), (byte)127);
-    }
+      /* Benchmark */
+      iter = -1;
+      elapsed = elapsedDecode = 0.0;
+      while (true) {
+        int tile = 0;
+        double start = getTime();
 
-    /* Benchmark */
-    iter = -1;
-    elapsed = elapsedDecode = 0.0;
-    while (true) {
-      int tile = 0;
-      double start = getTime();
+        for (int y = 0; y < h; y += tileh) {
+          for (int x = 0; x < w; x += tilew, tile++) {
+            int width = doTile ? Math.min(tilew, w - x) : scaledw;
+            int height = doTile ? Math.min(tileh, h - y) : scaledh;
 
-      for (int y = 0; y < h; y += tileh) {
-        for (int x = 0; x < w; x += tilew, tile++) {
-          int width = doTile ? Math.min(tilew, w - x) : scaledw;
-          int height = doTile ? Math.min(tileh, h - y) : scaledh;
-
-          try {
-            tjd.setSourceImage(jpegBufs[tile], jpegSizes[tile]);
-          } catch (TJException e) { handleTJException(e); }
-          if (doYUV) {
-            yuvImage.setBuf(yuvImage.getBuf(), width, yuvAlign, height,
-                            subsamp);
             try {
-              tjd.decompressToYUV(yuvImage);
+              tjd.setSourceImage(jpegBufs[tile], jpegSizes[tile]);
             } catch (TJException e) { handleTJException(e); }
-            double startDecode = getTime();
-            tjd.setSourceImage(yuvImage);
-            try {
-              tjd.decompress8((byte[])dstBuf, x, y, pitch, pf);
-            } catch (TJException e) { handleTJException(e); }
-            if (iter >= 0)
-              elapsedDecode += getTime() - startDecode;
-          } else {
-            try {
-              if (precision <= 8)
+            if (doYUV) {
+              yuvImage.setBuf(yuvImage.getBuf(), width, yuvAlign, height,
+                              subsamp);
+              try {
+                tjd.decompressToYUV(yuvImage);
+              } catch (TJException e) { handleTJException(e); }
+              double startDecode = getTime();
+              tjd.setSourceImage(yuvImage);
+              try {
                 tjd.decompress8((byte[])dstBuf, x, y, pitch, pf);
-              else if (precision <= 12)
-                tjd.decompress12((short[])dstBuf, x, y, pitch, pf);
-              else
-                tjd.decompress16((short[])dstBuf, x, y, pitch, pf);
-            } catch (TJException e) { handleTJException(e); }
+              } catch (TJException e) { handleTJException(e); }
+              if (iter >= 0)
+                elapsedDecode += getTime() - startDecode;
+            } else {
+              try {
+                if (precision <= 8)
+                  tjd.decompress8((byte[])dstBuf, x, y, pitch, pf);
+                else if (precision <= 12)
+                  tjd.decompress12((short[])dstBuf, x, y, pitch, pf);
+                else
+                  tjd.decompress16((short[])dstBuf, x, y, pitch, pf);
+              } catch (TJException e) { handleTJException(e); }
+            }
           }
         }
+        elapsed += getTime() - start;
+        if (iter >= 0) {
+          iter++;
+          if (elapsed >= benchTime)
+            break;
+        } else if (elapsed >= warmup) {
+          iter = 0;
+          elapsed = elapsedDecode = 0.0;
+        }
       }
-      elapsed += getTime() - start;
-      if (iter >= 0) {
-        iter++;
-        if (elapsed >= benchTime)
-          break;
-      } else if (elapsed >= warmup) {
-        iter = 0;
-        elapsed = elapsedDecode = 0.0;
-      }
-    }
-    if (doYUV)
-      elapsed -= elapsedDecode;
-
-    for (i = 0; i < jpegBufs.length; i++)
-      jpegBufs[i] = null;
-    jpegBufs = null;  jpegSizes = null;
-    System.gc();
-
-    if (quiet != 0) {
-      System.out.format("%-6s%s",
-                        sigFig((double)(w * h) / 1000000. *
-                               (double)iter / elapsed, 4),
-                        quiet == 2 ? "\n" : "  ");
       if (doYUV)
-        System.out.format("%s\n",
+        elapsed -= elapsedDecode;
+
+      for (i = 0; i < jpegBufs.length; i++)
+        jpegBufs[i] = null;
+      jpegBufs = null;  jpegSizes = null;
+      System.gc();
+
+      if (quiet != 0) {
+        System.out.format("%-6s%s",
                           sigFig((double)(w * h) / 1000000. *
-                                 (double)iter / elapsedDecode, 4));
-      else if (quiet != 2)
-        System.out.print("\n");
-    } else {
-      System.out.format("%s --> Frame rate:         %f fps\n",
-                        (doYUV ? "Decomp to YUV" : "Decompress   "),
-                        (double)iter / elapsed);
-      System.out.format("                  Throughput:         %f Megapixels/sec\n",
-                        (double)(w * h) / 1000000. * (double)iter / elapsed);
-      if (doYUV) {
-        System.out.format("YUV Decode    --> Frame rate:         %f fps\n",
-                          (double)iter / elapsedDecode);
+                                 (double)iter / elapsed, 4),
+                          quiet == 2 ? "\n" : "  ");
+        if (doYUV)
+          System.out.format("%s\n",
+                            sigFig((double)(w * h) / 1000000. *
+                                   (double)iter / elapsedDecode, 4));
+        else if (quiet != 2)
+          System.out.print("\n");
+      } else {
+        System.out.format("%s --> Frame rate:         %f fps\n",
+                          (doYUV ? "Decomp to YUV" : "Decompress   "),
+                          (double)iter / elapsed);
         System.out.format("                  Throughput:         %f Megapixels/sec\n",
-                          (double)(w * h) / 1000000. *
-                          (double)iter / elapsedDecode);
+                          (double)(w * h) / 1000000. * (double)iter / elapsed);
+        if (doYUV) {
+          System.out.format("YUV Decode    --> Frame rate:         %f fps\n",
+                            (double)iter / elapsedDecode);
+          System.out.format("                  Throughput:         %f Megapixels/sec\n",
+                            (double)(w * h) / 1000000. *
+                            (double)iter / elapsedDecode);
+        }
       }
+
+      if (!write) return;
+
+      if (sf.getNum() != 1 || sf.getDenom() != 1)
+        sizeStr = new String(sf.getNum() + "_" + sf.getDenom());
+      else if (tilew != w || tileh != h)
+        sizeStr = new String(tilew + "x" + tileh);
+      else
+        sizeStr = new String("full");
+      if (decompOnly)
+        tempStr = new String(fileName + "_" + sizeStr + "." + ext);
+      else
+        tempStr = new String(fileName + "_" +
+                             (lossless ? "LOSSLS" : SUBNAME[subsamp]) +
+                             qualStr + "_" + sizeStr + "." + ext);
+
+      tjd.saveImage(tempStr, dstBuf, 0, 0, scaledw, 0, scaledh, pf);
     }
-
-    if (!write) return;
-
-    if (sf.getNum() != 1 || sf.getDenom() != 1)
-      sizeStr = new String(sf.getNum() + "_" + sf.getDenom());
-    else if (tilew != w || tileh != h)
-      sizeStr = new String(tilew + "x" + tileh);
-    else
-      sizeStr = new String("full");
-    if (decompOnly)
-      tempStr = new String(fileName + "_" + sizeStr + "." + ext);
-    else
-      tempStr = new String(fileName + "_" +
-                           (lossless ? "LOSSLS" : SUBNAME[subsamp]) + qualStr +
-                           "_" + sizeStr + "." + ext);
-
-    tjd.saveImage(tempStr, dstBuf, 0, 0, scaledw, 0, scaledh, pf);
   }
 
 
@@ -502,10 +502,9 @@ final class TJBench {
         String tempStr = fileName + "_" +
                          (lossless ? "LOSSLS" : SUBNAME[subsamp]) + "_" +
                          (lossless ? "PSV" : "Q") + jpegQual + ".jpg";
-        FileOutputStream fos = new FileOutputStream(tempStr);
-
-        fos.write(jpegBufs[0], 0, jpegSizes[0]);
-        fos.close();
+        try (FileOutputStream fos = new FileOutputStream(tempStr)) {
+          fos.write(jpegBufs[0], 0, jpegSizes[0]);
+        }
         if (quiet == 0)
           System.out.println("Reference image written to " + tempStr);
       }
@@ -523,7 +522,6 @@ final class TJBench {
 
 
   static void decompTest(String fileName) throws Exception {
-    TJTransformer tjt;
     byte[][] jpegBufs = null;
     byte[] srcBuf;
     int[] jpegSizes = null;
@@ -534,226 +532,229 @@ final class TJBench {
     int w = 0, h = 0, ntilesw = 1, ntilesh = 1, subsamp = -1, cs = -1;
     // Transformed image
     int minTile = 16, tw, th, ttilew, ttileh, tntilesw, tntilesh, tsubsamp;
+    int srcSize;
 
-    FileInputStream fis = new FileInputStream(fileName);
-    if (fis.getChannel().size() > (long)Integer.MAX_VALUE)
-      throw new Exception("Image is too large");
-    int srcSize = (int)fis.getChannel().size();
-    srcBuf = new byte[srcSize];
-    fis.read(srcBuf, 0, srcSize);
-    fis.close();
+    try (FileInputStream fis = new FileInputStream(fileName)) {
+      if (fis.getChannel().size() > (long)Integer.MAX_VALUE)
+        throw new Exception("Image is too large");
+      srcSize = (int)fis.getChannel().size();
+      srcBuf = new byte[srcSize];
+      fis.read(srcBuf, 0, srcSize);
+    }
 
     int index = fileName.lastIndexOf('.');
     if (index >= 0)
       fileName = new String(fileName.substring(0, index));
 
-    tjt = new TJTransformer();
-    tjt.set(TJ.PARAM_STOPONWARNING, stopOnWarning ? 1 : 0);
-    tjt.set(TJ.PARAM_BOTTOMUP, bottomUp ? 1 : 0);
-    tjt.set(TJ.PARAM_FASTUPSAMPLE, fastUpsample ? 1 : 0);
-    tjt.set(TJ.PARAM_FASTDCT, fastDCT ? 1 : 0);
-    tjt.set(TJ.PARAM_SCANLIMIT, maxScans);
-    tjt.set(TJ.PARAM_RESTARTBLOCKS, restartIntervalBlocks);
-    tjt.set(TJ.PARAM_RESTARTROWS, restartIntervalRows);
-    tjt.set(TJ.PARAM_MAXMEMORY, maxMemory);
-    tjt.set(TJ.PARAM_MAXPIXELS, maxPixels);
+    try (TJTransformer tjt = new TJTransformer()) {
+      tjt.set(TJ.PARAM_STOPONWARNING, stopOnWarning ? 1 : 0);
+      tjt.set(TJ.PARAM_BOTTOMUP, bottomUp ? 1 : 0);
+      tjt.set(TJ.PARAM_FASTUPSAMPLE, fastUpsample ? 1 : 0);
+      tjt.set(TJ.PARAM_FASTDCT, fastDCT ? 1 : 0);
+      tjt.set(TJ.PARAM_SCANLIMIT, maxScans);
+      tjt.set(TJ.PARAM_RESTARTBLOCKS, restartIntervalBlocks);
+      tjt.set(TJ.PARAM_RESTARTROWS, restartIntervalRows);
+      tjt.set(TJ.PARAM_MAXMEMORY, maxMemory);
+      tjt.set(TJ.PARAM_MAXPIXELS, maxPixels);
 
-    try {
-      tjt.setSourceImage(srcBuf, srcSize);
-    } catch (TJException e) { handleTJException(e); }
-    w = tjt.getWidth();
-    h = tjt.getHeight();
-    subsamp = tjt.get(TJ.PARAM_SUBSAMP);
-    precision = tjt.get(TJ.PARAM_PRECISION);
-    cs = tjt.get(TJ.PARAM_COLORSPACE);
-    if (tjt.get(TJ.PARAM_PROGRESSIVE) == 1)
-      System.out.println("JPEG image is progressive\n");
-    if (tjt.get(TJ.PARAM_ARITHMETIC) == 1)
-      System.out.println("JPEG image uses arithmetic entropy coding\n");
-    tjt.set(TJ.PARAM_PROGRESSIVE, progressive ? 1 : 0);
-    tjt.set(TJ.PARAM_ARITHMETIC, arithmetic ? 1 : 0);
+      try {
+        tjt.setSourceImage(srcBuf, srcSize);
+      } catch (TJException e) { handleTJException(e); }
+      w = tjt.getWidth();
+      h = tjt.getHeight();
+      subsamp = tjt.get(TJ.PARAM_SUBSAMP);
+      precision = tjt.get(TJ.PARAM_PRECISION);
+      cs = tjt.get(TJ.PARAM_COLORSPACE);
+      if (tjt.get(TJ.PARAM_PROGRESSIVE) == 1)
+        System.out.println("JPEG image is progressive\n");
+      if (tjt.get(TJ.PARAM_ARITHMETIC) == 1)
+        System.out.println("JPEG image uses arithmetic entropy coding\n");
+      tjt.set(TJ.PARAM_PROGRESSIVE, progressive ? 1 : 0);
+      tjt.set(TJ.PARAM_ARITHMETIC, arithmetic ? 1 : 0);
 
-    if (cs == TJ.CS_YCCK || cs == TJ.CS_CMYK) {
-      pf = TJ.PF_CMYK;  ps = TJ.getPixelSize(pf);
-    }
-
-    if (tjt.get(TJ.PARAM_LOSSLESS) != 0)
-      sf = TJ.UNSCALED;
-
-    tjt.setScalingFactor(sf);
-    tjt.setCroppingRegion(cr);
-
-    if (quiet == 1) {
-      System.out.println("All performance values in Mpixels/sec\n");
-      System.out.format("Pixel     JPEG             %s  %s   Xform   Comp    Decomp  ",
-                        (doTile ? "Tile " : "Image"),
-                        (doTile ? "Tile " : "Image"));
-      if (doYUV)
-        System.out.print("Decode");
-      System.out.print("\n");
-      System.out.print("Format    Format           Width  Height  Perf    Ratio   Perf    ");
-      if (doYUV)
-        System.out.print("Perf");
-      System.out.println("\n");
-    } else if (quiet == 0)
-      System.out.format(">>>>>  %d-bit JPEG (%s) --> %s (%s)  <<<<<\n",
-                        precision, formatName(subsamp, cs), PIXFORMATSTR[pf],
-                        bottomUp ? "Bottom-up" : "Top-down");
-
-    if (doTile) {
-      if (subsamp == TJ.SAMP_UNKNOWN)
-        throw new Exception("Could not determine subsampling level of JPEG image");
-      minTile = Math.max(TJ.getMCUWidth(subsamp), TJ.getMCUHeight(subsamp));
-    }
-    for (int tilew = doTile ? minTile : w, tileh = doTile ? minTile : h; ;
-         tilew *= 2, tileh *= 2) {
-      if (tilew > w)
-        tilew = w;
-      if (tileh > h)
-        tileh = h;
-      ntilesw = (w + tilew - 1) / tilew;
-      ntilesh = (h + tileh - 1) / tileh;
-
-      tw = w;  th = h;  ttilew = tilew;  ttileh = tileh;
-      if (quiet == 0) {
-        System.out.format("\n%s size: %d x %d", (doTile ? "Tile" : "Image"),
-                          ttilew, ttileh);
-        if (sf.getNum() != 1 || sf.getDenom() != 1 || isCropped(cr))
-          System.out.format(" --> %d x %d", getCroppedWidth(tw),
-                            getCroppedHeight(th));
-        System.out.println("");
-      } else if (quiet == 1) {
-        System.out.format("%-4s(%s)  %-14s   ", PIXFORMATSTR[pf],
-                          bottomUp ? "BU" : "TD", formatName(subsamp, cs));
-        System.out.format("%-5d  %-5d   ", getCroppedWidth(tilew),
-                          getCroppedHeight(tileh));
+      if (cs == TJ.CS_YCCK || cs == TJ.CS_CMYK) {
+        pf = TJ.PF_CMYK;  ps = TJ.getPixelSize(pf);
       }
 
-      tsubsamp = subsamp;
-      if ((xformOpt & TJTransform.OPT_GRAY) != 0)
-        tsubsamp = TJ.SAMP_GRAY;
-      if (xformOp == TJTransform.OP_TRANSPOSE ||
-          xformOp == TJTransform.OP_TRANSVERSE ||
-          xformOp == TJTransform.OP_ROT90 ||
-          xformOp == TJTransform.OP_ROT270) {
-        if (tsubsamp == TJ.SAMP_422)
-          tsubsamp = TJ.SAMP_440;
-        else if (tsubsamp == TJ.SAMP_440)
-          tsubsamp = TJ.SAMP_422;
-        else if (tsubsamp == TJ.SAMP_411)
-          tsubsamp = TJ.SAMP_441;
-        else if (tsubsamp == TJ.SAMP_441)
-          tsubsamp = TJ.SAMP_411;
-      }
+      if (tjt.get(TJ.PARAM_LOSSLESS) != 0)
+        sf = TJ.UNSCALED;
 
-      if (doTile || xformOp != TJTransform.OP_NONE || xformOpt != 0 ||
-          customFilter != null) {
+      tjt.setScalingFactor(sf);
+      tjt.setCroppingRegion(cr);
+
+      if (quiet == 1) {
+        System.out.println("All performance values in Mpixels/sec\n");
+        System.out.format("Pixel     JPEG             %s  %s   Xform   Comp    Decomp  ",
+                          (doTile ? "Tile " : "Image"),
+                          (doTile ? "Tile " : "Image"));
+        if (doYUV)
+          System.out.print("Decode");
+        System.out.print("\n");
+        System.out.print("Format    Format           Width  Height  Perf    Ratio   Perf    ");
+        if (doYUV)
+          System.out.print("Perf");
+        System.out.println("\n");
+      } else if (quiet == 0)
+        System.out.format(">>>>>  %d-bit JPEG (%s) --> %s (%s)  <<<<<\n",
+                          precision, formatName(subsamp, cs), PIXFORMATSTR[pf],
+                          bottomUp ? "Bottom-up" : "Top-down");
+
+      if (doTile) {
+        if (subsamp == TJ.SAMP_UNKNOWN)
+          throw new Exception("Could not determine subsampling level of JPEG image");
+        minTile = Math.max(TJ.getMCUWidth(subsamp), TJ.getMCUHeight(subsamp));
+      }
+      for (int tilew = doTile ? minTile : w, tileh = doTile ? minTile : h; ;
+           tilew *= 2, tileh *= 2) {
+        if (tilew > w)
+          tilew = w;
+        if (tileh > h)
+          tileh = h;
+        ntilesw = (w + tilew - 1) / tilew;
+        ntilesh = (h + tileh - 1) / tileh;
+
+        tw = w;  th = h;  ttilew = tilew;  ttileh = tileh;
+        if (quiet == 0) {
+          System.out.format("\n%s size: %d x %d", (doTile ? "Tile" : "Image"),
+                            ttilew, ttileh);
+          if (sf.getNum() != 1 || sf.getDenom() != 1 || isCropped(cr))
+            System.out.format(" --> %d x %d", getCroppedWidth(tw),
+                              getCroppedHeight(th));
+          System.out.println("");
+        } else if (quiet == 1) {
+          System.out.format("%-4s(%s)  %-14s   ", PIXFORMATSTR[pf],
+                            bottomUp ? "BU" : "TD", formatName(subsamp, cs));
+          System.out.format("%-5d  %-5d   ", getCroppedWidth(tilew),
+                            getCroppedHeight(tileh));
+        }
+
+        tsubsamp = subsamp;
+        if ((xformOpt & TJTransform.OPT_GRAY) != 0)
+          tsubsamp = TJ.SAMP_GRAY;
         if (xformOp == TJTransform.OP_TRANSPOSE ||
             xformOp == TJTransform.OP_TRANSVERSE ||
             xformOp == TJTransform.OP_ROT90 ||
             xformOp == TJTransform.OP_ROT270) {
-          tw = h;  th = w;  ttilew = tileh;  ttileh = tilew;
+          if (tsubsamp == TJ.SAMP_422)
+            tsubsamp = TJ.SAMP_440;
+          else if (tsubsamp == TJ.SAMP_440)
+            tsubsamp = TJ.SAMP_422;
+          else if (tsubsamp == TJ.SAMP_411)
+            tsubsamp = TJ.SAMP_441;
+          else if (tsubsamp == TJ.SAMP_441)
+            tsubsamp = TJ.SAMP_411;
         }
 
-        if (xformOp != TJTransform.OP_NONE &&
-            xformOp != TJTransform.OP_TRANSPOSE && subsamp == TJ.SAMP_UNKNOWN)
-          throw new Exception("Could not determine subsampling level of JPEG image");
-        if (xformOp == TJTransform.OP_HFLIP ||
-            xformOp == TJTransform.OP_TRANSVERSE ||
-            xformOp == TJTransform.OP_ROT90 ||
-            xformOp == TJTransform.OP_ROT180)
-          tw = tw - (tw % TJ.getMCUWidth(tsubsamp));
-        if (xformOp == TJTransform.OP_VFLIP ||
-            xformOp == TJTransform.OP_TRANSVERSE ||
-            xformOp == TJTransform.OP_ROT180 ||
-            xformOp == TJTransform.OP_ROT270)
-          th = th - (th % TJ.getMCUHeight(tsubsamp));
-        tntilesw = (tw + ttilew - 1) / ttilew;
-        tntilesh = (th + ttileh - 1) / ttileh;
-
-        TJTransform[] t = new TJTransform[tntilesw * tntilesh];
-        jpegBufs = new byte[tntilesw * tntilesh][];
-
-        for (y = 0, tile = 0; y < th; y += ttileh) {
-          for (x = 0; x < tw; x += ttilew, tile++) {
-            t[tile] = new TJTransform();
-            t[tile].width = Math.min(ttilew, tw - x);
-            t[tile].height = Math.min(ttileh, th - y);
-            t[tile].x = x;
-            t[tile].y = y;
-            t[tile].op = xformOp;
-            t[tile].options = xformOpt | TJTransform.OPT_TRIM;
-            t[tile].cf = customFilter;
-            if ((t[tile].options & TJTransform.OPT_NOOUTPUT) == 0)
-              jpegBufs[tile] = new byte[tjt.bufSize(t[tile])];
+        if (doTile || xformOp != TJTransform.OP_NONE || xformOpt != 0 ||
+            customFilter != null) {
+          if (xformOp == TJTransform.OP_TRANSPOSE ||
+              xformOp == TJTransform.OP_TRANSVERSE ||
+              xformOp == TJTransform.OP_ROT90 ||
+              xformOp == TJTransform.OP_ROT270) {
+            tw = h;  th = w;  ttilew = tileh;  ttileh = tilew;
           }
-        }
 
-        iter = -1;
-        elapsed = 0.;
-        while (true) {
-          start = getTime();
-          try {
-            tjt.transform(jpegBufs, t);
-          } catch (TJException e) { handleTJException(e); }
-          jpegSizes = tjt.getTransformedSizes();
-          elapsed += getTime() - start;
-          if (iter >= 0) {
-            iter++;
-            if (elapsed >= benchTime)
-              break;
-          } else if (elapsed >= warmup) {
-            iter = 0;
-            elapsed = 0.0;
+          if (xformOp != TJTransform.OP_NONE &&
+              xformOp != TJTransform.OP_TRANSPOSE &&
+              subsamp == TJ.SAMP_UNKNOWN)
+            throw new Exception("Could not determine subsampling level of JPEG image");
+          if (xformOp == TJTransform.OP_HFLIP ||
+              xformOp == TJTransform.OP_TRANSVERSE ||
+              xformOp == TJTransform.OP_ROT90 ||
+              xformOp == TJTransform.OP_ROT180)
+            tw = tw - (tw % TJ.getMCUWidth(tsubsamp));
+          if (xformOp == TJTransform.OP_VFLIP ||
+              xformOp == TJTransform.OP_TRANSVERSE ||
+              xformOp == TJTransform.OP_ROT180 ||
+              xformOp == TJTransform.OP_ROT270)
+            th = th - (th % TJ.getMCUHeight(tsubsamp));
+          tntilesw = (tw + ttilew - 1) / ttilew;
+          tntilesh = (th + ttileh - 1) / ttileh;
+
+          TJTransform[] t = new TJTransform[tntilesw * tntilesh];
+          jpegBufs = new byte[tntilesw * tntilesh][];
+
+          for (y = 0, tile = 0; y < th; y += ttileh) {
+            for (x = 0; x < tw; x += ttilew, tile++) {
+              t[tile] = new TJTransform();
+              t[tile].width = Math.min(ttilew, tw - x);
+              t[tile].height = Math.min(ttileh, th - y);
+              t[tile].x = x;
+              t[tile].y = y;
+              t[tile].op = xformOp;
+              t[tile].options = xformOpt | TJTransform.OPT_TRIM;
+              t[tile].cf = customFilter;
+              if ((t[tile].options & TJTransform.OPT_NOOUTPUT) == 0)
+                jpegBufs[tile] = new byte[tjt.bufSize(t[tile])];
+            }
           }
-        }
-        t = null;
 
-        for (tile = 0, totalJpegSize = 0; tile < tntilesw * tntilesh; tile++)
-          totalJpegSize += jpegSizes[tile];
+          iter = -1;
+          elapsed = 0.;
+          while (true) {
+            start = getTime();
+            try {
+              tjt.transform(jpegBufs, t);
+            } catch (TJException e) { handleTJException(e); }
+            jpegSizes = tjt.getTransformedSizes();
+            elapsed += getTime() - start;
+            if (iter >= 0) {
+              iter++;
+              if (elapsed >= benchTime)
+                break;
+            } else if (elapsed >= warmup) {
+              iter = 0;
+              elapsed = 0.0;
+            }
+          }
+          t = null;
 
-        if (quiet != 0) {
-          System.out.format("%-6s%s%-6s%s",
-                            sigFig((double)(w * h) / 1000000. / elapsed, 4),
-                            quiet == 2 ? "\n" : "  ",
-                            sigFig((double)(w * h * ps) /
-                                   (double)totalJpegSize, 4),
-                            quiet == 2 ? "\n" : "  ");
+          for (tile = 0, totalJpegSize = 0; tile < tntilesw * tntilesh; tile++)
+            totalJpegSize += jpegSizes[tile];
+
+          if (quiet != 0) {
+            System.out.format("%-6s%s%-6s%s",
+                              sigFig((double)(w * h) / 1000000. / elapsed, 4),
+                              quiet == 2 ? "\n" : "  ",
+                              sigFig((double)(w * h * ps) /
+                                     (double)totalJpegSize, 4),
+                              quiet == 2 ? "\n" : "  ");
+          } else {
+            System.out.format("Transform     --> Frame rate:         %f fps\n",
+                              1.0 / elapsed);
+            System.out.format("                  Output image size:  %d bytes\n",
+                              totalJpegSize);
+            System.out.format("                  Compression ratio:  %f:1\n",
+                              (double)(w * h * ps) / (double)totalJpegSize);
+            System.out.format("                  Throughput:         %f Megapixels/sec\n",
+                              (double)(w * h) / 1000000. / elapsed);
+            System.out.format("                  Output bit stream:  %f Megabits/sec\n",
+                              (double)totalJpegSize * 8. / 1000000. / elapsed);
+          }
         } else {
-          System.out.format("Transform     --> Frame rate:         %f fps\n",
-                            1.0 / elapsed);
-          System.out.format("                  Output image size:  %d bytes\n",
-                            totalJpegSize);
-          System.out.format("                  Compression ratio:  %f:1\n",
-                            (double)(w * h * ps) / (double)totalJpegSize);
-          System.out.format("                  Throughput:         %f Megapixels/sec\n",
-                            (double)(w * h) / 1000000. / elapsed);
-          System.out.format("                  Output bit stream:  %f Megabits/sec\n",
-                            (double)totalJpegSize * 8. / 1000000. / elapsed);
+          if (quiet == 1)
+            System.out.print("N/A     N/A     ");
+          jpegBufs = new byte[1][];
+          jpegSizes = new int[1];
+          jpegBufs[0] = srcBuf;
+          jpegSizes[0] = srcSize;
         }
-      } else {
-        if (quiet == 1)
-          System.out.print("N/A     N/A     ");
-        jpegBufs = new byte[1][];
-        jpegSizes = new int[1];
-        jpegBufs[0] = srcBuf;
-        jpegSizes[0] = srcSize;
+
+        if (w == tilew)
+          ttilew = tw;
+        if (h == tileh)
+          ttileh = th;
+        if ((xformOpt & TJTransform.OPT_NOOUTPUT) == 0)
+          decomp(jpegBufs, jpegSizes, null, tw, th, tsubsamp, 0, fileName,
+                 ttilew, ttileh);
+        else if (quiet == 1)
+          System.out.println("N/A");
+
+        jpegBufs = null;
+        jpegSizes = null;
+
+        if (tilew == w && tileh == h) break;
       }
-
-      if (w == tilew)
-        ttilew = tw;
-      if (h == tileh)
-        ttileh = th;
-      if ((xformOpt & TJTransform.OPT_NOOUTPUT) == 0)
-        decomp(jpegBufs, jpegSizes, null, tw, th, tsubsamp, 0, fileName,
-               ttilew, ttileh);
-      else if (quiet == 1)
-        System.out.println("N/A");
-
-      jpegBufs = null;
-      jpegSizes = null;
-
-      if (tilew == w && tileh == h) break;
     }
   }
 
@@ -1354,6 +1355,10 @@ final class TJBench {
         System.out.println("ERROR: " + e.getMessage());
       e.printStackTrace();
       retval = -1;
+    } finally {
+      try {
+        if (tjc != null) tjc.close();
+      } catch (Exception e) {}
     }
 
     System.exit(retval);
