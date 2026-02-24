@@ -24,6 +24,9 @@ IMGDIR=@CMAKE_SOURCE_DIR@/testimages
 OUTDIR=`mktemp -d /tmp/__tjtrantest_output.XXXXXX`
 EXEDIR=@CMAKE_BINARY_DIR@
 JAVA="@Java_JAVA_EXECUTABLE@"
+if [ -z "$JAVA" ]; then
+	JAVA=java
+fi
 JAVAARGS="-cp $EXEDIR/java/turbojpeg.jar -Djava.library.path=$EXEDIR"
 TJTRAN=$EXEDIR/tjtran
 JAVAARG=
