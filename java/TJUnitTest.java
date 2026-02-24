@@ -658,9 +658,9 @@ final class TJUnitTest {
   static void writeJPEG(byte[] jpegBuf, int jpegBufSize, String filename)
                         throws Exception {
     File file = new File(filename);
-    FileOutputStream fos = new FileOutputStream(file);
-    fos.write(jpegBuf, 0, jpegBufSize);
-    fos.close();
+    try (FileOutputStream fos = new FileOutputStream(file)) {
+      fos.write(jpegBuf, 0, jpegBufSize);
+    }
   }
 
   static int compTest(TJCompressor tjc, byte[] dstBuf, int w, int h, int pf,
@@ -856,8 +856,6 @@ final class TJUnitTest {
 
   static void doTest(int w, int h, int[] formats, int subsamp, String baseName)
                      throws Exception {
-    TJCompressor tjc = null;
-    TJDecompressor tjd = null;
     int size;
     byte[] dstBuf;
 
@@ -866,10 +864,8 @@ final class TJUnitTest {
 
     dstBuf = new byte[TJ.bufSize(w, h, subsamp)];
 
-    try {
-      tjc = new TJCompressor();
-      tjd = new TJDecompressor();
-
+    try (TJCompressor tjc = new TJCompressor();
+         TJDecompressor tjd = new TJDecompressor()) {
       if (lossless) {
         tjc.set(TJ.PARAM_LOSSLESS, 1);
         tjc.set(TJ.PARAM_LOSSLESSPSV, ((psv++ - 1) % 7) + 1);
@@ -898,13 +894,7 @@ final class TJUnitTest {
         }
       }
       System.out.print("--------------------\n\n");
-    } catch (Exception e) {
-      if (tjc != null) tjc.close();
-      if (tjd != null) tjd.close();
-      throw e;
     }
-    if (tjc != null) tjc.close();
-    if (tjd != null) tjd.close();
   }
 
   static void overflowTest() throws Exception {
@@ -960,12 +950,9 @@ final class TJUnitTest {
     int w, h, i, subsamp, numSamp = TJ.NUMSAMP;
     byte[] srcBuf, dstBuf = null;
     YUVImage dstImage = null;
-    TJCompressor tjc = null;
     Random r = new Random();
 
-    try {
-      tjc = new TJCompressor();
-
+    try (TJCompressor tjc = new TJCompressor()) {
       if (lossless) {
         tjc.set(TJ.PARAM_PRECISION, precision);
         tjc.set(TJ.PARAM_LOSSLESS, 1);
@@ -1016,11 +1003,7 @@ final class TJUnitTest {
         }
       }
       System.out.println("Done.      ");
-    } catch (Exception e) {
-      if (tjc != null) tjc.close();
-      throw e;
     }
-    if (tjc != null) tjc.close();
   }
 
   static void rgbToCMYK(int r, int g, int b, int[] c, int[] m, int[] y,
@@ -1170,8 +1153,6 @@ final class TJUnitTest {
 
   static void doBmpTest(String ext, int width, int align, int height, int pf,
                         boolean bottomUp) throws Exception {
-    TJCompressor tjc = null;
-    TJDecompressor tjd = null;
     String filename, md5sum;
     int ps = TJ.getPixelSize(pf), pitch = pad(width * ps, align),
       loadWidth = 0, loadPitch = 0, loadHeight = 0, pixelFormat = pf;
@@ -1199,10 +1180,9 @@ final class TJUnitTest {
     };
     int maxTargetPrecision = 16;
 
-    try {
-      tjc = new TJCompressor();
+    try (TJCompressor tjc =  new TJCompressor();
+         TJDecompressor tjd = new TJDecompressor()) {
       tjc.set(TJ.PARAM_BOTTOMUP, bottomUp ? 1 : 0);
-      tjd = new TJDecompressor();
       tjd.set(TJ.PARAM_BOTTOMUP, bottomUp ? 1 : 0);
       tjd.set(TJ.PARAM_PRECISION, precision);
 
@@ -1304,13 +1284,7 @@ final class TJUnitTest {
       }
       File file = new File(filename);
       file.delete();
-    } catch (Exception e) {
-      if (tjc != null) tjc.close();
-      if (tjd != null) tjd.close();
-      throw e;
     }
-    if (tjc != null) tjc.close();
-    if (tjd != null) tjd.close();
   }
 
   static void bmpTest() throws Exception {
