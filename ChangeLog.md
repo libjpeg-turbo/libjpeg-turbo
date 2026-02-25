@@ -32,7 +32,16 @@ image.  The new default behavior is useful, in combination with the `-drop`
 option, for reversibly combining multiple JPEG source images into a single
 composite JPEG image.
 
-5. The MIPS DSPr2 SIMD extensions have been removed.  Justifications:
+5. Added a new `-roll +X+Y` option to jpegtran that performs a lossless roll
+(shift with wrap-around) transformation.  The image is shifted right by X
+and down by Y pixels, with pixels wrapping around the edges.  X and Y may be
+negative; a negative X shifts the image left, and a negative Y shifts the
+image up.  For a perfect transformation, the absolute values of X and Y
+should be multiples of the iMCU width and height, respectively.  When
+`-perfect` is specified, the transformation will fail if the offsets are not
+MCU-aligned.
+
+6. The MIPS DSPr2 SIMD extensions have been removed.  Justifications:
 
      - MIPS Technologies deprecated the MIPS architecture in favor of RISC-V in
 2021.
@@ -54,7 +63,7 @@ could benefit from the DSPr2 SIMD extensions to near zero.  The DSPr2 SIMD
 extensions will continue to be maintained in the 3.1.x branch on a break/fix
 basis.
 
-6. Added RISC-V Vector (RVV) SIMD implementations of the colorspace conversion,
+7. Added RISC-V Vector (RVV) SIMD implementations of the colorspace conversion,
 chroma downsampling and upsampling, integer quantization and sample conversion,
 and integer DCT/IDCT algorithms.  When using the accurate integer DCT/IDCT
 algorithms, RGB-to-baseline JPEG compression is approximately 131-221% (avg.
