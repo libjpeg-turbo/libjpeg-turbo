@@ -139,6 +139,10 @@ extracted from a PNG image by `tj3LoadImage*()`.)
 11. Added a new cjpeg, djpeg, and jpegtran option (`-nooverwrite`) that causes
 the programs to fail if the specified output file exists.
 
+12. jpegtran now includes a `-roll` option that performs a lossless roll
+transform (shift with wraparound), which is similar in concept to the `-roll`
+option in ImageMagick and the Offset filter/tool in Photoshop and GIMP.
+
 
 3.1.4
 =====

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2012, 2014-2015, 2017, 2019, 2021-2025 D. R. Commander
+ * Copyright (C) 2011-2012, 2014-2015, 2017, 2019, 2021-2026 D. R. Commander
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -35,6 +35,7 @@
  * - Expanding the input image when cropping
  * - Wiping a region of the input image
  * - Dropping another JPEG image into the input image
+ * - Lossless rolling
  * - Progress reporting
  * - Debug output
  */

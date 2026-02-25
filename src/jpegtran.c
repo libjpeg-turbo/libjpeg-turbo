@@ -5,6 +5,7 @@
  * Copyright (C) 1995-2019, Thomas G. Lane, Guido Vollbeding.
  * libjpeg-turbo Modifications:
  * Copyright (C) 2010, 2014, 2017, 2019-2022, 2024, 2026, D. R. Commander.
+ * Copyright (C) 2026, Ricardo M. Ferreira.
  * For conditions of distribution and use, see the accompanying README.ijg
  * file.
  *
@@ -76,6 +77,7 @@ usage(void)
   fprintf(stderr, "  -flip [horizontal|vertical]  Mirror image (left-right or top-bottom)\n");
   fprintf(stderr, "  -grayscale     Reduce to grayscale (omit color data)\n");
   fprintf(stderr, "  -perfect       Fail if there is non-transformable edge blocks\n");
+  fprintf(stderr, "  -roll +X+Y     Roll image (shift with wraparound)\n");
   fprintf(stderr, "  -rotate [90|180|270]         Rotate image (degrees clockwise)\n");
   fprintf(stderr, "  -transpose     Transpose image\n");
   fprintf(stderr, "  -transverse    Transverse transpose image\n");
@@ -212,7 +214,8 @@ parse_switches(j_compress_ptr cinfo, int argc, char **argv,
 #if TRANSFORMS_SUPPORTED
       if (++argn >= argc)       /* advance to next argument */
         usage();
-      if (transformoption.crop /* reject multiple crop/drop/wipe requests */ ||
+      if (transformoption.crop ||  /* reject multiple crop/drop/roll/wipe
+                                      requests */
           !jtransform_parse_crop_spec(&transformoption, argv[argn])) {
         fprintf(stderr, "%s: bogus -crop argument '%s'\n",
                 progname, argv[argn]);
@@ -226,7 +229,8 @@ parse_switches(j_compress_ptr cinfo, int argc, char **argv,
 #if TRANSFORMS_SUPPORTED
       if (++argn >= argc)       /* advance to next argument */
         usage();
-      if (transformoption.crop /* reject multiple crop/drop/wipe requests */ ||
+      if (transformoption.crop ||  /* reject multiple crop/drop/roll/wipe
+                                      requests */
           !jtransform_parse_crop_spec(&transformoption, argv[argn]) ||
           transformoption.crop_width_set != JCROP_UNSET ||
           transformoption.crop_height_set != JCROP_UNSET) {
@@ -363,6 +367,24 @@ parse_switches(j_compress_ptr cinfo, int argc, char **argv,
         cinfo->restart_in_rows = (int)lval;
         /* restart_interval will be computed during startup */
       }
+    } else if (keymatch(arg, "roll", 3)) {
+      /* Perform lossless rolling (shift with wraparound). */
+#if TRANSFORMS_SUPPORTED
+      if (++argn >= argc)       /* advance to next argument */
+        usage();
+      if (transformoption.crop ||  /* reject multiple crop/drop/roll/wipe
+                                      requests */
+          !jtransform_parse_crop_spec(&transformoption, argv[argn]) ||
+          transformoption.crop_width_set != JCROP_UNSET ||
+          transformoption.crop_height_set != JCROP_UNSET) {
+        fprintf(stderr, "%s: bogus -roll argument '%s'\n",
+                progname, argv[argn]);
+        exit(EXIT_FAILURE);
+      }
+      select_transform(JXFORM_ROLL);
+#else
+      select_transform(JXFORM_NONE);    /* force an error */
+#endif
 
     } else if (keymatch(arg, "rotate", 2)) {
       /* Rotate 90, 180, or 270 degrees (measured clockwise). */
@@ -409,7 +431,8 @@ parse_switches(j_compress_ptr cinfo, int argc, char **argv,
 #if TRANSFORMS_SUPPORTED
       if (++argn >= argc)       /* advance to next argument */
         usage();
-      if (transformoption.crop /* reject multiple crop/drop/wipe requests */ ||
+      if (transformoption.crop ||  /* reject multiple crop/drop/roll/wipe
+                                      requests */
           !jtransform_parse_crop_spec(&transformoption, argv[argn])) {
         fprintf(stderr, "%s: bogus -wipe argument '%s'\n",
                 progname, argv[argn]);

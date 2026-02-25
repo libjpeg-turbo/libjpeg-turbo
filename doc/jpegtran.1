@@ -1,4 +1,4 @@
-.TH JPEGTRAN 1 "3 Jan 2026"
+.TH JPEGTRAN 1 "19 Mar 2026"
 .SH NAME
 jpegtran \- lossless transformation of JPEG files
 .SH SYNOPSIS
@@ -88,6 +88,13 @@ Mirror image horizontally (left-right).
 .B \-flip vertical
 Mirror image vertically (top-bottom).
 .TP
+.B \-roll +X+Y
+Roll image (shift with wraparound) horizontally by X pixels and vertically by Y
+pixels.  X and Y may be negative; a negative X shifts the image left, and a
+negative Y shifts the image up.  If the shifted origin does not fall on an iMCU
+boundary, then it is silently moved up and/or left to the nearest iMCU
+boundary.
+.TP
 .B \-rotate 90
 Rotate image 90 degrees clockwise.
 .TP
@@ -112,13 +119,13 @@ transform complete blocks of DCT coefficient data in the desired way.
 default behavior when transforming an odd-size image is designed
 to preserve exact reversibility and mathematical consistency of the
 transformation set.  As stated, transpose is able to flip the entire image
-area.  Horizontal mirroring leaves any partial iMCU column at the right edge
-untouched, but is able to flip all rows of the image.  Similarly, vertical
-mirroring leaves any partial iMCU row at the bottom edge untouched, but is
-able to flip all columns.  The other transforms can be built up as sequences
-of transpose and flip operations; for consistency, their actions on edge
-pixels are defined to be the same as the end result of the corresponding
-transpose-and-flip sequence.
+area.  Horizontal mirroring and rolling leaves any partial iMCU column at the
+right edge untouched but is able to flip or roll all rows of the image.
+Similarly, vertical mirroring and rolling leaves any partial iMCU row at the
+bottom edge untouched but is able to flip or roll all columns.  The other
+transforms can be built up as sequences of transpose and flip operations; for
+consistency, their actions on edge pixels are defined to be the same as the end
+result of the corresponding transpose-and-flip sequence.
 .PP
 For practical use, you may prefer to discard any untransformable edge pixels
 rather than having a strange-looking strip along the right and/or bottom edges
