@@ -31,7 +31,7 @@ Build Requirements
     repository on Red Hat Enterprise Linux 8+ and derivatives, which is not
     enabled by default.
 
-- If building the TurboJPEG Java API, JDK or OpenJDK 1.5 or later is required.
+- If building the TurboJPEG Java API, JDK or OpenJDK 7 or later is required.
 
   * Most modern Linux distributions, as well as Solaris 10 and later, include
     JDK or OpenJDK.  For other systems, pre-built JDK binaries can be obtained
