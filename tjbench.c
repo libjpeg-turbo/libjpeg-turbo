@@ -1234,12 +1234,6 @@ int main(int argc, char *argv[])
     }
   }
 
-  if (!noRealloc && doTile) {
-    printf("Disabling tiled compression/decompression tests, because those tests do not\n");
-    printf("work when dynamic JPEG buffer allocation is enabled.\n\n");
-    doTile = 0;  xformOpt &= (~TJXOPT_CROP);
-  }
-
   if (!decompOnly) {
     if ((handle = tj3Init(TJINIT_COMPRESS)) == NULL)
       THROW_TJG();
