@@ -152,7 +152,6 @@ static int decomp(unsigned char *srcBuf, unsigned char **jpegBuf,
                   int tileh)
 {
   char tempStr[1024], sizeStr[24] = "\0", qualStr[13] = "\0", *ptr;
-  FILE *file = NULL;
   tjhandle handle = NULL;
   int row, col, iter = 0, dstBufAlloc = 0, retval = 0;
   double elapsed, elapsedDecode;
@@ -315,7 +314,6 @@ static int decomp(unsigned char *srcBuf, unsigned char **jpegBuf,
   }
 
 bailout:
-  if (file) fclose(file);
   if (handle) tjDestroy(handle);
   if (dstBufAlloc) free(dstBuf);
   free(yuvBuf);
