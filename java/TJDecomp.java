@@ -27,19 +27,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * This program demonstrates how to use the TurboJPEG Java API to approximate
- * the functionality of the IJG's djpeg program.  djpeg features that are not
- * covered:
- *
- * - OS/2 BMP, GIF, and Targa output file formats [legacy feature]
- * - Color quantization and dithering [legacy feature]
- * - The floating-point IDCT method [legacy feature]
- * - Extracting an ICC color management profile
- * - Progress reporting
- * - Skipping rows (i.e. exclusive rather than inclusive partial decompression)
- * - Debug output
- */
+// This program demonstrates how to use the TurboJPEG Java API to approximate
+// the functionality of the IJG's djpeg program.  djpeg features that are not
+// covered:
+//
+// - OS/2 BMP, GIF, and Targa output file formats [legacy feature]
+// - Color quantization and dithering [legacy feature]
+// - The floating-point IDCT method [legacy feature]
+// - Extracting an ICC color management profile
+// - Progress reporting
+// - Skipping rows (i.e. exclusive rather than inclusive partial decompression)
+// - Debug output
 
 import java.io.*;
 import java.util.*;

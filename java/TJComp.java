@@ -27,22 +27,20 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * This program demonstrates how to use the TurboJPEG Java API to approximate
- * the functionality of the IJG's cjpeg program.  cjpeg features that are not
- * covered:
- *
- * - GIF and Targa input file formats [legacy feature]
- * - Separate quality settings for luminance and chrominance
- * - The floating-point DCT method [legacy feature]
- * - Input image smoothing
- * - Progress reporting
- * - Debug output
- * - Forcing baseline-compatible quantization tables
- * - Specifying arbitrary quantization tables
- * - Specifying arbitrary sampling factors
- * - Scan scripts
- */
+// This program demonstrates how to use the TurboJPEG Java API to approximate
+// the functionality of the IJG's cjpeg program.  cjpeg features that are not
+// covered:
+//
+// - GIF and Targa input file formats [legacy feature]
+// - Separate quality settings for luminance and chrominance
+// - The floating-point DCT method [legacy feature]
+// - Input image smoothing
+// - Progress reporting
+// - Debug output
+// - Forcing baseline-compatible quantization tables
+// - Specifying arbitrary quantization tables
+// - Specifying arbitrary sampling factors
+// - Scan scripts
 
 import java.io.*;
 import java.util.*;

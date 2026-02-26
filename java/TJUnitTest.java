@@ -26,9 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * This program tests the various code paths in the TurboJPEG Java API
- */
+// This program tests the various code paths in the TurboJPEG Java API
 
 import java.io.*;
 import java.util.*;
@@ -897,7 +895,7 @@ final class TJUnitTest {
   }
 
   static void overflowTest() throws Exception {
-    /* Ensure that the various buffer size methods don't overflow */
+    // Ensure that the various buffer size methods don't overflow
     int size = 0;
     boolean exception = false;
 
@@ -1268,8 +1266,8 @@ final class TJUnitTest {
                                 targetPrecision + ")");
         }
 
-        /* Verify that TJCompressor.loadSourceImage() returns the proper
-           "preferred" pixel format for the file type. */
+        // Verify that TJCompressor.loadSourceImage() returns the proper
+        // "preferred" pixel format for the file type.
         pf = pixelFormat;
         pixelFormat = TJ.PF_UNKNOWN;
         tjc.loadSourceImage(filename, align, pixelFormat);

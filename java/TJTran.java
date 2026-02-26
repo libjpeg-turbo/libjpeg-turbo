@@ -27,19 +27,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * This program demonstrates how to use the TurboJPEG Java API to approximate
- * the functionality of the IJG's jpegtran program.  jpegtran features that are
- * not covered:
- *
- * - Scan scripts
- * - Expanding the input image when cropping
- * - Wiping a region of the input image
- * - Dropping another JPEG image into the input image
- * - Progress reporting
- * - Treating warnings as non-fatal [limitation of the TurboJPEG Java API]
- * - Debug output
- */
+// This program demonstrates how to use the TurboJPEG Java API to approximate
+// the functionality of the IJG's jpegtran program.  jpegtran features that are
+// not covered:
+//
+// - Scan scripts
+// - Expanding the input image when cropping
+// - Wiping a region of the input image
+// - Dropping another JPEG image into the input image
+// - Progress reporting
+// - Treating warnings as non-fatal [limitation of the TurboJPEG Java API]
+// - Debug output
 
 import java.io.*;
 import java.util.*;
