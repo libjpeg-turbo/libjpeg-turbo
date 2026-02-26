@@ -27,10 +27,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * This program demonstrates how to compress, decompress, and transform JPEG
- * images using the TurboJPEG Java API
- */
+// This program demonstrates how to compress, decompress, and transform JPEG
+// images using the TurboJPEG Java API
 
 import java.io.*;
 import java.awt.*;
@@ -60,7 +58,7 @@ class TJExample implements TJCustomFilter {
   };
 
 
-  /* DCT filter example.  This produces a negative of the image. */
+  // DCT filter example.  This produces a negative of the image.
 
   @SuppressWarnings("checkstyle:JavadocMethod")
   public void customFilter(ShortBuffer coeffBuffer, Rectangle bufferRegion,
@@ -163,7 +161,7 @@ class TJExample implements TJCustomFilter {
       if (argv[1].substring(0, 2).equalsIgnoreCase("-d"))
         display = true;
 
-      /* Parse arguments. */
+      // Parse arguments.
       for (int i = 2; i < argv.length; i++) {
         if (argv[i].length() < 2)
           continue;
@@ -248,7 +246,7 @@ class TJExample implements TJCustomFilter {
         } else usage();
       }
 
-      /* Determine input and output image formats based on file extensions. */
+      // Determine input and output image formats based on file extensions.
       String[] inFileTokens = argv[0].split("\\.");
       if (inFileTokens.length > 1)
         inFormat = inFileTokens[inFileTokens.length - 1];
@@ -262,11 +260,11 @@ class TJExample implements TJCustomFilter {
       }
 
       if (inFormat.equalsIgnoreCase("jpg")) {
-        /* Input image is a JPEG image.  Decompress and/or transform it. */
+        // Input image is a JPEG image.  Decompress and/or transform it.
         boolean doTransform = (xform.op != TJTransform.OP_NONE ||
                                xform.options != 0 || xform.cf != null);
 
-        /* Read the JPEG file into memory. */
+        // Read the JPEG file into memory.
         File jpegFile = new File(argv[0]);
         byte[] jpegBuf;
         try (FileInputStream fis = new FileInputStream(jpegFile)) {
@@ -281,7 +279,7 @@ class TJExample implements TJCustomFilter {
 
         TJDecompressor tjd;
         if (doTransform) {
-          /* Transform it. */
+          // Transform it.
           try (TJTransformer tjt = new TJTransformer(jpegBuf)) {
             TJTransform[] xforms = new TJTransform[1];
             xforms[0] = xform;
@@ -309,9 +307,9 @@ class TJExample implements TJCustomFilter {
 
         if (outFormat.equalsIgnoreCase("jpg") && doTransform &&
             scalingFactor.isOne() && outSubsamp < 0 && outQual < 0) {
-          /* Input image has been transformed, and no re-compression options
-             have been selected.  Write the transformed image to disk and
-             exit. */
+          // Input image has been transformed, and no re-compression options
+          // have been selected.  Write the transformed image to disk and
+          // exit.
           File outFile = new File(argv[1]);
           try (FileOutputStream fos = new FileOutputStream(outFile)) {
             fos.write(tjd.getJPEGBuf(), 0, tjd.getJPEGSize());
@@ -319,9 +317,9 @@ class TJExample implements TJCustomFilter {
           System.exit(0);
         }
 
-        /* Scaling and/or a non-JPEG output image format and/or compression
-           options have been selected, so we need to decompress the
-           input/transformed image. */
+        // Scaling and/or a non-JPEG output image format and/or compression
+        // options have been selected, so we need to decompress the
+        // input/transformed image.
         tjd.setScalingFactor(scalingFactor);
         width = scalingFactor.getScaled(width);
         height = scalingFactor.getScaled(height);
@@ -334,7 +332,7 @@ class TJExample implements TJCustomFilter {
           imgBuf = tjd.decompress8(0, TJ.PF_BGRX);
         tjd.close();
       } else {
-        /* Input image is not a JPEG image.  Load it into memory. */
+        // Input image is not a JPEG image.  Load it into memory.
         img = ImageIO.read(new File(argv[0]));
         if (img == null)
           throw new Exception("Input image type not supported.");
@@ -355,13 +353,13 @@ class TJExample implements TJCustomFilter {
                          " x " + height + " pixels");
 
       if (display) {
-        /* Display the uncompressed image */
+        // Display the uncompressed image
         ImageIcon icon = new ImageIcon(img);
         JLabel label = new JLabel(icon, JLabel.CENTER);
         JOptionPane.showMessageDialog(null, label, "Output Image",
                                       JOptionPane.PLAIN_MESSAGE);
       } else if (outFormat.equalsIgnoreCase("jpg")) {
-        /* Output image format is JPEG.  Compress the uncompressed image. */
+        // Output image format is JPEG.  Compress the uncompressed image.
         if (outQual < 0)
           outQual = DEFAULT_QUALITY;
         System.out.println(", " + SUBSAMP_NAME[outSubsamp] +
@@ -381,14 +379,14 @@ class TJExample implements TJCustomFilter {
           jpegSize = tjc.getCompressedSize();
         }
 
-        /* Write the JPEG image to disk. */
+        // Write the JPEG image to disk.
         File outFile = new File(argv[1]);
         try (FileOutputStream fos = new FileOutputStream(outFile)) {
           fos.write(jpegBuf, 0, jpegSize);
         }
       } else {
-        /* Output image format is not JPEG.  Save the uncompressed image
-           directly to disk. */
+        // Output image format is not JPEG.  Save the uncompressed image
+        // directly to disk.
         System.out.print("\n");
         File outFile = new File(argv[1]);
         ImageIO.write(img, outFormat, outFile);

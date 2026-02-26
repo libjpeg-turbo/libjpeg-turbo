@@ -27,9 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * This program tests the various code paths in the TurboJPEG Java API
- */
+// This program tests the various code paths in the TurboJPEG Java API
 
 import java.io.*;
 import java.util.*;
@@ -888,7 +886,7 @@ final class TJUnitTest {
   }
 
   static void overflowTest() throws Exception {
-    /* Ensure that the various buffer size methods don't overflow */
+    // Ensure that the various buffer size methods don't overflow
     int size = 0;
     boolean exception = false;
 
