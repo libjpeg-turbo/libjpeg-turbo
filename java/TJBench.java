@@ -163,7 +163,7 @@ final class TJBench {
                      int tilew, int tileh) throws Exception {
     String qualStr = new String(""), sizeStr, tempStr;
     double elapsed, elapsedDecode;
-    int ps = TJ.getPixelSize(pf), i, iter = 0;
+    int ps = TJ.getPixelSize(pf), iter = 0;
     int scaledw, scaledh, pitch;
     YUVImage yuvImage = null;
 
@@ -177,6 +177,7 @@ final class TJBench {
       qualStr = new String((lossless ? "_PSV" : "_Q") + jpegQual);
 
     try (TJDecompressor tjd = new TJDecompressor()) {
+
       tjd.set(TJ.PARAM_STOPONWARNING, stopOnWarning ? 1 : 0);
       tjd.set(TJ.PARAM_BOTTOMUP, bottomUp ? 1 : 0);
       tjd.set(TJ.PARAM_FASTUPSAMPLE, fastUpsample ? 1 : 0);
@@ -273,11 +274,11 @@ final class TJBench {
           iter = 0;
           elapsed = elapsedDecode = 0.0;
         }
-      }
+      }  // while (true)
       if (doYUV)
         elapsed -= elapsedDecode;
 
-      for (i = 0; i < jpegBufs.length; i++)
+      for (int i = 0; i < jpegBufs.length; i++)
         jpegBufs[i] = null;
       jpegBufs = null;  jpegSizes = null;
       System.gc();
@@ -324,7 +325,8 @@ final class TJBench {
                              qualStr + "_" + sizeStr + "." + ext);
 
       tjd.saveImage(tempStr, dstBuf, 0, 0, scaledw, 0, scaledh, pf);
-    }
+
+    }  // try (tjd)
   }
 
 
@@ -335,7 +337,7 @@ final class TJBench {
     byte[][] jpegBufs;
     int[] jpegSizes;
     double start, elapsed, elapsedEncode;
-    int totalJpegSize = 0, tilew, tileh, i, iter;
+    int totalJpegSize = 0, iter;
     int ps = TJ.getPixelSize(pf);
     int ntilesw = 1, ntilesh = 1, pitch = w * ps;
     String pfStr = PIXFORMATSTR[pf];
@@ -368,7 +370,7 @@ final class TJBench {
     tjc.set(TJ.PARAM_RESTARTROWS, restartIntervalRows);
     tjc.set(TJ.PARAM_MAXMEMORY, maxMemory);
 
-    for (tilew = doTile ? 8 : w, tileh = doTile ? 8 : h; ;
+    for (int tilew = doTile ? 8 : w, tileh = doTile ? 8 : h; ;
          tilew *= 2, tileh *= 2) {
       if (tilew > w)
         tilew = w;
@@ -388,11 +390,11 @@ final class TJBench {
                           lossless ? "LOSSLS" : SUBNAME_LONG[subsamp],
                           jpegQual);
       if (precision <= 8) {
-        for (i = 0; i < h; i++)
+        for (int i = 0; i < h; i++)
           System.arraycopy((byte[])srcBuf, w * ps * i, (byte[])tmpBuf,
                            pitch * i, w * ps);
       } else {
-        for (i = 0; i < h; i++)
+        for (int i = 0; i < h; i++)
           System.arraycopy((short[])srcBuf, w * ps * i, (short[])tmpBuf,
                            pitch * i, w * ps);
       }
@@ -448,7 +450,7 @@ final class TJBench {
           iter = 0;
           elapsed = elapsedEncode = 0.0;
         }
-      }
+      }  // while (true)
       if (doYUV)
         elapsed -= elapsedEncode;
 
@@ -517,7 +519,7 @@ final class TJBench {
         System.out.println("N/A");
 
       if (tilew == w && tileh == h) break;
-    }
+    }  // for (tilew, tileh)
   }
 
 
@@ -527,7 +529,7 @@ final class TJBench {
     int[] jpegSizes = null;
     int totalJpegSize;
     double start, elapsed;
-    int ps = TJ.getPixelSize(pf), tile, x, y, iter;
+    int ps = TJ.getPixelSize(pf), iter;
     // Original image
     int w = 0, h = 0, ntilesw = 1, ntilesh = 1, subsamp = -1, cs = -1;
     // Transformed image
@@ -547,6 +549,7 @@ final class TJBench {
       fileName = new String(fileName.substring(0, index));
 
     try (TJTransformer tjt = new TJTransformer()) {
+
       tjt.set(TJ.PARAM_STOPONWARNING, stopOnWarning ? 1 : 0);
       tjt.set(TJ.PARAM_BOTTOMUP, bottomUp ? 1 : 0);
       tjt.set(TJ.PARAM_FASTUPSAMPLE, fastUpsample ? 1 : 0);
@@ -674,8 +677,8 @@ final class TJBench {
           TJTransform[] t = new TJTransform[tntilesw * tntilesh];
           jpegBufs = new byte[tntilesw * tntilesh][];
 
-          for (y = 0, tile = 0; y < th; y += ttileh) {
-            for (x = 0; x < tw; x += ttilew, tile++) {
+          for (int y = 0, tile = 0; y < th; y += ttileh) {
+            for (int x = 0; x < tw; x += ttilew, tile++) {
               t[tile] = new TJTransform();
               t[tile].width = Math.min(ttilew, tw - x);
               t[tile].height = Math.min(ttileh, th - y);
@@ -709,7 +712,8 @@ final class TJBench {
           }
           t = null;
 
-          for (tile = 0, totalJpegSize = 0; tile < tntilesw * tntilesh; tile++)
+          totalJpegSize = 0;
+          for (int tile = 0; tile < tntilesw * tntilesh; tile++)
             totalJpegSize += jpegSizes[tile];
 
           if (quiet != 0) {
@@ -731,7 +735,7 @@ final class TJBench {
             System.out.format("                  Output bit stream:  %f Megabits/sec\n",
                               (double)totalJpegSize * 8. / 1000000. / elapsed);
           }
-        } else {
+        } else {  // if (doTile ...)
           if (quiet == 1)
             System.out.print("N/A     N/A     ");
           jpegBufs = new byte[1][];
@@ -754,13 +758,13 @@ final class TJBench {
         jpegSizes = null;
 
         if (tilew == w && tileh == h) break;
-      }
-    }
+      }  // for (tilew, tileh)
+
+    }  // try (tjt)
   }
 
 
   static void usage() throws Exception {
-    int i;
     TJScalingFactor[] scalingFactors = TJ.getScalingFactors();
     int nsf = scalingFactors.length;
     String className = new TJBench().getClass().getName();
@@ -861,7 +865,7 @@ final class TJBench {
     System.out.println("-scale M/N");
     System.out.println("    When decompressing, scale the width/height of the JPEG image by a factor of");
     System.out.print("    M/N (M/N = ");
-    for (i = 0; i < nsf; i++) {
+    for (int i = 0; i < nsf; i++) {
       System.out.format("%d/%d", scalingFactors[i].getNum(),
                         scalingFactors[i].getDenom());
       if (nsf == 2 && i != nsf - 1)

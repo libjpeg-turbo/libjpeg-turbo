@@ -81,7 +81,6 @@ final class TJDecomp {
 
 
   static void usage() {
-    int i;
     TJScalingFactor[] scalingFactors = TJ.getScalingFactors();
     int numScalingFactors = scalingFactors.length;
 
@@ -127,7 +126,7 @@ final class TJDecomp {
     System.out.println("-scale M/N");
     System.out.println("    Scale the width/height of the JPEG image by a factor of M/N when");
     System.out.print("    decompressing it (M/N = ");
-    for (i = 0; i < numScalingFactors; i++) {
+    for (int i = 0; i < numScalingFactors; i++) {
       System.out.format("%d/%d", scalingFactors[i].getNum(),
                         scalingFactors[i].getDenom());
       if (numScalingFactors == 2 && i != numScalingFactors - 1)
@@ -343,7 +342,9 @@ final class TJDecomp {
         } catch (TJException e) { handleTJException(e, stopOnWarning); }
 
         tjd.saveImage(argv[i], dstBuf, 0, 0, width, 0, height, pixelFormat);
-      }
+
+      }  // try (tjd)
+
     } catch (Exception e) {
       e.printStackTrace();
       exitStatus = -1;

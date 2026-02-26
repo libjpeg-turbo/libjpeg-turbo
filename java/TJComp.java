@@ -299,7 +299,9 @@ final class TJComp {
         try (FileOutputStream fos = new FileOutputStream(outFile)) {
           fos.write(jpegBuf, 0, tjc.getCompressedSize());
         }
-      }
+
+      }  // try (tjc)
+
     } catch (Exception e) {
       e.printStackTrace();
       exitStatus = -1;
