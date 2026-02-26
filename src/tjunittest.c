@@ -417,36 +417,82 @@ static void compTest(tjhandle handle, unsigned char **dstBuf, size_t *dstSize,
   if (*dstBuf && *dstSize > 0) memset(*dstBuf, 0, *dstSize);
 
   if (doYUV) {
+    unsigned char *yuvPtr, *yuvPlanes[3] = { NULL, NULL, NULL };
+    int i, yuvStrides[3] = { 0, 0, 0 }, success;
+    size_t dstBufSize;
+    MD5_CTX md5ctx;
+    char *md5ref, md5refbuf[65], *md5sum, md5buf[65];
     size_t yuvSize = tj3YUVBufSize(w, yuvAlign, h, subsamp);
+
+    if ((yuvBuf = (unsigned char *)malloc(yuvSize)) == NULL)
+      THROW("Memory allocation failure");
+
+    printf("%s %s -> YUV %s ... ", pfStr, buStrLong, subNameLong[subsamp]);
 
     if ((handle2 = tj3Init(TJINIT_COMPRESS)) == NULL)
       THROW_TJ(NULL);
     TRY_TJ(handle2, tj3Set(handle2, TJPARAM_BOTTOMUP, bottomUp));
     TRY_TJ(handle2, tj3Set(handle2, TJPARAM_SUBSAMP, subsamp));
-
-    if ((yuvBuf = (unsigned char *)malloc(yuvSize)) == NULL)
-      THROW("Memory allocation failure");
-    memset(yuvBuf, 0, yuvSize);
-
-    printf("%s %s -> YUV %s ... ", pfStr, buStrLong, subNameLong[subsamp]);
     /* Verify that tj3EncodeYUV*8() ignores TJPARAM_LOSSLESS and
        TJPARAM_COLORSPACE. */
     TRY_TJ(handle2, tj3Set(handle2, TJPARAM_LOSSLESS, 1));
     TRY_TJ(handle2, tj3Set(handle2, TJPARAM_COLORSPACE, TJCS_RGB));
+
+    memset(yuvBuf, 0, yuvSize);
     TRY_TJ(handle2, tj3EncodeYUV8(handle2, (unsigned char *)srcBuf, w, 0, h,
                                   pf, yuvBuf, yuvAlign));
-    tj3Destroy(handle2);  handle2 = NULL;
-    if (checkBufYUV(yuvBuf, w, h, subsamp, TJUNSCALED)) printf("Passed.\n");
+    success = checkBufYUV(yuvBuf, w, h, subsamp, TJUNSCALED);
+
+    /* Verify that tj3EncodeYUVPlanes8() produces the same results. */
+    yuvPtr = yuvBuf;
+    for (i = 0; i < (subsamp == TJSAMP_GRAY ? 1 : 3); i++) {
+      int planeWidth, planeHeight;
+      size_t planeSize;
+
+      if ((planeWidth = tj3YUVPlaneWidth(i, w, subsamp)) == 0 ||
+          (planeHeight = tj3YUVPlaneHeight(i, h, subsamp)) == 0)
+        THROW_TJ(NULL);
+      yuvStrides[i] = PAD(planeWidth, yuvAlign);
+      if ((planeSize = tj3YUVPlaneSize(i, w, yuvStrides[i], h, subsamp)) == 0)
+        THROW_TJ(NULL);
+      yuvPlanes[i] = yuvPtr;
+      yuvPtr += planeSize + yuvStrides[i] - planeWidth;
+    }
+    memset(yuvBuf, 0, yuvSize);
+    TRY_TJ(handle2, tj3EncodeYUVPlanes8(handle2, (unsigned char *)srcBuf, w, 0,
+                                        h, pf, yuvPlanes, yuvStrides));
+    success &= checkBufYUV(yuvBuf, w, h, subsamp, TJUNSCALED);
+    if (success) printf("Passed.\n");
     else printf("FAILED!\n");
+
+    tj3Destroy(handle2);  handle2 = NULL;
 
     printf("YUV %s %s -> JPEG Q%d ... ", subNameLong[subsamp], buStrLong,
            jpegQual);
+
     /* Verify that tj3CompressFromYUV*8() ignores TJPARAM_LOSSLESS and
        TJPARAM_COLORSPACE. */
     TRY_TJ(handle, tj3Set(handle, TJPARAM_LOSSLESS, 1));
     TRY_TJ(handle, tj3Set(handle, TJPARAM_COLORSPACE, TJCS_RGB));
+    dstBufSize = *dstSize;
     TRY_TJ(handle, tj3CompressFromYUV8(handle, yuvBuf, w, yuvAlign, h, dstBuf,
                                        dstSize));
+    MD5Init(&md5ctx);
+    MD5Update(&md5ctx, *dstBuf, *dstSize);
+    md5ref = MD5End(&md5ctx, md5refbuf);
+
+    /* Verify that tj3CompressFromYUVPlanes8() produces the same results. */
+    *dstSize = dstBufSize;
+    if (*dstBuf && *dstSize > 0) memset(*dstBuf, 0, *dstSize);
+    TRY_TJ(handle, tj3CompressFromYUVPlanes8(handle,
+                                             (const unsigned char **)yuvPlanes,
+                                             w, yuvStrides, h, dstBuf,
+                                             dstSize));
+    MD5Init(&md5ctx);
+    MD5Update(&md5ctx, *dstBuf, *dstSize);
+    md5sum = MD5End(&md5ctx, md5buf);
+    if (strcasecmp(md5sum, md5ref))
+      THROW_MD5("JPEG image", md5sum, md5ref);
   } else {
     if (lossless) {
       TRY_TJ(handle, tj3Set(handle, TJPARAM_PRECISION, precision));
@@ -488,6 +534,7 @@ static void _decompTest(tjhandle handle, unsigned char *jpegBuf,
 {
   void *dstBuf = NULL;
   unsigned char *yuvBuf = NULL;
+  int success = 1;
   int _hdrw = 0, _hdrh = 0, _hdrsubsamp;
   int scaledWidth = TJSCALED(w, sf);
   int scaledHeight = TJSCALED(h, sf);
@@ -512,33 +559,67 @@ static void _decompTest(tjhandle handle, unsigned char *jpegBuf,
   memset(dstBuf, 0, dstSize * sampleSize);
 
   if (doYUV) {
+    unsigned char *yuvPtr, *yuvPlanes[3] = { NULL, NULL, NULL };
+    int i, yuvStrides[3] = { 0, 0, 0 };
     size_t yuvSize = tj3YUVBufSize(scaledWidth, yuvAlign, scaledHeight,
                                    subsamp);
+
+    if ((yuvBuf = (unsigned char *)malloc(yuvSize)) == NULL)
+      THROW("Memory allocation failure");
+
+    printf("JPEG -> YUV %s ", subNameLong[subsamp]);
+    if (sf.num != 1 || sf.denom != 1)
+      printf("%d/%d ... ", sf.num, sf.denom);
+    else printf("... ");
+
+    memset(yuvBuf, 0, yuvSize);
+    TRY_TJ(handle, tj3DecompressToYUV8(handle, jpegBuf, jpegSize, yuvBuf,
+                                       yuvAlign));
+    success = checkBufYUV(yuvBuf, scaledWidth, scaledHeight, subsamp, sf);
+
+    /* Verify that tj3DecompressToYUVPlanes8() produces the same results. */
+    yuvPtr = yuvBuf;
+    for (i = 0; i < (subsamp == TJSAMP_GRAY ? 1 : 3); i++) {
+      int planeWidth, planeHeight;
+      size_t planeSize;
+
+      if ((planeWidth = tj3YUVPlaneWidth(i, scaledWidth, subsamp)) == 0 ||
+          (planeHeight = tj3YUVPlaneHeight(i, scaledHeight, subsamp)) == 0)
+        THROW_TJ(NULL);
+      yuvStrides[i] = PAD(planeWidth, yuvAlign);
+      if ((planeSize = tj3YUVPlaneSize(i, scaledWidth, yuvStrides[i],
+                                       scaledHeight, subsamp)) == 0)
+        THROW_TJ(NULL);
+      yuvPlanes[i] = yuvPtr;
+      yuvPtr += planeSize + yuvStrides[i] - planeWidth;
+    }
+    memset(yuvBuf, 0, yuvSize);
+    TRY_TJ(handle, tj3DecompressToYUVPlanes8(handle, jpegBuf, jpegSize,
+                                             yuvPlanes, yuvStrides));
+    success &= checkBufYUV(yuvBuf, scaledWidth, scaledHeight, subsamp, sf);
+    if (success) printf("Passed.\n");
+    else printf("FAILED!\n");
+
+    printf("YUV %s -> %s %s ... ", subNameLong[subsamp], pixFormatStr[pf],
+           bottomUp ? "Bottom-Up" : "Top-Down ");
 
     if ((handle2 = tj3Init(TJINIT_DECOMPRESS)) == NULL)
       THROW_TJ(NULL);
     TRY_TJ(handle2, tj3Set(handle2, TJPARAM_BOTTOMUP, bottomUp));
     TRY_TJ(handle2, tj3Set(handle2, TJPARAM_SUBSAMP, subsamp));
 
-    if ((yuvBuf = (unsigned char *)malloc(yuvSize)) == NULL)
-      THROW("Memory allocation failure");
-    memset(yuvBuf, 0, yuvSize);
-
-    printf("JPEG -> YUV %s ", subNameLong[subsamp]);
-    if (sf.num != 1 || sf.denom != 1)
-      printf("%d/%d ... ", sf.num, sf.denom);
-    else printf("... ");
-    TRY_TJ(handle, tj3DecompressToYUV8(handle, jpegBuf, jpegSize, yuvBuf,
-                                       yuvAlign));
-    if (checkBufYUV(yuvBuf, scaledWidth, scaledHeight, subsamp, sf))
-      printf("Passed.\n");
-    else printf("FAILED!\n");
-
-    printf("YUV %s -> %s %s ... ", subNameLong[subsamp], pixFormatStr[pf],
-           bottomUp ? "Bottom-Up" : "Top-Down ");
     TRY_TJ(handle2, tj3DecodeYUV8(handle2, yuvBuf, yuvAlign,
                                   (unsigned char *)dstBuf, scaledWidth, 0,
                                   scaledHeight, pf));
+    success = checkBuf(dstBuf, scaledWidth, scaledHeight, pf, subsamp, sf,
+                       bottomUp);
+
+    /* Verify that tj3DecodeYUVPlanes8() produces the same results. */
+    TRY_TJ(handle2, tj3DecodeYUVPlanes8(handle2,
+                                        (const unsigned char **)yuvPlanes,
+                                        yuvStrides, (unsigned char *)dstBuf,
+                                        scaledWidth, 0, scaledHeight, pf));
+
     tj3Destroy(handle2);  handle2 = NULL;
   } else {
     printf("JPEG -> %s %s ", pixFormatStr[pf],
@@ -558,8 +639,9 @@ static void _decompTest(tjhandle handle, unsigned char *jpegBuf,
     }
   }
 
-  if (checkBuf(dstBuf, scaledWidth, scaledHeight, pf, subsamp, sf, bottomUp))
-    printf("Passed.");
+  success &= checkBuf(dstBuf, scaledWidth, scaledHeight, pf, subsamp, sf,
+                      bottomUp);
+  if (success) printf("Passed.");
   else printf("FAILED!");
   printf("\n");
 

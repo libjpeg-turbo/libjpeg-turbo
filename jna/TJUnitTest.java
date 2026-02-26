@@ -26,9 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * This program tests the various code paths in TurboJPEG/JNA
- */
+// This program tests the various code paths in TurboJPEG/JNA
 
 import java.io.*;
 import java.util.*;
@@ -459,8 +457,8 @@ final class TJUnitTest {
           try (TJ.Handle handle2 = new TJ.Handle(TJ.INIT_COMPRESS)) {
             TJ.set(handle2, TJ.PARAM_BOTTOMUP, bottomUp ? 1 : 0);
             TJ.set(handle2, TJ.PARAM_SUBSAMP, subsamp);
-            /* Verify that TJ.tj3EncodeYUV*8() ignores TJ.PARAM_LOSSLESS and
-               TJ.PARAM_COLORSPACE. */
+            // Verify that TJ.tj3EncodeYUV*8() ignores TJ.PARAM_LOSSLESS and
+            // TJ.PARAM_COLORSPACE.
             TJ.set(handle2, TJ.PARAM_LOSSLESS, 1);
             TJ.set(handle2, TJ.PARAM_COLORSPACE, TJ.CS_RGB);
             TJ.encodeYUV8(handle2, srcBuf, w, 0, h, pf, yuvBuf, yuvAlign);
@@ -474,8 +472,8 @@ final class TJUnitTest {
 
           System.out.format("YUV %s %s -> JPEG Q%d ... ",
                             SUBNAME_LONG[subsamp], buStrLong, jpegQual);
-          /* Verify that TJ.tj3CompressFromYUV*8() ignores TJ.PARAM_LOSSLESS
-             and  TJ.PARAM_COLORSPACE. */
+          // Verify that TJ.tj3CompressFromYUV*8() ignores TJ.PARAM_LOSSLESS
+          // and  TJ.PARAM_COLORSPACE.
           TJ.set(handle, TJ.PARAM_LOSSLESS, 1);
           TJ.set(handle, TJ.PARAM_COLORSPACE, TJ.CS_RGB);
           TJ.compressFromYUV8(handle, yuvBuf, w, yuvAlign, h, dstBuf, dstSize);
@@ -675,7 +673,7 @@ final class TJUnitTest {
   }
 
   static void overflowTest() throws Exception {
-    /* Ensure that the various buffer size methods don't overflow */
+    // Ensure that the various buffer size methods don't overflow
     NativeLong size = new NativeLong(1);
     int intSize = 1;
     boolean exception = false;
@@ -763,17 +761,17 @@ final class TJUnitTest {
                 setVal(srcBuf, i, r.nextInt(2) * maxSample);
 
               if (doYUV) {
-                /* Verify that TJ.tj3EncodeYUV*8() ignores TJ.PARAM_LOSSLESS
-                   and TJ.PARAM_COLORSPACE. */
+                // Verify that TJ.tj3EncodeYUV*8() ignores TJ.PARAM_LOSSLESS
+                // and TJ.PARAM_COLORSPACE.
                 TJ.set(handle, TJ.PARAM_LOSSLESS, 1);
                 TJ.set(handle, TJ.PARAM_COLORSPACE, TJ.CS_RGB);
                 TJ.encodeYUV8(handle, srcBuf, w, 0, h, TJ.PF_BGRX,
                               dstBuf.getValue(), yuvAlign);
               } else {
-                /* Verify that the API is hardened against hypothetical
-                   applications that may erroneously set the JPEG destination
-                   buffer size to 0 while reusing the destination buffer
-                   pointer. */
+                // Verify that the API is hardened against hypothetical
+                // applications that may erroneously set the JPEG destination
+                // buffer size to 0 while reusing the destination buffer
+                // pointer.
                 if (alloc && (w > 1 || h > 1))
                   dstSize.setValue(new NativeLong(0));
                 if (precision <= 8)
@@ -804,8 +802,8 @@ final class TJUnitTest {
                 setVal(srcBuf, i, r.nextInt(2) * maxSample);
 
               if (doYUV) {
-                /* Verify that TJ.tj3EncodeYUV*8() ignores TJ.PARAM_LOSSLESS
-                   and TJ.PARAM_COLORSPACE. */
+                // Verify that TJ.tj3EncodeYUV*8() ignores TJ.PARAM_LOSSLESS
+                // and TJ.PARAM_COLORSPACE.
                 TJ.set(handle, TJ.PARAM_LOSSLESS, 1);
                 TJ.set(handle, TJ.PARAM_COLORSPACE, TJ.CS_RGB);
                 TJ.encodeYUV8(handle, srcBuf, h, 0, w, TJ.PF_BGRX,
@@ -1108,8 +1106,8 @@ final class TJUnitTest {
           TJ.free(buf);  buf = null;
         }
 
-        /* Verify that TJ.tj3LoadImage*() returns the proper "preferred" pixel
-           format for the file type. */
+        // Verify that TJ.tj3LoadImage*() returns the proper "preferred" pixel
+        // format for the file type.
         pf = pixelFormat;
         pixelFormat = TJ.PF_UNKNOWN;
         loadPF.setValue(pixelFormat);

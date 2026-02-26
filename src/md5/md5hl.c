@@ -60,7 +60,7 @@
 
 #include "md5.h"
 
-static char *MD5End(MD5_CTX *ctx, char *buf)
+char *MD5End(MD5_CTX *ctx, char *buf)
 {
   int i;
   unsigned char digest[LENGTH];
