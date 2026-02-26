@@ -150,7 +150,7 @@ jobs:
       - name: Build
         shell: bash
         run: |
-          export PATH="/c/nasm-2.10.01:/c/Program Files (x86)/NSIS/:$PATH"
+          export PATH="/c/nasm-2.10.01:/c/Program Files (x86)/NSIS/:$PATH:/c/msys64/usr/bin/"
           export VSINSTALLDIR='C:\Program Files\Microsoft Visual Studio\2022\Enterprise\'
           eval "$(c:/vcvars-bash/vcvarsall.sh amd64)"
           echo INCLUDE=$INCLUDE
