@@ -1,6 +1,6 @@
 /*
  * libjpeg-turbo Modifications:
- * Copyright (C) 2018 D. R. Commander.  All Rights Reserved.
+ * Copyright (C) 2018, 2026 D. R. Commander.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -53,5 +53,6 @@ extern void MD5Final(unsigned char digest[16], struct MD5Context *ctx);
 extern void MD5Transform(uint32 buf[4], uint32 in[16]);
 extern char *MD5File(const char *, char *);
 extern char *MD5FileChunk(const char *, char *, off_t, off_t);
+extern char *MD5End(struct MD5Context *ctx, char *buf);
 
 #endif /* !MD5_H */
