@@ -548,18 +548,19 @@ public final class TJ {
   // srcPlanes
 
   public static native int
-    tj3CompressFromYUVPlanes8(Pointer handle, Pointer srcPlanes, int width,
-                              int[] strides, int height,
+    tj3CompressFromYUVPlanes8(Pointer handle, PointerReference srcPlanes,
+                              int width, int[] strides, int height,
                               PointerByReference jpegBuf,
                               NativeLongByReference jpegSize);
 
-  public static void compressFromYUVPlanes8(Pointer handle, Pointer srcPlanes,
+  public static void compressFromYUVPlanes8(Pointer handle,
+                                            PointerReference[] srcPlanes,
                                             int width, int[] strides,
                                             int height,
                                             PointerByReference jpegBuf,
                                             NativeLongByReference jpegSize)
                                             throws Exception {
-    if (tj3CompressFromYUVPlanes8(handle, srcPlanes, width, strides, height,
+    if (tj3CompressFromYUVPlanes8(handle, srcPlanes[0], width, strides, height,
                                   jpegBuf, jpegSize) < 0)
       throw new Exception(tj3GetErrorStr(handle), tj3GetErrorCode(handle));
   }
@@ -584,20 +585,19 @@ public final class TJ {
 
   // --------------------------------------------------------------------------
 
-  // dstPlanes
-
   public static native int tj3EncodeYUVPlanes8(Pointer handle, Pointer srcBuf,
                                                int width, int pitch,
                                                int height, int pixelFormat,
-                                               Pointer dstPlanes,
+                                               PointerReference dstPlanes,
                                                int[] strides);
 
   public static void encodeYUVPlanes8(Pointer handle, Pointer srcBuf,
                                       int width, int pitch, int height,
-                                      int pixelFormat, Pointer dstPlanes,
+                                      int pixelFormat,
+                                      PointerReference[] dstPlanes,
                                       int[] strides) throws Exception {
     if (tj3EncodeYUVPlanes8(handle, srcBuf, width, pitch, height, pixelFormat,
-                            dstPlanes, strides) < 0)
+                            dstPlanes[0], strides) < 0)
       throw new Exception(tj3GetErrorStr(handle), tj3GetErrorCode(handle));
   }
 
@@ -733,14 +733,14 @@ public final class TJ {
 
   public static native int
     tj3DecompressToYUVPlanes8(Pointer handle, Pointer jpegBuf,
-                              NativeLong jpegSize, Pointer dstPlanes,
+                              NativeLong jpegSize, PointerReference dstPlanes,
                               int[] strides);
 
   public static void decompressToYUVPlanes8(Pointer handle, Pointer jpegBuf,
                                             NativeLong jpegSize,
-                                            Pointer dstPlanes, int[] strides)
-                                            throws Exception {
-    if (tj3DecompressToYUVPlanes8(handle, jpegBuf, jpegSize, dstPlanes,
+                                            PointerReference[] dstPlanes,
+                                            int[] strides) throws Exception {
+    if (tj3DecompressToYUVPlanes8(handle, jpegBuf, jpegSize, dstPlanes[0],
                                   strides) < 0)
       throw new Exception(tj3GetErrorStr(handle), tj3GetErrorCode(handle));
   }
@@ -762,18 +762,18 @@ public final class TJ {
   // --------------------------------------------------------------------------
 
   public static native int tj3DecodeYUVPlanes8(Pointer handle,
-                                               Pointer srcPlanes,
+                                               PointerReference srcPlanes,
                                                int[] strides, Pointer dstBuf,
                                                int width, int pitch,
                                                int height, int pixelFormat);
 
   public static void decodeYUVPlanes8(Pointer handle,
-                                      Pointer srcPlanes, int[] strides,
-                                      Pointer dstBuf, int width, int pitch,
-                                      int height, int pixelFormat)
+                                      PointerReference[] srcPlanes,
+                                      int[] strides, Pointer dstBuf, int width,
+                                      int pitch, int height, int pixelFormat)
                                       throws Exception {
-    if (tj3DecodeYUVPlanes8(handle, srcPlanes, strides, dstBuf, width, pitch,
-                            height, pixelFormat) < 0)
+    if (tj3DecodeYUVPlanes8(handle, srcPlanes[0], strides, dstBuf, width,
+                            pitch, height, pixelFormat) < 0)
       throw new Exception(tj3GetErrorStr(handle), tj3GetErrorCode(handle));
   }
 

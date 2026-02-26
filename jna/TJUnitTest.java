@@ -427,6 +427,13 @@ final class TJUnitTest {
     }
   }
 
+  static String getMD5Sum(Pointer buffer, int len) throws Exception {
+    byte[] bytes = buffer.getByteArray(0, len);
+    byte[] md5sum =
+      java.security.MessageDigest.getInstance("MD5").digest(bytes);
+    return new java.math.BigInteger(1, md5sum).toString(16);
+  }
+
   static void compTest(Pointer handle, PointerByReference dstBuf,
                        NativeLongByReference dstSize, int w, int h, int pf,
                        String baseName) throws Exception {
@@ -447,10 +454,13 @@ final class TJUnitTest {
         dstBuf.getValue().clear(dstSize.getValue().longValue());
 
       if (doYUV) {
+        int nc = (subsamp == TJ.SAMP_GRAY ? 1 : 3);
+        TJ.PointerReference[] yuvPlanes =
+          (TJ.PointerReference[])(new TJ.PointerReference().toArray(nc));
+        int[] yuvStrides = new int[nc];
         long yuvSize = TJ.yuvBufSize(w, yuvAlign, h, subsamp).longValue();
-        try (Memory yuvBuf = new Memory(yuvSize)) {
-          yuvBuf.clear(yuvSize);
 
+        try (Memory yuvBuf = new Memory(yuvSize)) {
           System.out.format("%s %s -> YUV %s ... ", pfStr, buStrLong,
                             SUBNAME_LONG[subsamp]);
 
@@ -461,22 +471,62 @@ final class TJUnitTest {
             // TJ.PARAM_COLORSPACE.
             TJ.set(handle2, TJ.PARAM_LOSSLESS, 1);
             TJ.set(handle2, TJ.PARAM_COLORSPACE, TJ.CS_RGB);
+
+            yuvBuf.clear(yuvSize);
             TJ.encodeYUV8(handle2, srcBuf, w, 0, h, pf, yuvBuf, yuvAlign);
-          }
-          if (checkBufYUV(yuvBuf, w, h, subsamp, TJ.UNSCALED))
-            System.out.print("Passed.\n");
-          else {
-            System.out.print("FAILED!\n");
-            exitStatus = -1;
+            boolean success = checkBufYUV(yuvBuf, w, h, subsamp, TJ.UNSCALED);
+
+            // Verify that TJ.tj3EncodeYUVPlanes8() produces the same
+            // results.
+            Pointer yuvPtr = yuvBuf;
+            for (int i = 0; i < yuvPlanes.length; i++) {
+              int planeWidth, planeHeight;
+              NativeLong planeSize;
+
+              planeWidth = TJ.yuvPlaneWidth(i, w, subsamp);
+              planeHeight = TJ.yuvPlaneHeight(i, h, subsamp);
+              yuvStrides[i] = pad(planeWidth, yuvAlign);
+              planeSize = TJ.yuvPlaneSize(i, w, yuvStrides[i], h, subsamp);
+              yuvPlanes[i].pointer = yuvPtr;
+              yuvPtr = yuvPtr.share(planeSize.longValue() + yuvStrides[i] -
+                                    planeWidth);
+            }
+            yuvBuf.clear(yuvSize);
+            TJ.encodeYUVPlanes8(handle2, srcBuf, w, 0, h, pf, yuvPlanes,
+                                yuvStrides);
+            success &= checkBufYUV(yuvBuf, w, h, subsamp, TJ.UNSCALED);
+            if (success)
+              System.out.print("Passed.\n");
+            else {
+              System.out.print("FAILED!\n");
+              exitStatus = -1;
+            }
           }
 
           System.out.format("YUV %s %s -> JPEG Q%d ... ",
                             SUBNAME_LONG[subsamp], buStrLong, jpegQual);
+
           // Verify that TJ.tj3CompressFromYUV*8() ignores TJ.PARAM_LOSSLESS
           // and  TJ.PARAM_COLORSPACE.
           TJ.set(handle, TJ.PARAM_LOSSLESS, 1);
           TJ.set(handle, TJ.PARAM_COLORSPACE, TJ.CS_RGB);
+          long dstBufSize = dstSize.getValue().longValue();
           TJ.compressFromYUV8(handle, yuvBuf, w, yuvAlign, h, dstBuf, dstSize);
+          String md5ref = getMD5Sum(dstBuf.getValue(),
+                                    dstSize.getValue().intValue());
+
+          // Verify that TJ.tj3CompressFromYUVPlanes8() produces the same
+          // results.
+          dstSize.getValue().setValue(dstBufSize);
+          if (dstBuf.getValue() != null && dstSize.getValue().longValue() != 0)
+            dstBuf.getValue().clear(dstSize.getValue().longValue());
+          TJ.compressFromYUVPlanes8(handle, yuvPlanes, w, yuvStrides, h,
+                                    dstBuf, dstSize);
+          String md5sum = getMD5Sum(dstBuf.getValue(),
+                                    dstSize.getValue().intValue());
+          if (!md5sum.equalsIgnoreCase(md5ref))
+            throw new Exception("JPEG image has an MD5 sum of " + md5sum +
+                                ".  Should be " + md5ref);
         }  // try (yuvBuf)
       } else {  // doYUV
         if (lossless) {
@@ -509,6 +559,7 @@ final class TJUnitTest {
   static void decompTest(Pointer handle, Pointer jpegBuf, NativeLong jpegSize,
                          int w, int h, int pf, String baseName, int subsamp,
                          TJ.ScalingFactor sf) throws Exception {
+    boolean success = true;
     int headerWidth = 0, headerHeight = 0, headerSubsamp;
     int scaledWidth = TJ.scaled(w, sf);
     int scaledHeight = TJ.scaled(h, sf);
@@ -536,14 +587,45 @@ final class TJUnitTest {
         long yuvSize = TJ.yuvBufSize(scaledWidth, yuvAlign, scaledHeight,
                                      subsamp).longValue();
         try (Memory yuvBuf = new Memory(yuvSize)) {
-          yuvBuf.clear(yuvSize);
+          int nc = (subsamp == TJ.SAMP_GRAY ? 1 : 3);
+          TJ.PointerReference[] yuvPlanes =
+            (TJ.PointerReference[])(new TJ.PointerReference().toArray(nc));
+          int[] yuvStrides = new int[nc];
 
           System.out.format("JPEG -> YUV %s ", SUBNAME_LONG[subsamp]);
           if (sf.num != 1 || sf.denom != 1)
             System.out.format("%d/%d ... ", sf.num, sf.denom);
           else System.out.print("... ");
+
+          yuvBuf.clear(yuvSize);
           TJ.decompressToYUV8(handle, jpegBuf, jpegSize, yuvBuf, yuvAlign);
-          if (checkBufYUV(yuvBuf, scaledWidth, scaledHeight, subsamp, sf))
+          success = checkBufYUV(yuvBuf, scaledWidth, scaledHeight, subsamp,
+                                sf);
+
+          // Verify that TJ.tj3DecompressToYUVPlanes8() produces the same
+          // results.
+          Pointer yuvPtr = yuvBuf;
+          for (int i = 0; i < yuvPlanes.length; i++) {
+            int planeWidth, planeHeight;
+            NativeLong planeSize;
+
+            planeWidth = TJ.yuvPlaneWidth(i, scaledWidth, subsamp);
+            planeHeight = TJ.yuvPlaneHeight(i, scaledHeight, subsamp);
+            yuvStrides[i] = pad(planeWidth, yuvAlign);
+            planeSize = TJ.yuvPlaneSize(i, scaledWidth, yuvStrides[i],
+                                        scaledHeight, subsamp);
+            yuvPlanes[i].pointer = yuvPtr;
+            long planeOffset = planeSize.longValue() + yuvStrides[i] -
+                               planeWidth;
+            yuvPtr = yuvPtr.share(planeSize.longValue() + yuvStrides[i] -
+                                  planeWidth);
+          }
+          yuvBuf.clear(yuvSize);
+          TJ.decompressToYUVPlanes8(handle, jpegBuf, jpegSize, yuvPlanes,
+                                    yuvStrides);
+          success &= checkBufYUV(yuvBuf, scaledWidth, scaledHeight, subsamp,
+                                 sf);
+          if (success)
             System.out.print("Passed.\n");
           else {
             System.out.print("FAILED!\n");
@@ -553,11 +635,20 @@ final class TJUnitTest {
           System.out.format("YUV %s -> %s %s ... ", SUBNAME_LONG[subsamp],
                             PIXFORMATSTR[pf],
                             bottomUp ? "Bottom-Up" : "Top-Down ");
+
           try (TJ.Handle handle2 = new TJ.Handle(TJ.INIT_DECOMPRESS)) {
             TJ.set(handle2, TJ.PARAM_BOTTOMUP, bottomUp ? 1 : 0);
             TJ.set(handle2, TJ.PARAM_SUBSAMP, subsamp);
+
             TJ.decodeYUV8(handle2, yuvBuf, yuvAlign, dstBuf, scaledWidth, 0,
                           scaledHeight, pf);
+            success = checkBuf(dstBuf, scaledWidth, scaledHeight, pf, subsamp,
+                               sf, bottomUp);
+
+            // Verify that TJ.tj3DecodeYUVPlanes8() produces the same
+            // results.
+            TJ.decodeYUVPlanes8(handle2, yuvPlanes, yuvStrides, dstBuf,
+                                scaledWidth, 0, scaledHeight, pf);
           }
         }  // try (yuvBuf)
       } else {  // doYUV
@@ -574,8 +665,9 @@ final class TJUnitTest {
           TJ.decompress16(handle, jpegBuf, jpegSize, dstBuf, 0, pf);
       }
 
-      if (checkBuf(dstBuf, scaledWidth, scaledHeight, pf, subsamp, sf,
-                   bottomUp))
+      success &= checkBuf(dstBuf, scaledWidth, scaledHeight, pf, subsamp, sf,
+                          bottomUp);
+      if (success)
         System.out.print("Passed.\n");
       else {
         System.out.print("FAILED!\n");

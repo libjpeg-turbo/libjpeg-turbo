@@ -146,33 +146,44 @@ To represent an array of structures, JNA uses a single instance of a
   array, simply pass the first member.  The `TJ.transform()` convenience
   method accepts a `TJ.Transform[]` argument and passes the first member internally.
 
-- To pass an array of structures, it is necessary to allocate the array in
-  contiguous memory.  This is accomplished with `Structure.toArray()`.  For
-  example:
+- To pass an array of structures to a native method, it is necessary to
+  allocate the array in contiguous memory.  This is accomplished with
+  `Structure.toArray()`.  For example:
 
   ```
   TJ.Transform[] xform = (TJ.Transform[])(new TJ.Transform().toArray(2));
   ```
 
-- Since JNA doesn't allow for passing an array of `PointerByReference` or
-  `NativeLongByReference` instances, both of which are needed by the lossless
-  transformation methods, TurboJPEG/JNA provides two `Structure` subclasses
-  (`TJ.PointerReference` and `TJ.NativeLongReference`) to accomplish that.  As
-  above, use `Structure.toArray()` to ensure that the arrays are allocated
-  contiguously:
+### Arrays of `Pointer` or `NativeLong` Instances
 
-  ```
-  TJ.PointerReference[] dstBufs =
-      (TJ.PointerReference[])(new TJ.PointersByReference().toArray(2));
-  TJ.NativeLongReference[] dstSizes =
-      (TJ.NativeLongReference[])(new TJ.NativeLongsByReference().toArray(2));
-  ```
+JNA doesn't allow for passing an array of `Pointer` or `NativeLong` instances,
+which are needed by `TJ.tj3EncodeYUVPlanes8()`,
+`TJ.tj3CompressFromYUVPlanes8()`, `TJ.tj3DecompressToYUVPlanes8()`,
+`TJ.tj3DecodeYUVPlanes8()`, and `TJ.tj3Transform()`.  Thus, TurboJPEG/JNA
+provides two `Structure` subclasses, `TJ.PointerReference` and
+`TJ.NativeLongReference`, that can be passed as arrays.  Per above, use
+`Structure.toArray()` to ensure that the arrays are allocated contiguously.
+For example:
 
-  Then you can simply pass the first members of the arrays to
-  `TJ.tj3Transform()`, as you did with the `TJ.Transform[]` array.  The
-  `TJ.transform()` convenience method accepts `TJ.PointerReference[]` and
-  `TJ.NativeLongReference[]` arguments and passes the first members
-  internally.
+```
+TJ.PointerReference[] dstBufs =
+  (TJ.PointerReference[])(new TJ.PointersByReference().toArray(2));
+dstBufs[0].pointer = jpegBuf0;
+dstBufs[1].pointer = jpegBuf1;
+TJ.NativeLongReference[] dstSizes =
+  (TJ.NativeLongReference[])(new TJ.NativeLongsByReference().toArray(2));
+dstSizes[0].value = jpegSize0;
+dstSizes[1].value = jpegSize1;
+```
+
+Then you can simply pass the first members of the arrays to
+`TJ.tj3EncodeYUVPlanes8()`, `TJ.tj3CompressFromYUVPlanes8()`,
+`TJ.tj3DecompressToYUVPlanes8()`, `TJ.tj3DecodeYUVPlanes8()`, or
+`TJ.tj3Transform()`, as you did with the `TJ.Transform[]` array.  The
+`TJ.encodeYUVPlanes8()`, `TJ.compressFromYUVPlanes8()`,
+`TJ.decompressToYUVPlanes8()`, `TJ.decodeYUVPlanes8()`, and `TJ.transform()`
+convenience methods accept `TJ.PointerReference[]` and
+`TJ.NativeLongReference[]` arguments and pass the first members internally.
 
 ### Passing Structures By Value
 
