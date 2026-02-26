@@ -894,61 +894,66 @@ endif()
 enable_testing()
 
 if(WITH_JNA)
+  if(WIN32)
+    set(CLASSPATH "jna/turbojpeg-jna.jar\\;${WITH_JNA}")
+  else()
+    set(CLASSPATH "jna/turbojpeg-jna.jar:${WITH_JNA}")
+  endif()
   add_test(NAME TJUnitTest
     COMMAND ${Java_JAVA_EXECUTABLE} ${JAVAARGS}
       -Djna.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
-      -cp jna/turbojpeg-jna.jar:${WITH_JNA} TJUnitTest)
+      -cp ${CLASSPATH} TJUnitTest)
   add_test(NAME TJUnitTest-alloc
     COMMAND ${Java_JAVA_EXECUTABLE} ${JAVAARGS}
       -Djna.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
-      -cp jna/turbojpeg-jna.jar:${WITH_JNA} TJUnitTest -alloc)
+      -cp ${CLASSPATH} TJUnitTest -alloc)
   add_test(NAME TJUnitTest-yuv
     COMMAND ${Java_JAVA_EXECUTABLE} ${JAVAARGS}
       -Djna.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
-      -cp jna/turbojpeg-jna.jar:${WITH_JNA} TJUnitTest -yuv)
+      -cp ${CLASSPATH} TJUnitTest -yuv)
   add_test(NAME TJUnitTest-yuv-alloc
     COMMAND ${Java_JAVA_EXECUTABLE} ${JAVAARGS}
       -Djna.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
-      -cp jna/turbojpeg-jna.jar:${WITH_JNA} TJUnitTest -yuv -alloc)
+      -cp ${CLASSPATH} TJUnitTest -yuv -alloc)
   add_test(NAME TJUnitTest-yuv-nopad
     COMMAND ${Java_JAVA_EXECUTABLE} ${JAVAARGS}
       -Djna.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
-      -cp jna/turbojpeg-jna.jar:${WITH_JNA} TJUnitTest -yuv -noyuvpad)
+      -cp ${CLASSPATH} TJUnitTest -yuv -noyuvpad)
   add_test(NAME TJUnitTest-lossless
     COMMAND ${Java_JAVA_EXECUTABLE} ${JAVAARGS}
       -Djna.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
-      -cp jna/turbojpeg-jna.jar:${WITH_JNA} TJUnitTest -lossless)
+      -cp ${CLASSPATH} TJUnitTest -lossless)
   add_test(NAME TJUnitTest-lossless-alloc
     COMMAND ${Java_JAVA_EXECUTABLE} ${JAVAARGS}
       -Djna.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
-      -cp jna/turbojpeg-jna.jar:${WITH_JNA} TJUnitTest -lossless -alloc)
+      -cp ${CLASSPATH} TJUnitTest -lossless -alloc)
   add_test(NAME TJUnitTest-bmp
     COMMAND ${Java_JAVA_EXECUTABLE} ${JAVAARGS}
       -Djna.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
-      -cp jna/turbojpeg-jna.jar:${WITH_JNA} TJUnitTest -bmp)
+      -cp ${CLASSPATH} TJUnitTest -bmp)
   add_test(NAME TJUnitTest12
     COMMAND ${Java_JAVA_EXECUTABLE} ${JAVAARGS}
       -Djna.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
-      -cp jna/turbojpeg-jna.jar:${WITH_JNA} TJUnitTest -precision 12)
+      -cp ${CLASSPATH} TJUnitTest -precision 12)
   add_test(NAME TJUnitTest12-alloc
     COMMAND ${Java_JAVA_EXECUTABLE} ${JAVAARGS}
       -Djna.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
-      -cp jna/turbojpeg-jna.jar:${WITH_JNA} TJUnitTest -precision 12 -alloc)
+      -cp ${CLASSPATH} TJUnitTest -precision 12 -alloc)
   foreach(sample_bits 2 3 4 5 6 7 9 10 11 12 13 14 15 16)
     add_test(NAME TJUnitTest${sample_bits}-lossless
       COMMAND ${Java_JAVA_EXECUTABLE} ${JAVAARGS}
         -Djna.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
-        -cp jna/turbojpeg-jna.jar:${WITH_JNA}
+        -cp ${CLASSPATH}
         TJUnitTest -precision ${sample_bits} -lossless)
     add_test(NAME TJUnitTest${sample_bits}-lossless-alloc
       COMMAND ${Java_JAVA_EXECUTABLE} ${JAVAARGS}
         -Djna.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
-        -cp jna/turbojpeg-jna.jar:${WITH_JNA}
+        -cp ${CLASSPATH}
         TJUnitTest -precision ${sample_bits} -lossless -alloc)
     add_test(NAME TJUnitTest${sample_bits}-bmp
       COMMAND ${Java_JAVA_EXECUTABLE} ${JAVAARGS}
         -Djna.library.path=${CMAKE_CURRENT_BINARY_DIR}/${OBJDIR}
-        -cp jna/turbojpeg-jna.jar:${WITH_JNA}
+        -cp ${CLASSPATH}
         TJUnitTest -precision ${sample_bits} -bmp)
   endforeach()
 endif()
