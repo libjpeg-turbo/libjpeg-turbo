@@ -57,10 +57,10 @@ basis.
 6. Added RISC-V Vector (RVV) SIMD implementations of the colorspace conversion,
 chroma downsampling and upsampling, integer quantization and sample conversion,
 and integer DCT/IDCT algorithms.  When using the accurate integer DCT/IDCT
-algorithms, RGB-to-baseline JPEG compression is approximately 131-221% (avg.
-180%) faster relative to libjpeg-turbo 3.1.x, and baseline-to-RGB JPEG
-decompression is approximately 29-144% (avg. 87%) faster.  (Tested on a 1.6 GHz
-Ky X1 CPU.  Actual mileage may vary.)
+algorithms, RGB-to-baseline JPEG compression is approximately 149-246% (avg.
+201%) faster relative to libjpeg-turbo 3.1.x, and baseline-to-RGB JPEG
+decompression is approximately 48-180% (avg. 115%) faster.  (Tested on a 1.6
+GHz Ky X1 CPU.  Actual mileage may vary.)
 
 7. The TurboJPEG Java API has been moved to a
 [dedicated repository](https://github.com/libjpeg-turbo/turbojpeg-java) where
