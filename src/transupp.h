@@ -5,6 +5,7 @@
  * Copyright (C) 1997-2019, Thomas G. Lane, Guido Vollbeding.
  * libjpeg-turbo Modifications:
  * Copyright (C) 2017, 2021, D. R. Commander.
+ * Copyright (C) 2026, Ricardo M. Ferreira.
  * For conditions of distribution and use, see the accompanying README.ijg
  * file.
  *
@@ -105,7 +106,8 @@ typedef enum {
   JXFORM_ROT_180,         /* 180-degree rotation */
   JXFORM_ROT_270,         /* 270-degree clockwise (or 90 ccw) */
   JXFORM_WIPE,            /* wipe */
-  JXFORM_DROP             /* drop */
+  JXFORM_DROP,            /* drop */
+  JXFORM_ROLL             /* roll (shift with wrap-around) */
 } JXFORM_CODE;
 
 /*
