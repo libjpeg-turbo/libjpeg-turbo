@@ -5,7 +5,8 @@
  * Copyright (C) 1991-1997, Thomas G. Lane.
  * Modified 2013-2019 by Guido Vollbeding.
  * libjpeg-turbo Modifications:
- * Copyright (C) 2010-2011, 2013-2017, 2019-2020, 2022-2024, D. R. Commander.
+ * Copyright (C) 2010-2011, 2013-2017, 2019-2020, 2022-2024, 2026,
+ *           D. R. Commander.
  * Copyright (C) 2015, Google, Inc.
  * For conditions of distribution and use, see the accompanying README.ijg
  * file.
@@ -138,6 +139,7 @@ usage(void)
           (DEFAULT_FMT == FMT_TARGA ? " (default)" : ""));
 #endif
   fprintf(stderr, "Switches for advanced users:\n");
+  fprintf(stderr, "  -precision 12  Force 12-bit-per-sample output [useful for shadow recovery]\n");
 #ifdef DCT_ISLOW_SUPPORTED
   fprintf(stderr, "  -dct int       Use accurate integer DCT method%s\n",
           (JDCT_DEFAULT == JDCT_ISLOW ? " (default)" : ""));
@@ -387,6 +389,18 @@ parse_switches(j_decompress_ptr cinfo, int argc, char **argv,
     } else if (keymatch(arg, "pnm", 1) || keymatch(arg, "ppm", 1)) {
       /* PPM/PGM output format. */
       requested_fmt = FMT_PPM;
+
+    } else if (keymatch(arg, "precision", 2)) {
+      /* Set data precision. */
+      int val;
+
+      if (++argn >= argc)       /* advance to next argument */
+        usage();
+      if (sscanf(argv[argn], "%d", &val) != 1)
+        usage();
+      if (val != 12)
+        usage();
+      cinfo->data_precision = val;
 
     } else if (keymatch(arg, "report", 2)) {
       report = TRUE;

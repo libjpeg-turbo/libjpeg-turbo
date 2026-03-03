@@ -419,6 +419,27 @@ The basic command line switches for djpeg are:
 
 Switches for advanced users:
 
+        -precision 12   Decompress an 8-bit-per-sample lossy JPEG image to a
+                        12-bit-per-sample output image.  The JPEG format uses
+                        16-bit DCT coefficients and computes those coefficients
+                        relative to an 8x8 DCT block.  Thus, an
+                        8-bit-per-sample JPEG image can retain most of the
+                        signal from an underexposed higher-data-precision
+                        source image, provided that the data precision of the
+                        source image is retained in the compressor until the
+                        forward DCT stage.  (Modern digital cameras typically
+                        do that, but note that libjpeg-turbo does not.  Our
+                        solution for retaining higher data precision in the
+                        compressor is simply to generate a 12-bit-per-sample
+                        JPEG image.)
+
+                        It may be desirable to preserve as much of that signal
+                        as possible in the decompressor, to facilitate shadow
+                        recovery in the output image.  Thus, this switch forces
+                        the decompressor to use the 12-bit-per-sample
+                        decompression pipeline even if the JPEG image has 8
+                        bits of data precision.
+
         -dct int        Use accurate integer DCT method (default).
         -dct fast       Use less accurate integer DCT method [legacy feature].
                         When the Independent JPEG Group's software was first

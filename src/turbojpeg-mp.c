@@ -186,6 +186,10 @@ DLLEXPORT int GET_NAME(tj3Decompress, BITS_IN_JSAMPLE)
     jpeg_read_header(dinfo, TRUE);
   }
   setDecompParameters(this);
+#if BITS_IN_JSAMPLE == 12
+  if (this->precision == 8 && !this->lossless)
+    dinfo->data_precision = 12;
+#endif
   if (this->maxPixels &&
       (unsigned long long)this->jpegWidth * this->jpegHeight >
       (unsigned long long)this->maxPixels)

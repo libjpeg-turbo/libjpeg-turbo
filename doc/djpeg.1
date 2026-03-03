@@ -1,4 +1,4 @@
-.TH DJPEG 1 "17 June 2024"
+.TH DJPEG 1 "3 Mar 2026"
 .SH NAME
 djpeg \- decompress a JPEG file to an image file
 .SH SYNOPSIS
@@ -123,6 +123,22 @@ is specified; otherwise, 24-bit full-color format is emitted.  This format can
 only be used when decompressing 8-bit-per-sample JPEG images.
 .PP
 Switches for advanced users:
+.TP
+.B \-precision 12
+Decompress an 8-bit-per-sample lossy JPEG image to a 12-bit-per-sample output
+image.  The JPEG format uses 16-bit DCT coefficients and computes those
+coefficients relative to an 8x8 DCT block.  Thus, an 8-bit-per-sample JPEG
+image can retain most of the signal from an underexposed higher-data-precision
+source image, provided that the data precision of the source image is retained
+in the compressor until the forward DCT stage.  (Modern digital cameras
+typically do that, but note that libjpeg-turbo does not.  Our solution for
+retaining higher data precision in the compressor is simply to generate a
+12-bit-per-sample JPEG image.)
+
+It may be desirable to preserve as much of that signal as possible in the
+decompressor, to facilitate shadow recovery in the output image.  Thus, this
+switch forces the decompressor to use the 12-bit-per-sample decompression
+pipeline even if the JPEG image has 8 bits of data precision.
 .TP
 .B \-dct int
 Use accurate integer DCT method (default).

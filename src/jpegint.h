@@ -293,6 +293,11 @@ struct jpeg_decomp_master {
   double upsample_elapsed, upsample_msamples;
   double cconvert_elapsed, cconvert_mpixels;
 #endif
+
+  /* The data precision of the JPEG image.  For lossy images, this can be
+   * different from the output data precision.
+   */
+  int jpeg_data_precision;
 };
 
 /* Input control module */

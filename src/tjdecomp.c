@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2012, 2014-2015, 2017, 2019, 2021-2025 D. R. Commander
+ * Copyright (C) 2011-2012, 2014-2015, 2017, 2019, 2021-2026 D. R. Commander
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -130,6 +130,9 @@ static void usage(char *programName)
   printf("    Refuse to decompress progressive JPEG images that have more than N scans\n");
   printf("-nosmooth\n");
   printf("    Use the fastest chrominance upsampling algorithm available\n");
+  printf("-precision 12\n");
+  printf("    Decompress an 8-bit-per-sample JPEG image into a 12-bit-per-sample output\n");
+  printf("    image [useful for shadow recovery]\n");
   printf("-rgb\n");
   printf("    Decompress a grayscale JPEG image into a full-color output image\n");
   printf("-scale M/N\n");
@@ -156,9 +159,9 @@ static void usage(char *programName)
 int main(int argc, char **argv)
 {
   int i, retval = 0;
-  int colorspace, fastDCT = -1, fastUpsample = -1, maxMemory = -1,
-    maxScans = -1, pixelFormat = TJPF_UNKNOWN, precision, stopOnWarning = -1,
-    subsamp;
+  int colorspace, fastDCT = -1, fastUpsample = -1, jpegPrecision, lossless,
+    maxMemory = -1, maxScans = -1, pixelFormat = TJPF_UNKNOWN, precision = -1,
+    stopOnWarning = -1, subsamp;
   tjregion croppingRegion = TJUNCROPPED;
   tjscalingfactor scalingFactor = TJUNSCALED;
   char *iccFilename = NULL;
@@ -207,7 +210,13 @@ int main(int argc, char **argv)
       maxMemory = tempi;
     } else if (MATCH_ARG(argv[i], "-nosmooth", 2))
       fastUpsample = 1;
-    else if (MATCH_ARG(argv[i], "-rgb", 2))
+    else if (MATCH_ARG(argv[i], "-precision", 4) && i < argc - 1) {
+      int tempi = atoi(argv[++i]);
+
+      if (tempi != 12)
+        usage(argv[0]);
+      precision = tempi;
+    } else if (MATCH_ARG(argv[i], "-rgb", 2))
       pixelFormat = TJPF_RGB;
     else if (MATCH_ARG(argv[i], "-strict", 3))
       stopOnWarning = 1;
@@ -269,9 +278,12 @@ int main(int argc, char **argv)
   subsamp = tj3Get(tjInstance, TJPARAM_SUBSAMP);
   width = tj3Get(tjInstance, TJPARAM_JPEGWIDTH);
   height = tj3Get(tjInstance, TJPARAM_JPEGHEIGHT);
-  precision = tj3Get(tjInstance, TJPARAM_PRECISION);
-  sampleSize = (precision <= 8 ? sizeof(unsigned char) : sizeof(short));
+  jpegPrecision = tj3Get(tjInstance, TJPARAM_PRECISION);
   colorspace = tj3Get(tjInstance, TJPARAM_COLORSPACE);
+  lossless = tj3Get(tjInstance, TJPARAM_LOSSLESS);
+  if (precision == -1 || lossless || jpegPrecision != 8)
+    precision = jpegPrecision;
+  sampleSize = (precision <= 8 ? sizeof(unsigned char) : sizeof(short));
 
   if (iccFilename) {
     if (tj3GetICCProfile(tjInstance, &iccBuf, &iccSize) < 0) {
@@ -295,7 +307,7 @@ int main(int argc, char **argv)
       pixelFormat = TJPF_RGB;
   }
 
-  if (!tj3Get(tjInstance, TJPARAM_LOSSLESS)) {
+  if (!lossless) {
     if (tj3SetScalingFactor(tjInstance, scalingFactor) < 0)
       THROW_TJ("setting scaling factor");
     width = TJSCALED(width, scalingFactor);

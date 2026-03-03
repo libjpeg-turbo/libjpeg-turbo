@@ -122,6 +122,9 @@ final class TJDecomp {
     System.out.println("    Refuse to decompress progressive JPEG images that have more than N scans");
     System.out.println("-nosmooth");
     System.out.println("    Use the fastest chrominance upsampling algorithm available");
+    System.out.println("-precision 12");
+    System.out.println("    Decompress an 8-bit-per-sample JPEG image into a 12-bit-per-sample output");
+    System.out.println("    image [useful for shadow recovery]");
     System.out.println("-rgb");
     System.out.println("    Decompress a grayscale JPEG image into a full-color output image");
     System.out.println("-scale M/N");
@@ -163,9 +166,10 @@ final class TJDecomp {
     try {
 
       int i;
-      int colorspace, fastDCT = -1, fastUpsample = -1, maxMemory = -1,
-        maxScans = -1, pixelFormat = TJ.PF_UNKNOWN, precision,
-        stopOnWarning = -1, subsamp;
+      int colorspace, fastDCT = -1, fastUpsample = -1, jpegPrecision,
+        maxMemory = -1, maxScans = -1, pixelFormat = TJ.PF_UNKNOWN,
+        precision = -1, stopOnWarning = -1, subsamp;
+      boolean lossless;
       TJ.Region croppingRegion = TJ.UNCROPPED;
       TJ.ScalingFactor scalingFactor = TJ.UNSCALED;
       String iccFilename = null;
@@ -227,7 +231,16 @@ final class TJDecomp {
           maxMemory = temp;
         } else if (matchArg(argv[i], "-nosmooth", 2))
           fastUpsample = 1;
-        else if (matchArg(argv[i], "-rgb", 2))
+        else if (matchArg(argv[i], "-precision", 4) && i < argv.length - 1) {
+          int temp = 0;
+
+          try {
+            temp = Integer.parseInt(argv[++i]);
+          } catch (NumberFormatException e) {}
+          if (temp != 12)
+            usage();
+          precision = temp;
+        } else if (matchArg(argv[i], "-rgb", 2))
           pixelFormat = TJ.PF_RGB;
         else if (matchArg(argv[i], "-strict", 3))
           stopOnWarning = 1;
@@ -288,9 +301,12 @@ final class TJDecomp {
         subsamp = TJ.get(tjInstance, TJ.PARAM_SUBSAMP);
         width = TJ.get(tjInstance, TJ.PARAM_JPEGWIDTH);
         height = TJ.get(tjInstance, TJ.PARAM_JPEGHEIGHT);
-        precision = TJ.get(tjInstance, TJ.PARAM_PRECISION);
-        sampleSize = (precision <= 8 ? 1 : 2);
+        jpegPrecision = TJ.get(tjInstance, TJ.PARAM_PRECISION);
         colorspace = TJ.get(tjInstance, TJ.PARAM_COLORSPACE);
+        lossless = TJ.get(tjInstance, TJ.PARAM_LOSSLESS) == 1;
+        if (precision == -1 || lossless || jpegPrecision != 8)
+          precision = jpegPrecision;
+        sampleSize = (precision <= 8 ? 1 : 2);
 
         if (iccFilename != null) {
           NativeLongByReference iccSize = new NativeLongByReference();
@@ -323,7 +339,7 @@ final class TJDecomp {
             pixelFormat = TJ.PF_RGB;
         }
 
-        if (TJ.get(tjInstance, TJ.PARAM_LOSSLESS) == 0) {
+        if (!lossless) {
           TJ.setScalingFactor(tjInstance, scalingFactor);
           width = TJ.scaled(width, scalingFactor);
           height = TJ.scaled(height, scalingFactor);

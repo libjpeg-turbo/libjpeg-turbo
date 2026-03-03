@@ -99,6 +99,13 @@ TurboJPEG/JNA generally performs as well as the TurboJPEG C API, whereas
 compressing JPEG images with the TurboJPEG Java API was slower on some
 platforms.
 
+8. To facilitate shadow recovery in underexposed images, the libjpeg and
+TurboJPEG APIs and associated programs now allow an 8-bit-per-sample lossy JPEG
+image to be decompressed to a 12-bit-per-sample output image.  This is enabled
+in the libjpeg API by setting `cinfo->data_precision = 12` after calling
+`jpeg_read_header()`, and in the TurboJPEG API by calling `tj3Decompress12()`
+after calling `tj3DecompressHeader()`.
+
 
 3.1.4
 =====
