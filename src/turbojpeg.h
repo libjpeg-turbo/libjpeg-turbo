@@ -2045,6 +2045,24 @@ DLLEXPORT int tj3Decompress8(tjhandle handle, const unsigned char *jpegBuf,
  * Decompress a JPEG image with 9 to 12 bits of data precision per sample into
  * a packed-pixel RGB, grayscale, or CMYK image with the same data precision.
  *
+ * @note This function can also be used to decompress an 8-bit-per-sample lossy
+ * JPEG image into a 12-bit-per-sample packed-pixel image.
+ *
+ * @note The JPEG format uses 16-bit DCT coefficients and computes those
+ * coefficients relative to an 8x8 DCT block.  Thus, an 8-bit-per-sample JPEG
+ * image can preserve most of the signal from an underexposed
+ * higher-data-precision source image, provided that the data precision of the
+ * source image is retained in the compressor until the forward DCT stage.
+ * (Modern digital cameras typically do that, but note that libjpeg-turbo does
+ * not.  Our solution for retaining higher data precision in the compressor is
+ * simply to generate a 12-bit-per-sample JPEG image.)
+ *
+ * @note It may be desirable to preserve as much of that signal as possible in
+ * the decompressor, to facilitate shadow recovery in the decompressed image.
+ * Thus, calling this function forces the decompressor to use the
+ * 12-bit-per-sample decompression pipeline even if the JPEG image has 8 bits
+ * of data precision.
+ *
  * \details \copydetails tj3Decompress8()
  */
 DLLEXPORT int tj3Decompress12(tjhandle handle, const unsigned char *jpegBuf,
