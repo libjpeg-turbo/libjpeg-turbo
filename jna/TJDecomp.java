@@ -96,6 +96,9 @@ final class TJDecomp {
     System.out.println("-icc FILE");
     System.out.println("    Extract the ICC (International Color Consortium) color profile from the");
     System.out.println("    JPEG image to the specified file");
+    System.out.println("-noicc");
+    System.out.println("    Do not transfer the embedded ICC profile (if any) from the JPEG image to a");
+    System.out.println("    PNG output image");
     System.out.println("-strict");
     System.out.println("    Treat all warnings as fatal; abort immediately if incomplete or corrupt");
     System.out.println("    data is encountered in the JPEG image, rather than trying to salvage the");
@@ -169,7 +172,7 @@ final class TJDecomp {
       int colorspace, fastDCT = -1, fastUpsample = -1, jpegPrecision,
         maxMemory = -1, maxScans = -1, pixelFormat = TJ.PF_UNKNOWN,
         precision = -1, stopOnWarning = -1, subsamp;
-      boolean lossless;
+      boolean lossless, noICC = false;
       TJ.Region croppingRegion = TJ.UNCROPPED;
       TJ.ScalingFactor scalingFactor = TJ.UNSCALED;
       String iccFilename = null;
@@ -229,7 +232,9 @@ final class TJDecomp {
           if (temp < 0)
             usage();
           maxMemory = temp;
-        } else if (matchArg(argv[i], "-nosmooth", 2))
+        } else if (matchArg(argv[i], "-noicc", 4))
+          noICC = true;
+        else if (matchArg(argv[i], "-nosmooth", 2))
           fastUpsample = 1;
         else if (matchArg(argv[i], "-precision", 4) && i < argv.length - 1) {
           int temp = 0;
@@ -307,6 +312,8 @@ final class TJDecomp {
         if (precision == -1 || lossless || jpegPrecision != 8)
           precision = jpegPrecision;
         sampleSize = (precision <= 8 ? 1 : 2);
+        if (noICC)
+          TJ.set(tjInstance, TJ.PARAM_SAVEMARKERS, 0);
 
         if (iccFilename != null) {
           NativeLongByReference iccSize = new NativeLongByReference();

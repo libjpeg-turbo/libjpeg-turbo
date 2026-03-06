@@ -40,6 +40,10 @@ if(WITH_SIMD AND (MSVC_IDE OR XCODE))
   set_source_files_properties(${SIMD_OBJS} PROPERTIES GENERATED 1)
 endif()
 
+if(WITH_TURBOJPEG OR WITH_TOOLS)
+  add_subdirectory(spng)
+endif()
+
 if(WIN32)
   set(DEFFILE ../win/jpeg${SO_MAJOR_VERSION}.def)
 endif()
@@ -85,25 +89,35 @@ if(WITH_TOOLS)
     set(USE_SETMODE "-DUSE_SETMODE")
   endif()
   set(CDJPEG_COMPILE_FLAGS
-    "-DBMP_SUPPORTED -DGIF_SUPPORTED -DPPM_SUPPORTED -DTARGA_SUPPORTED ${USE_SETMODE}")
+    "-DBMP_SUPPORTED -DGIF_SUPPORTED -DPNG_SUPPORTED -DSPNG_STATIC -DPPM_SUPPORTED -DTARGA_SUPPORTED ${USE_SETMODE}")
 
   add_executable(cjpeg ../src/cjpeg.c ../src/cdjpeg.c ../src/rdbmp.c
     ../src/rdgif.c
+    ../src/wrapper/rdpng-8.c ../src/wrapper/rdpng-12.c
+    ../src/wrapper/rdpng-16.c $<TARGET_OBJECTS:spng>
     ../src/wrapper/rdppm-8.c ../src/wrapper/rdppm-12.c
     ../src/wrapper/rdppm-16.c
     ../src/rdswitch.c ../src/rdtarga.c)
   set_property(TARGET cjpeg PROPERTY COMPILE_FLAGS ${CDJPEG_COMPILE_FLAGS})
   target_link_libraries(cjpeg jpeg)
+  if(UNIX)
+    target_link_libraries(cjpeg m)
+  endif()
 
   add_executable(djpeg ../src/djpeg.c ../src/cdjpeg.c
     ../src/wrapper/rdcolmap-8.c ../src/wrapper/rdcolmap-12.c
     ../src/rdswitch.c ../src/wrbmp.c
     ../src/wrapper/wrgif-8.c ../src/wrapper/wrgif-12.c
+    ../src/wrapper/wrpng-8.c ../src/wrapper/wrpng-12.c
+    ../src/wrapper/wrpng-16.c $<TARGET_OBJECTS:spng>
     ../src/wrapper/wrppm-8.c ../src/wrapper/wrppm-12.c
     ../src/wrapper/wrppm-16.c
     ../src/wrtarga.c)
   set_property(TARGET djpeg PROPERTY COMPILE_FLAGS ${CDJPEG_COMPILE_FLAGS})
   target_link_libraries(djpeg jpeg)
+  if(UNIX)
+    target_link_libraries(djpeg m)
+  endif()
 
   add_executable(jpegtran ../src/jpegtran.c ../src/cdjpeg.c ../src/rdswitch.c
     ../src/transupp.c)

@@ -4,7 +4,7 @@
  * This file was part of the Independent JPEG Group's software:
  * Copyright (C) 1991-1996, Thomas G. Lane.
  * libjpeg-turbo Modifications:
- * Copyright (C) 2017, 2019, 2022, D. R. Commander.
+ * Copyright (C) 2017, 2019, 2022, 2026, D. R. Commander.
  * For conditions of distribution and use, see the accompanying README.ijg
  * file.
  *
@@ -194,6 +194,13 @@ start_output_tga(j_decompress_ptr cinfo, djpeg_dest_ptr dinfo)
 }
 
 
+METHODDEF(void)
+write_icc_profile_tga(j_decompress_ptr cinfo, djpeg_dest_ptr dinfo,
+                      const JOCTET *icc_data_ptr, unsigned int icc_data_len)
+{
+}
+
+
 /*
  * Finish up at the end of the file.
  */
@@ -238,6 +245,7 @@ jinit_write_targa(j_decompress_ptr cinfo)
     (*cinfo->mem->alloc_small) ((j_common_ptr)cinfo, JPOOL_IMAGE,
                                 sizeof(tga_dest_struct));
   dest->pub.start_output = start_output_tga;
+  dest->pub.write_icc_profile = write_icc_profile_tga;
   dest->pub.finish_output = finish_output_tga;
   dest->pub.calc_buffer_dimensions = calc_buffer_dimensions_tga;
 

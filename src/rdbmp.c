@@ -625,7 +625,7 @@ start_input_bmp(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
   }
 
   /* Ensure that biWidth * cinfo->input_components doesn't exceed the maximum
-     value of the JDIMENSION type.  This is only a danger with BMP files, since
+     value of the JDIMENSION type.  This is a danger with BMP files, since
      their width and height fields are 32-bit integers. */
   if ((unsigned long long)biWidth *
       (unsigned long long)cinfo->input_components > 0xFFFFFFFFULL)
@@ -639,6 +639,14 @@ start_input_bmp(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
   cinfo->data_precision = 8;
   cinfo->image_width = (JDIMENSION)biWidth;
   cinfo->image_height = (JDIMENSION)biHeight;
+}
+
+
+METHODDEF(boolean)
+read_icc_profile_bmp(j_compress_ptr cinfo, cjpeg_source_ptr sinfo,
+                     JOCTET **icc_data_ptr, unsigned int *icc_data_len)
+{
+  return FALSE;
 }
 
 
@@ -672,6 +680,7 @@ jinit_read_bmp(j_compress_ptr cinfo, boolean use_inversion_array)
   source->cinfo = cinfo;        /* make back link for subroutines */
   /* Fill in method ptrs, except get_pixel_rows which start_input sets */
   source->pub.start_input = start_input_bmp;
+  source->pub.read_icc_profile = read_icc_profile_bmp;
   source->pub.finish_input = finish_input_bmp;
   source->pub.max_pixels = 0;
 

@@ -268,6 +268,13 @@ start_output_ppm(j_decompress_ptr cinfo, djpeg_dest_ptr dinfo)
 }
 
 
+METHODDEF(void)
+write_icc_profile_ppm(j_decompress_ptr cinfo, djpeg_dest_ptr dinfo,
+                      const JOCTET *icc_data_ptr, unsigned int icc_data_len)
+{
+}
+
+
 /*
  * Finish up at the end of the file.
  */
@@ -321,6 +328,7 @@ _jinit_write_ppm(j_decompress_ptr cinfo)
       (*cinfo->mem->alloc_small) ((j_common_ptr)cinfo, JPOOL_IMAGE,
                                   sizeof(ppm_dest_struct));
   dest->pub.start_output = start_output_ppm;
+  dest->pub.write_icc_profile = write_icc_profile_ppm;
   dest->pub.finish_output = finish_output_ppm;
   dest->pub.calc_buffer_dimensions = calc_buffer_dimensions_ppm;
 

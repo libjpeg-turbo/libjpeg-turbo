@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2012, 2014-2015, 2017, 2019, 2021-2025 D. R. Commander
+ * Copyright (C) 2011-2012, 2014-2015, 2017, 2019, 2021-2026 D. R. Commander
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -106,6 +106,8 @@ static void usage(char *programName)
   printf("    Memory limit (in megabytes) for intermediate buffers used with progressive\n");
   printf("    JPEG compression, lossless JPEG compression, and Huffman table optimization\n");
   printf("    [default = no limit]\n");
+  printf("-noicc\n");
+  printf("    Do not transfer the embedded ICC profile (if any) from a PNG input image\n");
   printf("-precision N\n");
   printf("    Create a JPEG image with N-bit data precision [N = 2..16; default = 8; if N\n");
   printf("    is not 8 or 12, then -lossless must also be specified] (-precision 12\n");
@@ -149,10 +151,10 @@ int main(int argc, char **argv)
 {
   int i, retval = 0;
   int arithmetic = -1, colorspace = -1, fastDCT = -1, losslessPSV = -1,
-    losslessPt = -1, maxMemory = -1, optimize = -1, pixelFormat = TJPF_UNKNOWN,
-    precision = 8, progressive = -1, quality = DEFAULT_QUALITY,
-    restartIntervalBlocks = -1, restartIntervalRows = -1,
-    subsamp = DEFAULT_SUBSAMP;
+    losslessPt = -1, maxMemory = -1, noICC = 0, optimize = -1,
+    pixelFormat = TJPF_UNKNOWN, precision = 8, progressive = -1,
+    quality = DEFAULT_QUALITY, restartIntervalBlocks = -1,
+    restartIntervalRows = -1, subsamp = DEFAULT_SUBSAMP;
   char *iccFilename = NULL;
   tjhandle tjInstance = NULL;
   void *srcBuf = NULL;
@@ -185,8 +187,10 @@ int main(int argc, char **argv)
 
       if (tempi < 0) usage(argv[0]);
       maxMemory = tempi;
-    } else if (MATCH_ARG(argv[i], "-optimize", 2) ||
-               MATCH_ARG(argv[i], "-optimise", 2))
+    } else if (MATCH_ARG(argv[i], "-noicc", 4))
+      noICC = 1;
+    else if (MATCH_ARG(argv[i], "-optimize", 2) ||
+             MATCH_ARG(argv[i], "-optimise", 2))
       optimize = 1;
     else if (MATCH_ARG(argv[i], "-precision", 4) && i < argc - 1) {
       int tempi = atoi(argv[++i]);
@@ -276,6 +280,8 @@ int main(int argc, char **argv)
     THROW_TJ("setting TJPARAM_RESTARTROWS");
   if (maxMemory >= 0 && tj3Set(tjInstance, TJPARAM_MAXMEMORY, maxMemory) < 0)
     THROW_TJ("setting TJPARAM_MAXMEMORY");
+  if (noICC && tj3Set(tjInstance, TJPARAM_SAVEMARKERS, 0) < 0)
+    THROW_TJ("setting TJPARAM_SAVEMARKERS");
 
   if (precision <= 8) {
     if ((srcBuf = tj3LoadImage8(tjInstance, argv[i], &width, 1, &height,

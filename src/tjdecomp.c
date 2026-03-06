@@ -104,6 +104,9 @@ static void usage(char *programName)
   printf("-icc FILE\n");
   printf("    Extract the ICC (International Color Consortium) color profile from the\n");
   printf("    JPEG image to the specified file\n");
+  printf("-noicc\n");
+  printf("    Do not transfer the embedded ICC profile (if any) from the JPEG image to a\n");
+  printf("    PNG output image\n");
   printf("-strict\n");
   printf("    Treat all warnings as fatal; abort immediately if incomplete or corrupt\n");
   printf("    data is encountered in the JPEG image, rather than trying to salvage the\n");
@@ -160,8 +163,8 @@ int main(int argc, char **argv)
 {
   int i, retval = 0;
   int colorspace, fastDCT = -1, fastUpsample = -1, jpegPrecision, lossless,
-    maxMemory = -1, maxScans = -1, pixelFormat = TJPF_UNKNOWN, precision = -1,
-    stopOnWarning = -1, subsamp;
+    maxMemory = -1, maxScans = -1, noICC = 0, pixelFormat = TJPF_UNKNOWN,
+    precision = -1, stopOnWarning = -1, subsamp;
   tjregion croppingRegion = TJUNCROPPED;
   tjscalingfactor scalingFactor = TJUNSCALED;
   char *iccFilename = NULL;
@@ -208,7 +211,9 @@ int main(int argc, char **argv)
 
       if (tempi < 0) usage(argv[0]);
       maxMemory = tempi;
-    } else if (MATCH_ARG(argv[i], "-nosmooth", 2))
+    } else if (MATCH_ARG(argv[i], "-noicc", 4))
+      noICC = 1;
+    else if (MATCH_ARG(argv[i], "-nosmooth", 2))
       fastUpsample = 1;
     else if (MATCH_ARG(argv[i], "-precision", 4) && i < argc - 1) {
       int tempi = atoi(argv[++i]);
@@ -258,6 +263,8 @@ int main(int argc, char **argv)
     THROW_TJ("setting TJPARAM_SCANLIMIT");
   if (maxMemory >= 0 && tj3Set(tjInstance, TJPARAM_MAXMEMORY, maxMemory) < 0)
     THROW_TJ("setting TJPARAM_MAXMEMORY");
+  if (noICC && tj3Set(tjInstance, TJPARAM_SAVEMARKERS, 0) < 0)
+    THROW_TJ("setting TJPARAM_SAVEMARKERS");
 
   if ((jpegFile = fopen(argv[i++], "rb")) == NULL)
     THROW_UNIX("opening input file");

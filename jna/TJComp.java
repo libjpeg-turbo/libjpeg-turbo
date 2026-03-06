@@ -85,6 +85,8 @@ final class TJComp {
     System.out.println("    Memory limit (in megabytes) for intermediate buffers used with progressive");
     System.out.println("    JPEG compression, lossless JPEG compression, and Huffman table optimization");
     System.out.println("    [default = no limit]");
+    System.out.println("-noicc");
+    System.out.println("    Do not transfer the embedded ICC profile (if any) from a PNG input image");
     System.out.println("-precision N");
     System.out.println("    Create a JPEG image with N-bit data precision [N = 2..16; default = 8; if N");
     System.out.println("    is not 8 or 12, then -lossless must also be specified] (-precision 12");
@@ -147,6 +149,7 @@ final class TJComp {
         progressive = -1, quality = DEFAULT_QUALITY,
         restartIntervalBlocks = -1, restartIntervalRows = -1,
         subsamp = DEFAULT_SUBSAMP;
+      boolean noICC = false;
       String iccFilename = null;
       IntByReference width = new IntByReference(),
         height = new IntByReference(),
@@ -188,8 +191,10 @@ final class TJComp {
           if (temp < 0)
             usage();
           maxMemory = temp;
-        } else if (matchArg(argv[i], "-optimize", 2) ||
-                   matchArg(argv[i], "-optimise", 2))
+        } else if (matchArg(argv[i], "-noicc", 4))
+          noICC = true;
+        else if (matchArg(argv[i], "-optimize", 2) ||
+                 matchArg(argv[i], "-optimise", 2))
           optimize = 1;
         else if (matchArg(argv[i], "-precision", 4) && i < argv.length - 1) {
           int temp = 0;
@@ -277,6 +282,8 @@ final class TJComp {
           TJ.set(tjInstance, TJ.PARAM_RESTARTROWS, restartIntervalRows);
         if (maxMemory >= 0)
           TJ.set(tjInstance, TJ.PARAM_MAXMEMORY, maxMemory);
+        if (noICC)
+          TJ.set(tjInstance, TJ.PARAM_SAVEMARKERS, 0);
 
         if (precision <= 8)
           srcBuf = TJ.loadImage8(tjInstance, argv[i], width, 1, height,

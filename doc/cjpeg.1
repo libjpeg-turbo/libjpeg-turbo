@@ -1,4 +1,4 @@
-.TH CJPEG 1 "30 August 2024"
+.TH CJPEG 1 "10 March 2026"
 .SH NAME
 cjpeg \- compress an image file to a JPEG file
 .SH SYNOPSIS
@@ -15,9 +15,9 @@ cjpeg \- compress an image file to a JPEG file
 .B cjpeg
 compresses the named image file, or the standard input if no file is
 named, and produces a JPEG/JFIF file on the standard output.
-The currently supported input file formats are: PPM (PBMPLUS color
-format), PGM (PBMPLUS grayscale format), BMP, GIF [legacy feature], and Targa
-[legacy feature].
+The currently supported input file formats are: PNG (true color and grayscale),
+PPM (PBMPLUS color format), PGM (PBMPLUS grayscale format), BMP, GIF [legacy
+feature], and Targa [legacy feature].
 .SH OPTIONS
 All switch names may be abbreviated; for example,
 .B \-grayscale
@@ -263,7 +263,15 @@ behavior, whereas the integer methods should give the same results on all
 machines.
 .TP
 .BI \-icc " file"
-Embed ICC color management profile contained in the specified file.
+Embed ICC color management profile contained in the specified file.  If neither
+this option nor
+.B \-noicc
+is specified and the input file is a PNG file with an embedded ICC color
+management profile, then the profile will be transferred from the input file.
+.TP
+.BI \-noicc
+Do not transfer the embedded ICC color management profile (if any) from a PNG
+input file.
 .TP
 .BI \-restart " N"
 Emit a JPEG restart marker every N MCU rows, or every N MCUs if "B" is attached

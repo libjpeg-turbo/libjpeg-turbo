@@ -33,6 +33,8 @@
 #define _JSAMPLE  JSAMPLE
 #define _JSAMPROW  JSAMPROW
 #define _buffer  buffer
+#define _jinit_read_png  jinit_read_png
+#define _jinit_write_png  jinit_write_png
 #define _jinit_read_ppm  jinit_read_ppm
 #define _jinit_write_ppm  jinit_write_ppm
 #define _jpeg_crop_scanline  jpeg_crop_scanline
@@ -43,6 +45,8 @@
 #define _JSAMPLE  J12SAMPLE
 #define _JSAMPROW  J12SAMPROW
 #define _buffer  buffer12
+#define _jinit_read_png  j12init_read_png
+#define _jinit_write_png  j12init_write_png
 #define _jinit_read_ppm  j12init_read_ppm
 #define _jinit_write_ppm  j12init_write_ppm
 #define _jpeg_crop_scanline  jpeg12_crop_scanline
@@ -53,6 +57,8 @@
 #define _JSAMPLE  J16SAMPLE
 #define _JSAMPROW  J16SAMPROW
 #define _buffer  buffer16
+#define _jinit_read_png  j16init_read_png
+#define _jinit_write_png  j16init_write_png
 #define _jinit_read_ppm  j16init_read_ppm
 #define _jinit_write_ppm  j16init_write_ppm
 #define _jpeg_read_scanlines  jpeg16_read_scanlines
@@ -347,6 +353,17 @@ _JSAMPLE *GET_NAME(_tj3LoadImageFromFileHandle, BITS_IN_JSAMPLE)
     if ((src = jinit_read_bmp(cinfo, FALSE)) == NULL)
       THROW("Could not initialize bitmap loader");
     invert = !this->bottomUp;
+  } else if (tempc == 0x89) {
+#if BITS_IN_JSAMPLE == 8
+    if (this->precision >= 2 && this->precision <= BITS_IN_JSAMPLE)
+#else
+    if (this->precision >= BITS_IN_JSAMPLE - 3 &&
+        this->precision <= BITS_IN_JSAMPLE)
+#endif
+      cinfo->data_precision = this->precision;
+    if ((src = _jinit_read_png(cinfo)) == NULL)
+      THROW("Could not initialize PNG loader");
+    invert = this->bottomUp;
   } else if (tempc == 'P') {
 #if BITS_IN_JSAMPLE == 8
     if (this->precision >= 2 && this->precision <= BITS_IN_JSAMPLE)
@@ -373,6 +390,14 @@ _JSAMPLE *GET_NAME(_tj3LoadImageFromFileHandle, BITS_IN_JSAMPLE)
       this->yDensity = cinfo->Y_density;
       this->densityUnits = cinfo->density_unit;
     }
+  } else if (tempc == 0x89 && (this->init & COMPRESS) &&
+             (this->saveMarkers == 2 || this->saveMarkers == 4)) {
+    JOCTET *iccBuf = NULL;
+    unsigned int iccLen = 0;
+
+    if ((*src->read_icc_profile) (cinfo, src, &iccBuf, &iccLen) && iccBuf &&
+        iccLen)
+      tj3SetICCProfile(handle, (unsigned char *)iccBuf, iccLen);
   }
   (*cinfo->mem->realize_virt_arrays) ((j_common_ptr)cinfo);
 
@@ -546,6 +571,28 @@ DLLEXPORT int GET_NAME(tj3SaveImage, BITS_IN_JSAMPLE)
     dinfo->X_density = (UINT16)this->xDensity;
     dinfo->Y_density = (UINT16)this->yDensity;
     dinfo->density_unit = (UINT8)this->densityUnits;
+  } else if (ptr && !strcasecmp(ptr, ".png")) {
+#if BITS_IN_JSAMPLE == 8
+    if (this->precision >= 2 && this->precision <= BITS_IN_JSAMPLE)
+#else
+    if (this->precision >= BITS_IN_JSAMPLE - 3 &&
+        this->precision <= BITS_IN_JSAMPLE)
+#endif
+      dinfo->data_precision = this->precision;
+    if ((dst = _jinit_write_png(dinfo)) == NULL)
+      THROW("Could not initialize PNG writer");
+    invert = this->bottomUp;
+
+    if ((this->init & DECOMPRESS) && this->decompICCBuf &&
+        this->decompICCSize) {
+      unsigned char *iccBuf = (unsigned char *)malloc(this->decompICCSize);
+
+      if (!iccBuf)
+        THROW("Memory allocation failure");
+      memcpy(iccBuf, this->decompICCBuf, this->decompICCSize);
+      (*dst->write_icc_profile) (dinfo, dst, iccBuf,
+                                 (unsigned int)this->decompICCSize);
+    }
   } else {
 #if BITS_IN_JSAMPLE == 8
     if (this->precision >= 2 && this->precision <= BITS_IN_JSAMPLE)
@@ -603,6 +650,8 @@ bailout:
 #undef _JSAMPLE
 #undef _JSAMPROW
 #undef _buffer
+#undef _jinit_read_png
+#undef _jinit_write_png
 #undef _jinit_read_ppm
 #undef _jinit_write_ppm
 #undef _jpeg_crop_scanline

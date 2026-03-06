@@ -139,8 +139,8 @@ typedef struct _tjinstance {
   int maxMemory;
   int maxPixels;
   int saveMarkers;
-  unsigned char *iccBuf, *tempICCBuf;
-  size_t iccSize, tempICCSize;
+  unsigned char *iccBuf, *decompICCBuf;
+  size_t iccSize, decompICCSize;
 } tjinstance;
 
 static tjhandle _tjInitCompress(tjinstance *this);
@@ -593,7 +593,7 @@ DLLEXPORT void tj3Destroy(tjhandle handle)
   if (this->init & COMPRESS) jpeg_destroy_compress(cinfo);
   if (this->init & DECOMPRESS) jpeg_destroy_decompress(dinfo);
   free(this->iccBuf);
-  free(this->tempICCBuf);
+  free(this->decompICCBuf);
   free(this);
 }
 
@@ -790,8 +790,6 @@ DLLEXPORT int tj3Set(tjhandle handle, int param, int value)
     SET_PARAM(maxPixels, 0, -1);
     break;
   case TJPARAM_SAVEMARKERS:
-    if (!(this->init & DECOMPRESS))
-      THROW("TJPARAM_SAVEMARKERS is not applicable to compression instances.");
     SET_PARAM(saveMarkers, 0, 4);
     break;
   default:
@@ -1852,9 +1850,9 @@ DLLEXPORT int tj3DecompressHeader(tjhandle handle,
 
   if (this->saveMarkers == 2 || this->saveMarkers == 4) {
     if (jpeg_read_icc_profile(dinfo, &iccPtr, &iccLen)) {
-      free(this->tempICCBuf);
-      this->tempICCBuf = iccPtr;
-      this->tempICCSize = (size_t)iccLen;
+      free(this->decompICCBuf);
+      this->decompICCBuf = iccPtr;
+      this->decompICCSize = (size_t)iccLen;
     }
   }
 
@@ -1930,25 +1928,31 @@ DLLEXPORT int tj3GetICCProfile(tjhandle handle, unsigned char **iccBuf,
   int retval = 0;
 
   GET_TJINSTANCE(handle, -1);
-  if ((this->init & DECOMPRESS) == 0)
-    THROW("Instance has not been initialized for decompression");
 
   if (iccSize == NULL)
     THROW("Invalid argument");
 
-  if (!this->tempICCBuf || !this->tempICCSize) {
-    if (iccBuf) *iccBuf = NULL;
-    *iccSize = 0;
-    this->jerr.warning = TRUE;
-    THROW("No ICC profile data has been extracted");
-  }
-
-  *iccSize = this->tempICCSize;
+  if (this->init & DECOMPRESS) {
+    if (!this->decompICCBuf || !this->decompICCSize) {
+      if (iccBuf) *iccBuf = NULL;
+      *iccSize = 0;
+      this->jerr.warning = TRUE;
+      THROW("No ICC profile data has been extracted");
+    }
+    *iccSize = this->decompICCSize;
+  } else
+    *iccSize = this->iccSize;
   if (iccBuf == NULL)
     return 0;
-  *iccBuf = this->tempICCBuf;
-  this->tempICCBuf = NULL;
-  this->tempICCSize = 0;
+  if (*iccSize) {
+    if ((*iccBuf = (unsigned char *)malloc(*iccSize)) == NULL)
+      THROW("Memory allocation failure");
+    if (this->init & DECOMPRESS)
+      memcpy(*iccBuf, this->decompICCBuf, *iccSize);
+    else
+      memcpy(*iccBuf, this->iccBuf, *iccSize);
+  } else
+    *iccBuf = NULL;
 
 bailout:
   return retval;
@@ -2857,7 +2861,7 @@ DLLEXPORT size_t tj3TransformBufSize(tjhandle handle,
   retval = tj3JPEGBufSize(dstWidth, dstHeight, dstSubsamp);
   if ((this->saveMarkers == 2 || this->saveMarkers == 4) &&
       !(transform->options & TJXOPT_COPYNONE))
-    retval += this->tempICCSize;
+    retval += this->decompICCSize;
   else
     retval += this->iccSize;
 

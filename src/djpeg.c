@@ -62,6 +62,7 @@ typedef enum {
   FMT_GIF,                      /* GIF format (LZW-compressed) */
   FMT_GIF0,                     /* GIF format (uncompressed) */
   FMT_OS2,                      /* BMP format (OS/2 flavor) */
+  FMT_PNG,                      /* PNG format */
   FMT_PPM,                      /* PPM/PGM (PBMPLUS formats) */
   FMT_TARGA,                    /* Targa format */
   FMT_TIFF                      /* TIFF format */
@@ -85,6 +86,7 @@ static IMAGE_FORMATS requested_fmt;
 
 static const char *progname;    /* program name for error messages */
 static char *icc_filename;      /* for -icc switch */
+static boolean noicc;           /* for -noicc switch */
 static JDIMENSION max_scans;    /* for -maxscans switch */
 static char *outfilename;       /* for -outfile switch */
 static boolean memsrc;          /* for -memsrc switch */
@@ -130,6 +132,10 @@ usage(void)
   fprintf(stderr, "  -os2           Select BMP output format (OS/2 style)%s [legacy feature]\n",
           (DEFAULT_FMT == FMT_OS2 ? " (default)" : ""));
 #endif
+#ifdef PNG_SUPPORTED
+  fprintf(stderr, "  -png           Select PNG output format%s\n",
+          (DEFAULT_FMT == FMT_PNG ? " (default)" : ""));
+#endif
 #ifdef PPM_SUPPORTED
   fprintf(stderr, "  -pnm           Select PBMPLUS (PPM/PGM) output format%s\n",
           (DEFAULT_FMT == FMT_PPM ? " (default)" : ""));
@@ -158,6 +164,7 @@ usage(void)
   fprintf(stderr, "  -dither ordered  Use ordered dithering when quantizing colors\n");
   fprintf(stderr, "                   [legacy feature]\n");
   fprintf(stderr, "  -icc FILE      Extract ICC profile to FILE\n");
+  fprintf(stderr, "  -noicc         Do not transfer ICC profile to PNG output file\n");
 #ifdef QUANT_2PASS_SUPPORTED
   fprintf(stderr, "  -map FILE      Quantize to colors used in named image file [legacy feature]\n");
 #endif
@@ -172,7 +179,7 @@ usage(void)
   fprintf(stderr, "  -report        Report decompression progress\n");
   fprintf(stderr, "  -skip Y0,Y1    Decompress all rows except those between Y0 and Y1 (inclusive)\n");
   fprintf(stderr, "  -crop WxH+X+Y  Decompress only a rectangular subregion of the image\n");
-  fprintf(stderr, "                 [requires PBMPLUS (PPM/PGM), GIF, or Targa output format]\n");
+  fprintf(stderr, "                 [requires PNG, PBMPLUS (PPM/PGM), Targa, or GIF output format]\n");
   fprintf(stderr, "  -strict        Treat all warnings as fatal\n");
   fprintf(stderr, "  -verbose  or  -debug   Emit debug output\n");
   fprintf(stderr, "  -version       Print version information and exit\n");
@@ -198,6 +205,7 @@ parse_switches(j_decompress_ptr cinfo, int argc, char **argv,
   /* Set up default JPEG parameters. */
   requested_fmt = DEFAULT_FMT;  /* set default output file format */
   icc_filename = NULL;
+  noicc = FALSE;
   max_scans = 0;
   outfilename = NULL;
   memsrc = FALSE;
@@ -322,6 +330,9 @@ parse_switches(j_decompress_ptr cinfo, int argc, char **argv,
       jpeg_save_markers(cinfo, JPEG_APP0 + 2, 0xFFFF);
 #endif
 
+    } else if (keymatch(arg, "noicc", 3)) {
+      noicc = TRUE;
+
     } else if (keymatch(arg, "map", 3)) {
       /* Quantize to a color map taken from an input file. */
       if (++argn >= argc)       /* advance to next argument */
@@ -389,6 +400,10 @@ parse_switches(j_decompress_ptr cinfo, int argc, char **argv,
     } else if (keymatch(arg, "pnm", 1) || keymatch(arg, "ppm", 1)) {
       /* PPM/PGM output format. */
       requested_fmt = FMT_PPM;
+
+    } else if (keymatch(arg, "png", 3)) {
+      /* PNG output format. */
+      requested_fmt = FMT_PNG;
 
     } else if (keymatch(arg, "precision", 2)) {
       /* Set data precision. */
@@ -671,6 +686,10 @@ main(int argc, char **argv)
     jpeg_stdio_src(&cinfo, input_file);
 
   /* Read file header, set default decompression parameters */
+#if defined(SAVE_MARKERS_SUPPORTED) && defined(PNG_SUPPORTED)
+  if (requested_fmt == FMT_PNG)
+    jpeg_save_markers(&cinfo, JPEG_APP0 + 2, 0xFFFF);
+#endif
   (void)jpeg_read_header(&cinfo, TRUE);
 
   /* Adjust default decompression parameters by re-parsing the options */
@@ -701,6 +720,20 @@ main(int argc, char **argv)
     dest_mgr = jinit_write_gif(&cinfo, FALSE);
     break;
 #endif
+#ifdef PNG_SUPPORTED
+  case FMT_PNG:
+    if (cinfo.data_precision <= 8)
+      dest_mgr = jinit_write_png(&cinfo);
+    else if (cinfo.data_precision <= 12)
+      dest_mgr = j12init_write_png(&cinfo);
+    else
+#ifdef D_LOSSLESS_SUPPORTED
+      dest_mgr = j16init_write_png(&cinfo);
+#else
+      ERREXIT1(&cinfo, JERR_BAD_PRECISION, cinfo.data_precision);
+#endif
+    break;
+#endif
 #ifdef PPM_SUPPORTED
   case FMT_PPM:
     if (cinfo.data_precision <= 8)
@@ -725,6 +758,14 @@ main(int argc, char **argv)
     break;
   }
   dest_mgr->output_file = output_file;
+
+  if (requested_fmt == FMT_PNG && !noicc) {
+    JOCTET *icc_profile;
+    unsigned int icc_len;
+
+    if (jpeg_read_icc_profile(&cinfo, &icc_profile, &icc_len))
+      (*dest_mgr->write_icc_profile) (&cinfo, dest_mgr, icc_profile, icc_len);
+  }
 
   /* Start decompressor */
   (void)jpeg_start_decompress(&cinfo);

@@ -60,10 +60,12 @@ SAMPOPT=(1x1 2x1 1x2 2x2 4x1 1x4 4x2)
 for precision in 8 12; do
 	if [ $precision -le 8 ]; then
 		RGBIMG=$IMGDIR/testorig.ppm
-		GRAYIMG=$IMGDIR/testorig.pgm
+		GRAYIMG=$IMGDIR/testorig.png
+		basename=testorig
 	else
-		RGBIMG=$IMGDIR/monkey16.ppm
+		RGBIMG=$IMGDIR/monkey16.png
 		GRAYIMG=$IMGDIR/monkey16.pgm
+		basename=monkey16
 	fi
 
 	for sampi in {0..6}; do
@@ -78,32 +80,26 @@ for precision in 8 12; do
 			EXTRA_ARGS="-r 1"
 		fi
 		runme $EXEDIR/cjpeg -pre $precision -sa ${SAMPOPT[$sampi]} $EXTRA_ARGS \
-			-outf $OUTDIR/`basename $RGBIMG .ppm`-${SUBSAMPOPT[$sampi]}.jpg $RGBIMG
+			-outf $OUTDIR/${basename}-${SUBSAMPOPT[$sampi]}.jpg $RGBIMG
 		if [[ $sampi = 3 || $sampi = 4 ]]; then
 			$EXEDIR/wrjpgcom -comment "This is a test" \
-				$OUTDIR/`basename $RGBIMG .ppm`-${SUBSAMPOPT[$sampi]}.jpg \
-				>$OUTDIR/temp.jpg
-			mv $OUTDIR/temp.jpg \
-				$OUTDIR/`basename $RGBIMG .ppm`-${SUBSAMPOPT[$sampi]}.jpg
+				$OUTDIR/${basename}-${SUBSAMPOPT[$sampi]}.jpg >$OUTDIR/temp.jpg
+			mv $OUTDIR/temp.jpg $OUTDIR/${basename}-${SUBSAMPOPT[$sampi]}.jpg
 		fi
 	done
 	runme $EXEDIR/cjpeg -pre $precision \
-		-outf $OUTDIR/`basename $GRAYIMG .pgm`-gray.jpg $GRAYIMG
+		-outf $OUTDIR/${basename}-gray.jpg $GRAYIMG
 	echo
 
 	for subsamp in ${SUBSAMPOPT[*]} gray; do
-		if [ "$subsamp" = "gray" ]; then
-			basename=`basename $GRAYIMG .pgm`
-		else
-			basename=`basename $RGBIMG .ppm`
-		fi
 		for ariarg in "" "-a"; do
 			for copyarg in "" "-c i" "-c n"; do
 				if [[ "$copyarg" = "-c n" && "$subsamp" != "411" && \
 					"$subsamp" != "420" ]]; then
 					continue
 				fi
-				if [[ "$copyarg" = "-c i" && "$subsamp" != "420" ]]; then
+				if [[ "$copyarg" = "-c i" && "$subsamp" != "420" && \
+					( "$subsamp" != "444" || $precision -eq 8 ) ]]; then
 					continue
 				fi
 				for croparg in "" "-cr 14x14+23+23" "-cr 21x21+4+4" "-cr 18x18+13+13" \

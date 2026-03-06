@@ -4,7 +4,7 @@ endif()
 
 foreach(FILE jcapistd.c jccolor.c jcdiffct.c jclossls.c jcmainct.c jcprepct.c
   jcsample.c jdapistd.c jdcolor.c jddiffct.c jdlossls.c jdmainct.c jdpostct.c
-  jdsample.c jutils.c rdppm.c wrppm.c)
+  jdsample.c jutils.c rdpng.c rdppm.c wrpng.c wrppm.c)
 
   foreach(BITS 8 12 16)
 

@@ -576,18 +576,18 @@ enum TJPARAM {
    *
    * The JPEG image uses (decompression) or will use (lossless compression) the
    * specified number of bits per sample.  This parameter also specifies the
-   * target data precision when loading a PBMPLUS file with #tj3LoadImage8(),
-   * #tj3LoadImage12(), or #tj3LoadImage16() and the source data precision when
-   * saving a PBMPLUS file with #tj3SaveImage8(), #tj3SaveImage12(), or
-   * #tj3SaveImage16().
+   * target data precision when loading a PNG or PBMPLUS file with
+   * #tj3LoadImage8(), #tj3LoadImage12(), or #tj3LoadImage16() and the source
+   * data precision when saving a PNG or PBMPLUS file with #tj3SaveImage8(),
+   * #tj3SaveImage12(), or #tj3SaveImage16().
    *
    * The data precision is the number of bits in the maximum sample value,
    * which may not be the same as the width of the data type used to store the
    * sample.
    *
    * **Value**
-   * - `8` or `12` for lossy JPEG images; `2` to `16` for lossless JPEG and
-   * PBMPLUS images
+   * - `8` or `12` for lossy JPEG images; `2` to `16` for lossless JPEG, PNG,
+   * and PBMPLUS images
    *
    * 12-bit JPEG data precision implies #TJPARAM_OPTIMIZE unless
    * #TJPARAM_ARITHMETIC is set.
@@ -923,7 +923,8 @@ enum TJPARAM {
    */
   TJPARAM_MAXPIXELS,
   /**
-   * Marker copying behavior [decompression, lossless transformation]
+   * Marker copying behavior [decompression, lossless transformation,
+   * packed-pixel image I/O]
    *
    * **Value [lossless transformation]**
    * - `0` Do not copy any extra markers (including comments, JFIF thumbnails,
@@ -940,11 +941,22 @@ enum TJPARAM {
    *
    * #TJXOPT_COPYNONE overrides this parameter for a particular transform.
    * This parameter overrides any ICC profile that was previously associated
-   * with the TurboJPEG instance using #tj3SetICCProfile().
+   * with the TurboJPEG instance using #tj3SetICCProfile(), #tj3LoadImage8(),
+   * #tj3LoadImage12(), or #tj3LoadImage16().
    *
-   * When decompressing, #tj3DecompressHeader() extracts the ICC profile from a
-   * JPEG image if this parameter is set to `2` or `4`.  #tj3GetICCProfile()
-   * can then be used to retrieve the profile.
+   * If this parameter is set to `2` or `4`:
+   * - When decompressing, #tj3DecompressHeader() extracts the ICC profile from
+   *   a JPEG image.  #tj3GetICCProfile() can then be used to retrieve the
+   *   profile.
+   * - When loading a PNG image using a TurboJPEG compression instance,
+   *   #tj3LoadImage8(), #tj3LoadImage12(), and #tj3LoadImage16() extract the
+   *   ICC profile from the PNG image and associate the profile with the
+   *   TurboJPEG instance.  #tj3GetICCProfile() can then be used to retrieve
+   *   the profile.
+   * - When saving a PNG image using a TurboJPEG decompression instance,
+   *   #tj3SaveImage8(), #tj3SaveImage12(), and #tj3SaveImage16() transfer the
+   *   ICC profile that was previously extracted from a JPEG image to the PNG
+   *   image.
    */
   TJPARAM_SAVEMARKERS
 };
@@ -1498,8 +1510,9 @@ DLLEXPORT int tj3SetICCProfile(tjhandle handle, unsigned char *iccBuf,
  * -# pre-allocate the buffer to a "worst case" size determined by calling
  * #tj3JPEGBufSize() and adding the return value to the size of the ICC profile
  * (if any) that was previously associated with the TurboJPEG instance (see
- * #tj3SetICCProfile().)  This should ensure that the buffer never has to be
- * re-allocated.  (Setting #TJPARAM_NOREALLOC guarantees that it won't be.)
+ * #tj3SetICCProfile() and #tj3GetICCProfile().)  This should ensure that the
+ * buffer never has to be re-allocated.  (Setting #TJPARAM_NOREALLOC guarantees
+ * that it won't be.)
  * .
  * Unless you have set #TJPARAM_NOREALLOC, you should always check `*jpegBuf`
  * upon return from this function, as it may have changed.
@@ -1558,8 +1571,9 @@ DLLEXPORT int tj3Compress8(tjhandle handle, const unsigned char *srcBuf,
  * -# pre-allocate the buffer to a "worst case" size determined by calling
  * #tj3JPEGBufSize() and adding the return value to the size of the ICC profile
  * (if any) that was previously associated with the TurboJPEG instance (see
- * #tj3SetICCProfile().)  This should ensure that the buffer never has to be
- * re-allocated.  (Setting #TJPARAM_NOREALLOC guarantees that it won't be.)
+ * #tj3SetICCProfile() and #tj3GetICCProfile().)  This should ensure that the
+ * buffer never has to be re-allocated.  (Setting #TJPARAM_NOREALLOC guarantees
+ * that it won't be.)
  * .
  * Unless you have set #TJPARAM_NOREALLOC, you should always check `*jpegBuf`
  * upon return from this function, as it may have changed.
@@ -1619,8 +1633,9 @@ DLLEXPORT int tj3Compress12(tjhandle handle, const short *srcBuf, int width,
  * -# pre-allocate the buffer to a "worst case" size determined by calling
  * #tj3JPEGBufSize() and adding the return value to the size of the ICC profile
  * (if any) that was previously associated with the TurboJPEG instance (see
- * #tj3SetICCProfile().)  This should ensure that the buffer never has to be
- * re-allocated.  (Setting #TJPARAM_NOREALLOC guarantees that it won't be.)
+ * #tj3SetICCProfile() and #tj3GetICCProfile().)  This should ensure that the
+ * buffer never has to be re-allocated.  (Setting #TJPARAM_NOREALLOC guarantees
+ * that it won't be.)
  * .
  * Unless you have set #TJPARAM_NOREALLOC, you should always check `*jpegBuf`
  * upon return from this function, as it may have changed.
@@ -1684,8 +1699,9 @@ DLLEXPORT int tj3Compress16(tjhandle handle, const unsigned short *srcBuf,
  * -# pre-allocate the buffer to a "worst case" size determined by calling
  * #tj3JPEGBufSize() and adding the return value to the size of the ICC profile
  * (if any) that was previously associated with the TurboJPEG instance (see
- * #tj3SetICCProfile().)  This should ensure that the buffer never has to be
- * re-allocated.  (Setting #TJPARAM_NOREALLOC guarantees that it won't be.)
+ * #tj3SetICCProfile() and #tj3GetICCProfile().)  This should ensure that the
+ * buffer never has to be re-allocated.  (Setting #TJPARAM_NOREALLOC guarantees
+ * that it won't be.)
  * .
  * Unless you have set #TJPARAM_NOREALLOC, you should always check `*jpegBuf`
  * upon return from this function, as it may have changed.
@@ -1746,8 +1762,9 @@ DLLEXPORT int tj3CompressFromYUVPlanes8(tjhandle handle,
  * -# pre-allocate the buffer to a "worst case" size determined by calling
  * #tj3JPEGBufSize() and adding the return value to the size of the ICC profile
  * (if any) that was previously associated with the TurboJPEG instance (see
- * #tj3SetICCProfile().)  This should ensure that the buffer never has to be
- * re-allocated.  (Setting #TJPARAM_NOREALLOC guarantees that it won't be.)
+ * #tj3SetICCProfile() and #tj3GetICCProfile().)  This should ensure that the
+ * buffer never has to be re-allocated.  (Setting #TJPARAM_NOREALLOC guarantees
+ * that it won't be.)
  * .
  * Unless you have set #TJPARAM_NOREALLOC, you should always check `*jpegBuf`
  * upon return from this function, as it may have changed.
@@ -1906,15 +1923,18 @@ DLLEXPORT int tj3DecompressHeader(tjhandle handle,
 
 /**
  * Retrieve the ICC (International Color Consortium) color management profile
- * (if any) that was previously extracted from a JPEG image.
+ * (if any) that was previously extracted from a JPEG image or associated with
+ * a TurboJPEG compression instance.
  *
  * @note To extract the ICC profile from a JPEG image, call
- * #tj3DecompressHeader() with #TJPARAM_SAVEMARKERS set to `2` or `4`.  Once
- * the ICC profile is retrieved, it must be re-extracted before it can be
- * retrieved again.
+ * #tj3DecompressHeader() with #TJPARAM_SAVEMARKERS set to `2` or `4`.
  *
- * @param handle handle to a TurboJPEG instance that has been initialized for
- * decompression
+ * @note To associate an ICC profile with a TurboJPEG compression instance,
+ * call #tj3SetICCProfile() or use #tj3LoadImage8(), #tj3LoadImage12(), or
+ * #tj3LoadImage16() to load a PNG image with #TJPARAM_SAVEMARKERS set to `2`
+ * or `4`.
+ *
+ * @param handle handle to a TurboJPEG instance
  *
  * @param iccBuf address of a pointer to a byte buffer.  Upon return:
  * - If `iccBuf` is not NULL and there is an ICC profile to retrieve, then
@@ -2279,10 +2299,10 @@ DLLEXPORT int tj3DecodeYUV8(tjhandle handle, const unsigned char *srcBuf,
  * cropping, transposition of the width and height (which affects the
  * destination image dimensions and level of chrominance subsampling),
  * grayscale conversion, and the ICC profile (if any) that was previously
- * associated with the TurboJPEG instance (see #tj3SetICCProfile()) or
- * extracted from the source image (see #tj3GetICCProfile() and
- * #TJPARAM_SAVEMARKERS.)  The JPEG header must be read (see
- * tj3DecompressHeader()) prior to calling this function.
+ * associated with the TurboJPEG instance or extracted from the source image
+ * (see #tj3SetICCProfile(), #tj3GetICCProfile(), and #TJPARAM_SAVEMARKERS.)
+ * The JPEG header must be read (see #tj3DecompressHeader()) prior to calling
+ * this function.
  *
  * @param handle handle to a TurboJPEG instance that has been initialized for
  * lossless transformation
@@ -2365,15 +2385,20 @@ DLLEXPORT int tj3Transform(tjhandle handle, const unsigned char *jpegBuf,
  * Load a packed-pixel image with 2 to 8 bits of data precision per sample from
  * disk into memory.
  *
+ * @note If loading a PNG image using a TurboJPEG compression instance, the
+ * ICC profile (if any) embedded in the PNG image is extracted and associated
+ * with the TurboJPEG instance if #TJPARAM_SAVEMARKERS is set to `2` or `4`.
+ *
  * @param handle handle to a TurboJPEG instance
  *
- * @param filename name of a file containing a packed-pixel image in Windows
- * BMP or PBMPLUS (PPM/PGM) format.  Windows BMP files require 8-bit-per-sample
- * data precision.  When loading a PBMPLUS file, the target data precision
- * (from 2 to 8 bits per sample) can be specified using #TJPARAM_PRECISION and
- * defaults to 8 if #TJPARAM_PRECISION is unset or out of range.  If the data
- * precision of the PBMPLUS file does not match the target data precision, then
- * upconverting or downconverting will be performed.
+ * @param filename name of a file containing a packed-pixel image in true color
+ * PNG, grayscale PNG, PBMPLUS (PPM/PGM), or Windows BMP format.  Windows BMP
+ * files require 8-bit-per-sample data precision.  When loading a PNG or
+ * PBMPLUS file, the target data precision (from 2 to 8 bits per sample) can be
+ * specified using #TJPARAM_PRECISION and defaults to 8 if #TJPARAM_PRECISION
+ * is unset or out of range.  If the data precision of the PNG or PBMPLUS file
+ * does not match the target data precision, then upconverting or
+ * downconverting will be performed.
  *
  * @param width pointer to an integer variable that will receive the width (in
  * pixels) of the packed-pixel image
@@ -2417,14 +2442,18 @@ DLLEXPORT unsigned char *tj3LoadImage8(tjhandle handle, const char *filename,
  * Load a packed-pixel image with 9 to 12 bits of data precision per sample
  * from disk into memory.
  *
+ * @note If loading a PNG image using a TurboJPEG compression instance, the
+ * ICC profile (if any) embedded in the PNG image is extracted and associated
+ * with the TurboJPEG instance if #TJPARAM_SAVEMARKERS is set to `2` or `4`.
+ *
  * @param handle handle to a TurboJPEG instance
  *
- * @param filename name of a file containing a packed-pixel image in PBMPLUS
- * (PPM/PGM) format.  The target data precision (from 9 to 12 bits per sample)
- * can be specified using #TJPARAM_PRECISION and defaults to 12 if
- * #TJPARAM_PRECISION is unset or out of range.  If the data precision of the
- * PBMPLUS file does not match the target data precision, then upconverting or
- * downconverting will be performed.
+ * @param filename name of a file containing a packed-pixel image in true color
+ * PNG, grayscale PNG, or PBMPLUS (PPM/PGM) format.  The target data precision
+ * (from 9 to 12 bits per sample) can be specified using #TJPARAM_PRECISION and
+ * defaults to 12 if #TJPARAM_PRECISION is unset or out of range.  If the data
+ * precision of the PNG or PBMPLUS file does not match the target data
+ * precision, then upconverting or downconverting will be performed.
  *
  * @param width pointer to an integer variable that will receive the width (in
  * pixels) of the packed-pixel image
@@ -2467,14 +2496,18 @@ DLLEXPORT short *tj3LoadImage12(tjhandle handle, const char *filename,
  * Load a packed-pixel image with 13 to 16 bits of data precision per sample
  * from disk into memory.
  *
+ * @note If loading a PNG image using a TurboJPEG compression instance, the
+ * ICC profile (if any) embedded in the PNG image is extracted and associated
+ * with the TurboJPEG instance if #TJPARAM_SAVEMARKERS is set to `2` or `4`.
+ *
  * @param handle handle to a TurboJPEG instance
  *
- * @param filename name of a file containing a packed-pixel image in PBMPLUS
- * (PPM/PGM) format.  The target data precision (from 13 to 16 bits per sample)
- * can be specified using #TJPARAM_PRECISION and defaults to 16 if
- * #TJPARAM_PRECISION is unset or out of range.  If the data precision of the
- * PBMPLUS file does not match the target data precision, then upconverting or
- * downconverting will be performed.
+ * @param filename name of a file containing a packed-pixel image in true color
+ * PNG, grayscale PNG, or PBMPLUS (PPM/PGM) format.  The target data precision
+ * (from 13 to 16 bits per sample) can be specified using #TJPARAM_PRECISION
+ * and defaults to 16 if #TJPARAM_PRECISION is unset or out of range.  If the
+ * data precision of the PNG or PBMPLUS file does not match the target data
+ * precision, then upconverting or downconverting will be performed.
  *
  * @param width pointer to an integer variable that will receive the width (in
  * pixels) of the packed-pixel image
@@ -2518,14 +2551,19 @@ DLLEXPORT unsigned short *tj3LoadImage16(tjhandle handle, const char *filename,
  * Save a packed-pixel image with 2 to 8 bits of data precision per sample from
  * memory to disk.
  *
+ * @note If saving a PNG image using a TurboJPEG decompression instance, the
+ * ICC profile (if any) that was previously extracted from a JPEG image is
+ * transferred to the PNG image if #TJPARAM_SAVEMARKERS is set to `2` or `4`.
+ *
  * @param handle handle to a TurboJPEG instance
  *
  * @param filename name of a file to which to save the packed-pixel image.  The
- * image will be stored in Windows BMP or PBMPLUS (PPM/PGM) format, depending
- * on the file extension.  Windows BMP files require 8-bit-per-sample data
- * precision.  When saving a PBMPLUS file, the source data precision (from 2 to
- * 8 bits per sample) can be specified using #TJPARAM_PRECISION and defaults to
- * 8 if #TJPARAM_PRECISION is unset or out of range.
+ * image will be stored in PNG, PBMPLUS (PPM/PGM), or Windows BMP format,
+ * depending on the file extension.  Windows BMP files require 8-bit-per-sample
+ * data precision.  When saving a PNG or PBMPLUS file, the source data
+ * precision (from 2 to 8 bits per sample) can be specified using
+ * #TJPARAM_PRECISION and defaults to 8 if #TJPARAM_PRECISION is unset or out
+ * of range.
  *
  * @param buffer pointer to a buffer containing a packed-pixel RGB, grayscale,
  * or CMYK image to be saved
@@ -2540,12 +2578,13 @@ DLLEXPORT unsigned short *tj3LoadImage16(tjhandle handle, const char *filename,
  *
  * @param pixelFormat pixel format of the packed-pixel image (see @ref TJPF
  * "Pixel formats".)  If this parameter is set to @ref TJPF_GRAY, then the
- * image will be stored in PGM or 8-bit-per-pixel (indexed color) BMP format.
- * Otherwise, the image will be stored in PPM or 24-bit-per-pixel BMP format.
- * If this parameter is set to @ref TJPF_CMYK, then the CMYK pixels will be
- * converted to RGB using a quick & dirty algorithm that is suitable only for
- * testing purposes.  (Proper conversion between CMYK and other formats
- * requires a color management system.)
+ * image will be stored in grayscale PNG, PGM, or 8-bit-per-pixel (indexed
+ * color) BMP format.  Otherwise, the image will be stored in true color PNG,
+ * PPM, or 24-bit-per-pixel BMP format.  If this parameter is set to
+ * @ref TJPF_CMYK, then the CMYK pixels will be converted to RGB using a quick
+ * & dirty algorithm that is suitable only for testing purposes.  (Proper
+ * conversion between CMYK and other formats requires a color management
+ * system.)
  *
  * @return 0 if successful, or -1 if an error occurred (see #tj3GetErrorStr().)
  */
@@ -2557,12 +2596,17 @@ DLLEXPORT int tj3SaveImage8(tjhandle handle, const char *filename,
  * Save a packed-pixel image with 9 to 12 bits of data precision per sample
  * from memory to disk.
  *
+ * @note If saving a PNG image using a TurboJPEG decompression instance, the
+ * ICC profile (if any) that was previously extracted from a JPEG image is
+ * transferred to the PNG image if #TJPARAM_SAVEMARKERS is set to `2` or `4`.
+ *
  * @param handle handle to a TurboJPEG instance
  *
  * @param filename name of a file to which to save the packed-pixel image,
- * which will be stored in PBMPLUS (PPM/PGM) format.  The source data precision
- * (from 9 to 12 bits per sample) can be specified using #TJPARAM_PRECISION and
- * defaults to 12 if #TJPARAM_PRECISION is unset or out of range.
+ * which will be stored in PNG or PBMPLUS (PPM/PGM) format.  The source data
+ * precision (from 9 to 12 bits per sample) can be specified using
+ * #TJPARAM_PRECISION and defaults to 12 if #TJPARAM_PRECISION is unset or out
+ * of range.
  *
  * @param buffer pointer to a buffer containing a packed-pixel RGB, grayscale,
  * or CMYK image to be saved
@@ -2577,11 +2621,12 @@ DLLEXPORT int tj3SaveImage8(tjhandle handle, const char *filename,
  *
  * @param pixelFormat pixel format of the packed-pixel image (see @ref TJPF
  * "Pixel formats".)  If this parameter is set to @ref TJPF_GRAY, then the
- * image will be stored in PGM format.  Otherwise, the image will be stored in
- * PPM format.  If this parameter is set to @ref TJPF_CMYK, then the CMYK
- * pixels will be converted to RGB using a quick & dirty algorithm that is
- * suitable only for testing purposes.  (Proper conversion between CMYK and
- * other formats requires a color management system.)
+ * image will be stored in PGM or grayscale PNG format.  Otherwise, the image
+ * will be stored in PPM or true color PNG format.  If this parameter is set to
+ * @ref TJPF_CMYK, then the CMYK pixels will be converted to RGB using a quick
+ * & dirty algorithm that is suitable only for testing purposes.  (Proper
+ * conversion between CMYK and other formats requires a color management
+ * system.)
  *
  * @return 0 if successful, or -1 if an error occurred (see #tj3GetErrorStr().)
  */
@@ -2593,12 +2638,17 @@ DLLEXPORT int tj3SaveImage12(tjhandle handle, const char *filename,
  * Save a packed-pixel image with 13 to 16 bits of data precision per sample
  * from memory to disk.
  *
+ * @note If saving a PNG image using a TurboJPEG decompression instance, the
+ * ICC profile (if any) that was previously extracted from a JPEG image is
+ * transferred to the PNG image if #TJPARAM_SAVEMARKERS is set to `2` or `4`.
+ *
  * @param handle handle to a TurboJPEG instance
  *
  * @param filename name of a file to which to save the packed-pixel image,
- * which will be stored in PBMPLUS (PPM/PGM) format.  The source data precision
- * (from 13 to 16 bits per sample) can be specified using #TJPARAM_PRECISION
- * and defaults to 16 if #TJPARAM_PRECISION is unset or out of range.
+ * which will be stored in PNG or PBMPLUS (PPM/PGM) format.  The source data
+ * precision (from 13 to 16 bits per sample) can be specified using
+ * #TJPARAM_PRECISION and defaults to 16 if #TJPARAM_PRECISION is unset or out
+ * of range.
  *
  * @param buffer pointer to a buffer containing a packed-pixel RGB, grayscale,
  * or CMYK image to be saved
@@ -2613,11 +2663,12 @@ DLLEXPORT int tj3SaveImage12(tjhandle handle, const char *filename,
  *
  * @param pixelFormat pixel format of the packed-pixel image (see @ref TJPF
  * "Pixel formats".)  If this parameter is set to @ref TJPF_GRAY, then the
- * image will be stored in PGM format.  Otherwise, the image will be stored in
- * PPM format.  If this parameter is set to @ref TJPF_CMYK, then the CMYK
- * pixels will be converted to RGB using a quick & dirty algorithm that is
- * suitable only for testing purposes.  (Proper conversion between CMYK and
- * other formats requires a color management system.)
+ * image will be stored in PGM or grayscale PNG format.  Otherwise, the image
+ * will be stored in PPM or true color PNG format.  If this parameter is set to
+ * @ref TJPF_CMYK, then the CMYK pixels will be converted to RGB using a quick
+ * & dirty algorithm that is suitable only for testing purposes.  (Proper
+ * conversion between CMYK and other formats requires a color management
+ * system.)
  *
  * @return 0 if successful, or -1 if an error occurred (see #tj3GetErrorStr().)
  */

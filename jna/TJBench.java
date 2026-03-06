@@ -39,12 +39,13 @@ final class TJBench {
   private TJBench() {}
 
   private static boolean stopOnWarning, bottomUp, noRealloc = true,
-    fastUpsample, fastDCT, optimize, progressive, arithmetic, lossless;
+    fastUpsample, fastDCT, optimize, progressive, arithmetic, lossless, noICC;
   private static int precision = 8, maxScans = 0, restartIntervalBlocks = 0,
     restartIntervalRows = 0, maxMemory = 0, maxPixels = 0;
   private static String ext = null;
   private static boolean compOnly, decompOnly, write = true, doTile, doYUV;
   private static int sampleSize, pf = TJ.PF_BGR, quiet = 0, yuvAlign = 1;
+  private static NativeLong iccSize;
 
   static final String[] PIXFORMATSTR = {
     "RGB", "BGR", "RGBX", "BGRX", "XBGR", "XRGB", "GRAY", "", "", "", "",
@@ -189,12 +190,12 @@ final class TJBench {
       TJ.set(handle, TJ.PARAM_SCANLIMIT, maxScans);
       TJ.set(handle, TJ.PARAM_MAXMEMORY, maxMemory);
       TJ.set(handle, TJ.PARAM_MAXPIXELS, maxPixels);
+      if (noICC)
+        TJ.set(handle, TJ.PARAM_SAVEMARKERS, 0);
 
-      if (isCropped(cr)) {
-        try {
-          TJ.decompressHeader(handle, jpegBufs[0].pointer, jpegSizes[0].value);
-        } catch (TJ.Exception e) { handleTJException(e); }
-      }
+      try {
+        TJ.decompressHeader(handle, jpegBufs[0].pointer, jpegSizes[0].value);
+      } catch (TJ.Exception e) { handleTJException(e); }
       TJ.setScalingFactor(handle, sf);
       TJ.setCroppingRegion(handle, cr);
       if (isCropped(cr)) {
@@ -389,6 +390,8 @@ final class TJBench {
             (new TJ.NativeLongReference().toArray(ntilesw * ntilesh));
           for (int i = 0; i < ntilesw * ntilesh; i++) {
             NativeLong jpegBufSize = TJ.jpegBufSize(tilew, tileh, subsamp);
+            jpegBufSize.setValue(jpegBufSize.longValue() +
+                                 iccSize.longValue());
             jpegBufs[i].pointer = TJ.alloc(jpegBufSize);
             jpegBufSizes[i].value = jpegBufSize;
           }
@@ -841,7 +844,7 @@ final class TJBench {
     String className = new TJBench().getClass().getName();
 
     System.out.println("\nUSAGE: java " + className);
-    System.out.println("       <Inputimage (BMP|PPM|PGM)> <Quality or PSV> [options]\n");
+    System.out.println("       <Inputimage (PNG|PPM||PGM|BMP)> <Quality or PSV> [options]\n");
     System.out.println("       java " + className);
     System.out.println("       <Inputimage (JPG)> [options]");
 
@@ -867,6 +870,9 @@ final class TJBench {
     System.out.println("    JPEG compression, and lossless transformation [default = no limit]");
     System.out.println("-maxpixels N");
     System.out.println("    Input image size limit (in pixels) [default = no limit]");
+    System.out.println("-noicc");
+    System.out.println("    Do not transfer the embedded ICC profile (if any) from PNG input images or");
+    System.out.println("    to PNG output images.");
     System.out.println("-nowrite");
     System.out.println("    Do not write reference or output images (improves consistency of benchmark");
     System.out.println("    results)");
@@ -876,6 +882,8 @@ final class TJBench {
     System.out.println("-pixelformat cmyk");
     System.out.println("    Indirectly test YCCK JPEG compression/decompression (use the CMYK pixel");
     System.out.println("    format for packed-pixel source/destination buffers)");
+    System.out.println("-png");
+    System.out.println("    Use PNG format for output images [default = PPM or PGM]");
     System.out.println("-precision N");
     System.out.println("    Use N-bit data precision when compressing [N = 2..16; default = 8; if N is");
     System.out.println("    not 8 or 12, then -lossless must also be specified] (-precision 12 implies");
@@ -1000,7 +1008,9 @@ final class TJBench {
       String tempStr = argv[0].toLowerCase();
       if (tempStr.endsWith(".jpg") || tempStr.endsWith(".jpeg"))
         decompOnly = true;
-      if (tempStr.endsWith(".bmp"))
+      if (tempStr.endsWith(".png"))
+        ext = new String("png");
+      else if (tempStr.endsWith(".bmp"))
         ext = new String("bmp");
 
       System.out.println("");
@@ -1137,7 +1147,9 @@ final class TJBench {
             if (temp < 0)
               usage();
             maxMemory = temp;
-          } else if (matchArg(argv[i], "-nooutput", 4))
+          } else if (matchArg(argv[i], "-noicc", 4))
+            noICC = true;
+          else if (matchArg(argv[i], "-nooutput", 4))
             xformOpt |= TJ.XOPT_NOOUTPUT;
           else if (matchArg(argv[i], "-nosmooth", 4)) {
             System.out.println("Using fastest upsampling algorithm\n");
@@ -1170,6 +1182,10 @@ final class TJBench {
               pf = TJ.PF_XRGB;
             else
               usage();
+          } else if (matchArg(argv[i], "-png", 3)) {
+            if (ext == null)
+              ext = new String("png");
+            ext = "png";
           } else if (matchArg(argv[i], "-precision", 4) &&
                      i < argv.length - 1) {
             int temp = 0;
@@ -1357,6 +1373,8 @@ final class TJBench {
         TJ.set(handle, TJ.PARAM_BOTTOMUP, bottomUp ? 1 : 0);
         TJ.set(handle, TJ.PARAM_PRECISION, precision);
         TJ.set(handle, TJ.PARAM_MAXPIXELS, maxPixels);
+        if (noICC)
+          TJ.set(handle, TJ.PARAM_SAVEMARKERS, 0);
 
         IntByReference width = new IntByReference(),
           height = new IntByReference(),
@@ -1370,6 +1388,9 @@ final class TJBench {
         else
           srcBuf = TJ.loadImage16(handle, argv[0], width, 1, height,
                                   pixelFormat);
+        NativeLongByReference iccSizeRef = new NativeLongByReference();
+        TJ.getICCProfile(handle, null, iccSizeRef);
+        iccSize = iccSizeRef.getValue();
         w = width.getValue();
         h = height.getValue();
         pf = pixelFormat.getValue();

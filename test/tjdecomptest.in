@@ -60,30 +60,39 @@ SAMPOPT=(1x1 2x1 1x2 2x2 4x1 1x4 4x2)
 for precision in 8 12; do
 	if [ $precision -le 8 ]; then
 		RGBIMG=$IMGDIR/testorig.ppm
-		GRAYIMG=$IMGDIR/testorig.pgm
+		RGBFMTARG=
+		GRAYIMG=$IMGDIR/testorig.png
+		GRAYFMTARG=-png
+		basename=testorig
 	else
-		RGBIMG=$IMGDIR/monkey16.ppm
+		RGBIMG=$IMGDIR/monkey16.png
+		RGBFMTARG=-png
 		GRAYIMG=$IMGDIR/monkey16.pgm
+		GRAYFMTARG=
+		basename=monkey16
 	fi
+	RGBEXT=${RGBIMG##*.}
+	GRAYEXT=${GRAYIMG##*.}
 
 	for sampi in {0..6}; do
 		iccarg=
 		if [ $sampi = 3 ]; then
 			iccarg="-icc $IMGDIR/test1.icc"
+		elif [ $sampi = 4 -a "$RGBEXT" = "png" ]; then
+			iccarg=-noicc
 		fi
 		runme $EXEDIR/cjpeg -pre $precision -sa ${SAMPOPT[$sampi]} $iccarg \
-			-outf $OUTDIR/`basename $RGBIMG .ppm`-${SUBSAMPOPT[$sampi]}.jpg $RGBIMG
+			-outf $OUTDIR/${basename}-${SUBSAMPOPT[$sampi]}.jpg $RGBIMG
 		if [ $precision -gt 8 ]; then
 			runme $EXEDIR/cjpeg -pre 8 -sa ${SAMPOPT[$sampi]} $iccarg \
-				-outf $OUTDIR/`basename $RGBIMG .ppm`-${SUBSAMPOPT[$sampi]}-8.jpg \
-				$RGBIMG
+				-outf $OUTDIR/${basename}-${SUBSAMPOPT[$sampi]}-8.jpg $RGBIMG
 		fi
 	done
 	runme $EXEDIR/cjpeg -pre $precision \
-		-outf $OUTDIR/`basename $GRAYIMG .pgm`-gray.jpg $GRAYIMG
+		-outf $OUTDIR/${basename}-gray.jpg $GRAYIMG
 	if [ $precision -gt 8 ]; then
 		runme $EXEDIR/cjpeg -pre 8 \
-			-outf $OUTDIR/`basename $GRAYIMG .pgm`-gray-8.jpg $GRAYIMG
+			-outf $OUTDIR/${basename}-gray-8.jpg $GRAYIMG
 	fi
 	echo
 
@@ -113,78 +122,82 @@ for precision in 8 12; do
 							continue
 						fi
 						if [ "$subsamp" = "gray" ]; then
-							basename=`basename $GRAYIMG .pgm`
-
 							runme $TJDECOMP $croparg $dctarg $nsarg $scalearg \
 								$OUTDIR/${basename}-$subsamp.jpg \
-								$OUTDIR/${basename}-tjdecomp.pgm
+								$OUTDIR/${basename}-tjdecomp.$GRAYEXT
 							runme $EXEDIR/djpeg $croparg $dctarg $nsarg $scalearg \
-								-outf $OUTDIR/${basename}-djpeg.pgm \
+								$GRAYFMTARG -outf $OUTDIR/${basename}-djpeg.$GRAYEXT \
 								$OUTDIR/${basename}-$subsamp.jpg
-							$EXEDIR/test/md5sum $OUTDIR/${basename}-tjdecomp.pgm \
-								$OUTDIR/${basename}-djpeg.pgm | sed "s@$OUTDIR@\$OUTDIR@g"
-							cmp $OUTDIR/${basename}-tjdecomp.pgm \
-								$OUTDIR/${basename}-djpeg.pgm
-							rm $OUTDIR/${basename}-tjdecomp.pgm $OUTDIR/${basename}-djpeg.pgm
+							$EXEDIR/test/md5sum $OUTDIR/${basename}-tjdecomp.$GRAYEXT \
+								$OUTDIR/${basename}-djpeg.$GRAYEXT | sed "s@$OUTDIR@\$OUTDIR@g"
+							cmp $OUTDIR/${basename}-tjdecomp.$GRAYEXT \
+								$OUTDIR/${basename}-djpeg.$GRAYEXT
+							rm $OUTDIR/${basename}-tjdecomp.$GRAYEXT \
+								$OUTDIR/${basename}-djpeg.$GRAYEXT
 							echo
 
 							runme $TJDECOMP $croparg $dctarg $nsarg $scalearg \
 								-r $OUTDIR/${basename}-$subsamp.jpg \
-								$OUTDIR/${basename}-tjdecomp.ppm
+								$OUTDIR/${basename}-tjdecomp.$RGBEXT
 							runme $EXEDIR/djpeg $croparg $dctarg $nsarg $scalearg \
-								-rg -outf $OUTDIR/${basename}-djpeg.ppm \
+								$RGBFMTARG -rg -outf $OUTDIR/${basename}-djpeg.$RGBEXT \
 								$OUTDIR/${basename}-$subsamp.jpg
-							$EXEDIR/test/md5sum $OUTDIR/${basename}-tjdecomp.ppm \
-								$OUTDIR/${basename}-djpeg.ppm | sed "s@$OUTDIR@\$OUTDIR@g"
-							cmp $OUTDIR/${basename}-tjdecomp.ppm \
-								$OUTDIR/${basename}-djpeg.ppm
-							rm $OUTDIR/${basename}-tjdecomp.ppm $OUTDIR/${basename}-djpeg.ppm
+							$EXEDIR/test/md5sum $OUTDIR/${basename}-tjdecomp.$RGBEXT \
+								$OUTDIR/${basename}-djpeg.$RGBEXT | sed "s@$OUTDIR@\$OUTDIR@g"
+							cmp $OUTDIR/${basename}-tjdecomp.$RGBEXT \
+								$OUTDIR/${basename}-djpeg.$RGBEXT
+							rm $OUTDIR/${basename}-tjdecomp.$RGBEXT \
+								$OUTDIR/${basename}-djpeg.$RGBEXT
 							echo
 
 							if [ $precision -gt 8 ]; then
 								runme $TJDECOMP $croparg $dctarg $nsarg $scalearg \
 									$OUTDIR/${basename}-$subsamp-8.jpg \
-									$OUTDIR/${basename}-tjdecomp.pgm
+									$OUTDIR/${basename}-tjdecomp.$GRAYEXT
 								runme $EXEDIR/djpeg $croparg $dctarg $nsarg $scalearg \
-									-outf $OUTDIR/${basename}-djpeg.pgm \
+									$GRAYFMTARG -outf $OUTDIR/${basename}-djpeg.$GRAYEXT \
 									$OUTDIR/${basename}-$subsamp-8.jpg
-								$EXEDIR/test/md5sum $OUTDIR/${basename}-tjdecomp.pgm \
-									$OUTDIR/${basename}-djpeg.pgm | sed "s@$OUTDIR@\$OUTDIR@g"
-								cmp $OUTDIR/${basename}-tjdecomp.pgm \
-									$OUTDIR/${basename}-djpeg.pgm
-								rm $OUTDIR/${basename}-tjdecomp.pgm \
-									$OUTDIR/${basename}-djpeg.pgm
+								$EXEDIR/test/md5sum $OUTDIR/${basename}-tjdecomp.$GRAYEXT \
+									$OUTDIR/${basename}-djpeg.$GRAYEXT | \
+									sed "s@$OUTDIR@\$OUTDIR@g"
+								cmp $OUTDIR/${basename}-tjdecomp.$GRAYEXT \
+									$OUTDIR/${basename}-djpeg.$GRAYEXT
+								rm $OUTDIR/${basename}-tjdecomp.$GRAYEXT \
+									$OUTDIR/${basename}-djpeg.$GRAYEXT
 								echo
 
 								runme $TJDECOMP $croparg $dctarg $nsarg $scalearg \
 									-r $OUTDIR/${basename}-$subsamp-8.jpg \
-									$OUTDIR/${basename}-tjdecomp.ppm
+									$OUTDIR/${basename}-tjdecomp.$RGBEXT
 								runme $EXEDIR/djpeg $croparg $dctarg $nsarg $scalearg \
-									-rg -outf $OUTDIR/${basename}-djpeg.ppm \
+									$RGBFMTARG -rg -outf $OUTDIR/${basename}-djpeg.$RGBEXT \
 									$OUTDIR/${basename}-$subsamp-8.jpg
-								$EXEDIR/test/md5sum $OUTDIR/${basename}-tjdecomp.ppm \
-									$OUTDIR/${basename}-djpeg.ppm | sed "s@$OUTDIR@\$OUTDIR@g"
-								cmp $OUTDIR/${basename}-tjdecomp.ppm \
-									$OUTDIR/${basename}-djpeg.ppm
-								rm $OUTDIR/${basename}-tjdecomp.ppm \
-									$OUTDIR/${basename}-djpeg.ppm
+								$EXEDIR/test/md5sum $OUTDIR/${basename}-tjdecomp.$RGBEXT \
+									$OUTDIR/${basename}-djpeg.$RGBEXT | \
+									sed "s@$OUTDIR@\$OUTDIR@g"
+								cmp $OUTDIR/${basename}-tjdecomp.$RGBEXT \
+									$OUTDIR/${basename}-djpeg.$RGBEXT
+								rm $OUTDIR/${basename}-tjdecomp.$RGBEXT \
+									$OUTDIR/${basename}-djpeg.$RGBEXT
 								echo
 							fi
 						else
-							basename=`basename $RGBIMG .ppm`
-
 							iccarg=
 							if [ "$subsamp" = "420" ]; then
 								iccarg="-icc $OUTDIR/${basename}-tjdecomp.icc"
+							elif [ "$subsamp" = "411" -a "$RGBEXT" = "png" ]; then
+								iccarg=-noicc
 							fi
 							runme $TJDECOMP $croparg $dctarg $nsarg $scalearg $iccarg \
 								$OUTDIR/${basename}-$subsamp.jpg \
-								$OUTDIR/${basename}-tjdecomp.ppm
+								$OUTDIR/${basename}-tjdecomp.$RGBEXT
 							if [ "$subsamp" = "420" ]; then
 								iccarg="-icc $OUTDIR/${basename}-djpeg.icc"
+							elif [ "$subsamp" = "411" -a "$RGBEXT" = "png" ]; then
+								iccarg=-noicc
 							fi
 							runme $EXEDIR/djpeg $croparg $dctarg $nsarg $scalearg $iccarg \
-								-outf $OUTDIR/${basename}-djpeg.ppm \
+								$RGBFMTARG -outf $OUTDIR/${basename}-djpeg.$RGBEXT \
 								$OUTDIR/${basename}-$subsamp.jpg
 							if [ "$subsamp" = "420" ]; then
 								$EXEDIR/test/md5sum $OUTDIR/${basename}-tjdecomp.icc \
@@ -194,26 +207,28 @@ for precision in 8 12; do
 								rm $OUTDIR/${basename}-tjdecomp.icc \
 									$OUTDIR/${basename}-djpeg.icc
 							fi
-							$EXEDIR/test/md5sum $OUTDIR/${basename}-tjdecomp.ppm \
-								$OUTDIR/${basename}-djpeg.ppm | sed "s@$OUTDIR@\$OUTDIR@g"
-							cmp $OUTDIR/${basename}-tjdecomp.ppm \
-								$OUTDIR/${basename}-djpeg.ppm
-							rm $OUTDIR/${basename}-tjdecomp.ppm $OUTDIR/${basename}-djpeg.ppm
+							$EXEDIR/test/md5sum $OUTDIR/${basename}-tjdecomp.$RGBEXT \
+								$OUTDIR/${basename}-djpeg.$RGBEXT | sed "s@$OUTDIR@\$OUTDIR@g"
+							cmp $OUTDIR/${basename}-tjdecomp.$RGBEXT \
+								$OUTDIR/${basename}-djpeg.$RGBEXT
+							rm $OUTDIR/${basename}-tjdecomp.$RGBEXT \
+								$OUTDIR/${basename}-djpeg.$RGBEXT
 							echo
 
 							if [[ "$nsarg" = "" ]]; then
 								runme $TJDECOMP $croparg $dctarg $nsarg $scalearg \
 									-g $OUTDIR/${basename}-$subsamp.jpg \
-									$OUTDIR/${basename}-tjdecomp.pgm
+									$OUTDIR/${basename}-tjdecomp.$GRAYEXT
 								runme $EXEDIR/djpeg $croparg $dctarg $nsarg $scalearg \
-									-gr -outf $OUTDIR/${basename}-djpeg.pgm \
+									$GRAYFMTARG -gr -outf $OUTDIR/${basename}-djpeg.$GRAYEXT \
 									$OUTDIR/${basename}-$subsamp.jpg
-								$EXEDIR/test/md5sum $OUTDIR/${basename}-tjdecomp.pgm \
-									$OUTDIR/${basename}-djpeg.pgm | sed "s@$OUTDIR@\$OUTDIR@g"
-								cmp $OUTDIR/${basename}-tjdecomp.pgm \
-									$OUTDIR/${basename}-djpeg.pgm
-								rm $OUTDIR/${basename}-tjdecomp.pgm \
-									$OUTDIR/${basename}-djpeg.pgm
+								$EXEDIR/test/md5sum $OUTDIR/${basename}-tjdecomp.$GRAYEXT \
+									$OUTDIR/${basename}-djpeg.$GRAYEXT | \
+									sed "s@$OUTDIR@\$OUTDIR@g"
+								cmp $OUTDIR/${basename}-tjdecomp.$GRAYEXT \
+									$OUTDIR/${basename}-djpeg.$GRAYEXT
+								rm $OUTDIR/${basename}-tjdecomp.$GRAYEXT \
+									$OUTDIR/${basename}-djpeg.$GRAYEXT
 								echo
 							fi
 
@@ -221,15 +236,19 @@ for precision in 8 12; do
 								iccarg=
 								if [ "$subsamp" = "420" ]; then
 									iccarg="-icc $OUTDIR/${basename}-tjdecomp.icc"
+								elif [ "$subsamp" = "411" -a "$RGBEXT" = "png" ]; then
+									iccarg=-noicc
 								fi
 								runme $TJDECOMP $croparg $dctarg $nsarg $scalearg $iccarg \
 									$OUTDIR/${basename}-$subsamp-8.jpg \
-									$OUTDIR/${basename}-tjdecomp.ppm
+									$OUTDIR/${basename}-tjdecomp.$RGBEXT
 								if [ "$subsamp" = "420" ]; then
 									iccarg="-icc $OUTDIR/${basename}-djpeg.icc"
+								elif [ "$subsamp" = "411" -a "$RGBEXT" = "png" ]; then
+									iccarg=-noicc
 								fi
 								runme $EXEDIR/djpeg $croparg $dctarg $nsarg $scalearg $iccarg \
-									-outf $OUTDIR/${basename}-djpeg.ppm \
+									$RGBFMTARG -outf $OUTDIR/${basename}-djpeg.$RGBEXT \
 									$OUTDIR/${basename}-$subsamp-8.jpg
 								if [ "$subsamp" = "420" ]; then
 									$EXEDIR/test/md5sum $OUTDIR/${basename}-tjdecomp.icc \
@@ -239,27 +258,29 @@ for precision in 8 12; do
 									rm $OUTDIR/${basename}-tjdecomp.icc \
 										$OUTDIR/${basename}-djpeg.icc
 								fi
-								$EXEDIR/test/md5sum $OUTDIR/${basename}-tjdecomp.ppm \
-									$OUTDIR/${basename}-djpeg.ppm | sed "s@$OUTDIR@\$OUTDIR@g"
-								cmp $OUTDIR/${basename}-tjdecomp.ppm \
-									$OUTDIR/${basename}-djpeg.ppm
-								rm $OUTDIR/${basename}-tjdecomp.ppm \
-									$OUTDIR/${basename}-djpeg.ppm
+								$EXEDIR/test/md5sum $OUTDIR/${basename}-tjdecomp.$RGBEXT \
+									$OUTDIR/${basename}-djpeg.$RGBEXT | \
+									sed "s@$OUTDIR@\$OUTDIR@g"
+								cmp $OUTDIR/${basename}-tjdecomp.$RGBEXT \
+									$OUTDIR/${basename}-djpeg.$RGBEXT
+								rm $OUTDIR/${basename}-tjdecomp.$RGBEXT \
+									$OUTDIR/${basename}-djpeg.$RGBEXT
 								echo
 
 								if [[ "$nsarg" = "" ]]; then
 									runme $TJDECOMP $croparg $dctarg $nsarg $scalearg \
 										-g $OUTDIR/${basename}-$subsamp-8.jpg \
-										$OUTDIR/${basename}-tjdecomp.pgm
+										$OUTDIR/${basename}-tjdecomp.$GRAYEXT
 									runme $EXEDIR/djpeg $croparg $dctarg $nsarg $scalearg \
-										-gr -outf $OUTDIR/${basename}-djpeg.pgm \
+										$GRAYFMTARG -gr -outf $OUTDIR/${basename}-djpeg.$GRAYEXT \
 										$OUTDIR/${basename}-$subsamp-8.jpg
-									$EXEDIR/test/md5sum $OUTDIR/${basename}-tjdecomp.pgm \
-										$OUTDIR/${basename}-djpeg.pgm | sed "s@$OUTDIR@\$OUTDIR@g"
-									cmp $OUTDIR/${basename}-tjdecomp.pgm \
-										$OUTDIR/${basename}-djpeg.pgm
-									rm $OUTDIR/${basename}-tjdecomp.pgm \
-										$OUTDIR/${basename}-djpeg.pgm
+									$EXEDIR/test/md5sum $OUTDIR/${basename}-tjdecomp.$GRAYEXT \
+										$OUTDIR/${basename}-djpeg.$GRAYEXT | \
+										sed "s@$OUTDIR@\$OUTDIR@g"
+									cmp $OUTDIR/${basename}-tjdecomp.$GRAYEXT \
+										$OUTDIR/${basename}-djpeg.$GRAYEXT
+									rm $OUTDIR/${basename}-tjdecomp.$GRAYEXT \
+										$OUTDIR/${basename}-djpeg.$GRAYEXT
 									echo
 								fi
 							fi
@@ -278,41 +299,47 @@ done
 for precision in {2..16}; do
 	if [ $precision -le 8 ]; then
 		RGBIMG=$IMGDIR/testorig.ppm
-		GRAYIMG=$IMGDIR/testorig.pgm
+		RGBFMTARG=
+		GRAYIMG=$IMGDIR/testorig.png
+		GRAYFMTARG=-png
+		basename=testorig
 	else
-		RGBIMG=$IMGDIR/monkey16.ppm
+		RGBIMG=$IMGDIR/monkey16.png
+		RGBFMTARG=-png
 		GRAYIMG=$IMGDIR/monkey16.pgm
+		GRAYFMTARG=
+		basename=monkey16
 	fi
+	RGBEXT=${RGBIMG##*.}
+	GRAYEXT=${GRAYIMG##*.}
 
-	basename=`basename $RGBIMG .ppm`
 	runme $EXEDIR/cjpeg -pre $precision -l 1 \
 		-outf $OUTDIR/${basename}-rgb.jpg $RGBIMG
 	echo
 
 	runme $TJDECOMP $OUTDIR/${basename}-rgb.jpg \
-		$OUTDIR/${basename}-tjdecomp.ppm
-	runme $EXEDIR/djpeg -outf $OUTDIR/${basename}-djpeg.ppm \
+		$OUTDIR/${basename}-tjdecomp.$RGBEXT
+	runme $EXEDIR/djpeg $RGBFMTARG -outf $OUTDIR/${basename}-djpeg.$RGBEXT \
 		$OUTDIR/${basename}-rgb.jpg
-	$EXEDIR/test/md5sum $OUTDIR/${basename}-tjdecomp.ppm \
-		$OUTDIR/${basename}-djpeg.ppm | sed "s@$OUTDIR@\$OUTDIR@g"
-	cmp $OUTDIR/${basename}-tjdecomp.ppm $OUTDIR/${basename}-djpeg.ppm
-	rm $OUTDIR/${basename}-tjdecomp.ppm $OUTDIR/${basename}-djpeg.ppm
+	$EXEDIR/test/md5sum $OUTDIR/${basename}-tjdecomp.$RGBEXT \
+		$OUTDIR/${basename}-djpeg.$RGBEXT | sed "s@$OUTDIR@\$OUTDIR@g"
+	cmp $OUTDIR/${basename}-tjdecomp.$RGBEXT $OUTDIR/${basename}-djpeg.$RGBEXT
+	rm $OUTDIR/${basename}-tjdecomp.$RGBEXT $OUTDIR/${basename}-djpeg.$RGBEXT
 	rm $OUTDIR/${basename}-rgb.jpg
 	echo
 
-	basename=`basename $GRAYIMG .pgm`
 	runme $EXEDIR/cjpeg -pre $precision -l 1 \
 		-outf $OUTDIR/${basename}-gray.jpg $GRAYIMG
 	echo
 
 	runme $TJDECOMP $OUTDIR/${basename}-gray.jpg \
-		$OUTDIR/${basename}-tjdecomp.pgm
-	runme $EXEDIR/djpeg -outf $OUTDIR/${basename}-djpeg.pgm \
+		$OUTDIR/${basename}-tjdecomp.$GRAYEXT
+	runme $EXEDIR/djpeg $GRAYFMTARG -outf $OUTDIR/${basename}-djpeg.$GRAYEXT \
 		$OUTDIR/${basename}-gray.jpg
-	$EXEDIR/test/md5sum $OUTDIR/${basename}-tjdecomp.pgm \
-		$OUTDIR/${basename}-djpeg.pgm | sed "s@$OUTDIR@\$OUTDIR@g"
-	cmp $OUTDIR/${basename}-tjdecomp.pgm $OUTDIR/${basename}-djpeg.pgm
-	rm $OUTDIR/${basename}-tjdecomp.pgm $OUTDIR/${basename}-djpeg.pgm
+	$EXEDIR/test/md5sum $OUTDIR/${basename}-tjdecomp.$GRAYEXT \
+		$OUTDIR/${basename}-djpeg.$GRAYEXT | sed "s@$OUTDIR@\$OUTDIR@g"
+	cmp $OUTDIR/${basename}-tjdecomp.$GRAYEXT $OUTDIR/${basename}-djpeg.$GRAYEXT
+	rm $OUTDIR/${basename}-tjdecomp.$GRAYEXT $OUTDIR/${basename}-djpeg.$GRAYEXT
 	rm $OUTDIR/${basename}-gray.jpg
 	echo
 done

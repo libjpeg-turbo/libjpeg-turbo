@@ -108,6 +108,21 @@ select_file_type(j_compress_ptr cinfo, FILE *infile)
   case 'G':
     return jinit_read_gif(cinfo);
 #endif
+#ifdef PNG_SUPPORTED
+  case 0x89:
+    if (cinfo->data_precision <= 8)
+      return jinit_read_png(cinfo);
+    else if (cinfo->data_precision <= 12)
+      return j12init_read_png(cinfo);
+    else {
+#ifdef C_LOSSLESS_SUPPORTED
+      return j16init_read_png(cinfo);
+#else
+      ERREXIT1(cinfo, JERR_BAD_PRECISION, cinfo->data_precision);
+      break;
+#endif
+    }
+#endif
 #ifdef PPM_SUPPORTED
   case 'P':
     if (cinfo->data_precision <= 8)
@@ -147,6 +162,7 @@ select_file_type(j_compress_ptr cinfo, FILE *infile)
 
 static const char *progname;    /* program name for error messages */
 static char *icc_filename;      /* for -icc switch */
+static boolean noicc;           /* for -noicc switch */
 static char *outfilename;       /* for -outfile switch */
 static boolean memdst;          /* for -memdst switch */
 static boolean report;          /* for -report switch */
@@ -243,6 +259,7 @@ usage(void)
           (JDCT_DEFAULT == JDCT_FLOAT ? " (default)" : ""));
 #endif
   fprintf(stderr, "  -icc FILE      Embed ICC profile contained in FILE\n");
+  fprintf(stderr, "  -noicc         Do not transfer ICC profile from PNG input file\n");
   fprintf(stderr, "  -restart N     Set restart interval in rows, or in blocks with B\n");
 #ifdef INPUT_SMOOTHING_SUPPORTED
   fprintf(stderr, "  -smooth N      Smooth dithered input (N=1..100 is strength)\n");
@@ -297,6 +314,7 @@ parse_switches(j_compress_ptr cinfo, int argc, char **argv,
   simple_progressive = FALSE;
   is_targa = FALSE;
   icc_filename = NULL;
+  noicc = FALSE;
   outfilename = NULL;
   memdst = FALSE;
   report = FALSE;
@@ -378,6 +396,9 @@ parse_switches(j_compress_ptr cinfo, int argc, char **argv,
       if (++argn >= argc)       /* advance to next argument */
         usage();
       icc_filename = argv[argn];
+
+    } else if (keymatch(arg, "noicc", 3)) {
+      noicc = TRUE;
 
     } else if (keymatch(arg, "lossless", 1)) {
       /* Enable lossless mode. */
@@ -795,6 +816,14 @@ main(int argc, char **argv)
 
   if (icc_profile != NULL)
     jpeg_write_icc_profile(&cinfo, icc_profile, (unsigned int)icc_len);
+  else if (!noicc) {
+    JOCTET *src_icc_profile;
+    unsigned int src_icc_len;
+
+    if ((*src_mgr->read_icc_profile) (&cinfo, src_mgr, &src_icc_profile,
+                                      &src_icc_len))
+      jpeg_write_icc_profile(&cinfo, src_icc_profile, src_icc_len);
+  }
 
   /* Process data */
   if (cinfo.data_precision <= 8) {

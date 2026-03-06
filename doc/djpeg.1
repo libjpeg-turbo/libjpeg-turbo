@@ -1,4 +1,4 @@
-.TH DJPEG 1 "3 Mar 2026"
+.TH DJPEG 1 "10 March 2026"
 .SH NAME
 djpeg \- decompress a JPEG file to an image file
 .SH SYNOPSIS
@@ -14,8 +14,8 @@ djpeg \- decompress a JPEG file to an image file
 .LP
 .B djpeg
 decompresses the named JPEG file, or the standard input if no file is named,
-and produces an image file on the standard output.  PBMPLUS (PPM/PGM), BMP,
-GIF, or Targa output format can be selected.
+and produces an image file on the standard output.  PNG, PBMPLUS (PPM/PGM),
+BMP, GIF, or Targa output format can be selected.
 .SH OPTIONS
 All switch names may be abbreviated; for example,
 .B \-grayscale
@@ -107,6 +107,17 @@ is specified, or if the JPEG file is grayscale; otherwise, 24-bit full-color
 format is emitted.  This format can only be used when decompressing
 8-bit-per-sample JPEG images.
 .TP
+.B \-png
+Select PNG output format.  Grayscale format is emitted if the JPEG file is
+grayscale or if
+.B \-grayscale
+is specified; otherwise true color format is emitted.  16-bit-per-channel
+format is emitted if the output data precision is greater than 8 bits.  If the
+JPEG file contains an ICC color management profile, then it is automatically
+transferred to the output image unless
+.B \-noicc
+is specified.
+.TP
 .B \-pnm
 Select PBMPLUS (PPM/PGM) output format (this is the default format).
 PGM is emitted if the JPEG file is grayscale or if
@@ -197,6 +208,10 @@ mode.
 .BI \-icc " file"
 Extract ICC color management profile to the specified file.
 .TP
+.BI \-noicc
+Do not transfer the embedded ICC color management profile (if any) from the
+JPEG file to a PNG output image.
+.TP
 .BI \-map " file"
 Quantize to the colors used in the specified image file [legacy feature].  This
 is useful for producing multiple files with identical color maps, or for
@@ -260,8 +275,8 @@ Decompress only a rectangular subregion of the image, starting at point X,Y
 with width W and height H.  If necessary, X will be shifted left to the nearest
 iMCU boundary, and the width will be increased accordingly.  Note that if
 decompression scaling is being used, then X, Y, W, and H are relative to the
-scaled image dimensions.  Currently this option only works with the
-PBMPLUS (PPM/PGM), GIF, and Targa output formats.
+scaled image dimensions.  Currently this option does not work with the BMP
+output format.
 .TP
 .BI \-strict
 Treat all warnings as fatal.  This feature also demonstrates a method by which

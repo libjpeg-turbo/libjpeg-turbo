@@ -106,6 +106,33 @@ in the libjpeg API by setting `cinfo->data_precision = 12` after calling
 `jpeg_read_header()`, and in the TurboJPEG API by calling `tj3Decompress12()`
 after calling `tj3DecompressHeader()`.
 
+9. cjpeg, djpeg, `tj3LoadImage*()`, and `tj3SaveImage*()` now support
+8-bit-per-channel and 16-bit-per-channel true color and grayscale PNG images.
+
+     - By default, cjpeg transfers the embedded ICC profile from a PNG input
+image to the JPEG image, and djpeg transfers the embedded ICC profile from the
+JPEG image to a PNG output image.  A new option (`-noicc`) can be used to
+disable that behavior.
+     - If called with a TurboJPEG compression instance, `tj3LoadImage*()`
+extracts the embedded ICC profile from a PNG image and associates it with the
+TurboJPEG instance if `TJPARAM_SAVEMARKERS` is set to 2 or 4.
+     - If called with a TurboJPEG decompression instance, `tj3SaveImage*()`
+transfers the ICC profile that was previously extracted from the JPEG image to
+a PNG image if `TJPARAM_SAVEMARKERS` is set to 2 or 4.
+     - The PNG writer upscales images with 2-7 and 9-15 bits of data
+precision to, respectively, 8-bit-per-channel and 16-bit-per-channel PNG
+images.  The upscaling algorithm is reversible, so a lossless JPEG image with a
+non-standard data precision can be losslessly converted to a PNG image and back
+to a lossless JPEG image with the same data precision.
+
+10. The TurboJPEG API has been improved in the following ways:
+
+     - `tj3GetICCProfile()` can now be called multiple times to retrieve the
+ICC profile that was previously extracted from a JPEG image.
+     - `tj3GetICCProfile()` can now be used to retrieve the ICC profile
+associated with a TurboJPEG compression instance (including an ICC profile
+extracted from a PNG image by `tj3LoadImage*()`.)
+
 
 3.1.4
 =====

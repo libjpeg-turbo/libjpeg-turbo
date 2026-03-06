@@ -991,12 +991,15 @@ final class TJUnitTest {
 
   static boolean cmpBitmap(Pointer buf, int width, int pitch, int height,
                            int pf, boolean bottomUp, boolean gray2rgb,
-                           int targetPrecision) {
+                           int targetPrecision, String ext) {
     int roffset = TJ.RED_OFFSET[pf];
     int goffset = TJ.GREEN_OFFSET[pf];
     int boffset = TJ.BLUE_OFFSET[pf];
     int aoffset = TJ.ALPHA_OFFSET[pf];
     int ps = TJ.PIXEL_SIZE[pf];
+
+    if (ext.equalsIgnoreCase("bmp"))
+      targetPrecision = 8;
     int targetMaxSample = (1 << targetPrecision) - 1;
 
     for (int j = 0; j < height; j++) {
@@ -1011,12 +1014,38 @@ final class TJUnitTest {
         if (precision != targetPrecision) {
           long halfMaxSample = maxSample / 2;
 
-          r = (int)((r * ((1 << targetPrecision) - 1) + halfMaxSample) /
-                    maxSample);
-          g = (int)((g * ((1 << targetPrecision) - 1) + halfMaxSample) /
-                    maxSample);
-          b = (int)((b * ((1 << targetPrecision) - 1) + halfMaxSample) /
-                    maxSample);
+          // The expected results are slightly different with PNG files,
+          // because the samples are scaled up to 8 or 16 bits of data
+          // precision by the PNG writer and scaled down to the target data
+          // precision by the PNG reader.
+          if (ext.equalsIgnoreCase("png")) {
+            if (precision <= 8) {
+              r = (int)((r * 255 + halfMaxSample) / maxSample);
+              r = (int)((r * ((1 << targetPrecision) - 1) + 127) / 255);
+              g = (int)((g * 255 + halfMaxSample) / maxSample);
+              g = (int)((g * ((1 << targetPrecision) - 1) + 127) / 255);
+              b = (int)((b * 255 + halfMaxSample) / maxSample);
+              b = (int)((b * ((1 << targetPrecision) - 1) + 127) / 255);
+            } else {
+              long rtemp = (long)((r * 65535L + halfMaxSample) / maxSample);
+              long gtemp = (long)((g * 65535L + halfMaxSample) / maxSample);
+              long btemp = (long)((b * 65535L + halfMaxSample) / maxSample);
+
+              r = (int)((rtemp * ((1 << targetPrecision) - 1) + 32767) /
+                        65535);
+              g = (int)((gtemp * ((1 << targetPrecision) - 1) + 32767) /
+                        65535);
+              b = (int)((btemp * ((1 << targetPrecision) - 1) + 32767) /
+                        65535);
+            }
+          } else {
+            r = (int)((r * ((1 << targetPrecision) - 1) + halfMaxSample) /
+                      maxSample);
+            g = (int)((g * ((1 << targetPrecision) - 1) + halfMaxSample) /
+                      maxSample);
+            b = (int)((b * ((1 << targetPrecision) - 1) + halfMaxSample) /
+                      maxSample);
+          }
         }
 
         if (pf == TJ.PF_GRAY) {
@@ -1077,6 +1106,26 @@ final class TJUnitTest {
       loadHeight = new IntByReference(0), loadPF = new IntByReference(pf);
     Pointer buf = null;
     String md5ref;
+    String[] colorPNGRefs = new String[] {
+      "", "", "d973fcebcb785e9286d2b00f924a2bfc",
+      "76426aa13d42e2ba67a8ab84f93806e4", "9895df84ae7e67b234cbfb38028d514e",
+      "381fc9cee6d8f4f013907154c0a3d4a4", "e44dd82241dbcf822ff622e51e17d7a3",
+      "a6a143a8c16896368cee3b48e29f7e04", "1d9f6c50b5f6acbb882bf975ee85d2ac",
+      "6e3521e58ccd649001b7f135c9a0d77c", "8498b048f3a42cace76f199831036808",
+      "270933f0e53a513a331fc06c4d99fced", "14987f4410c740d99320a30814dcee00",
+      "b0f97624504d6f208a691063d2e83f90", "7baefad230a3fbad7447568d29ad72ad",
+      "7b5fa7dd6184319f15e02ee575d361e1", "39d5bac5fa6e9413ebcb1fe63a7f4750"
+    };
+    String[] grayPNGRefs = new String[] {
+      "", "", "35bd865b7b3f5c52baa4431d1722c68e",
+      "a80e6ab4afa043b680e7c61eeba1c49b", "d373a735273e0fd359aa7a43d92883f7",
+      "e414230904deffffb33e723c10a92150", "ce4426862b998ad1ca18d6d4dfcf8ed2",
+      "9cb84538b47ff164f5786d8662d39c62", "a1d57ae8785cf85abac187f274452655",
+      "3134b92be88363989d2e197c7aaa8876", "f7baac93d23bf38bcfbca29eff107799",
+      "839b9a975ddfb622caaef4496510c3f9", "e1d6704888c8a0d7fa234d9d625ea0eb",
+      "4c8d7484b3c4a5d195bf19996b350a9e", "33699b2ef9fcce812f26d7272cd98b7c",
+      "b9c85b94a2c109830f00c203c900f3d9", "3e31a40843885e839b27cfddb69b26f8"
+    };
     String[] colorPPMRefs = new String[] {
       "", "", "bad09d9ef38eda566848fb7c0b7fd0a",
       "7ef2c87261a8bd6838303b541563cf27", "28a37cf9636ff6bb9ed6b206bdac60db",
@@ -1108,7 +1157,10 @@ final class TJUnitTest {
         md5ref = (pf == TJ.PF_GRAY ? "51976530acf75f02beddf5d21149101d" :
                                      "6d659071b9bfcdee2def22cb58ddadca");
         maxTargetPrecision = 8;
-      } else
+      } else if (ext.equalsIgnoreCase("png"))
+        md5ref = (pf == TJ.PF_GRAY ? grayPNGRefs[precision] :
+                                     colorPNGRefs[precision]);
+      else
         md5ref = (pf == TJ.PF_GRAY ? grayPPMRefs[precision] :
                                      colorPPMRefs[precision]);
 
@@ -1152,7 +1204,7 @@ final class TJUnitTest {
                               " are bogus");
         pitch = pad(width * TJ.PIXEL_SIZE[pf], align);
         if (!cmpBitmap(buf, width, pitch, height, pf, bottomUp, false,
-                       ext.equalsIgnoreCase("bmp") ? 8 : targetPrecision))
+                       targetPrecision, ext))
           throw new Exception("Pixel data in " + filename + " is bogus " +
                               "(target data precision = " + targetPrecision +
                               ")");
@@ -1172,7 +1224,7 @@ final class TJUnitTest {
           pf = loadPF.getValue();
           pitch = pad(width * TJ.PIXEL_SIZE[pf], align);
           if (!cmpBitmap(buf, width, pitch, height, pf, bottomUp, true,
-                         ext.equalsIgnoreCase("bmp") ? 8 : targetPrecision))
+                         targetPrecision, ext))
             throw new Exception("Converting " + filename + " to RGB failed " +
                                 "(target data precision = " + targetPrecision +
                                 ")");
@@ -1191,7 +1243,7 @@ final class TJUnitTest {
           pf = loadPF.getValue();
           pitch = pad(width * TJ.PIXEL_SIZE[pf], align);
           if (!cmpBitmap(buf, width, pitch, height, pf, bottomUp, true,
-                         ext.equalsIgnoreCase("bmp") ? 8 : targetPrecision))
+                         targetPrecision, ext))
             throw new Exception("Converting " + filename +
                                 " to CMYK failed (target data precision = " +
                                 targetPrecision + ")");
@@ -1242,6 +1294,11 @@ final class TJUnitTest {
           System.out.println("OK.");
         }
 
+        System.out.format("%s Top-Down PNG (row alignment = %d samples)  ...  ",
+                          PIXFORMATSTR[format], align);
+        doBmpTest("png", width, align, height, format, false);
+        System.out.println("OK.");
+
         System.out.format("%s Top-Down PPM (row alignment = %d samples)  ...  ",
                           PIXFORMATSTR[format], align);
         doBmpTest("ppm", width, align, height, format, false);
@@ -1253,6 +1310,11 @@ final class TJUnitTest {
           doBmpTest("bmp", width, align, height, format, true);
           System.out.println("OK.");
         }
+
+        System.out.format("%s Bottom-Up PNG (row alignment = %d samples)  ...  ",
+                          PIXFORMATSTR[format], align);
+        doBmpTest("png", width, align, height, format, true);
+        System.out.println("OK.");
 
         System.out.format("%s Bottom-Up PPM (row alignment = %d samples)  ...  ",
                           PIXFORMATSTR[format], align);

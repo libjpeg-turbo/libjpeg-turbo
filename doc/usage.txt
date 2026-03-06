@@ -52,11 +52,11 @@ or
         djpeg [switches] -outfile imagefile jpegfile
 This syntax works on all systems, so it is useful for scripts.
 
-The currently supported image file formats are: PPM (PBMPLUS color format),
-PGM (PBMPLUS grayscale format), BMP, GIF [legacy feature], and Targa [legacy
-feature].  cjpeg recognizes the input image format automatically, with the
-exception of some Targa files.  You have to tell djpeg which format to
-generate.
+The currently supported image file formats are: PNG (true color and grayscale),
+PPM (PBMPLUS color format), PGM (PBMPLUS grayscale format), BMP, GIF [legacy
+feature], and Targa [legacy feature].  cjpeg recognizes the input image format
+automatically, with the exception of some Targa files.  You have to tell djpeg
+which format to generate.
 
 JPEG files are in the defacto standard JFIF file format.  There are other,
 less widely used JPEG-based file formats, but we don't support them.
@@ -256,7 +256,13 @@ Switches for advanced users:
                         same results on all machines.
 
         -icc FILE       Embed ICC color management profile contained in the
-                        specified file.
+                        specified file.  If neither this option nor -noicc is
+                        specified and the input file is a PNG file with an
+                        embedded ICC color management profile, then the profile
+                        will be transferred from the input file.
+
+        -noicc          Do not transfer the embedded ICC color management
+                        profile (if any) from a PNG input file.
 
         -restart N      Emit a JPEG restart marker every N MCU rows, or every N
                         MCUs if "B" is attached to the number.
@@ -405,6 +411,15 @@ The basic command line switches for djpeg are:
                         emitted.  This format can only be used when
                         decompressing 8-bit-per-sample JPEG images.
 
+        -png            Select PNG output format.  Grayscale format is emitted
+                        if the JPEG file is grayscale or if -grayscale is
+                        specified; otherwise true color format is emitted.
+                        16-bit-per-channel format is emitted if the output data
+                        precision is greater than 8 bits.  If the JPEG file
+                        contains an ICC color management profile, then it is
+                        automatically transferred to the output image unless
+                        -noicc is specified.
+
         -pnm            Select PBMPLUS (PPM/PGM) output format (this is the
                         default format).  PGM is emitted if the JPEG file is
                         grayscale or if -grayscale is specified; otherwise PPM
@@ -498,6 +513,10 @@ Switches for advanced users:
         -icc FILE       Extract ICC color management profile to the specified
                         file.
 
+        -noicc          Do not transfer the embedded ICC color management
+                        profile (if any) from the JPEG file to a PNG output
+                        image.
+
         -map FILE       Quantize to the colors used in the specified image file
                         [legacy feature].  This is useful for producing
                         multiple files with identical color maps, or for
@@ -553,8 +572,8 @@ Switches for advanced users:
                         boundary, and the width will be increased accordingly.
                         Note that if decompression scaling is being used, then
                         X, Y, W, and H are relative to the scaled image
-                        dimensions.  Currently this option only works with the
-                        PBMPLUS (PPM/PGM), GIF, and Targa output formats.
+                        dimensions.  Currently this option does not work with
+                        the BMP output format.
 
         -strict         Treat all warnings as fatal.  This feature also
                         demonstrates a method by which applications can guard

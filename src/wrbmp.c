@@ -5,7 +5,7 @@
  * Copyright (C) 1994-1996, Thomas G. Lane.
  * libjpeg-turbo Modifications:
  * Copyright (C) 2013, Linaro Limited.
- * Copyright (C) 2014-2015, 2017, 2019, 2022, 2024, D. R. Commander.
+ * Copyright (C) 2014-2015, 2017, 2019, 2022, 2024, 2026, D. R. Commander.
  * For conditions of distribution and use, see the accompanying README.ijg
  * file.
  *
@@ -429,6 +429,13 @@ start_output_bmp(j_decompress_ptr cinfo, djpeg_dest_ptr dinfo)
 
 
 METHODDEF(void)
+write_icc_profile_bmp(j_decompress_ptr cinfo, djpeg_dest_ptr dinfo,
+                      const JOCTET *icc_data_ptr, unsigned int icc_data_len)
+{
+}
+
+
+METHODDEF(void)
 finish_output_bmp(j_decompress_ptr cinfo, djpeg_dest_ptr dinfo)
 {
   bmp_dest_ptr dest = (bmp_dest_ptr)dinfo;
@@ -488,6 +495,7 @@ jinit_write_bmp(j_decompress_ptr cinfo, boolean is_os2,
     (*cinfo->mem->alloc_small) ((j_common_ptr)cinfo, JPOOL_IMAGE,
                                 sizeof(bmp_dest_struct));
   dest->pub.start_output = start_output_bmp;
+  dest->pub.write_icc_profile = write_icc_profile_bmp;
   dest->pub.finish_output = finish_output_bmp;
   dest->pub.calc_buffer_dimensions = NULL;
   dest->is_os2 = is_os2;
