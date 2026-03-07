@@ -5,7 +5,7 @@
  * Copyright (C) 1991-1996, Thomas G. Lane.
  * Modified 2009 by Guido Vollbeding.
  * libjpeg-turbo Modifications:
- * Copyright (C) 2017, 2019-2020, 2022, D. R. Commander.
+ * Copyright (C) 2017, 2019-2020, 2022, 2026, D. R. Commander.
  * For conditions of distribution and use, see the accompanying README.ijg
  * file.
  *
@@ -109,19 +109,13 @@ copy_pixel_rows(j_decompress_ptr cinfo, djpeg_dest_ptr dinfo,
   ppm_dest_ptr dest = (ppm_dest_ptr)dinfo;
   register char *bufferptr;
   register _JSAMPROW ptr;
-#if BITS_IN_JSAMPLE != 8
   register JDIMENSION col;
-#endif
 
   ptr = dest->pub._buffer[0];
   bufferptr = dest->iobuffer;
-#if BITS_IN_JSAMPLE == 8
-  memcpy(bufferptr, ptr, dest->samples_per_row);
-#else
   for (col = dest->samples_per_row; col > 0; col--) {
     PUTPPMSAMPLE(bufferptr, *ptr++);
   }
-#endif
   fwrite(dest->iobuffer, 1, dest->buffer_width, dest->pub.output_file);
 }
 
@@ -330,12 +324,11 @@ _jinit_write_ppm(j_decompress_ptr cinfo)
 
   if (cinfo->quantize_colors || BITS_IN_JSAMPLE != 8 ||
       sizeof(_JSAMPLE) != sizeof(char) ||
-#if RGB_RED == 0 && RGB_GREEN == 1 && RGB_BLUE == 2 && RGB_PIXELSIZE == 3
       (cinfo->out_color_space != JCS_EXT_RGB &&
-       cinfo->out_color_space != JCS_RGB)) {
-#else
-      cinfo->out_color_space != JCS_EXT_RGB) {
+#if RGB_RED == 0 && RGB_GREEN == 1 && RGB_BLUE == 2 && RGB_PIXELSIZE == 3
+       cinfo->out_color_space != JCS_RGB &&
 #endif
+       cinfo->out_color_space != JCS_GRAYSCALE)) {
     /* When quantizing, we need an output buffer for colormap indexes
      * that's separate from the physical I/O buffer.  We also need a
      * separate buffer if pixel format translation must take place.
