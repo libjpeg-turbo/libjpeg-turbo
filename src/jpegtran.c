@@ -5,6 +5,7 @@
  * Copyright (C) 1995-2019, Thomas G. Lane, Guido Vollbeding.
  * libjpeg-turbo Modifications:
  * Copyright (C) 2010, 2014, 2017, 2019-2022, 2024, D. R. Commander.
+ * Copyright (C) 2026, Ricardo M. Ferreira.
  * For conditions of distribution and use, see the accompanying README.ijg
  * file.
  *
@@ -73,6 +74,7 @@ usage(void)
   fprintf(stderr, "  -flip [horizontal|vertical]  Mirror image (left-right or top-bottom)\n");
   fprintf(stderr, "  -grayscale     Reduce to grayscale (omit color data)\n");
   fprintf(stderr, "  -perfect       Fail if there is non-transformable edge blocks\n");
+  fprintf(stderr, "  -roll +X+Y     Roll (shift with wrap) image horizontally and vertically\n");
   fprintf(stderr, "  -rotate [90|180|270]         Rotate image (degrees clockwise)\n");
 #endif
 #if TRANSFORMS_SUPPORTED
@@ -350,6 +352,18 @@ parse_switches(j_compress_ptr cinfo, int argc, char **argv,
       } else {
         cinfo->restart_in_rows = (int)lval;
         /* restart_interval will be computed during startup */
+      }
+    } else if (keymatch(arg, "roll", 4)) {
+      /* Roll (shift with wrap-around) by offset. */
+      if (++argn >= argc)       /* advance to next argument */
+        usage();
+      select_transform(JXFORM_ROLL);
+      if (!jtransform_parse_crop_spec(&transformoption, argv[argn]) ||
+          transformoption.crop_width_set != JCROP_UNSET ||
+          transformoption.crop_height_set != JCROP_UNSET) {
+        fprintf(stderr, "%s: invalid roll specification '%s'\n",
+                progname, argv[argn]);
+        exit(EXIT_FAILURE);
       }
 
     } else if (keymatch(arg, "rotate", 2)) {

@@ -5,6 +5,7 @@
  * Copyright (C) 1997-2019, Thomas G. Lane, Guido Vollbeding.
  * libjpeg-turbo Modifications:
  * Copyright (C) 2010, 2017, 2021-2022, 2024, 2026, D. R. Commander.
+ * Copyright (C) 2026, Ricardo M. Ferreira.
  * For conditions of distribution and use, see the accompanying README.ijg
  * file.
  *
@@ -1184,6 +1185,70 @@ do_rot_270(j_decompress_ptr srcinfo, j_compress_ptr dstinfo,
 
 
 LOCAL(void)
+do_roll(j_decompress_ptr srcinfo, j_compress_ptr dstinfo,
+        JDIMENSION x_crop_offset, JDIMENSION y_crop_offset,
+        jvirt_barray_ptr *src_coef_arrays,
+        jvirt_barray_ptr *dst_coef_arrays)
+/* Roll (shift with wrap-around) image by specified offsets.
+ * x_crop_offset and y_crop_offset specify the roll amounts in iMCUs.
+ * Pixels are shifted right by x_crop_offset * iMCU_sample_width and
+ * down by y_crop_offset * iMCU_sample_height, with wrap-around.
+ */
+{
+  JDIMENSION MCU_cols, MCU_rows, comp_width, comp_height;
+  JDIMENSION dst_blk_x, dst_blk_y, src_blk_x, src_blk_y;
+  JDIMENSION x_shift_blocks, y_shift_blocks;
+  int ci, offset_y;
+  JBLOCKARRAY src_buffer, dst_buffer;
+  JBLOCKROW src_row_ptr, dst_row_ptr;
+  jpeg_component_info *compptr;
+
+  MCU_cols = srcinfo->output_width /
+             (dstinfo->max_h_samp_factor * dstinfo_min_DCT_h_scaled_size);
+  MCU_rows = srcinfo->output_height /
+             (dstinfo->max_v_samp_factor * dstinfo_min_DCT_v_scaled_size);
+
+  for (ci = 0; ci < dstinfo->num_components; ci++) {
+    compptr = dstinfo->comp_info + ci;
+    comp_width = MCU_cols * compptr->h_samp_factor;
+    comp_height = MCU_rows * compptr->v_samp_factor;
+    x_shift_blocks = x_crop_offset * compptr->h_samp_factor;
+    y_shift_blocks = y_crop_offset * compptr->v_samp_factor;
+    for (dst_blk_y = 0; dst_blk_y < compptr->height_in_blocks;
+         dst_blk_y += compptr->v_samp_factor) {
+      dst_buffer = (*srcinfo->mem->access_virt_barray)
+        ((j_common_ptr)srcinfo, dst_coef_arrays[ci], dst_blk_y,
+         (JDIMENSION)compptr->v_samp_factor, TRUE);
+      /* Calculate source y with wrap-around */
+      if (dst_blk_y < y_shift_blocks) {
+        src_blk_y = comp_height - y_shift_blocks + dst_blk_y;
+      } else {
+        src_blk_y = dst_blk_y - y_shift_blocks;
+      }
+      src_buffer = (*srcinfo->mem->access_virt_barray)
+        ((j_common_ptr)srcinfo, src_coef_arrays[ci], src_blk_y,
+         (JDIMENSION)compptr->v_samp_factor, FALSE);
+      for (offset_y = 0; offset_y < compptr->v_samp_factor; offset_y++) {
+        dst_row_ptr = dst_buffer[offset_y];
+        src_row_ptr = src_buffer[offset_y];
+        for (dst_blk_x = 0; dst_blk_x < compptr->width_in_blocks; dst_blk_x++) {
+          /* Calculate source x with wrap-around */
+          if (dst_blk_x < x_shift_blocks) {
+            src_blk_x = comp_width - x_shift_blocks + dst_blk_x;
+          } else {
+            src_blk_x = dst_blk_x - x_shift_blocks;
+          }
+          /* Copy the block */
+          jcopy_block_row(src_row_ptr + src_blk_x, dst_row_ptr + dst_blk_x,
+                          (JDIMENSION)1);
+        }
+      }
+    }
+  }
+}
+
+
+LOCAL(void)
 do_rot_180(j_decompress_ptr srcinfo, j_compress_ptr dstinfo,
            JDIMENSION x_crop_offset, JDIMENSION y_crop_offset,
            jvirt_barray_ptr *src_coef_arrays,
@@ -1552,6 +1617,7 @@ jtransform_request_workspace(j_decompress_ptr srcinfo,
   boolean need_workspace, transpose_it;
   jpeg_component_info *compptr;
   JDIMENSION xoffset, yoffset, dtemp;
+  long signed_xoffset, signed_yoffset;
   JDIMENSION width_in_iMCUs, height_in_iMCUs;
   JDIMENSION width_in_blocks, height_in_blocks;
   int itemp, ci, h_samp_factor, v_samp_factor, MCU_width, MCU_height;
@@ -1678,19 +1744,43 @@ jtransform_request_workspace(j_decompress_ptr srcinfo,
           ERREXIT(srcinfo, JERR_BAD_CROP_SPEC);
       }
     }
-    /* Convert negative crop offsets into regular offsets */
-    if (info->crop_xoffset_set != JCROP_NEG)
-      xoffset = info->crop_xoffset;
-    else if (info->crop_width > info->output_width) /* crop extension */
-      xoffset = info->crop_width - info->output_width - info->crop_xoffset;
-    else
-      xoffset = info->output_width - info->crop_width - info->crop_xoffset;
-    if (info->crop_yoffset_set != JCROP_NEG)
-      yoffset = info->crop_yoffset;
-    else if (info->crop_height > info->output_height) /* crop extension */
-      yoffset = info->crop_height - info->output_height - info->crop_yoffset;
-    else
-      yoffset = info->output_height - info->crop_height - info->crop_yoffset;
+    /* Convert negative crop offsets into regular offsets.
+     * For most transforms, negative offsets mean "measure from right/bottom",
+     * and we convert them into non-negative absolute offsets in xoffset/yoffset.
+     * For JXFORM_ROLL, however, we want to accept negative values as signed
+     * displacements (negative => shift left/up).  We therefore compute
+     * signed_xoffset/signed_yoffset for the roll case and leave xoffset/yoffset
+     * for the other cases.
+     */
+    signed_xoffset = 0;
+    signed_yoffset = 0;
+    if (info->transform == JXFORM_ROLL) {
+      /* Interpret sign literally for roll: '-' => negative displacement */
+      signed_xoffset = (info->crop_xoffset_set == JCROP_NEG) ?
+        -((long) info->crop_xoffset) : (long) info->crop_xoffset;
+      signed_yoffset = (info->crop_yoffset_set == JCROP_NEG) ?
+        -((long) info->crop_yoffset) : (long) info->crop_yoffset;
+      /* Provide default values if unset (acts like +0) */
+      if (info->crop_xoffset_set == JCROP_UNSET) signed_xoffset = 0;
+      if (info->crop_yoffset_set == JCROP_UNSET) signed_yoffset = 0;
+      /* For non-roll code paths later, keep xoffset/yoffset usable by init code */
+      xoffset = (signed_xoffset >= 0) ? (JDIMENSION)signed_xoffset : (JDIMENSION)(-signed_xoffset);
+      yoffset = (signed_yoffset >= 0) ? (JDIMENSION)signed_yoffset : (JDIMENSION)(-signed_yoffset);
+    } else {
+      /* Existing crop semantics: negative offsets measure from right/bottom */
+      if (info->crop_xoffset_set != JCROP_NEG)
+        xoffset = info->crop_xoffset;
+      else if (info->crop_width > info->output_width) /* crop extension */
+        xoffset = info->crop_width - info->output_width - info->crop_xoffset;
+      else
+        xoffset = info->output_width - info->crop_width - info->crop_xoffset;
+      if (info->crop_yoffset_set != JCROP_NEG)
+        yoffset = info->crop_yoffset;
+      else if (info->crop_height > info->output_height) /* crop extension */
+        yoffset = info->crop_height - info->output_height - info->crop_yoffset;
+      else
+        yoffset = info->output_height - info->crop_height - info->crop_yoffset;
+    }
     /* Now adjust so that upper left corner falls at an iMCU boundary */
     switch (info->transform) {
     case JXFORM_DROP:
@@ -1748,6 +1838,20 @@ jtransform_request_workspace(j_decompress_ptr srcinfo,
         ((long)(info->crop_height + (yoffset % info->iMCU_sample_height)),
          (long)info->iMCU_sample_height);
       break;
+    case JXFORM_ROLL: {
+      /* Roll offsets are used as signed displacements (negative allowed).
+       * With -perfect, offsets MUST be MCU-aligned or we fail. Check using
+       * the absolute displacement.
+       */
+      long abs_x = (signed_xoffset < 0) ? -signed_xoffset : signed_xoffset;
+      long abs_y = (signed_yoffset < 0) ? -signed_yoffset : signed_yoffset;
+      if (info->perfect) {
+        if ((abs_x % info->iMCU_sample_width) != 0 ||
+            (abs_y % info->iMCU_sample_height) != 0)
+          return FALSE;
+      }
+      break;
+    }
     default:
       /* Ensure the effective crop region will cover the requested */
       if (info->crop_width_set == JCROP_FORCE ||
@@ -1763,9 +1867,31 @@ jtransform_request_workspace(j_decompress_ptr srcinfo,
         info->output_height =
           info->crop_height + (yoffset % info->iMCU_sample_height);
     }
-    /* Save x/y offsets measured in iMCUs */
-    info->x_crop_offset = xoffset / info->iMCU_sample_width;
-    info->y_crop_offset = yoffset / info->iMCU_sample_height;
+    /* Save x/y offsets measured in iMCUs.
+     * For roll, signed_xoffset/signed_yoffset represent pixel displacements
+     * that may be negative. Convert them to an equivalent non-negative
+     * pixel offset by wrapping around the output dimension, then store the
+     * iMCU-count. For other transforms, xoffset/yoffset are already
+     * non-negative pixel offsets.
+     */
+    if (info->transform == JXFORM_ROLL) {
+      long pixw = (long) info->output_width;
+      long pixh = (long) info->output_height;
+      long nx = 0, ny = 0;
+      if (pixw > 0) {
+        nx = signed_xoffset % pixw;
+        if (nx < 0) nx += pixw;
+      }
+      if (pixh > 0) {
+        ny = signed_yoffset % pixh;
+        if (ny < 0) ny += pixh;
+      }
+      info->x_crop_offset = (JDIMENSION)(nx / info->iMCU_sample_width);
+      info->y_crop_offset = (JDIMENSION)(ny / info->iMCU_sample_height);
+    } else {
+      info->x_crop_offset = xoffset / info->iMCU_sample_width;
+      info->y_crop_offset = yoffset / info->iMCU_sample_height;
+    }
   } else {
     info->x_crop_offset = 0;
     info->y_crop_offset = 0;
@@ -1838,7 +1964,11 @@ jtransform_request_workspace(j_decompress_ptr srcinfo,
     break;
   case JXFORM_DROP:
     break;
-  }
+  case JXFORM_ROLL:
+    /* Need workspace arrays having same dimensions as source image. */
+    need_workspace = TRUE;
+    break;
+}
 
   /* Allocate workspace if needed.
    * Note that we allocate arrays padded out to the next iMCU boundary,
@@ -2295,6 +2425,10 @@ jtransform_execute_transform(j_decompress_ptr srcinfo, j_compress_ptr dstinfo,
               src_coef_arrays, info->drop_ptr, info->drop_coef_arrays,
               info->drop_width, info->drop_height);
     break;
+  case JXFORM_ROLL:
+    do_roll(srcinfo, dstinfo, info->x_crop_offset, info->y_crop_offset,
+            src_coef_arrays, dst_coef_arrays);
+    break;
   }
 }
 
@@ -2339,6 +2473,7 @@ jtransform_perfect_transform(JDIMENSION image_width, JDIMENSION image_height,
     break;
   case JXFORM_TRANSVERSE:
   case JXFORM_ROT_180:
+  case JXFORM_ROLL:
     if (image_width % (JDIMENSION)MCU_width)
       result = FALSE;
     if (image_height % (JDIMENSION)MCU_height)
