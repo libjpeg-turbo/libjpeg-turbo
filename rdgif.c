@@ -5,7 +5,7 @@
  * Copyright (C) 1991-1997, Thomas G. Lane.
  * Modified 2019 by Guido Vollbeding.
  * libjpeg-turbo Modifications:
- * Copyright (C) 2021-2023, D. R. Commander.
+ * Copyright (C) 2021-2023, 2026, D. R. Commander.
  * For conditions of distribution and use, see the accompanying README.ijg
  * file.
  *
@@ -40,12 +40,6 @@
     (BITS_IN_JSAMPLE != 16 || defined(C_LOSSLESS_SUPPORTED))
 
 
-/* Macros to deal with unsigned chars as efficiently as compiler allows */
-
-typedef unsigned char U_CHAR;
-#define UCH(x)  ((int)(x))
-
-
 #define ReadOK(file, buffer, len) \
   (fread(buffer, 1, len, file) == ((size_t)(len)))
 
@@ -62,8 +56,8 @@ typedef unsigned char U_CHAR;
 /* Macros for extracting header data --- note we assume chars may be signed */
 
 #define LM_to_uint(array, offset) \
-  ((unsigned int)UCH(array[offset]) + \
-   (((unsigned int)UCH(array[offset + 1])) << 8))
+  ((unsigned int)(array[offset]) + \
+   (((unsigned int)array[offset + 1]) << 8))
 
 #define BitSet(byte, bit)       ((byte) & (bit))
 #define INTERLACE       0x40    /* mask for bit signifying interlaced image */
@@ -94,7 +88,7 @@ typedef struct {
   _JSAMPARRAY colormap;         /* GIF colormap (converted to my format) */
 
   /* State for GetCode and LZWReadByte */
-  U_CHAR code_buf[256 + 4];     /* current input data block */
+  unsigned char code_buf[256 + 4]; /* current input data block */
   int last_byte;                /* # of bytes in code_buf */
   int last_bit;                 /* # of bits in code_buf */
   int cur_bit;                  /* next bit index to read */
@@ -153,7 +147,7 @@ ReadByte(gif_source_ptr sinfo)
 
 
 LOCAL(int)
-GetDataBlock(gif_source_ptr sinfo, U_CHAR *buf)
+GetDataBlock(gif_source_ptr sinfo, unsigned char *buf)
 /* Read a GIF data block, which has a leading count byte */
 /* A zero-length block marks the end of a data block sequence */
 {
@@ -172,7 +166,7 @@ LOCAL(void)
 SkipDataBlocks(gif_source_ptr sinfo)
 /* Skip a series of data blocks, until a block terminator is found */
 {
-  U_CHAR buf[256];
+  unsigned char buf[256];
 
   while (GetDataBlock(sinfo, buf) > 0)
     /* skip */;
@@ -247,11 +241,11 @@ GetCode(gif_source_ptr sinfo)
 
   /* Form up next 24 bits in accum */
   offs = sinfo->cur_bit >> 3;   /* byte containing cur_bit */
-  accum = UCH(sinfo->code_buf[offs + 2]);
+  accum = sinfo->code_buf[offs + 2];
   accum <<= 8;
-  accum |= UCH(sinfo->code_buf[offs + 1]);
+  accum |= sinfo->code_buf[offs + 1];
   accum <<= 8;
-  accum |= UCH(sinfo->code_buf[offs]);
+  accum |= sinfo->code_buf[offs];
 
   /* Right-align cur_bit in accum, then mask off desired number of bits */
   accum >>= (sinfo->cur_bit & 7);
@@ -393,7 +387,7 @@ METHODDEF(void)
 start_input_gif(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
 {
   gif_source_ptr source = (gif_source_ptr)sinfo;
-  U_CHAR hdrbuf[10];            /* workspace for reading control blocks */
+  unsigned char hdrbuf[10];     /* workspace for reading control blocks */
   unsigned int width, height;   /* image dimensions */
   int colormaplen, aspectRatio;
   int c;
@@ -422,7 +416,7 @@ start_input_gif(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
       (unsigned long long)width * height > sinfo->max_pixels)
     ERREXIT1(cinfo, JERR_IMAGE_TOO_BIG, sinfo->max_pixels);
   /* we ignore the color resolution, sort flag, and background color index */
-  aspectRatio = UCH(hdrbuf[6]);
+  aspectRatio = hdrbuf[6];
   if (aspectRatio != 0 && aspectRatio != 49)
     TRACEMS(cinfo, 1, JTRC_GIF_NONSQUARE);
 
