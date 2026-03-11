@@ -5,7 +5,7 @@
  * Copyright (C) 1991-1997, Thomas G. Lane.
  * Modified 2009 by Bill Allombert, Guido Vollbeding.
  * libjpeg-turbo Modifications:
- * Copyright (C) 2015-2017, 2020-2024, D. R. Commander.
+ * Copyright (C) 2015-2017, 2020-2024, 2026, D. R. Commander.
  * For conditions of distribution and use, see the accompanying README.ijg
  * file.
  *
@@ -465,6 +465,8 @@ get_rgb_cmyk_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
 }
 
 
+#if BITS_IN_JSAMPLE == 8
+
 METHODDEF(JDIMENSION)
 get_raw_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
 /* This version is for reading raw-byte-format files with maxval = _MAXJSAMPLE.
@@ -478,6 +480,8 @@ get_raw_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
     ERREXIT(cinfo, JERR_INPUT_EOF);
   return 1;
 }
+
+#endif
 
 
 METHODDEF(JDIMENSION)
@@ -746,11 +750,13 @@ start_input_ppm(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
         source->pub.get_pixel_rows = get_word_gray_cmyk_row;
       else
         ERREXIT(cinfo, JERR_BAD_IN_COLORSPACE);
-    } else if (maxval == _MAXJSAMPLE && sizeof(_JSAMPLE) == sizeof(U_CHAR) &&
+#if BITS_IN_JSAMPLE == 8
+    } else if (maxval == _MAXJSAMPLE &&
                cinfo->in_color_space == JCS_GRAYSCALE) {
       source->pub.get_pixel_rows = get_raw_row;
       use_raw_buffer = TRUE;
       need_rescale = FALSE;
+#endif
     } else {
       if (cinfo->in_color_space == JCS_GRAYSCALE)
         source->pub.get_pixel_rows = get_scaled_gray_row;
@@ -774,7 +780,8 @@ start_input_ppm(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
         source->pub.get_pixel_rows = get_word_rgb_cmyk_row;
       else
         ERREXIT(cinfo, JERR_BAD_IN_COLORSPACE);
-    } else if (maxval == _MAXJSAMPLE && sizeof(_JSAMPLE) == sizeof(U_CHAR) &&
+#if BITS_IN_JSAMPLE == 8
+    } else if (maxval == _MAXJSAMPLE &&
 #if RGB_RED == 0 && RGB_GREEN == 1 && RGB_BLUE == 2 && RGB_PIXELSIZE == 3
                (cinfo->in_color_space == JCS_EXT_RGB ||
                 cinfo->in_color_space == JCS_RGB)) {
@@ -784,6 +791,7 @@ start_input_ppm(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
       source->pub.get_pixel_rows = get_raw_row;
       use_raw_buffer = TRUE;
       need_rescale = FALSE;
+#endif
     } else {
       if (IsExtRGB(cinfo->in_color_space))
         source->pub.get_pixel_rows = get_rgb_row;

@@ -79,6 +79,8 @@ typedef struct {
 typedef ppm_dest_struct *ppm_dest_ptr;
 
 
+#if BITS_IN_JSAMPLE == 8
+
 /*
  * Write some pixel data.
  * In this module rows_supplied will always be 1.
@@ -95,6 +97,8 @@ put_pixel_rows(j_decompress_ptr cinfo, djpeg_dest_ptr dinfo,
 
   fwrite(dest->iobuffer, 1, dest->buffer_width, dest->pub.output_file);
 }
+
+#endif
 
 
 /*
@@ -322,13 +326,15 @@ _jinit_write_ppm(j_decompress_ptr cinfo)
   dest->iobuffer = (char *)(*cinfo->mem->alloc_small)
     ((j_common_ptr)cinfo, JPOOL_IMAGE, dest->buffer_width);
 
-  if (cinfo->quantize_colors || BITS_IN_JSAMPLE != 8 ||
-      sizeof(_JSAMPLE) != sizeof(char) ||
+#if BITS_IN_JSAMPLE == 8
+  if (cinfo->quantize_colors ||
       (cinfo->out_color_space != JCS_EXT_RGB &&
 #if RGB_RED == 0 && RGB_GREEN == 1 && RGB_BLUE == 2 && RGB_PIXELSIZE == 3
        cinfo->out_color_space != JCS_RGB &&
 #endif
-       cinfo->out_color_space != JCS_GRAYSCALE)) {
+       cinfo->out_color_space != JCS_GRAYSCALE))
+#endif
+  {
     /* When quantizing, we need an output buffer for colormap indexes
      * that's separate from the physical I/O buffer.  We also need a
      * separate buffer if pixel format translation must take place.
@@ -348,7 +354,9 @@ _jinit_write_ppm(j_decompress_ptr cinfo)
       dest->pub.put_pixel_rows = put_demapped_gray;
     else
       dest->pub.put_pixel_rows = put_demapped_rgb;
-  } else {
+  }
+#if BITS_IN_JSAMPLE == 8
+  else {
     /* We will fwrite() directly from decompressor output buffer. */
     /* Synthesize a _JSAMPARRAY pointer structure */
     dest->pixrow = (_JSAMPROW)dest->iobuffer;
@@ -356,6 +364,7 @@ _jinit_write_ppm(j_decompress_ptr cinfo)
     dest->pub.buffer_height = 1;
     dest->pub.put_pixel_rows = put_pixel_rows;
   }
+#endif
 
   return (djpeg_dest_ptr)dest;
 }
