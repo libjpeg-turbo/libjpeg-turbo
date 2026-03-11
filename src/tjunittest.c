@@ -479,7 +479,7 @@ static void compTest(tjhandle handle, unsigned char **dstBuf, size_t *dstSize,
     TRY_TJ(handle, tj3CompressFromYUV8(handle, yuvBuf, w, yuvAlign, h, dstBuf,
                                        dstSize));
     MD5Init(&md5ctx);
-    MD5Update(&md5ctx, *dstBuf, *dstSize);
+    MD5Update(&md5ctx, *dstBuf, (unsigned int)(*dstSize));
     md5ref = MD5End(&md5ctx, md5refbuf);
 
     /* Verify that tj3CompressFromYUVPlanes8() produces the same results. */
@@ -490,7 +490,7 @@ static void compTest(tjhandle handle, unsigned char **dstBuf, size_t *dstSize,
                                              w, yuvStrides, h, dstBuf,
                                              dstSize));
     MD5Init(&md5ctx);
-    MD5Update(&md5ctx, *dstBuf, *dstSize);
+    MD5Update(&md5ctx, *dstBuf, (unsigned int)(*dstSize));
     md5sum = MD5End(&md5ctx, md5buf);
     if (strcasecmp(md5sum, md5ref))
       THROW_MD5("JPEG image", md5sum, md5ref);
