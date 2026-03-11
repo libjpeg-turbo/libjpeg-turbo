@@ -704,7 +704,7 @@ static int decompTest(char *fileName)
     THROW_TJ();
 
   lossless = tj3Get(handle, TJPARAM_LOSSLESS);
-  sampleSize = (precision <= 8 ? sizeof(unsigned char) : sizeof(short));
+  sampleSize = (precision <= 8 ? 1 : 2);
   cs = tj3Get(handle, TJPARAM_COLORSPACE);
   if (w < 1 || h < 1)
     THROW("reading JPEG header", "Invalid image dimensions");
@@ -1328,7 +1328,7 @@ int main(int argc, char *argv[])
     printf("ERROR: -lossless and -yuv are incompatible\n");
     retval = -1;  goto bailout;
   }
-  sampleSize = (precision <= 8 ? sizeof(unsigned char) : sizeof(short));
+  sampleSize = (precision <= 8 ? 1 : 2);
 
   if ((sf.num != 1 || sf.denom != 1) && doTile) {
     printf("Disabling tiled compression/decompression tests, because those tests do not\n");
