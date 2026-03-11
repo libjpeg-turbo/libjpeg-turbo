@@ -975,7 +975,8 @@ endif()
 #       is being used for floating point math (which is generally the default
 #       with x86 compilers)
 # msvc = validate against the expected results from the C code when compiled
-#        with a 32-bit version of Visual C++
+#        with a 32-bit version of Visual C++ and /arch:IA32 (which was the
+#        default in Visual C++ 2010 and earlier)
 
 if(CPU_TYPE STREQUAL "x86_64" OR CPU_TYPE STREQUAL "i386")
   if(WITH_SIMD)
@@ -1013,7 +1014,7 @@ if(DEFINED WITH_SIMD_INT AND NOT WITH_SIMD EQUAL WITH_SIMD_INT)
 endif()
 set(WITH_SIMD_INT ${WITH_SIMD} CACHE INTERNAL "")
 set(FLOATTEST8 ${DEFAULT_FLOATTEST8} CACHE STRING
-  "The type of floating point math used by the 8-bit-per-sample floating point DCT/IDCT algorithms.  This tells the testing system which numerical results it should expect from those tests.  [sse = libjpeg-turbo x86/x86-64 SIMD extensions, no-fp-contract = generic FPU with floating point expression contraction disabled, fp-contract = generic FPU with floating point expression contraction enabled, 387 = 387 FPU, msvc = 32-bit Visual Studio] (default = ${DEFAULT_FLOATTEST8})"
+  "The type of floating point math used by the 8-bit-per-sample floating point DCT/IDCT algorithms.  This tells the testing system which numerical results it should expect from those tests.  [sse = libjpeg-turbo x86/x86-64 SIMD extensions, no-fp-contract = generic FPU with floating point expression contraction disabled, fp-contract = generic FPU with floating point expression contraction enabled, 387 = 387 FPU, msvc = 32-bit Visual Studio + 387 FPU] (default = ${DEFAULT_FLOATTEST8})"
   ${FORCE_FLOATTEST8})
 message(STATUS "FLOATTEST8 = ${FLOATTEST8}")
 
@@ -1055,7 +1056,7 @@ elseif(CPU_TYPE STREQUAL "powerpc" OR CPU_TYPE STREQUAL "arm64")
 endif()
 
 set(FLOATTEST12 ${DEFAULT_FLOATTEST12} CACHE STRING
-  "The type of floating point math used by the 12-bit-per-sample floating point DCT/IDCT algorithms.  This tells the testing system which numerical results it should expect from those tests.  [sse = libjpeg-turbo x86/x86-64 SIMD extensions, no-fp-contract = generic FPU with floating point expression contraction disabled, fp-contract = generic FPU with floating point expression contraction enabled, 387 = 387 FPU, msvc = 32-bit Visual Studio] (default = ${DEFAULT_FLOATTEST12})")
+  "The type of floating point math used by the 12-bit-per-sample floating point DCT/IDCT algorithms.  This tells the testing system which numerical results it should expect from those tests.  [sse = libjpeg-turbo x86/x86-64 SIMD extensions, no-fp-contract = generic FPU with floating point expression contraction disabled, fp-contract = generic FPU with floating point expression contraction enabled, 387 = 387 FPU, msvc = 32-bit Visual Studio + 387 FPU] (default = ${DEFAULT_FLOATTEST12})")
 message(STATUS "FLOATTEST12 = ${FLOATTEST12}")
 
 if(FLOATTEST12)
@@ -1285,10 +1286,9 @@ foreach(libtype ${TEST_LIBTYPES})
       set(MD5_JPEG_3x2_FLOAT_PROG_SSE a8c17daf77b457725ec929e215b603f8)
       set(MD5_PPM_3x2_FLOAT_SSE 42876ab9e5c2f76a87d08db5fbd57956)
       set(MD5_JPEG_3x2_FLOAT_PROG_NO_FP_CONTRACT
-        a8c17daf77b457725ec929e215b603f8)
+        ${MD5_JPEG_3x2_FLOAT_PROG_SSE})
       set(MD5_PPM_3x2_FLOAT_NO_FP_CONTRACT ${MD5_PPM_3x2_FLOAT_SSE})
-      set(MD5_JPEG_3x2_FLOAT_PROG_FP_CONTRACT
-        ${MD5_JPEG_3x2_FLOAT_PROG_NO_FP_CONTRACT})
+      set(MD5_JPEG_3x2_FLOAT_PROG_FP_CONTRACT ${MD5_JPEG_3x2_FLOAT_PROG_SSE})
       if(CMAKE_C_COMPILER_ID MATCHES "Clang")
         set(MD5_PPM_3x2_FLOAT_FP_CONTRACT 2da9de6ae869e88b8372de815d366b03)
       else()
