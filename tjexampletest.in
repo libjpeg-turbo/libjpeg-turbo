@@ -46,7 +46,7 @@ while [ $# -gt 0 ]; do
 	shift
 done
 
-exec >$EXEDIR/tjexampletest$JAVAARG.log
+exec >$EXEDIR/tjexampletest$JAVAARG.log 2>&1
 
 for image in $IMAGES; do
 
