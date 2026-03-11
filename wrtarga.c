@@ -248,7 +248,7 @@ jinit_write_targa(j_decompress_ptr cinfo)
   dest->pub.calc_buffer_dimensions(cinfo, (djpeg_dest_ptr)dest);
   dest->iobuffer = (char *)
     (*cinfo->mem->alloc_small) ((j_common_ptr)cinfo, JPOOL_IMAGE,
-                                (size_t)(dest->buffer_width * sizeof(char)));
+                                (size_t)dest->buffer_width);
 
   /* Create decompressor output buffer. */
   dest->pub.buffer = (*cinfo->mem->alloc_sarray)

@@ -1234,7 +1234,7 @@ int main(int argc, char *argv[])
     THROW("YUV encoding/decoding requires 8-bit data precision.");
 
   printf("Testing %d-bit precision\n", precision);
-  sampleSize = (precision == 8 ? sizeof(unsigned char) : sizeof(short));
+  sampleSize = (precision == 8 ? 1 : 2);
   maxSample = (1 << precision) - 1;
   tolerance = (lossless ? 0 : (precision > 8 ? 2 : 1));
   redToY = (19595U * maxSample) >> 16;

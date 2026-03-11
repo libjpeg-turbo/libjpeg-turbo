@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2012, 2014-2015, 2017, 2019, 2021-2025
+ * Copyright (C) 2011-2012, 2014-2015, 2017, 2019, 2021-2026
  *           D. R. Commander.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -345,7 +345,7 @@ int main(int argc, char **argv)
       THROW("allocating uncompressed image buffer", "Image is too large");
 #endif
     if ((imgBuf =
-         (unsigned char *)malloc(sizeof(unsigned char) * width * height *
+         (unsigned char *)malloc(width * height *
                                  tjPixelSize[pixelFormat])) == NULL)
       THROW_UNIX("allocating uncompressed image buffer");
 

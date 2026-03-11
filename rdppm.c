@@ -806,13 +806,9 @@ start_input_ppm(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
   /* Allocate space for I/O buffer: 1 or 3 bytes or words/pixel. */
   if (need_iobuffer) {
     if (c == '6')
-      source->buffer_width = (size_t)w * 3 *
-        ((maxval <= 255) ? sizeof(unsigned char) :
-                           (2 * sizeof(unsigned char)));
+      source->buffer_width = (size_t)w * 3 * (maxval <= 255 ? 1 : 2);
     else
-      source->buffer_width = (size_t)w *
-        ((maxval <= 255) ? sizeof(unsigned char) :
-                           (2 * sizeof(unsigned char)));
+      source->buffer_width = (size_t)w * (maxval <= 255 ? 1 : 2);
     source->iobuffer = (unsigned char *)
       (*cinfo->mem->alloc_small) ((j_common_ptr)cinfo, JPOOL_IMAGE,
                                   source->buffer_width);
