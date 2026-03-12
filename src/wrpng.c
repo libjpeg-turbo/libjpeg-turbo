@@ -48,6 +48,7 @@ typedef struct {
   struct djpeg_dest_struct pub; /* public fields */
 
   spng_ctx *ctx;
+  struct spng_iccp iccp;
 
   /* Usually these two pointers point to the same place: */
   PNGSAMPLE *iobuffer;          /* libspng's I/O buffer */
@@ -256,8 +257,8 @@ put_demapped_gray(j_decompress_ptr cinfo, djpeg_dest_ptr dinfo,
 /*
  * Embed an ICC profile in the PNG image.
  *
- * NOTE: The pointer passed to this function will be freed by spng_ctx_free()
- * in the body of finish_output_png().
+ * NOTE: The pointer passed to this function will be freed in the body of
+ * finish_output_png().
  */
 
 METHODDEF(void)
@@ -265,15 +266,14 @@ write_icc_profile_png(j_decompress_ptr cinfo, djpeg_dest_ptr dinfo,
                       const JOCTET *icc_data_ptr, unsigned int icc_data_len)
 {
   png_dest_ptr dest = (png_dest_ptr)dinfo;
-  struct spng_iccp iccp;
 
   if (!icc_data_ptr || !icc_data_len)
     ERREXIT(cinfo, JERR_INPUT_EMPTY);
 
-  SNPRINTF(iccp.profile_name, 80, "ICC Profile");
-  iccp.profile_len = icc_data_len;
-  iccp.profile = (char *)icc_data_ptr;
-  TRY_SPNG(spng_set_iccp(dest->ctx, &iccp));
+  SNPRINTF(dest->iccp.profile_name, 80, "ICC Profile");
+  dest->iccp.profile_len = icc_data_len;
+  dest->iccp.profile = (char *)icc_data_ptr;
+  TRY_SPNG(spng_set_iccp(dest->ctx, &dest->iccp));
 }
 
 
@@ -337,6 +337,7 @@ finish_output_png(j_decompress_ptr cinfo, djpeg_dest_ptr dinfo)
 
   if (dest->ctx) {
     spng_encode_chunks(dest->ctx);
+    free(dest->iccp.profile);
     spng_ctx_free(dest->ctx);
   }
 
@@ -390,6 +391,7 @@ _jinit_write_png(j_decompress_ptr cinfo)
   dest->pub.write_icc_profile = write_icc_profile_png;
   dest->pub.finish_output = finish_output_png;
   dest->pub.calc_buffer_dimensions = calc_buffer_dimensions_png;
+  memset(&dest->iccp, 0, sizeof(struct spng_iccp));
 
   /* Calculate output image dimensions so we can allocate space */
   jpeg_calc_output_dimensions(cinfo);
