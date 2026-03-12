@@ -1119,6 +1119,14 @@ EXTERN(void) jpeg_core_output_dimensions(j_decompress_ptr cinfo);
 #endif
 EXTERN(void) jpeg_calc_output_dimensions(j_decompress_ptr cinfo);
 
+/* Set an optional upper bound on the total number of pixels in the image.
+ * When non-zero, this is enforced during initial header setup and causes
+ * the decompressor to abort with JERR_IMAGE_TOO_BIG if the image dimensions
+ * would exceed the limit.  This is intended as a generic defense-in-depth
+ * mechanism against decompression bombs.
+ */
+EXTERN(void) jpeg_set_max_pixels(j_decompress_ptr cinfo, size_t max_pixels);
+
 /* Control saving of COM and APPn markers into marker_list. */
 EXTERN(void) jpeg_save_markers(j_decompress_ptr cinfo, int marker_code,
                                unsigned int length_limit);

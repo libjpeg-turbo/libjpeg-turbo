@@ -123,6 +123,36 @@ jpeg_abort_decompress(j_decompress_ptr cinfo)
 
 
 /*
+ * Set an optional upper bound on the total number of pixels in the image.
+ *
+ * This is intended as a generic defense-in-depth mechanism against
+ * decompression bombs and integer overflows in size calculations.  When
+ * non-zero, the limit is enforced during initial header setup, after the
+ * SOF marker has been processed and the image dimensions are known.
+ *
+ * This function may be called any time after jpeg_CreateDecompress() and
+ * before or after jpeg_read_header().  The limit applies to the next image
+ * that is decoded with the given decompression object.
+ */
+
+GLOBAL(void)
+jpeg_set_max_pixels(j_decompress_ptr cinfo, size_t max_pixels)
+{
+  my_master_ptr master;
+
+  /* Check for valid jpeg object */
+  if (!cinfo->is_decompressor)
+    ERREXIT1(cinfo, JERR_BAD_STATE, cinfo->global_state);
+
+  if (cinfo->master == NULL)
+    ERREXIT1(cinfo, JERR_BAD_STATE, cinfo->global_state);
+
+  master = (my_master_ptr)cinfo->master;
+  master->max_pixels = max_pixels;
+}
+
+
+/*
  * Set default decompression parameters.
  */
 

@@ -22,6 +22,7 @@
 #include "jinclude.h"
 #include "jpeglib.h"
 #include "jpegapicomp.h"
+#include "jdmaster.h"
 
 
 /* Private state */
@@ -47,6 +48,7 @@ LOCAL(void)
 initial_setup(j_decompress_ptr cinfo)
 /* Called once, when first SOS marker is reached */
 {
+  my_master_ptr master = (my_master_ptr)cinfo->master;
   int ci;
   jpeg_component_info *compptr;
   int data_unit = cinfo->master->lossless ? 1 : DCTSIZE;
@@ -55,6 +57,17 @@ initial_setup(j_decompress_ptr cinfo)
   if ((long)cinfo->image_height > (long)JPEG_MAX_DIMENSION ||
       (long)cinfo->image_width > (long)JPEG_MAX_DIMENSION)
     ERREXIT1(cinfo, JERR_IMAGE_TOO_BIG, (unsigned int)JPEG_MAX_DIMENSION);
+
+  /* Enforce optional caller-provided upper bound on total pixels.
+   * This provides a generic, opt-in defense-in-depth mechanism against
+   * decompression bombs and excessively large images, independent of any
+   * particular application-level size checks.
+   */
+  if (master && master->max_pixels) {
+    if ((unsigned long long)cinfo->image_width * cinfo->image_height >
+        (unsigned long long)master->max_pixels)
+      ERREXIT(cinfo, JERR_IMAGE_TOO_BIG);
+  }
 
   /* Lossy JPEG images must have 8 or 12 bits per sample.  Lossless JPEG images
    * can have 2 to 16 bits per sample.

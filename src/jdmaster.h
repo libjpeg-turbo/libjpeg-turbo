@@ -23,6 +23,13 @@ typedef struct {
    */
   struct jpeg_color_quantizer *quantizer_1pass;
   struct jpeg_color_quantizer *quantizer_2pass;
+
+  /* Optional per-image upper bound on the number of pixels.
+   * When non-zero, this is enforced during initial header setup in order to
+   * provide a generic defense-in-depth mechanism against decompression bombs
+   * and integer overflows in buffer size calculations.
+   */
+  size_t max_pixels;
 } my_decomp_master;
 
 typedef my_decomp_master *my_master_ptr;
