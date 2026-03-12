@@ -5,7 +5,7 @@
  * Copyright (C) 1991-1996, Thomas G. Lane.
  * Modified 2017 by Guido Vollbeding.
  * libjpeg-turbo Modifications:
- * Copyright (C) 2018, 2021-2023, D. R. Commander.
+ * Copyright (C) 2018, 2021-2023, 2026, D. R. Commander.
  * For conditions of distribution and use, see the accompanying README.ijg
  * file.
  *
@@ -24,12 +24,6 @@
 #include "cdjpeg.h"             /* Common decls for cjpeg/djpeg applications */
 
 #ifdef TARGA_SUPPORTED
-
-
-/* Macros to deal with unsigned chars as efficiently as compiler allows */
-
-typedef unsigned char U_CHAR;
-#define UCH(x)  ((int)(x))
 
 
 #define ReadOK(file, buffer, len) \
@@ -53,8 +47,11 @@ typedef struct _tga_source_struct {
   /* Pointer to routine to extract next Targa pixel from input file */
   void (*read_pixel) (tga_source_ptr sinfo);
 
-  /* Result of read_pixel is delivered here: */
-  U_CHAR tga_pixel[4];
+  /* Result of read_pixel is delivered here:
+   * The array length is 6 rather than 4 to work around a -Wstringop-overflow
+   * false positive with GCC 14 and later.
+   */
+  unsigned char tga_pixel[6];
 
   int pixel_size;               /* Bytes per Targa pixel (1 to 4) */
   int cmap_length;              /* colormap length */
@@ -121,7 +118,7 @@ read_non_rle_pixel(tga_source_ptr sinfo)
   register int i;
 
   for (i = 0; i < sinfo->pixel_size; i++) {
-    sinfo->tga_pixel[i] = (U_CHAR)read_byte(sinfo);
+    sinfo->tga_pixel[i] = (unsigned char)read_byte(sinfo);
   }
 }
 
@@ -151,7 +148,7 @@ read_rle_pixel(tga_source_ptr sinfo)
 
   /* Read next pixel */
   for (i = 0; i < sinfo->pixel_size; i++) {
-    sinfo->tga_pixel[i] = (U_CHAR)read_byte(sinfo);
+    sinfo->tga_pixel[i] = (unsigned char)read_byte(sinfo);
   }
 }
 
@@ -174,7 +171,7 @@ get_8bit_gray_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
   ptr = source->pub.buffer[0];
   for (col = cinfo->image_width; col > 0; col--) {
     (*source->read_pixel) (source); /* Load next pixel into tga_pixel */
-    *ptr++ = (JSAMPLE)UCH(source->tga_pixel[0]);
+    *ptr++ = (JSAMPLE)source->tga_pixel[0];
   }
   return 1;
 }
@@ -193,7 +190,7 @@ get_8bit_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
   ptr = source->pub.buffer[0];
   for (col = cinfo->image_width; col > 0; col--) {
     (*source->read_pixel) (source); /* Load next pixel into tga_pixel */
-    t = UCH(source->tga_pixel[0]);
+    t = source->tga_pixel[0];
     if (t >= cmaplen)
       ERREXIT(cinfo, JERR_TGA_BADPARMS);
     *ptr++ = colormap[0][t];
@@ -215,8 +212,8 @@ get_16bit_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
   ptr = source->pub.buffer[0];
   for (col = cinfo->image_width; col > 0; col--) {
     (*source->read_pixel) (source); /* Load next pixel into tga_pixel */
-    t = UCH(source->tga_pixel[0]);
-    t += UCH(source->tga_pixel[1]) << 8;
+    t = source->tga_pixel[0];
+    t += source->tga_pixel[1] << 8;
     /* We expand 5 bit data to 8 bit sample width.
      * The format of the 16-bit (LSB first) input word is
      *     xRRRRRGGGGGBBBBB
@@ -242,9 +239,9 @@ get_24bit_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
   ptr = source->pub.buffer[0];
   for (col = cinfo->image_width; col > 0; col--) {
     (*source->read_pixel) (source); /* Load next pixel into tga_pixel */
-    *ptr++ = (JSAMPLE)UCH(source->tga_pixel[2]); /* change BGR to RGB order */
-    *ptr++ = (JSAMPLE)UCH(source->tga_pixel[1]);
-    *ptr++ = (JSAMPLE)UCH(source->tga_pixel[0]);
+    *ptr++ = (JSAMPLE)source->tga_pixel[2]; /* change BGR to RGB order */
+    *ptr++ = (JSAMPLE)source->tga_pixel[1];
+    *ptr++ = (JSAMPLE)source->tga_pixel[0];
   }
   return 1;
 }
@@ -329,14 +326,14 @@ METHODDEF(void)
 start_input_tga(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
 {
   tga_source_ptr source = (tga_source_ptr)sinfo;
-  U_CHAR targaheader[18];
+  unsigned char targaheader[18];
   int idlen, cmaptype, subtype, flags, interlace_type, components;
   unsigned int width, height, maplen;
   boolean is_bottom_up;
 
 #define GET_2B(offset) \
-  ((unsigned int)UCH(targaheader[offset]) + \
-   (((unsigned int)UCH(targaheader[offset + 1])) << 8))
+  ((unsigned int)(targaheader[offset]) + \
+   (((unsigned int)targaheader[offset + 1]) << 8))
 
   if (!ReadOK(source->pub.input_file, targaheader, 18))
     ERREXIT(cinfo, JERR_INPUT_EOF);
@@ -345,21 +342,21 @@ start_input_tga(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
   if (targaheader[16] == 15)
     targaheader[16] = 16;
 
-  idlen = UCH(targaheader[0]);
-  cmaptype = UCH(targaheader[1]);
-  subtype = UCH(targaheader[2]);
+  idlen = targaheader[0];
+  cmaptype = targaheader[1];
+  subtype = targaheader[2];
   maplen = GET_2B(5);
   width = GET_2B(12);
   height = GET_2B(14);
-  source->pixel_size = UCH(targaheader[16]) >> 3;
-  flags = UCH(targaheader[17]); /* Image Descriptor byte */
+  source->pixel_size = targaheader[16] >> 3;
+  flags = targaheader[17];      /* Image Descriptor byte */
 
   is_bottom_up = ((flags & 0x20) == 0); /* bit 5 set => top-down */
   interlace_type = flags >> 6;  /* bits 6/7 are interlace code */
 
   if (cmaptype > 1 ||           /* cmaptype must be 0 or 1 */
       source->pixel_size < 1 || source->pixel_size > 4 ||
-      (UCH(targaheader[16]) & 7) != 0 || /* bits/pixel must be multiple of 8 */
+      (targaheader[16] & 7) != 0 || /* bits/pixel must be multiple of 8 */
       interlace_type != 0 ||      /* currently don't allow interlaced image */
       width == 0 || height == 0)  /* image width/height must be non-zero */
     ERREXIT(cinfo, JERR_TGA_BADPARMS);
@@ -453,7 +450,7 @@ start_input_tga(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
       ((j_common_ptr)cinfo, JPOOL_IMAGE, (JDIMENSION)maplen, (JDIMENSION)3);
     source->cmap_length = (int)maplen;
     /* and read it from the file */
-    read_colormap(source, (int)maplen, UCH(targaheader[7]));
+    read_colormap(source, (int)maplen, targaheader[7]);
   } else {
     if (cmaptype)               /* but you promised a cmap! */
       ERREXIT(cinfo, JERR_TGA_BADPARMS);

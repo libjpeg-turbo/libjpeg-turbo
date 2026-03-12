@@ -5,7 +5,7 @@
  * Copyright (C) 1991-1997, Thomas G. Lane.
  * Modified 2009 by Bill Allombert, Guido Vollbeding.
  * libjpeg-turbo Modifications:
- * Copyright (C) 2015-2017, 2020-2025, D. R. Commander.
+ * Copyright (C) 2015-2017, 2020-2026, D. R. Commander.
  * For conditions of distribution and use, see the accompanying README.ijg
  * file.
  *
@@ -42,12 +42,6 @@
 */
 
 
-/* Macros to deal with unsigned chars as efficiently as compiler allows */
-
-typedef unsigned char U_CHAR;
-#define UCH(x)  ((int)(x))
-
-
 #define ReadOK(file, buffer, len) \
   (fread(buffer, 1, len, file) == ((size_t)(len)))
 
@@ -62,7 +56,7 @@ typedef struct {
   struct cjpeg_source_struct pub; /* public fields */
 
   /* Usually these two pointers point to the same place: */
-  U_CHAR *iobuffer;             /* fread's I/O buffer */
+  unsigned char *iobuffer;      /* fread's I/O buffer */
   _JSAMPROW pixrow;             /* compressor input buffer */
   size_t buffer_width;          /* width of I/O buffer */
   _JSAMPLE *rescale;            /* => maxval-remapping array, or NULL */
@@ -311,7 +305,7 @@ get_scaled_gray_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
 {
   ppm_source_ptr source = (ppm_source_ptr)sinfo;
   register _JSAMPROW ptr;
-  register U_CHAR *bufferptr;
+  register unsigned char *bufferptr;
   register _JSAMPLE *rescale = source->rescale;
   JDIMENSION col;
 
@@ -320,7 +314,7 @@ get_scaled_gray_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
   ptr = source->pub._buffer[0];
   bufferptr = source->iobuffer;
   for (col = cinfo->image_width; col > 0; col--) {
-    *ptr++ = rescale[UCH(*bufferptr++)];
+    *ptr++ = rescale[*bufferptr++];
   }
   return 1;
 }
@@ -333,7 +327,7 @@ get_gray_rgb_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
 {
   ppm_source_ptr source = (ppm_source_ptr)sinfo;
   register _JSAMPROW ptr;
-  register U_CHAR *bufferptr;
+  register unsigned char *bufferptr;
   register _JSAMPLE *rescale = source->rescale;
   JDIMENSION col;
   unsigned int maxval = source->maxval;
@@ -354,10 +348,10 @@ get_gray_rgb_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
       GRAY_RGB_READ_LOOP(*bufferptr++, {})
   } else {
     if (aindex >= 0)
-      GRAY_RGB_READ_LOOP(rescale[UCH(*bufferptr++)],
+      GRAY_RGB_READ_LOOP(rescale[*bufferptr++],
                          ptr[aindex] = (1 << cinfo->data_precision) - 1;)
     else
-      GRAY_RGB_READ_LOOP(rescale[UCH(*bufferptr++)], {})
+      GRAY_RGB_READ_LOOP(rescale[*bufferptr++], {})
   }
   return 1;
 }
@@ -370,7 +364,7 @@ get_gray_cmyk_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
 {
   ppm_source_ptr source = (ppm_source_ptr)sinfo;
   register _JSAMPROW ptr;
-  register U_CHAR *bufferptr;
+  register unsigned char *bufferptr;
   register _JSAMPLE *rescale = source->rescale;
   JDIMENSION col;
   unsigned int maxval = source->maxval;
@@ -387,7 +381,7 @@ get_gray_cmyk_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
     }
   } else {
     for (col = cinfo->image_width; col > 0; col--) {
-      _JSAMPLE gray = rescale[UCH(*bufferptr++)];
+      _JSAMPLE gray = rescale[*bufferptr++];
       rgb_to_cmyk((1 << cinfo->data_precision) - 1, gray, gray, gray, ptr,
                   ptr + 1, ptr + 2, ptr + 3);
       ptr += 4;
@@ -403,7 +397,7 @@ get_rgb_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
 {
   ppm_source_ptr source = (ppm_source_ptr)sinfo;
   register _JSAMPROW ptr;
-  register U_CHAR *bufferptr;
+  register unsigned char *bufferptr;
   register _JSAMPLE *rescale = source->rescale;
   JDIMENSION col;
   unsigned int maxval = source->maxval;
@@ -424,10 +418,10 @@ get_rgb_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
       RGB_READ_LOOP(*bufferptr++, {})
   } else {
     if (aindex >= 0)
-      RGB_READ_LOOP(rescale[UCH(*bufferptr++)],
+      RGB_READ_LOOP(rescale[*bufferptr++],
                     ptr[aindex] = (1 << cinfo->data_precision) - 1;)
     else
-      RGB_READ_LOOP(rescale[UCH(*bufferptr++)], {})
+      RGB_READ_LOOP(rescale[*bufferptr++], {})
   }
   return 1;
 }
@@ -440,7 +434,7 @@ get_rgb_cmyk_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
 {
   ppm_source_ptr source = (ppm_source_ptr)sinfo;
   register _JSAMPROW ptr;
-  register U_CHAR *bufferptr;
+  register unsigned char *bufferptr;
   register _JSAMPLE *rescale = source->rescale;
   JDIMENSION col;
   unsigned int maxval = source->maxval;
@@ -459,9 +453,9 @@ get_rgb_cmyk_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
     }
   } else {
     for (col = cinfo->image_width; col > 0; col--) {
-      _JSAMPLE r = rescale[UCH(*bufferptr++)];
-      _JSAMPLE g = rescale[UCH(*bufferptr++)];
-      _JSAMPLE b = rescale[UCH(*bufferptr++)];
+      _JSAMPLE r = rescale[*bufferptr++];
+      _JSAMPLE g = rescale[*bufferptr++];
+      _JSAMPLE b = rescale[*bufferptr++];
       rgb_to_cmyk((1 << cinfo->data_precision) - 1, r, g, b, ptr, ptr + 1,
                   ptr + 2, ptr + 3);
       ptr += 4;
@@ -470,6 +464,8 @@ get_rgb_cmyk_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
   return 1;
 }
 
+
+#if BITS_IN_JSAMPLE == 8
 
 METHODDEF(JDIMENSION)
 get_raw_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
@@ -486,6 +482,8 @@ get_raw_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
   return 1;
 }
 
+#endif
+
 
 METHODDEF(JDIMENSION)
 get_word_gray_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
@@ -493,7 +491,7 @@ get_word_gray_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
 {
   ppm_source_ptr source = (ppm_source_ptr)sinfo;
   register _JSAMPROW ptr;
-  register U_CHAR *bufferptr;
+  register unsigned char *bufferptr;
   register _JSAMPLE *rescale = source->rescale;
   JDIMENSION col;
   unsigned int maxval = source->maxval;
@@ -504,8 +502,8 @@ get_word_gray_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
   bufferptr = source->iobuffer;
   for (col = cinfo->image_width; col > 0; col--) {
     register unsigned int temp;
-    temp  = UCH(*bufferptr++) << 8;
-    temp |= UCH(*bufferptr++);
+    temp  = (*bufferptr++) << 8;
+    temp |= (*bufferptr++);
     if (temp > maxval)
       ERREXIT(cinfo, JERR_PPM_OUTOFRANGE);
     *ptr++ = rescale[temp];
@@ -520,7 +518,7 @@ get_word_gray_rgb_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
 {
   ppm_source_ptr source = (ppm_source_ptr)sinfo;
   register _JSAMPROW ptr;
-  register U_CHAR *bufferptr;
+  register unsigned char *bufferptr;
   register _JSAMPLE *rescale = source->rescale;
   JDIMENSION col;
   unsigned int maxval = source->maxval;
@@ -536,8 +534,8 @@ get_word_gray_rgb_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
   bufferptr = source->iobuffer;
   for (col = cinfo->image_width; col > 0; col--) {
     register unsigned int temp;
-    temp  = UCH(*bufferptr++) << 8;
-    temp |= UCH(*bufferptr++);
+    temp  = (*bufferptr++) << 8;
+    temp |= (*bufferptr++);
     if (temp > maxval)
       ERREXIT(cinfo, JERR_PPM_OUTOFRANGE);
     ptr[rindex] = ptr[gindex] = ptr[bindex] = rescale[temp];
@@ -555,7 +553,7 @@ get_word_gray_cmyk_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
 {
   ppm_source_ptr source = (ppm_source_ptr)sinfo;
   register _JSAMPROW ptr;
-  register U_CHAR *bufferptr;
+  register unsigned char *bufferptr;
   register _JSAMPLE *rescale = source->rescale;
   JDIMENSION col;
   unsigned int maxval = source->maxval;
@@ -567,8 +565,8 @@ get_word_gray_cmyk_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
   if (maxval == (1U << cinfo->data_precision) - 1U) {
     for (col = cinfo->image_width; col > 0; col--) {
       register unsigned int gray;
-      gray  = UCH(*bufferptr++) << 8;
-      gray |= UCH(*bufferptr++);
+      gray  = (*bufferptr++) << 8;
+      gray |= (*bufferptr++);
       if (gray > maxval)
         ERREXIT(cinfo, JERR_PPM_OUTOFRANGE);
       rgb_to_cmyk(maxval, (_JSAMPLE)gray, (_JSAMPLE)gray, (_JSAMPLE)gray, ptr,
@@ -579,8 +577,8 @@ get_word_gray_cmyk_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
     for (col = cinfo->image_width; col > 0; col--) {
       register unsigned int temp;
       _JSAMPLE gray;
-      temp  = UCH(*bufferptr++) << 8;
-      temp |= UCH(*bufferptr++);
+      temp  = (*bufferptr++) << 8;
+      temp |= (*bufferptr++);
       if (temp > maxval)
         ERREXIT(cinfo, JERR_PPM_OUTOFRANGE);
       gray = rescale[temp];
@@ -599,7 +597,7 @@ get_word_rgb_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
 {
   ppm_source_ptr source = (ppm_source_ptr)sinfo;
   register _JSAMPROW ptr;
-  register U_CHAR *bufferptr;
+  register unsigned char *bufferptr;
   register _JSAMPLE *rescale = source->rescale;
   JDIMENSION col;
   unsigned int maxval = source->maxval;
@@ -615,18 +613,18 @@ get_word_rgb_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
   bufferptr = source->iobuffer;
   for (col = cinfo->image_width; col > 0; col--) {
     register unsigned int temp;
-    temp  = UCH(*bufferptr++) << 8;
-    temp |= UCH(*bufferptr++);
+    temp  = (*bufferptr++) << 8;
+    temp |= (*bufferptr++);
     if (temp > maxval)
       ERREXIT(cinfo, JERR_PPM_OUTOFRANGE);
     ptr[rindex] = rescale[temp];
-    temp  = UCH(*bufferptr++) << 8;
-    temp |= UCH(*bufferptr++);
+    temp  = (*bufferptr++) << 8;
+    temp |= (*bufferptr++);
     if (temp > maxval)
       ERREXIT(cinfo, JERR_PPM_OUTOFRANGE);
     ptr[gindex] = rescale[temp];
-    temp  = UCH(*bufferptr++) << 8;
-    temp |= UCH(*bufferptr++);
+    temp  = (*bufferptr++) << 8;
+    temp |= (*bufferptr++);
     if (temp > maxval)
       ERREXIT(cinfo, JERR_PPM_OUTOFRANGE);
     ptr[bindex] = rescale[temp];
@@ -644,7 +642,7 @@ get_word_rgb_cmyk_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
 {
   ppm_source_ptr source = (ppm_source_ptr)sinfo;
   register _JSAMPROW ptr;
-  register U_CHAR *bufferptr;
+  register unsigned char *bufferptr;
   register _JSAMPLE *rescale = source->rescale;
   JDIMENSION col;
   unsigned int maxval = source->maxval;
@@ -656,16 +654,16 @@ get_word_rgb_cmyk_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
   if (maxval == (1U << cinfo->data_precision) - 1U) {
     for (col = cinfo->image_width; col > 0; col--) {
       register unsigned int r, g, b;
-      r  = UCH(*bufferptr++) << 8;
-      r |= UCH(*bufferptr++);
+      r  = (*bufferptr++) << 8;
+      r |= (*bufferptr++);
       if (r > maxval)
         ERREXIT(cinfo, JERR_PPM_OUTOFRANGE);
-      g  = UCH(*bufferptr++) << 8;
-      g |= UCH(*bufferptr++);
+      g  = (*bufferptr++) << 8;
+      g |= (*bufferptr++);
       if (g > maxval)
         ERREXIT(cinfo, JERR_PPM_OUTOFRANGE);
-      b  = UCH(*bufferptr++) << 8;
-      b |= UCH(*bufferptr++);
+      b  = (*bufferptr++) << 8;
+      b |= (*bufferptr++);
       if (b > maxval)
         ERREXIT(cinfo, JERR_PPM_OUTOFRANGE);
       rgb_to_cmyk(maxval, (_JSAMPLE)r, (_JSAMPLE)g, (_JSAMPLE)b, ptr, ptr + 1,
@@ -675,16 +673,16 @@ get_word_rgb_cmyk_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
   } else {
     for (col = cinfo->image_width; col > 0; col--) {
       register unsigned int r, g, b;
-      r  = UCH(*bufferptr++) << 8;
-      r |= UCH(*bufferptr++);
+      r  = (*bufferptr++) << 8;
+      r |= (*bufferptr++);
       if (r > maxval)
         ERREXIT(cinfo, JERR_PPM_OUTOFRANGE);
-      g  = UCH(*bufferptr++) << 8;
-      g |= UCH(*bufferptr++);
+      g  = (*bufferptr++) << 8;
+      g |= (*bufferptr++);
       if (g > maxval)
         ERREXIT(cinfo, JERR_PPM_OUTOFRANGE);
-      b  = UCH(*bufferptr++) << 8;
-      b |= UCH(*bufferptr++);
+      b  = (*bufferptr++) << 8;
+      b |= (*bufferptr++);
       if (b > maxval)
         ERREXIT(cinfo, JERR_PPM_OUTOFRANGE);
       rgb_to_cmyk((1 << cinfo->data_precision) - 1, rescale[r], rescale[g],
@@ -788,12 +786,14 @@ start_input_ppm(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
         source->pub.get_pixel_rows = get_word_gray_cmyk_row;
       else
         ERREXIT(cinfo, JERR_BAD_IN_COLORSPACE);
-    } else if (maxval <= _MAXJSAMPLE && sizeof(_JSAMPLE) == sizeof(U_CHAR) &&
+#if BITS_IN_JSAMPLE == 8
+    } else if (maxval <= _MAXJSAMPLE &&
                maxval == ((1U << cinfo->data_precision) - 1U) &&
                cinfo->in_color_space == JCS_GRAYSCALE) {
       source->pub.get_pixel_rows = get_raw_row;
       use_raw_buffer = TRUE;
       need_rescale = FALSE;
+#endif
     } else {
       if (cinfo->in_color_space == JCS_GRAYSCALE)
         source->pub.get_pixel_rows = get_scaled_gray_row;
@@ -817,7 +817,8 @@ start_input_ppm(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
         source->pub.get_pixel_rows = get_word_rgb_cmyk_row;
       else
         ERREXIT(cinfo, JERR_BAD_IN_COLORSPACE);
-    } else if (maxval <= _MAXJSAMPLE && sizeof(_JSAMPLE) == sizeof(U_CHAR) &&
+#if BITS_IN_JSAMPLE == 8
+    } else if (maxval <= _MAXJSAMPLE &&
                maxval == ((1U << cinfo->data_precision) - 1U) &&
 #if RGB_RED == 0 && RGB_GREEN == 1 && RGB_BLUE == 2 && RGB_PIXELSIZE == 3
                (cinfo->in_color_space == JCS_EXT_RGB ||
@@ -828,6 +829,7 @@ start_input_ppm(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
       source->pub.get_pixel_rows = get_raw_row;
       use_raw_buffer = TRUE;
       need_rescale = FALSE;
+#endif
     } else {
       if (IsExtRGB(cinfo->in_color_space))
         source->pub.get_pixel_rows = get_rgb_row;
@@ -849,12 +851,10 @@ start_input_ppm(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
   /* Allocate space for I/O buffer: 1 or 3 bytes or words/pixel. */
   if (need_iobuffer) {
     if (c == '6')
-      source->buffer_width = (size_t)w * 3 *
-        ((maxval <= 255) ? sizeof(U_CHAR) : (2 * sizeof(U_CHAR)));
+      source->buffer_width = (size_t)w * 3 * (maxval <= 255 ? 1 : 2);
     else
-      source->buffer_width = (size_t)w *
-        ((maxval <= 255) ? sizeof(U_CHAR) : (2 * sizeof(U_CHAR)));
-    source->iobuffer = (U_CHAR *)
+      source->buffer_width = (size_t)w * (maxval <= 255 ? 1 : 2);
+    source->iobuffer = (unsigned char *)
       (*cinfo->mem->alloc_small) ((j_common_ptr)cinfo, JPOOL_IMAGE,
                                   source->buffer_width);
   }

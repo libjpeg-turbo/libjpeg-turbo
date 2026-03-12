@@ -283,7 +283,7 @@ int main(int argc, char **argv)
   lossless = tj3Get(tjInstance, TJPARAM_LOSSLESS);
   if (precision == -1 || lossless || jpegPrecision != 8)
     precision = jpegPrecision;
-  sampleSize = (precision <= 8 ? sizeof(unsigned char) : sizeof(short));
+  sampleSize = (precision <= 8 ? 1 : 2);
 
   if (iccFilename) {
     if (tj3GetICCProfile(tjInstance, &iccBuf, &iccSize) < 0) {
@@ -336,8 +336,8 @@ int main(int argc, char **argv)
     THROW("allocating uncompressed image buffer", "Image is too large");
 #endif
   if ((dstBuf =
-       (unsigned char *)malloc(sizeof(unsigned char) * width * height *
-                               tjPixelSize[pixelFormat] * sampleSize)) == NULL)
+       (unsigned char *)malloc(width * height * tjPixelSize[pixelFormat] *
+                               sampleSize)) == NULL)
     THROW_UNIX("allocating uncompressed image buffer");
 
   if (precision <= 8) {

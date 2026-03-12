@@ -6,7 +6,7 @@
  * Modified 2009-2017 by Guido Vollbeding.
  * libjpeg-turbo Modifications:
  * Modified 2011 by Siarhei Siamashka.
- * Copyright (C) 2015, 2017-2018, 2021-2024, D. R. Commander.
+ * Copyright (C) 2015, 2017-2018, 2021-2024, 2026, D. R. Commander.
  * For conditions of distribution and use, see the accompanying README.ijg
  * file.
  *
@@ -30,12 +30,6 @@
 #include "cdjpeg.h"             /* Common decls for cjpeg/djpeg applications */
 
 #ifdef BMP_SUPPORTED
-
-
-/* Macros to deal with unsigned chars as efficiently as compiler allows */
-
-typedef unsigned char U_CHAR;
-#define UCH(x)  ((int)(x))
 
 
 #define ReadOK(file, buffer, len) \
@@ -72,7 +66,7 @@ typedef struct _bmp_source_struct {
                                    its own image buffer and read the rows in
                                    bottom-up order */
 
-  U_CHAR *iobuffer;             /* I/O buffer (used to buffer a single row from
+  unsigned char *iobuffer;      /* I/O buffer (used to buffer a single row from
                                    disk if use_inversion_array == FALSE) */
 } bmp_source_struct;
 
@@ -413,17 +407,17 @@ METHODDEF(void)
 start_input_bmp(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
 {
   bmp_source_ptr source = (bmp_source_ptr)sinfo;
-  U_CHAR bmpfileheader[14];
-  U_CHAR bmpinfoheader[64];
+  unsigned char bmpfileheader[14];
+  unsigned char bmpinfoheader[64];
 
 #define GET_2B(array, offset) \
-  ((unsigned short)UCH(array[offset]) + \
-   (((unsigned short)UCH(array[offset + 1])) << 8))
+  ((unsigned short)array[offset] + \
+   (((unsigned short)array[offset + 1]) << 8))
 #define GET_4B(array, offset) \
-  ((unsigned int)UCH(array[offset]) + \
-   (((unsigned int)UCH(array[offset + 1])) << 8) + \
-   (((unsigned int)UCH(array[offset + 2])) << 16) + \
-   (((unsigned int)UCH(array[offset + 3])) << 24))
+  ((unsigned int)array[offset] + \
+   (((unsigned int)array[offset + 1]) << 8) + \
+   (((unsigned int)array[offset + 2]) << 16) + \
+   (((unsigned int)array[offset + 3]) << 24))
 
   int bfOffBits;
   int headerSize;
@@ -613,7 +607,7 @@ start_input_bmp(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
       progress->total_extra_passes++; /* count file input as separate pass */
     }
   } else {
-    source->iobuffer = (U_CHAR *)
+    source->iobuffer = (unsigned char *)
       (*cinfo->mem->alloc_small) ((j_common_ptr)cinfo, JPOOL_IMAGE, row_width);
     switch (source->bits_per_pixel) {
     case 8:

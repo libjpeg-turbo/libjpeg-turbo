@@ -5,7 +5,7 @@
  * Copyright (C) 1991-1996, Thomas G. Lane.
  * Modified 2009 by Guido Vollbeding.
  * libjpeg-turbo Modifications:
- * Copyright (C) 2017, 2019-2020, 2022, 2024, D. R. Commander.
+ * Copyright (C) 2017, 2019-2020, 2022, 2024, 2026, D. R. Commander.
  * For conditions of distribution and use, see the accompanying README.ijg
  * file.
  *
@@ -80,6 +80,8 @@ typedef struct {
 typedef ppm_dest_struct *ppm_dest_ptr;
 
 
+#if BITS_IN_JSAMPLE == 8
+
 /*
  * Write some pixel data.
  * In this module rows_supplied will always be 1.
@@ -97,6 +99,8 @@ put_pixel_rows(j_decompress_ptr cinfo, djpeg_dest_ptr dinfo,
   fwrite(dest->iobuffer, 1, dest->buffer_width, dest->pub.output_file);
 }
 
+#endif
+
 
 /*
  * This code is used when we have to copy the data and apply a pixel
@@ -110,19 +114,13 @@ copy_pixel_rows(j_decompress_ptr cinfo, djpeg_dest_ptr dinfo,
   ppm_dest_ptr dest = (ppm_dest_ptr)dinfo;
   register char *bufferptr;
   register _JSAMPROW ptr;
-#if BITS_IN_JSAMPLE != 8
   register JDIMENSION col;
-#endif
 
   ptr = dest->pub._buffer[0];
   bufferptr = dest->iobuffer;
-#if BITS_IN_JSAMPLE == 8
-  memcpy(bufferptr, ptr, dest->samples_per_row);
-#else
   for (col = dest->samples_per_row; col > 0; col--) {
     PUTPPMSAMPLE(bufferptr, *ptr++);
   }
-#endif
   fwrite(dest->iobuffer, 1, dest->buffer_width, dest->pub.output_file);
 }
 
@@ -297,7 +295,7 @@ calc_buffer_dimensions_ppm(j_decompress_ptr cinfo, djpeg_dest_ptr dinfo)
     dest->samples_per_row = cinfo->output_width * cinfo->out_color_components;
   else
     dest->samples_per_row = cinfo->output_width * 3;
-  dest->buffer_width = dest->samples_per_row * (BYTESPERSAMPLE * sizeof(char));
+  dest->buffer_width = dest->samples_per_row * BYTESPERSAMPLE;
 }
 
 
@@ -334,14 +332,15 @@ _jinit_write_ppm(j_decompress_ptr cinfo)
   dest->iobuffer = (char *)(*cinfo->mem->alloc_small)
     ((j_common_ptr)cinfo, JPOOL_IMAGE, dest->buffer_width);
 
-  if (cinfo->quantize_colors || BITS_IN_JSAMPLE != 8 ||
-      sizeof(_JSAMPLE) != sizeof(char) ||
-#if RGB_RED == 0 && RGB_GREEN == 1 && RGB_BLUE == 2 && RGB_PIXELSIZE == 3
+#if BITS_IN_JSAMPLE == 8
+  if (cinfo->quantize_colors ||
       (cinfo->out_color_space != JCS_EXT_RGB &&
-       cinfo->out_color_space != JCS_RGB)) {
-#else
-      cinfo->out_color_space != JCS_EXT_RGB) {
+#if RGB_RED == 0 && RGB_GREEN == 1 && RGB_BLUE == 2 && RGB_PIXELSIZE == 3
+       cinfo->out_color_space != JCS_RGB &&
 #endif
+       cinfo->out_color_space != JCS_GRAYSCALE))
+#endif
+  {
     /* When quantizing, we need an output buffer for colormap indexes
      * that's separate from the physical I/O buffer.  We also need a
      * separate buffer if pixel format translation must take place.
@@ -361,7 +360,9 @@ _jinit_write_ppm(j_decompress_ptr cinfo)
       dest->pub.put_pixel_rows = put_demapped_gray;
     else
       dest->pub.put_pixel_rows = put_demapped_rgb;
-  } else {
+  }
+#if BITS_IN_JSAMPLE == 8
+  else {
     /* We will fwrite() directly from decompressor output buffer. */
     /* Synthesize a _JSAMPARRAY pointer structure */
     dest->pixrow = (_JSAMPROW)dest->iobuffer;
@@ -369,6 +370,7 @@ _jinit_write_ppm(j_decompress_ptr cinfo)
     dest->pub.buffer_height = 1;
     dest->pub.put_pixel_rows = put_pixel_rows;
   }
+#endif
 
   return (djpeg_dest_ptr)dest;
 }
