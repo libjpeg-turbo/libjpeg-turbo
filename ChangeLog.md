@@ -37,6 +37,16 @@ destination buffers were passed to `tj3Transform()`, multiple lossless
 transform operations were performed, and it was necessary for the library to
 re-allocate the second buffer to accommodate the second destination image.
 
+6. Fixed an issue in `tj3Transform()` whereby, if `TJPARAM_SAVEMARKERS` was set
+to 2 or 4, `TJXOPT_COPYNONE` was not specified, an ICC profile was extracted
+from the source image, and another ICC profile was associated with the
+TurboJPEG instance using `tj3SetICCProfile()`, both profiles were embedded in
+the destination image.  The documented API behavior is for `TJXOPT_COPYNONE` to
+take precedence over `TJPARAM_SAVEMARKERS` and for `TJPARAM_SAVEMARKERS` to
+take precedence over the associated ICC profile.  Thus, `tj3Transform()` now
+ignores the associated ICC profile unless `TJXOPT_COPYNONE` is specified or
+`TJPARAM_SAVEMARKERS` is set to something other than 2 or 4.
+
 
 3.1.3
 =====

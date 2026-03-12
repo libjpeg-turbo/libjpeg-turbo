@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009-2025 D. R. Commander.  All Rights Reserved.
+ * Copyright (C) 2009-2026 D. R. Commander.  All Rights Reserved.
  * Copyright (C) 2021 Alex Richardson.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -2985,11 +2985,14 @@ DLLEXPORT int tj3Transform(tjhandle handle, const unsigned char *jpegBuf,
     cinfo->restart_interval = this->restartIntervalBlocks;
     cinfo->restart_in_rows = this->restartIntervalRows;
     if (!(t[i].options & TJXOPT_NOOUTPUT)) {
+      JCOPY_OPTION copyOption = t[i].options & TJXOPT_COPYNONE ?
+                                JCOPYOPT_NONE :
+                                (JCOPY_OPTION)this->saveMarkers;
+
       jpeg_write_coefficients(cinfo, dstcoefs);
-      jcopy_markers_execute(dinfo, cinfo, t[i].options & TJXOPT_COPYNONE ?
-                                          JCOPYOPT_NONE :
-                                          (JCOPY_OPTION)this->saveMarkers);
-      if (this->iccBuf != NULL && this->iccSize != 0)
+      jcopy_markers_execute(dinfo, cinfo, copyOption);
+      if (this->iccBuf != NULL && this->iccSize != 0 &&
+          copyOption != JCOPYOPT_ALL && copyOption != JCOPYOPT_ICC)
         jpeg_write_icc_profile(cinfo, this->iccBuf,
                                (unsigned int)this->iccSize);
     } else
