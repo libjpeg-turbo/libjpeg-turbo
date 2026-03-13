@@ -1,4 +1,4 @@
-.TH CJPEG 1 "10 March 2026"
+.TH CJPEG 1 "13 March 2026"
 .SH NAME
 cjpeg \- compress an image file to a JPEG file
 .SH SYNOPSIS
@@ -302,6 +302,9 @@ selects 4000000 bytes.  If more space is needed, an error will occur.
 .TP
 .BI \-outfile " name"
 Send output image to the named file, not to standard output.
+.TP
+.BI \-nooverwrite
+Don't overwrite output file if it exists.
 .TP
 .BI \-memdst
 Compress to memory instead of a file.  This feature was implemented mainly as a

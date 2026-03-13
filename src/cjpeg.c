@@ -164,6 +164,7 @@ static const char *progname;    /* program name for error messages */
 static char *icc_filename;      /* for -icc switch */
 static boolean noicc;           /* for -noicc switch */
 static char *outfilename;       /* for -outfile switch */
+static boolean nooverwrite;     /* for -nooverwrite switch */
 static boolean memdst;          /* for -memdst switch */
 static boolean report;          /* for -report switch */
 static boolean strict;          /* for -strict switch */
@@ -266,6 +267,7 @@ usage(void)
 #endif
   fprintf(stderr, "  -maxmemory N   Maximum memory to use (in kbytes)\n");
   fprintf(stderr, "  -outfile name  Specify name for output file\n");
+  fprintf(stderr, "  -nooverwrite   Don't overwrite output file if it exists\n");
   fprintf(stderr, "  -memdst        Compress to memory instead of file (useful for benchmarking)\n");
   fprintf(stderr, "  -report        Report compression progress\n");
   fprintf(stderr, "  -strict        Treat all warnings as fatal\n");
@@ -316,6 +318,7 @@ parse_switches(j_compress_ptr cinfo, int argc, char **argv,
   icc_filename = NULL;
   noicc = FALSE;
   outfilename = NULL;
+  nooverwrite = FALSE;
   memdst = FALSE;
   report = FALSE;
   strict = FALSE;
@@ -450,6 +453,9 @@ parse_switches(j_compress_ptr cinfo, int argc, char **argv,
       if (++argn >= argc)       /* advance to next argument */
         usage();
       outfilename = argv[argn]; /* save it away for later use */
+
+    } else if (keymatch(arg, "nooverwrite", 3)) {
+      nooverwrite = TRUE;
 
     } else if (keymatch(arg, "precision", 3)) {
       /* Set data precision. */
@@ -736,6 +742,13 @@ main(int argc, char **argv)
 
   /* Open the output file. */
   if (outfilename != NULL) {
+    if (nooverwrite &&
+        (output_file = fopen(outfilename, READ_BINARY)) != NULL) {
+      fclose(output_file);
+      fprintf(stderr, "%s: can't open %s; file exists\n", progname,
+              outfilename);
+      exit(EXIT_FAILURE);
+    }
     if ((output_file = fopen(outfilename, WRITE_BINARY)) == NULL) {
       fprintf(stderr, "%s: can't open %s\n", progname, outfilename);
       exit(EXIT_FAILURE);

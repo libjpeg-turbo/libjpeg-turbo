@@ -1,4 +1,4 @@
-.TH DJPEG 1 "10 March 2026"
+.TH DJPEG 1 "13 March 2026"
 .SH NAME
 djpeg \- decompress a JPEG file to an image file
 .SH SYNOPSIS
@@ -257,6 +257,9 @@ next scan.
 .TP
 .BI \-outfile " name"
 Send output image to the named file, not to standard output.
+.TP
+.BI \-nooverwrite
+Don't overwrite output file if it exists.
 .TP
 .BI \-memsrc
 Load input file into memory before decompressing.  This feature was implemented

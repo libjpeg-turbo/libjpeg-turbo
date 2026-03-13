@@ -133,6 +133,9 @@ ICC profile that was previously extracted from a JPEG image.
 associated with a TurboJPEG compression instance (including an ICC profile
 extracted from a PNG image by `tj3LoadImage*()`.)
 
+11. Added a new cjpeg, djpeg, and jpegtran option (`-nooverwrite`) that causes
+the programs to fail if the specified output file exists.
+
 
 3.1.4
 =====

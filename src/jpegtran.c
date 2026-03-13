@@ -4,7 +4,7 @@
  * This file was part of the Independent JPEG Group's software:
  * Copyright (C) 1995-2019, Thomas G. Lane, Guido Vollbeding.
  * libjpeg-turbo Modifications:
- * Copyright (C) 2010, 2014, 2017, 2019-2022, 2024, D. R. Commander.
+ * Copyright (C) 2010, 2014, 2017, 2019-2022, 2024, 2026, D. R. Commander.
  * For conditions of distribution and use, see the accompanying README.ijg
  * file.
  *
@@ -37,6 +37,7 @@ static const char *progname;    /* program name for error messages */
 static char *icc_filename;      /* for -icc switch */
 static JDIMENSION max_scans;    /* for -maxscans switch */
 static char *outfilename;       /* for -outfile switch */
+static boolean nooverwrite;     /* for -nooverwrite switch */
 static char *dropfilename;      /* for -drop switch */
 static boolean report;          /* for -report switch */
 static boolean strict;          /* for -strict switch */
@@ -91,6 +92,7 @@ usage(void)
   fprintf(stderr, "  -maxmemory N   Maximum memory to use (in kbytes)\n");
   fprintf(stderr, "  -maxscans N    Maximum number of scans to allow in input file\n");
   fprintf(stderr, "  -outfile name  Specify name for output file\n");
+  fprintf(stderr, "  -nooverwrite   Don't overwrite output file if it exists\n");
   fprintf(stderr, "  -report        Report transformation progress\n");
   fprintf(stderr, "  -strict        Treat all warnings as fatal\n");
   fprintf(stderr, "  -verbose  or  -debug   Emit debug output\n");
@@ -148,6 +150,7 @@ parse_switches(j_compress_ptr cinfo, int argc, char **argv,
   icc_filename = NULL;
   max_scans = 0;
   outfilename = NULL;
+  nooverwrite = FALSE;
   report = FALSE;
   strict = FALSE;
   copyoption = JCOPYOPT_DEFAULT;
@@ -313,6 +316,9 @@ parse_switches(j_compress_ptr cinfo, int argc, char **argv,
       if (++argn >= argc)       /* advance to next argument */
         usage();
       outfilename = argv[argn]; /* save it away for later use */
+
+    } else if (keymatch(arg, "nooverwrite", 1)) {
+      nooverwrite = TRUE;
 
     } else if (keymatch(arg, "perfect", 2)) {
       /* Fail if there is any partial edge MCUs that the transform can't
@@ -658,6 +664,11 @@ main(int argc, char **argv)
 
   /* Open the output file. */
   if (outfilename != NULL) {
+    if (nooverwrite && (fp = fopen(outfilename, READ_BINARY)) != NULL) {
+      fclose(fp);
+      fprintf(stderr, "%s: can't open %s; file exists\n", progname, outfilename);
+      exit(EXIT_FAILURE);
+    }
     if ((fp = fopen(outfilename, WRITE_BINARY)) == NULL) {
       fprintf(stderr, "%s: can't open %s for writing\n", progname,
               outfilename);

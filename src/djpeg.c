@@ -89,6 +89,7 @@ static char *icc_filename;      /* for -icc switch */
 static boolean noicc;           /* for -noicc switch */
 static JDIMENSION max_scans;    /* for -maxscans switch */
 static char *outfilename;       /* for -outfile switch */
+static boolean nooverwrite;     /* for -nooverwrite switch */
 static boolean memsrc;          /* for -memsrc switch */
 static boolean report;          /* for -report switch */
 static boolean skip, crop;
@@ -175,6 +176,7 @@ usage(void)
   fprintf(stderr, "  -maxmemory N   Maximum memory to use (in kbytes)\n");
   fprintf(stderr, "  -maxscans N    Maximum number of scans to allow in input file\n");
   fprintf(stderr, "  -outfile name  Specify name for output file\n");
+  fprintf(stderr, "  -nooverwrite   Don't overwrite output file if it exists\n");
   fprintf(stderr, "  -memsrc        Load input file into memory before decompressing\n");
   fprintf(stderr, "  -report        Report decompression progress\n");
   fprintf(stderr, "  -skip Y0,Y1    Decompress all rows except those between Y0 and Y1 (inclusive)\n");
@@ -208,6 +210,7 @@ parse_switches(j_decompress_ptr cinfo, int argc, char **argv,
   noicc = FALSE;
   max_scans = 0;
   outfilename = NULL;
+  nooverwrite = FALSE;
   memsrc = FALSE;
   report = FALSE;
   skip = FALSE;
@@ -392,6 +395,9 @@ parse_switches(j_decompress_ptr cinfo, int argc, char **argv,
       if (++argn >= argc)       /* advance to next argument */
         usage();
       outfilename = argv[argn]; /* save it away for later use */
+
+    } else if (keymatch(arg, "nooverwrite", 3)) {
+      nooverwrite = TRUE;
 
     } else if (keymatch(arg, "memsrc", 2)) {
       /* Use in-memory source manager */
@@ -646,6 +652,13 @@ main(int argc, char **argv)
 
   /* Open the output file. */
   if (outfilename != NULL) {
+    if (nooverwrite &&
+        (output_file = fopen(outfilename, READ_BINARY)) != NULL) {
+      fclose(output_file);
+      fprintf(stderr, "%s: can't open %s; file exists\n", progname,
+              outfilename);
+      exit(EXIT_FAILURE);
+    }
     if ((output_file = fopen(outfilename, WRITE_BINARY)) == NULL) {
       fprintf(stderr, "%s: can't open %s\n", progname, outfilename);
       exit(EXIT_FAILURE);
