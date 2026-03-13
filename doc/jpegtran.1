@@ -97,6 +97,19 @@ Rotate image 180 degrees.
 .B \-rotate 270
 Rotate image 270 degrees clockwise (or 90 ccw).
 .TP
+.B \-roll +X+Y
+Roll (shift with wrap-around) the image horizontally by X pixels and vertically
+by Y pixels.  X and Y may be negative: a negative X shifts the image left,
+and a negative Y shifts the image up.  For a perfect transformation, the
+absolute values of X and Y should be multiples of the iMCU width and height,
+respectively.  If the offsets are not multiples of the iMCU dimensions, the
+transformation will not be perfect unless
+.B \-trim
+is also specified.  When used with
+.BR \-perfect ,
+the transformation will fail if the absolute value of X or Y is not a multiple
+of the corresponding iMCU dimension.
+.TP
 .B \-transpose
 Transpose image (across UL-to-LR axis).
 .TP
