@@ -835,7 +835,8 @@ final class TJUnitTest {
           ((subsamp == TJ.SAMP_411 || subsamp == TJ.SAMP_441) && num == 1 &&
            (denom == 2 || denom == 1)) ||
           (subsamp != TJ.SAMP_411 && subsamp != TJ.SAMP_441 && num == 1 &&
-           (denom == 4 || denom == 2 || denom == 1)))
+           (denom == 4 || denom == 2 || denom == 1)) ||
+          (subsamp == TJ.SAMP_420 && num == 1 && denom == 8 && !doYUV))
         decompTest(tjd, jpegBuf, jpegSize, w, h, pf, baseName, subsamp, sf[i]);
     }
   }
