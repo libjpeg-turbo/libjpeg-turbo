@@ -62,7 +62,7 @@ final class TJComp {
 
 
   static final String[] SUBSAMP_NAME = {
-    "444", "422", "420", "GRAY", "440", "411", "441"
+    "444", "422", "420", "GRAY", "440", "411", "441", "410", "24"
   };
 
 
@@ -118,7 +118,7 @@ final class TJComp {
     System.out.println("-rgb");
     System.out.println("    Create a JPEG image that uses the RGB colorspace instead of the YCbCr");
     System.out.println("    colorspace");
-    System.out.println("-subsamp {444|422|440|420|411|441}");
+    System.out.println("-subsamp {444|422|440|420|411|441|410|24}");
     System.out.println("    Create a JPEG image that uses the specified chrominance subsampling level");
     System.out.format("    [default = %s]\n\n", SUBSAMP_NAME[DEFAULT_SUBSAMP]);
 
@@ -247,6 +247,10 @@ final class TJComp {
             subsamp = TJ.SAMP_411;
           else if (matchArg(argv[i], "441", 3))
             subsamp = TJ.SAMP_441;
+          else if (matchArg(argv[i], "410", 3))
+            subsamp = TJ.SAMP_410;
+          else if (matchArg(argv[i], "24", 2))
+            subsamp = TJ.SAMP_24;
           else
             usage();
         } else break;

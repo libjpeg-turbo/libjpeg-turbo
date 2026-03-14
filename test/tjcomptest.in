@@ -54,8 +54,8 @@ echo "IMGDIR: $IMGDIR"
 echo "OUTDIR: $OUTDIR"
 echo
 
-SUBSAMPOPT=(444 422 440 420 411 441)
-SAMPOPT=(1x1 2x1 1x2 2x2 4x1 1x4)
+SUBSAMPOPT=(444 422 440 420 411 441 410 24)
+SAMPOPT=(1x1 2x1 1x2 2x2 4x1 1x4 4x2 2x4)
 
 for precision in 8 12; do
 	if [ $precision -le 8 ]; then
@@ -92,7 +92,7 @@ for precision in 8 12; do
 							if [ "$qualarg" = "-q 1" ]; then
 								blarg=-baseline
 							fi
-							for sampi in {0..5}; do
+							for sampi in {0..7}; do
 								noiccarg=
 								if [ $sampi = 4 -a "$RGBEXT" = "png" ]; then
 									noiccarg=-noicc

@@ -54,8 +54,8 @@ echo "IMGDIR: $IMGDIR"
 echo "OUTDIR: $OUTDIR"
 echo
 
-SUBSAMPOPT=(444 422 440 420 411 441 410)
-SAMPOPT=(1x1 2x1 1x2 2x2 4x1 1x4 4x2)
+SUBSAMPOPT=(444 422 440 420 411 441 410 24 32)
+SAMPOPT=(1x1 2x1 1x2 2x2 4x1 1x4 4x2 2x4 3x2)
 
 for precision in 8 12; do
 	if [ $precision -le 8 ]; then
@@ -68,7 +68,7 @@ for precision in 8 12; do
 		basename=monkey16
 	fi
 
-	for sampi in {0..6}; do
+	for sampi in {0..8}; do
 		EXTRA_ARGS=
 		if [ $sampi = 1 ]; then
 			EXTRA_ARGS=-p
@@ -108,7 +108,7 @@ for precision in 8 12; do
 						"-transv"; do
 						for grayarg in "" "-g"; do
 							if [ "$grayarg" = "" ]; then
-								if [[ "$subsamp" = "410" && "$croparg" != "" ]]; then
+								if [[ "$subsamp" = "32" && "$croparg" != "" ]]; then
 									continue
 								fi
 							else

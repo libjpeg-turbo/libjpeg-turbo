@@ -59,10 +59,11 @@ final class TJUnitTest {
   }
 
   static final String[] SUBNAME_LONG = {
-    "4:4:4", "4:2:2", "4:2:0", "GRAY", "4:4:0", "4:1:1", "4:4:1"
+    "4:4:4", "4:2:2", "4:2:0", "GRAY", "4:4:0", "4:1:1", "4:4:1", "4:1:0",
+    "2:4"
   };
   static final String[] SUBNAME = {
-    "444", "422", "420", "GRAY", "440", "411", "441"
+    "444", "422", "420", "GRAY", "440", "411", "441", "410", "24"
   };
 
   static final String[] PIXFORMATSTR = {
@@ -694,6 +695,7 @@ final class TJUnitTest {
           ((subsamp == TJ.SAMP_411 || subsamp == TJ.SAMP_441) &&
            sf[i].num == 1 && (sf[i].denom == 2 || sf[i].denom == 1)) ||
           (subsamp != TJ.SAMP_411 && subsamp != TJ.SAMP_441 &&
+           subsamp != TJ.SAMP_410 && subsamp != TJ.SAMP_24 &&
            sf[i].num == 1 && (sf[i].denom == 4 || sf[i].denom == 2 ||
                               sf[i].denom == 1)) ||
           (subsamp == TJ.SAMP_420 && sf[i].num == 1 && sf[i].denom == 8 &&
@@ -734,6 +736,9 @@ final class TJUnitTest {
 
       for (int pf : formats) {
         if (pf < 0) continue;
+        if (pf == TJ.PF_CMYK &&
+            (subsamp == TJ.SAMP_410 || subsamp == TJ.SAMP_24))
+          continue;
         for (int i = 0; i < 2; i++) {
           TJ.set(chandle, TJ.PARAM_BOTTOMUP, i == 1 ? 1 : 0);
           TJ.set(dhandle, TJ.PARAM_BOTTOMUP, i == 1 ? 1 : 0);
@@ -1388,6 +1393,10 @@ final class TJUnitTest {
         doTest(35, 39, FORMATS_4SAMPLE, TJ.SAMP_411, testName);
         doTest(39, 41, FORMATS_3SAMPLE, TJ.SAMP_441, testName);
         doTest(41, 35, FORMATS_4SAMPLE, TJ.SAMP_441, testName);
+        doTest(35, 41, FORMATS_3SAMPLE, TJ.SAMP_410, testName);
+        doTest(39, 35, FORMATS_4SAMPLE, TJ.SAMP_410, testName);
+        doTest(41, 39, FORMATS_3SAMPLE, TJ.SAMP_24, testName);
+        doTest(35, 41, FORMATS_4SAMPLE, TJ.SAMP_24, testName);
       }
       doTest(39, 41, FORMATS_GRAY, TJ.SAMP_GRAY, testName);
       if (!lossless) {
@@ -1404,6 +1413,8 @@ final class TJUnitTest {
         doTest(48, 48, FORMATS_RGB, TJ.SAMP_440, "javatest_yuv0");
         doTest(48, 48, FORMATS_RGB, TJ.SAMP_411, "javatest_yuv0");
         doTest(48, 48, FORMATS_RGB, TJ.SAMP_441, "javatest_yuv0");
+        doTest(48, 48, FORMATS_RGB, TJ.SAMP_410, "javatest_yuv0");
+        doTest(48, 48, FORMATS_RGB, TJ.SAMP_24, "javatest_yuv0");
         doTest(48, 48, FORMATS_RGB, TJ.SAMP_GRAY, "javatest_yuv0");
         doTest(48, 48, FORMATS_GRAY, TJ.SAMP_GRAY, "javatest_yuv0");
       }

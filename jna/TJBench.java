@@ -53,11 +53,12 @@ final class TJBench {
   };
 
   static final String[] SUBNAME_LONG = {
-    "4:4:4", "4:2:2", "4:2:0", "GRAY", "4:4:0", "4:1:1", "4:4:1"
+    "4:4:4", "4:2:2", "4:2:0", "GRAY", "4:4:0", "4:1:1", "4:4:1", "4:1:0",
+    "2:4"
   };
 
   static final String[] SUBNAME = {
-    "444", "422", "420", "GRAY", "440", "411", "441"
+    "444", "422", "420", "GRAY", "440", "411", "441", "410", "24"
   };
 
   static final String[] CSNAME = {
@@ -697,6 +698,10 @@ final class TJBench {
             tsubsamp = TJ.SAMP_441;
           else if (tsubsamp == TJ.SAMP_441)
             tsubsamp = TJ.SAMP_411;
+          else if (tsubsamp == TJ.SAMP_410)
+            tsubsamp = TJ.SAMP_24;
+          else if (tsubsamp == TJ.SAMP_24)
+            tsubsamp = TJ.SAMP_410;
         }
 
         if (noRealloc && doTransform)
@@ -963,8 +968,8 @@ final class TJBench {
     System.out.println(")");
     System.out.println("-subsamp S");
     System.out.println("    When compressing, use the specified level of chrominance subsampling");
-    System.out.println("    (S = 444, 422, 440, 420, 411, 441, or GRAY) [default = test Grayscale,");
-    System.out.println("    4:2:0, 4:2:2, and 4:4:4 in sequence]");
+    System.out.println("    (S = 444, 422, 440, 420, 411, 441, 410, 24, or GRAY)");
+    System.out.println("    [default = test Grayscale, 4:2:0, 4:2:2, and 4:4:4 in sequence]");
     System.out.println("-yuv");
     System.out.println("    Compress from/decompress to intermediate planar YUV images");
     System.out.println("    ** 8-bit data precision only **");
@@ -1259,6 +1264,10 @@ final class TJBench {
               subsamp = TJ.SAMP_411;
             else if (argv[i].equals("441"))
               subsamp = TJ.SAMP_441;
+            else if (argv[i].equals("410"))
+              subsamp = TJ.SAMP_410;
+            else if (argv[i].equals("24"))
+              subsamp = TJ.SAMP_24;
             else
               usage();
           } else if (matchArg(argv[i], "-scale", 2) && i < argv.length - 1) {

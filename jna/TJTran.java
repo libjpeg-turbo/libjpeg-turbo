@@ -327,6 +327,10 @@ final class TJTran {
             subsamp = TJ.SAMP_441;
           else if (subsamp == TJ.SAMP_441)
             subsamp = TJ.SAMP_411;
+          else if (subsamp == TJ.SAMP_410)
+            subsamp = TJ.SAMP_24;
+          else if (subsamp == TJ.SAMP_24)
+            subsamp = TJ.SAMP_410;
         }
 
         if (progressive >= 0)

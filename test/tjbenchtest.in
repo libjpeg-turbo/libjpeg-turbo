@@ -37,8 +37,8 @@ LOSSLSARG=
 LOSSLSPSV=
 TJQUAL=95
 x1SUBSAMP="444 GRAY"
-x24SUBSAMP="422 440 420 411 441"
-ALLSUBSAMP="444 422 440 420 411 441 GRAY"
+x24SUBSAMP="422 440 420 411 441 410 24"
+ALLSUBSAMP="444 422 440 420 411 441 410 24 GRAY"
 PRECISION=8
 
 if [ -d $OUTDIR ]; then
@@ -154,6 +154,8 @@ for image in $IMAGES; do
 		r1barg="-r 1b"
 	fi
 	runme $EXEDIR/cjpeg -q 95 -pre $PRECISION -dc fa $ENTROPYARG $LOSSLSARG $LOSSLSPSV -gr -outf $OUTDIR/${basename}_GRAY_fast_cjpeg.jpg $IMGDIR/${basename}.${EXT}
+	runme $EXEDIR/cjpeg -q 95 -pre $PRECISION -dc fa $ENTROPYARG $LOSSLSARG $LOSSLSPSV -sa 2x4 -r 8 -outf $OUTDIR/${basename}_24_fast_cjpeg.jpg $IMGDIR/${basename}.${EXT}
+	runme $EXEDIR/cjpeg -q 95 -pre $PRECISION -dc fa $ENTROPYARG $LOSSLSARG $LOSSLSPSV -sa 4x2 -r 4 -outf $OUTDIR/${basename}_410_fast_cjpeg.jpg $IMGDIR/${basename}.${EXT}
 	runme $EXEDIR/cjpeg -q 95 -pre $PRECISION -dc fa $ENTROPYARG $LOSSLSARG $LOSSLSPSV -sa 1x4 -r 2 -outf $OUTDIR/${basename}_441_fast_cjpeg.jpg $IMGDIR/${basename}.${EXT}
 	runme $EXEDIR/cjpeg -q 95 -pre $PRECISION -dc fa $ENTROPYARG $LOSSLSARG $LOSSLSPSV -sa 4x1 -r 1 -outf $OUTDIR/${basename}_411_fast_cjpeg.jpg $IMGDIR/${basename}.${EXT}
 	runme $EXEDIR/cjpeg -q 95 -pre $PRECISION -dc fa $ENTROPYARG $LOSSLSARG $LOSSLSPSV -sa 2x2 -outf $OUTDIR/${basename}_420_fast_cjpeg.jpg $IMGDIR/${basename}.${EXT}
@@ -161,6 +163,8 @@ for image in $IMAGES; do
 	runme $EXEDIR/cjpeg -q 95 -pre $PRECISION -dc fa $ENTROPYARG $LOSSLSARG $LOSSLSPSV -sa 2x1 -outf $OUTDIR/${basename}_422_fast_cjpeg.jpg $IMGDIR/${basename}.${EXT}
 	runme $EXEDIR/cjpeg -q 95 -pre $PRECISION -dc fa $ENTROPYARG $LOSSLSARG $LOSSLSPSV -sa 1x1 -outf $OUTDIR/${basename}_444_fast_cjpeg.jpg $IMGDIR/${basename}.${EXT}
 	runme $EXEDIR/cjpeg -q 95 -pre $PRECISION -dc i $ENTROPYARG $LOSSLSARG $LOSSLSPSV -gr -outf $OUTDIR/${basename}_GRAY_accurate_cjpeg.jpg $IMGDIR/${basename}.${EXT}
+	runme $EXEDIR/cjpeg -q 95 -pre $PRECISION -dc i $ENTROPYARG $LOSSLSARG $LOSSLSPSV -sa 2x4 -r 8 -outf $OUTDIR/${basename}_24_accurate_cjpeg.jpg $IMGDIR/${basename}.${EXT}
+	runme $EXEDIR/cjpeg -q 95 -pre $PRECISION -dc i $ENTROPYARG $LOSSLSARG $LOSSLSPSV -sa 4x2 -r 4 -outf $OUTDIR/${basename}_410_accurate_cjpeg.jpg $IMGDIR/${basename}.${EXT}
 	runme $EXEDIR/cjpeg -q 95 -pre $PRECISION -dc i $ENTROPYARG $LOSSLSARG $LOSSLSPSV -sa 1x4 -r 2 -outf $OUTDIR/${basename}_441_accurate_cjpeg.jpg $IMGDIR/${basename}.${EXT}
 	runme $EXEDIR/cjpeg -q 95 -pre $PRECISION -dc i $ENTROPYARG $LOSSLSARG $LOSSLSPSV -sa 4x1 -r 1 -outf $OUTDIR/${basename}_411_accurate_cjpeg.jpg $IMGDIR/${basename}.${EXT}
 	runme $EXEDIR/cjpeg -q 95 -pre $PRECISION -dc i $ENTROPYARG $LOSSLSARG $LOSSLSPSV -sa 2x2 -outf $OUTDIR/${basename}_420_accurate_cjpeg.jpg $IMGDIR/${basename}.${EXT}
@@ -187,6 +191,8 @@ for image in $IMAGES; do
 			runme $TJBENCH $OUTDIR/$image $TJQUAL -pre $PRECISION -su 440 -r 1b -pi rgb -q -be 0.01 -w 0 ${dctarg} $YUVARG $ALLOCARG $ENTROPYARG $LOSSLSARG
 			runme $TJBENCH $OUTDIR/$image $TJQUAL -pre $PRECISION -su 411 -r 1 -pi rgb -q -be 0.01 -w 0 ${dctarg} $YUVARG $ALLOCARG $ENTROPYARG $LOSSLSARG
 			runme $TJBENCH $OUTDIR/$image $TJQUAL -pre $PRECISION -su 441 -r 2 -pi rgb -q -be 0.01 -w 0 ${dctarg} $YUVARG $ALLOCARG $ENTROPYARG $LOSSLSARG
+			runme $TJBENCH $OUTDIR/$image $TJQUAL -pre $PRECISION -su 410 -r 4 -pi rgb -q -be 0.01 -w 0 ${dctarg} $YUVARG $ALLOCARG $ENTROPYARG $LOSSLSARG
+			runme $TJBENCH $OUTDIR/$image $TJQUAL -pre $PRECISION -su 24 -r 8 -pi rgb -q -be 0.01 -w 0 ${dctarg} $YUVARG $ALLOCARG $ENTROPYARG $LOSSLSARG
 		fi
 		for samp in $ALLSUBSAMP; do
 			if [ "$LOSSLSARG" = "-l" ]; then
@@ -235,6 +241,8 @@ for image in $IMAGES; do
 			runme $TJBENCH $OUTDIR/$image $TJQUAL -pre $PRECISION -su 440 -pi rgb -ti -q -be 0.01 -w 0 -nos ${dctarg} $YUVARG $ALLOCARG $ENTROPYARG $LOSSLSARG
 			runme $TJBENCH $OUTDIR/$image $TJQUAL -pre $PRECISION -su 411 -pi rgb -ti -q -be 0.01 -w 0 -nos ${dctarg} $YUVARG $ALLOCARG $ENTROPYARG $LOSSLSARG
 			runme $TJBENCH $OUTDIR/$image $TJQUAL -pre $PRECISION -su 441 -pi rgb -ti -q -be 0.01 -w 0 -nos ${dctarg} $YUVARG $ALLOCARG $ENTROPYARG $LOSSLSARG
+			runme $TJBENCH $OUTDIR/$image $TJQUAL -pre $PRECISION -su 410 -pi rgb -ti -q -be 0.01 -w 0 -nos ${dctarg} $YUVARG $ALLOCARG $ENTROPYARG $LOSSLSARG
+			runme $TJBENCH $OUTDIR/$image $TJQUAL -pre $PRECISION -su 24 -pi rgb -ti -q -be 0.01 -w 0 -nos ${dctarg} $YUVARG $ALLOCARG $ENTROPYARG $LOSSLSARG
 		fi
 		for samp in $x24SUBSAMP; do
 			if [ $ALLOC = 1 ]; then
@@ -263,7 +271,8 @@ for image in $IMAGES; do
 							continue
 						fi
 						if [ "$TILESIZE" = "16x16" -a \
-							\( "${samp}" = "411" -o "${samp}" = "441" \) ]; then
+							\( "${samp}" = "411" -o "${samp}" = "441" -o \
+								"${samp}" = "410" -o "${samp}" = "24" \) ]; then
 							continue
 						fi
 						runme cmp $i $OUTDIR/${basename}_${samp}_${dct}_nosmooth_djpeg.${EXT}
@@ -301,7 +310,8 @@ for image in $IMAGES; do
 							continue
 						fi
 						if [ "$TILESIZE" = "16x16" -a \
-							\( "${samp}" = "411" -o "${samp}" = "441" \) ]; then
+							\( "${samp}" = "411" -o "${samp}" = "441" -o \
+								"${samp}" = "410" -o "${samp}" = "24" \) ]; then
 							continue
 						fi
 						runme cmp $i $OUTDIR/${basename}_${samp}_${dct}_nosmooth_djpeg.${EXT}
@@ -319,7 +329,7 @@ for image in $IMAGES; do
 			CROPL8_8=16
 			CROPW7_8=91
 			CROPL7_8=14
-			if [ "${samp}" = "411" ]; then
+			if [ "${samp}" = "411" -o "${samp}" = "410" ]; then
 				CROPW8_8=87
 				CROPL8_8=32
 				CROPW7_8=77
@@ -405,7 +415,8 @@ for image in $IMAGES; do
 							continue
 						fi
 						if [ "$TILESIZE" = "16x16" -a \
-							\( "${samp}" = "411" -o "${samp}" = "441" \) ]; then
+							\( "${samp}" = "411" -o "${samp}" = "441" -o \
+								"${samp}" = "410" -o "${samp}" = "24" \) ]; then
 							continue
 						fi
 						runme cmp $i $OUTDIR/${basename}_${samp}_${XFORMNAME[$xform]}_jpegtran.${EXT}
@@ -435,7 +446,8 @@ for image in $IMAGES; do
 							continue
 						fi
 						if [ "$TILESIZE" = "16x16" -a \
-							\( "${samp}" = "411" -o "${samp}" = "441" \) ]; then
+							\( "${samp}" = "411" -o "${samp}" = "441" -o \
+								"${samp}" = "410" -o "${samp}" = "24" \) ]; then
 							continue
 						fi
 						runme cmp $i $OUTDIR/${basename}_GRAY_${XFORMNAME[$xform]}_jpegtran.${EXT}

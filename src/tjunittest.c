@@ -83,10 +83,10 @@ static void usage(char *progName)
 }
 
 static const char *subNameLong[TJ_NUMSAMP] = {
-  "4:4:4", "4:2:2", "4:2:0", "GRAY", "4:4:0", "4:1:1", "4:4:1"
+  "4:4:4", "4:2:2", "4:2:0", "GRAY", "4:4:0", "4:1:1", "4:4:1", "4:1:0", "2:4"
 };
 static const char *subName[TJ_NUMSAMP] = {
-  "444", "422", "420", "GRAY", "440", "411", "441"
+  "444", "422", "420", "GRAY", "440", "411", "441", "410", "24"
 };
 
 static const char *pixFormatStr[TJ_NUMPF] = {
@@ -672,7 +672,8 @@ static void decompTest(tjhandle handle, unsigned char *jpegBuf,
     if (subsamp == TJSAMP_444 || subsamp == TJSAMP_GRAY ||
         ((subsamp == TJSAMP_411 || subsamp == TJSAMP_441) && sf[i].num == 1 &&
          (sf[i].denom == 2 || sf[i].denom == 1)) ||
-        (subsamp != TJSAMP_411 && subsamp != TJSAMP_441 && sf[i].num == 1 &&
+        (subsamp != TJSAMP_411 && subsamp != TJSAMP_441 &&
+         subsamp != TJSAMP_410 && subsamp != TJSAMP_24 && sf[i].num == 1 &&
          (sf[i].denom == 4 || sf[i].denom == 2 || sf[i].denom == 1)) ||
         (subsamp == TJSAMP_420 && sf[i].num == 1 && sf[i].denom == 8 &&
          !doYUV))
@@ -722,6 +723,9 @@ static void doTest(int w, int h, const int *formats, int nformats, int subsamp,
   TRY_TJ(chandle, tj3Set(chandle, TJPARAM_SUBSAMP, subsamp));
 
   for (pfi = 0; pfi < nformats; pfi++) {
+    if (formats[pfi] == TJPF_CMYK &&
+        (subsamp == TJSAMP_410 || subsamp == TJSAMP_24))
+      continue;
     for (i = 0; i < 2; i++) {
       TRY_TJ(chandle, tj3Set(chandle, TJPARAM_BOTTOMUP, i == 1));
       TRY_TJ(dhandle, tj3Set(dhandle, TJPARAM_BOTTOMUP, i == 1));
@@ -1421,6 +1425,10 @@ int main(int argc, char *argv[])
     doTest(35, 39, _4sampleFormats, num4bf, TJSAMP_411, "test");
     doTest(39, 41, _3sampleFormats, 2, TJSAMP_441, "test");
     doTest(41, 35, _4sampleFormats, num4bf, TJSAMP_441, "test");
+    doTest(35, 41, _3sampleFormats, 2, TJSAMP_410, "test");
+    doTest(39, 35, _4sampleFormats, num4bf, TJSAMP_410, "test");
+    doTest(41, 39, _3sampleFormats, 2, TJSAMP_24, "test");
+    doTest(35, 41, _4sampleFormats, num4bf, TJSAMP_24, "test");
   }
   doTest(39, 41, _onlyGray, 1, TJSAMP_GRAY, "test");
   if (!lossless) {
@@ -1436,6 +1444,8 @@ int main(int argc, char *argv[])
     doTest(48, 48, _onlyRGB, 1, TJSAMP_440, "test_yuv0");
     doTest(48, 48, _onlyRGB, 1, TJSAMP_411, "test_yuv0");
     doTest(48, 48, _onlyRGB, 1, TJSAMP_441, "test_yuv0");
+    doTest(48, 48, _onlyRGB, 1, TJSAMP_410, "test_yuv0");
+    doTest(48, 48, _onlyRGB, 1, TJSAMP_24, "test_yuv0");
     doTest(48, 48, _onlyRGB, 1, TJSAMP_GRAY, "test_yuv0");
     doTest(48, 48, _onlyGray, 1, TJSAMP_GRAY, "test_yuv0");
   }

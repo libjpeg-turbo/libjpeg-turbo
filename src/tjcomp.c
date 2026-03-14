@@ -83,7 +83,7 @@
 
 
 static const char *subsampName[TJ_NUMSAMP] = {
-  "444", "422", "420", "GRAY", "440", "411", "441"
+  "444", "422", "420", "GRAY", "440", "411", "441", "410", "24"
 };
 
 
@@ -139,7 +139,7 @@ static void usage(char *programName)
   printf("-rgb\n");
   printf("    Create a JPEG image that uses the RGB colorspace instead of the YCbCr\n");
   printf("    colorspace\n");
-  printf("-subsamp {444|422|440|420|411|441}\n");
+  printf("-subsamp {444|422|440|420|411|441|410|24}\n");
   printf("    Create a JPEG image that uses the specified chrominance subsampling level\n");
   printf("    [default = %s]\n\n", subsampName[DEFAULT_SUBSAMP]);
 
@@ -234,6 +234,10 @@ int main(int argc, char **argv)
         subsamp = TJSAMP_411;
       else if (MATCH_ARG(argv[i], "441", 3))
         subsamp = TJSAMP_441;
+      else if (MATCH_ARG(argv[i], "410", 3))
+        subsamp = TJSAMP_410;
+      else if (MATCH_ARG(argv[i], "24", 2))
+        subsamp = TJSAMP_24;
       else
         usage(argv[0]);
     } else break;

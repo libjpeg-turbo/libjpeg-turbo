@@ -2245,17 +2245,18 @@ DLLEXPORT int tj3DecompressToYUVPlanes8(tjhandle handle,
     for (i = 0; i < dinfo->num_components; i++) {
       jpeg_component_info *compptr = &dinfo->comp_info[i];
 
-      if (this->subsamp == TJSAMP_420) {
-        /* When 4:2:0 subsampling is used with IDCT scaling, libjpeg will try
-           to be clever and use the IDCT to perform upsampling on the U and V
-           planes.  For instance, if the output image is to be scaled by 1/2
-           relative to the JPEG image, then the scaling factor and upsampling
-           effectively cancel each other, so a normal 8x8 IDCT can be used.
-           However, this is not desirable when using the decompress-to-YUV
-           functionality in TurboJPEG, since we want to output the U and V
-           planes in their subsampled form.  Thus, we have to override some
-           internal libjpeg parameters to force it to use the "scaled" IDCT
-           functions on the U and V planes. */
+      if (this->subsamp == TJSAMP_420 || this->subsamp == TJSAMP_410 ||
+          this->subsamp == TJSAMP_24) {
+        /* When 4:2:0, 4:1:0, or 2:4 subsampling is used with IDCT scaling,
+           libjpeg will try to be clever and use the IDCT to perform upsampling
+           on the U and V planes.  For instance, if the output image is to be
+           scaled by 1/2 relative to the JPEG image, then the scaling factor
+           and upsampling effectively cancel each other, so a normal 8x8 IDCT
+           can be used. However, this is not desirable when using the
+           decompress-to-YUV functionality in TurboJPEG, since we want to
+           output the U and V planes in their subsampled form.  Thus, we have
+           to override some internal libjpeg parameters to force it to use the
+           "scaled" IDCT functions on the U and V planes. */
         compptr->_DCT_scaled_size = dctsize;
         compptr->MCU_sample_width = tjMCUWidth[this->subsamp] *
           this->scalingFactor.num / this->scalingFactor.denom *
@@ -2773,6 +2774,8 @@ static int getDstSubsamp(int srcSubsamp, const tjtransform *transform)
     else if (dstSubsamp == TJSAMP_440) dstSubsamp = TJSAMP_422;
     else if (dstSubsamp == TJSAMP_411) dstSubsamp = TJSAMP_441;
     else if (dstSubsamp == TJSAMP_441) dstSubsamp = TJSAMP_411;
+    else if (dstSubsamp == TJSAMP_410) dstSubsamp = TJSAMP_24;
+    else if (dstSubsamp == TJSAMP_24) dstSubsamp = TJSAMP_410;
   }
 
   return dstSubsamp;

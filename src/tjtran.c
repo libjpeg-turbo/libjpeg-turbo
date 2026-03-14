@@ -311,6 +311,8 @@ int main(int argc, char **argv)
     else if (subsamp == TJSAMP_440) subsamp = TJSAMP_422;
     else if (subsamp == TJSAMP_411) subsamp = TJSAMP_441;
     else if (subsamp == TJSAMP_441) subsamp = TJSAMP_411;
+    else if (subsamp == TJSAMP_410) subsamp = TJSAMP_24;
+    else if (subsamp == TJSAMP_24) subsamp = TJSAMP_410;
   }
 
   if (tj3Set(tjInstance, TJPARAM_PROGRESSIVE, progressive) < 0)

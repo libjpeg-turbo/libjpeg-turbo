@@ -60,7 +60,7 @@ public final class TJ {
   public static final int INIT_DECOMPRESS = 1;
   public static final int INIT_TRANSFORM = 2;
 
-  public static final int NUMSAMP = 7;
+  public static final int NUMSAMP = 9;
   public static final int SAMP_444 = 0;
   public static final int SAMP_422 = 1;
   public static final int SAMP_420 = 2;
@@ -68,10 +68,12 @@ public final class TJ {
   public static final int SAMP_440 = 4;
   public static final int SAMP_411 = 5;
   public static final int SAMP_441 = 6;
+  public static final int SAMP_410 = 7;
+  public static final int SAMP_24 = 8;
   public static final int SAMP_UNKNOWN = -1;
 
-  public static final int[] MCU_WIDTH  = { 8, 16, 16, 8, 8, 32, 8 };
-  public static final int[] MCU_HEIGHT = { 8, 8, 16, 8, 16, 8, 32 };
+  public static final int[] MCU_WIDTH  = { 8, 16, 16, 8, 8, 32, 8, 32, 16 };
+  public static final int[] MCU_HEIGHT = { 8, 8, 16, 8, 16, 8, 32, 16, 32 };
 
   public static final int NUMPF = 12;
   public static final int PF_RGB = 0;

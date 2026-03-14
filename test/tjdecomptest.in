@@ -54,8 +54,8 @@ echo "IMGDIR: $IMGDIR"
 echo "OUTDIR: $OUTDIR"
 echo
 
-SUBSAMPOPT=(444 422 440 420 411 441 410)
-SAMPOPT=(1x1 2x1 1x2 2x2 4x1 1x4 4x2)
+SUBSAMPOPT=(444 422 440 420 411 441 410 24 32)
+SAMPOPT=(1x1 2x1 1x2 2x2 4x1 1x4 4x2 2x4 3x2)
 
 for precision in 8 12; do
 	if [ $precision -le 8 ]; then
@@ -74,7 +74,7 @@ for precision in 8 12; do
 	RGBEXT=${RGBIMG##*.}
 	GRAYEXT=${GRAYIMG##*.}
 
-	for sampi in {0..6}; do
+	for sampi in {0..8}; do
 		iccarg=
 		if [ $sampi = 3 ]; then
 			iccarg="-icc $IMGDIR/test1.icc"
@@ -99,7 +99,7 @@ for precision in 8 12; do
 	for subsamp in ${SUBSAMPOPT[*]} gray; do
 		for croparg in "" "-cr 14x14+23+23" "-cr 21x21+4+4" "-cr 18x18+13+13" \
 			"-cr 21x21+0+0" "-cr 24x26+20+18"; do
-			if [[ "$croparg" != "" && "$subsamp" = "410" ]]; then
+			if [[ "$croparg" != "" && "$subsamp" = "32" ]]; then
 				continue
 			fi
 			for scalearg in "" "-s 16/8" "-s 15/8" "-s 14/8" "-s 13/8" "-s 12/8" \
@@ -117,7 +117,7 @@ for precision in 8 12; do
 					for dctarg in "" "-dc fa"; do
 						if [[ "$dctarg" = "-dc fa" && \
 							("$scalearg" != "-s 4/8" || \
-								("$subsamp" != "420" && "$subsamp" != "410")) && \
+								("$subsamp" != "420" && "$subsamp" != "32")) && \
 							"$scalearg" != "" ]]; then
 							continue
 						fi

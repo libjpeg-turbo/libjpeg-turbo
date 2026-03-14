@@ -106,13 +106,13 @@ static const char *pixFormatStr[TJ_NUMPF] = {
   "RGB", "BGR", "RGBX", "BGRX", "XBGR", "XRGB", "GRAY", "", "", "", "", "CMYK"
 };
 static const char *subNameLong[TJ_NUMSAMP] = {
-  "4:4:4", "4:2:2", "4:2:0", "GRAY", "4:4:0", "4:1:1", "4:4:1"
+  "4:4:4", "4:2:2", "4:2:0", "GRAY", "4:4:0", "4:1:1", "4:4:1", "4:1:0", "2:4"
 };
 static const char *csName[TJ_NUMCS] = {
   "RGB", "YCbCr", "GRAY", "CMYK", "YCCK"
 };
 static const char *subName[TJ_NUMSAMP] = {
-  "444", "422", "420", "GRAY", "440", "411", "441"
+  "444", "422", "420", "GRAY", "440", "411", "441", "410", "24"
 };
 static tjscalingfactor *scalingFactors = NULL, sf = { 1, 1 };
 static tjregion cr = { 0, 0, 0, 0 };
@@ -762,6 +762,8 @@ static int decompTest(char *fileName)
       else if (tsubsamp == TJSAMP_440) tsubsamp = TJSAMP_422;
       else if (tsubsamp == TJSAMP_411) tsubsamp = TJSAMP_441;
       else if (tsubsamp == TJSAMP_441) tsubsamp = TJSAMP_411;
+      else if (tsubsamp == TJSAMP_410) tsubsamp = TJSAMP_24;
+      else if (tsubsamp == TJSAMP_24) tsubsamp = TJSAMP_410;
     }
 
     if (noRealloc && doTransform) {
@@ -1032,8 +1034,8 @@ static void usage(char *progName)
   printf(")\n");
   printf("-subsamp S\n");
   printf("    When compressing, use the specified level of chrominance subsampling\n");
-  printf("    (S = 444, 422, 440, 420, 411, 441, or GRAY) [default = test Grayscale,\n");
-  printf("    4:2:0, 4:2:2, and 4:4:4 in sequence]\n");
+  printf("    (S = 444, 422, 440, 420, 411, 441, 410, 24, or GRAY)\n");
+  printf("    [default = test Grayscale, 4:2:0, 4:2:2, and 4:4:4 in sequence]\n");
   printf("-yuv\n");
   printf("    Compress from/decompress to intermediate planar YUV images\n");
   printf("    ** 8-bit data precision only **\n");
@@ -1270,6 +1272,10 @@ int main(int argc, char *argv[])
           subsamp = TJSAMP_411;
         else if (MATCH_ARG(argv[i], "441", 3))
           subsamp = TJSAMP_441;
+        else if (MATCH_ARG(argv[i], "410", 3))
+          subsamp = TJSAMP_410;
+        else if (MATCH_ARG(argv[i], "24", 3))
+          subsamp = TJSAMP_24;
         else
           usage(argv[0]);
       } else if (MATCH_ARG(argv[i], "-scale", 2) && i < argc - 1) {
