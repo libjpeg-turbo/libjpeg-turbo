@@ -150,9 +150,9 @@ static void usage(char *programName)
 int main(int argc, char **argv)
 {
   int i, retval = 0;
-  int arithmetic = -1, colorspace = -1, fastDCT = -1, losslessPSV = -1,
-    losslessPt = -1, maxMemory = -1, noICC = 0, optimize = -1,
-    pixelFormat = TJPF_UNKNOWN, precision = 8, progressive = -1,
+  int arithmetic = -1, colorspace = TJCS_DEFAULT, fastDCT = -1,
+    losslessPSV = -1, losslessPt = -1, maxMemory = -1, noICC = 0,
+    optimize = -1, pixelFormat = TJPF_UNKNOWN, precision = 8, progressive = -1,
     quality = DEFAULT_QUALITY, restartIntervalBlocks = -1,
     restartIntervalRows = -1, subsamp = DEFAULT_SUBSAMP;
   char *iccFilename = NULL;
@@ -297,10 +297,9 @@ int main(int argc, char **argv)
       THROW_TJ("loading input image");
   }
 
-  if (pixelFormat == TJPF_GRAY && colorspace < 0)
+  if (pixelFormat == TJPF_GRAY && colorspace == TJCS_DEFAULT)
     colorspace = TJCS_GRAY;
-  if (colorspace >= 0 &&
-      tj3Set(tjInstance, TJPARAM_COLORSPACE, colorspace) < 0)
+  if (tj3Set(tjInstance, TJPARAM_COLORSPACE, colorspace) < 0)
     THROW_TJ("setting TJPARAM_COLORSPACE");
 
   if (iccFilename) {

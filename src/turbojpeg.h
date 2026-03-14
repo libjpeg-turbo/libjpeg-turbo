@@ -504,7 +504,15 @@ enum TJCS {
    * perceptual loss.  YCCK JPEG images can only be generated from and
    * decompressed to packed-pixel images with the CMYK pixel format.
    */
-  TJCS_YCCK
+  TJCS_YCCK,
+  /**
+   * Default colorspace
+   *
+   * Generate a grayscale JPEG image if #TJPARAM_SUBSAMP is set to
+   * #TJSAMP_GRAY, a YCCK JPEG image if the source image is CMYK, and a YCbCr
+   * JPEG image otherwise.
+   */
+  TJCS_DEFAULT = -1
 };
 
 

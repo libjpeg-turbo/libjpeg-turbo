@@ -332,7 +332,7 @@ static int getPixelFormat(int pixelSize, int flags)
 
 static void setCompDefaults(tjinstance *this, int pixelFormat, boolean yuv)
 {
-  int colorspace = yuv ? -1 : this->colorspace;
+  int colorspace = yuv ? TJCS_DEFAULT : this->colorspace;
 
   this->cinfo.in_color_space = pf2cs[pixelFormat];
   this->cinfo.input_components = tjPixelSize[pixelFormat];
@@ -489,7 +489,7 @@ static void setDecompParameters(tjinstance *this)
   case JCS_YCbCr:      this->colorspace = TJCS_YCbCr;  break;
   case JCS_CMYK:       this->colorspace = TJCS_CMYK;  break;
   case JCS_YCCK:       this->colorspace = TJCS_YCCK;  break;
-  default:             this->colorspace = -1;  break;
+  default:             this->colorspace = TJCS_DEFAULT;  break;
   }
   this->progressive = this->dinfo.progressive_mode;
   this->arithmetic = this->dinfo.arith_code;
@@ -554,7 +554,7 @@ DLLEXPORT tjhandle tj3Init(int initType)
   this->jpegWidth = -1;
   this->jpegHeight = -1;
   this->precision = 8;
-  this->colorspace = -1;
+  this->colorspace = TJCS_DEFAULT;
   this->losslessPSV = 1;
   this->xDensity = 1;
   this->yDensity = 1;
@@ -711,7 +711,7 @@ DLLEXPORT int tj3Set(tjhandle handle, int param, int value)
   case TJPARAM_COLORSPACE:
     if (!(this->init & COMPRESS))
       THROW("TJPARAM_COLORSPACE is read-only in decompression instances.");
-    SET_PARAM(colorspace, 0, TJ_NUMCS - 1);
+    SET_PARAM(colorspace, TJCS_DEFAULT, TJ_NUMCS - 1);
     break;
   case TJPARAM_FASTUPSAMPLE:
     if (!(this->init & DECOMPRESS))
@@ -1858,7 +1858,7 @@ DLLEXPORT int tj3DecompressHeader(tjhandle handle,
 
   jpeg_abort_decompress(dinfo);
 
-  if (this->colorspace < 0)
+  if (this->colorspace == TJCS_DEFAULT)
     THROW("Could not determine colorspace of JPEG image");
   if (this->jpegWidth < 1 || this->jpegHeight < 1)
     THROW("Invalid data returned in header");

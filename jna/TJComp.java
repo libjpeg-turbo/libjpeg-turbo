@@ -144,9 +144,9 @@ final class TJComp {
 
     try {
       int i;
-      int arithmetic = -1, colorspace = -1, fastDCT = -1, losslessPSV = -1,
-        losslessPt = -1, maxMemory = -1, optimize = -1, precision = 8,
-        progressive = -1, quality = DEFAULT_QUALITY,
+      int arithmetic = -1, colorspace = TJ.CS_DEFAULT, fastDCT = -1,
+        losslessPSV = -1, losslessPt = -1, maxMemory = -1, optimize = -1,
+        precision = 8, progressive = -1, quality = DEFAULT_QUALITY,
         restartIntervalBlocks = -1, restartIntervalRows = -1,
         subsamp = DEFAULT_SUBSAMP;
       boolean noICC = false;
@@ -295,10 +295,10 @@ final class TJComp {
           srcBuf = TJ.loadImage16(tjInstance, argv[i], width, 1, height,
                                   pixelFormat);
 
-        if (pixelFormat.getValue() == TJ.PF_GRAY && colorspace < 0)
+        if (pixelFormat.getValue() == TJ.PF_GRAY &&
+            colorspace == TJ.CS_DEFAULT)
           colorspace = TJ.CS_GRAY;
-        if (colorspace >= 0)
-          TJ.set(tjInstance, TJ.PARAM_COLORSPACE, colorspace);
+        TJ.set(tjInstance, TJ.PARAM_COLORSPACE, colorspace);
 
         if (iccFilename != null) {
           File iccFile = new File(iccFilename);

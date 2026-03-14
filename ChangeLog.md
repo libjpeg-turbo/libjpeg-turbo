@@ -132,6 +132,8 @@ ICC profile that was previously extracted from a JPEG image.
      - `tj3GetICCProfile()` can now be used to retrieve the ICC profile
 associated with a TurboJPEG compression instance (including an ICC profile
 extracted from a PNG image by `tj3LoadImage*()`.)
+     - The JPEG colorspace can now be reset to the default, using a new
+`TJPARAM_COLORSPACE` value (`TJCS_DEFAULT`.)
 
 11. Added a new cjpeg, djpeg, and jpegtran option (`-nooverwrite`) that causes
 the programs to fail if the specified output file exists.

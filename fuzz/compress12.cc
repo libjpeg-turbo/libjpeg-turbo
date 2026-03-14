@@ -60,15 +60,15 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
   FILE *file = NULL;
   struct test tests[NUMTESTS] = {
     /*
-      BU Pixel      JPEG        Subsampling  Fst Qual Prg Ari No    Rst
-         Format     Colorspace  Level        DCT              Realc Rows */
-    { 0, TJPF_RGB,  TJCS_YCbCr, TJSAMP_444,  1,  100, 0,  0,  1,    0    },
-    { 0, TJPF_BGR,  TJCS_YCbCr, TJSAMP_422,  0,  90,  0,  0,  0,    0    },
-    { 0, TJPF_RGBX, TJCS_RGB,   TJSAMP_420,  0,  75,  0,  1,  0,    1    },
-    { 0, TJPF_BGRA, TJCS_YCbCr, TJSAMP_411,  0,  50,  0,  0,  0,    0    },
-    { 0, TJPF_XRGB, TJCS_GRAY,  TJSAMP_GRAY, 0,  25,  0,  0,  0,    0    },
-    { 0, TJPF_GRAY, TJCS_GRAY,  TJSAMP_GRAY, 0,  10,  1,  0,  0,    0    },
-    { 1, TJPF_CMYK, TJCS_YCCK,  TJSAMP_440,  0,  1,   1,  1,  0,    1    }
+      BU Pixel      JPEG          Subsampling  Fst Qual Prg Ari No    Rst
+         Format     Colorspace    Level        DCT              Realc Rows */
+    { 0, TJPF_RGB,  TJCS_YCbCr,   TJSAMP_444,  1,  100, 0,  0,  1,    0    },
+    { 0, TJPF_BGR,  TJCS_DEFAULT, TJSAMP_422,  0,  90,  0,  0,  0,    0    },
+    { 0, TJPF_RGBX, TJCS_RGB,     TJSAMP_420,  0,  75,  0,  1,  0,    1    },
+    { 0, TJPF_BGRA, TJCS_DEFAULT, TJSAMP_411,  0,  50,  0,  0,  0,    0    },
+    { 0, TJPF_XRGB, TJCS_GRAY,    TJSAMP_GRAY, 0,  25,  0,  0,  0,    0    },
+    { 0, TJPF_GRAY, TJCS_DEFAULT, TJSAMP_GRAY, 0,  10,  1,  0,  0,    0    },
+    { 1, TJPF_CMYK, TJCS_YCCK,    TJSAMP_440,  0,  1,   1,  1,  0,    1    }
   };
 
   if ((file = fmemopen((void *)data, size, "r")) == NULL)

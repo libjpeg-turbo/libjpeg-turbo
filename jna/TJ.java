@@ -111,6 +111,7 @@ public final class TJ {
   public static final int CS_GRAY = 2;
   public static final int CS_CMYK = 3;
   public static final int CS_YCCK = 4;
+  public static final int CS_DEFAULT = -1;
 
   public static final int PARAM_STOPONWARNING = 0;
   public static final int PARAM_BOTTOMUP = 1;
