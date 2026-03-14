@@ -695,7 +695,9 @@ final class TJUnitTest {
            sf[i].num == 1 && (sf[i].denom == 2 || sf[i].denom == 1)) ||
           (subsamp != TJ.SAMP_411 && subsamp != TJ.SAMP_441 &&
            sf[i].num == 1 && (sf[i].denom == 4 || sf[i].denom == 2 ||
-                              sf[i].denom == 1)))
+                              sf[i].denom == 1)) ||
+          (subsamp == TJ.SAMP_420 && sf[i].num == 1 && sf[i].denom == 8 &&
+           !doYUV))
         decompTest(handle, jpegBuf, jpegSize, w, h, pf, baseName, subsamp,
                    sf[i]);
     }
@@ -725,8 +727,7 @@ final class TJUnitTest {
       } else {
         TJ.set(chandle, TJ.PARAM_QUALITY, 100);
         if (subsamp == TJ.SAMP_422 || subsamp == TJ.SAMP_420 ||
-            subsamp == TJ.SAMP_440 || subsamp == TJ.SAMP_411 ||
-            subsamp == TJ.SAMP_441)
+            subsamp == TJ.SAMP_440)
           TJ.set(dhandle, TJ.PARAM_FASTUPSAMPLE, 1);
       }
       TJ.set(chandle, TJ.PARAM_SUBSAMP, subsamp);
