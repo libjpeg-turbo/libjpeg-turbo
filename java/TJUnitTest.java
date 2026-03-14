@@ -869,8 +869,7 @@ final class TJUnitTest {
       } else {
         tjc.set(TJ.PARAM_QUALITY, 100);
         if (subsamp == TJ.SAMP_422 || subsamp == TJ.SAMP_420 ||
-            subsamp == TJ.SAMP_440 || subsamp == TJ.SAMP_411 ||
-            subsamp == TJ.SAMP_441)
+            subsamp == TJ.SAMP_440)
           tjd.set(TJ.PARAM_FASTUPSAMPLE, 1);
       }
       tjc.set(TJ.PARAM_SUBSAMP, subsamp);

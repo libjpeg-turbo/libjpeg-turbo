@@ -717,8 +717,7 @@ static void doTest(int w, int h, const int *formats, int nformats, int subsamp,
   } else {
     TRY_TJ(chandle, tj3Set(chandle, TJPARAM_QUALITY, 100));
     if (subsamp == TJSAMP_422 || subsamp == TJSAMP_420 ||
-        subsamp == TJSAMP_440 || subsamp == TJSAMP_411 ||
-        subsamp == TJSAMP_441)
+        subsamp == TJSAMP_440)
       TRY_TJ(dhandle, tj3Set(dhandle, TJPARAM_FASTUPSAMPLE, 1));
   }
   TRY_TJ(chandle, tj3Set(chandle, TJPARAM_SUBSAMP, subsamp));

@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2011-2013, 2017-2018, 2020-2024 D. R. Commander.
- *                                               All Rights Reserved.
+ * Copyright (C) 2011-2013, 2017-2018, 2020-2024, 2026 D. R. Commander.
+ *                                                     All Rights Reserved.
  * Copyright (C) 2015 Viktor Szathmáry.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -590,10 +590,10 @@ public final class TJ {
    * <p><b>Value</b>
    * <ul>
    * <li> <code>0</code> <i>[default]</i> Use smooth upsampling when
-   * decompressing a JPEG image that was generated using chrominance
-   * subsampling.  This creates a smooth transition between neighboring
-   * chrominance components in order to reduce upsampling artifacts in the
-   * decompressed image.
+   * decompressing a JPEG image that was generated using 4:2:2, 4:2:0, or 4:4:0
+   * chrominance subsampling.  This creates a smooth transition between
+   * neighboring chrominance components in order to reduce upsampling artifacts
+   * in the decompressed image.
    * <li> <code>1</code> Use the fastest chrominance upsampling algorithm
    * available, which may combine upsampling with color conversion.
    * </ul>

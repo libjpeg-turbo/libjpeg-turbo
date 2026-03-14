@@ -887,7 +887,7 @@ scalingFactor)</code>. </p>
 </td></tr>
 <tr><td class="fieldname"><a id="ggaa0f6be63ba78278299c9f5c12031fe82a0e051ac106f7b7402b690a5daf4869c0" name="ggaa0f6be63ba78278299c9f5c12031fe82a0e051ac106f7b7402b690a5daf4869c0"></a>TJPARAM_FASTUPSAMPLE&#160;</td><td class="fielddoc"><p>Chrominance upsampling algorithm [lossy decompression only]. </p>
 <p><b>Value</b></p><ul>
-<li><code>0</code> <em>[default]</em> Use smooth upsampling when decompressing a JPEG image that was generated using chrominance subsampling. This creates a smooth transition between neighboring chrominance components in order to reduce upsampling artifacts in the decompressed image.</li>
+<li><code>0</code> <em>[default]</em> Use smooth upsampling when decompressing a JPEG image that was generated using 4:2:2, 4:2:0, or 4:4:0 chrominance subsampling. This creates a smooth transition between neighboring chrominance components in order to reduce upsampling artifacts in the decompressed image.</li>
 <li><code>1</code> Use the fastest chrominance upsampling algorithm available, which may combine upsampling with color conversion. </li>
 </ul>
 </td></tr>

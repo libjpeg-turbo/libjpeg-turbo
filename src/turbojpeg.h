@@ -610,9 +610,10 @@ enum TJPARAM {
    *
    * **Value**
    * - `0` *[default]* Use smooth upsampling when decompressing a JPEG image
-   * that was generated using chrominance subsampling.  This creates a smooth
-   * transition between neighboring chrominance components in order to reduce
-   * upsampling artifacts in the decompressed image.
+   * that was generated using 4:2:2, 4:2:0, or 4:4:0 chrominance subsampling.
+   * This creates a smooth transition between neighboring chrominance
+   * components in order to reduce upsampling artifacts in the decompressed
+   * image.
    * - `1` Use the fastest chrominance upsampling algorithm available, which
    * may combine upsampling with color conversion.
    */
