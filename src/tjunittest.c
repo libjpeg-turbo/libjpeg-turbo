@@ -674,7 +674,9 @@ static void decompTest(tjhandle handle, unsigned char *jpegBuf,
         ((subsamp == TJSAMP_411 || subsamp == TJSAMP_441) && sf[i].num == 1 &&
          (sf[i].denom == 2 || sf[i].denom == 1)) ||
         (subsamp != TJSAMP_411 && subsamp != TJSAMP_441 && sf[i].num == 1 &&
-         (sf[i].denom == 4 || sf[i].denom == 2 || sf[i].denom == 1)))
+         (sf[i].denom == 4 || sf[i].denom == 2 || sf[i].denom == 1)) ||
+        (subsamp == TJSAMP_420 && sf[i].num == 1 && sf[i].denom == 8 &&
+         !doYUV))
       _decompTest(handle, jpegBuf, jpegSize, w, h, pf, basename, subsamp,
                   sf[i]);
   }
