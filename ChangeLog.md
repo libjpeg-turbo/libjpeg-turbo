@@ -64,7 +64,7 @@ GHz Ky X1 CPU.  Actual mileage may vary.)
 
 7. The TurboJPEG Java API has been moved to a
 [dedicated repository](https://github.com/libjpeg-turbo/turbojpeg-java) where
-it can evolve independently of the TurboJPEG C API, based on demand.
+it can evolve independently of the TurboJPEG C API based on demand.
 Justifications:
 
      - The TurboJPEG Java API was designed around the needs of Java Web Start,
