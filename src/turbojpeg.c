@@ -2255,7 +2255,7 @@ DLLEXPORT int tj3DecompressToYUVPlanes8(tjhandle handle,
         compptr->_DCT_scaled_size = dctsize;
         compptr->MCU_sample_width = tjMCUWidth[this->subsamp] *
           this->scalingFactor.num / this->scalingFactor.denom *
-          compptr->v_samp_factor / dinfo->max_v_samp_factor;
+          compptr->h_samp_factor / dinfo->max_h_samp_factor;
         dinfo->idct->inverse_DCT[i] = dinfo->idct->inverse_DCT[0];
       }
       crow[i] = row * compptr->v_samp_factor / dinfo->max_v_samp_factor;
