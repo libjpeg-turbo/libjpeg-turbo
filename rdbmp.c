@@ -517,6 +517,8 @@ start_input_bmp(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
 
   if (biWidth <= 0 || biHeight <= 0)
     ERREXIT(cinfo, JERR_BMP_EMPTY);
+  if (biWidth > JPEG_MAX_DIMENSION || biHeight > JPEG_MAX_DIMENSION)
+    ERREXIT1(cinfo, JERR_IMAGE_TOO_BIG, JPEG_MAX_DIMENSION);
   if (sinfo->max_pixels &&
       (unsigned long long)biWidth * biHeight > sinfo->max_pixels)
     ERREXIT1(cinfo, JERR_IMAGE_TOO_BIG, sinfo->max_pixels);
@@ -573,8 +575,6 @@ start_input_bmp(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
       cinfo->input_components = 4;
     else
       ERREXIT(cinfo, JERR_BAD_IN_COLORSPACE);
-    if ((unsigned long long)biWidth * 3ULL > 0xFFFFFFFFULL)
-      ERREXIT(cinfo, JERR_WIDTH_OVERFLOW);
     row_width = (JDIMENSION)biWidth * 3;
     break;
   case 32:
@@ -586,8 +586,6 @@ start_input_bmp(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
       cinfo->input_components = 4;
     else
       ERREXIT(cinfo, JERR_BAD_IN_COLORSPACE);
-    if ((unsigned long long)biWidth * 4ULL > 0xFFFFFFFFULL)
-      ERREXIT(cinfo, JERR_WIDTH_OVERFLOW);
     row_width = (JDIMENSION)biWidth * 4;
     break;
   default:
@@ -624,12 +622,6 @@ start_input_bmp(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
     }
   }
 
-  /* Ensure that biWidth * cinfo->input_components doesn't exceed the maximum
-     value of the JDIMENSION type.  This is only a danger with BMP files, since
-     their width and height fields are 32-bit integers. */
-  if ((unsigned long long)biWidth *
-      (unsigned long long)cinfo->input_components > 0xFFFFFFFFULL)
-    ERREXIT(cinfo, JERR_WIDTH_OVERFLOW);
   /* Allocate one-row buffer for returned data */
   source->pub.buffer = (*cinfo->mem->alloc_sarray)
     ((j_common_ptr)cinfo, JPOOL_IMAGE,
