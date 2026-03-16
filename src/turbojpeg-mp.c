@@ -317,7 +317,7 @@ _JSAMPLE *GET_NAME(_tj3LoadImageFromFileHandle, BITS_IN_JSAMPLE)
   tjhandle handle2 = NULL;
   tjinstance *this2;
   j_compress_ptr cinfo = NULL;
-  cjpeg_source_ptr src;
+  cjpeg_source_ptr src = NULL;
   _JSAMPLE *dstBuf = NULL;
   boolean invert;
 
@@ -378,6 +378,11 @@ _JSAMPLE *GET_NAME(_tj3LoadImageFromFileHandle, BITS_IN_JSAMPLE)
   } else
     THROW("Unsupported file type");
 
+  if (setjmp(this2->jerr.setjmp_buffer)) {
+    /* If we get here, the JPEG code has signaled an error. */
+    retval = -1;  goto bailout;
+  }
+
   cinfo->mem->max_memory_to_use = (long)this->maxMemory * 1048576L;
 
   src->input_file = file;
@@ -435,9 +440,9 @@ _JSAMPLE *GET_NAME(_tj3LoadImageFromFileHandle, BITS_IN_JSAMPLE)
     cinfo->next_scanline += nlines;
   }
 
-  (*src->finish_input) (cinfo, src);
-
 bailout:
+  if (src)
+    (*src->finish_input) (cinfo, src);
   tj3Destroy(handle2);
   if (retval < 0) { free(dstBuf);  dstBuf = NULL; }
   return dstBuf;

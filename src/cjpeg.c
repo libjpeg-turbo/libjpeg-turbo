@@ -193,6 +193,8 @@ static void fuzzer_emit_message(j_common_ptr cinfo, int msg_level)
 }
 
 #define HANDLE_ERROR() { \
+  if (src_mgr) \
+    (*src_mgr->finish_input) (&cinfo, src_mgr); \
   if (cinfo.global_state > CSTATE_START) { \
     if (memdst && outbuffer) \
       (*cinfo.dest->term_destination) (&cinfo); \
@@ -657,7 +659,7 @@ main(int argc, char **argv)
 #endif
   struct cdjpeg_progress_mgr progress;
   int file_index;
-  cjpeg_source_ptr src_mgr;
+  cjpeg_source_ptr src_mgr = NULL;
 #ifndef CJPEG_FUZZER
   FILE *input_file = NULL;
 #endif
@@ -802,6 +804,11 @@ main(int argc, char **argv)
   src_mgr->input_file = input_file;
 #ifdef CJPEG_FUZZER
   src_mgr->max_pixels = 1048576;
+#endif
+
+#ifdef CJPEG_FUZZER
+  if (setjmp(myerr.setjmp_buffer))
+    HANDLE_ERROR()
 #endif
 
   /* Read the input file header to obtain file size & colorspace. */
