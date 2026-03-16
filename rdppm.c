@@ -5,7 +5,7 @@
  * Copyright (C) 1991-1997, Thomas G. Lane.
  * Modified 2009 by Bill Allombert, Guido Vollbeding.
  * libjpeg-turbo Modifications:
- * Copyright (C) 2015-2017, 2020-2023, D. R. Commander.
+ * Copyright (C) 2015-2017, 2020-2023, 2026, D. R. Commander.
  * For conditions of distribution and use, see the accompanying README.ijg
  * file.
  *
@@ -586,6 +586,8 @@ start_input_ppm(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
 
   if (w <= 0 || h <= 0 || maxval <= 0) /* error check */
     ERREXIT(cinfo, JERR_PPM_NOT);
+  if (w > JPEG_MAX_DIMENSION || h > JPEG_MAX_DIMENSION)
+    ERREXIT1(cinfo, JERR_IMAGE_TOO_BIG, JPEG_MAX_DIMENSION);
 #ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
   if (sinfo->max_pixels && (unsigned long long)w * h > sinfo->max_pixels)
     ERREXIT(cinfo, JERR_WIDTH_OVERFLOW);

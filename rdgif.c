@@ -5,7 +5,7 @@
  * Copyright (C) 1991-1997, Thomas G. Lane.
  * Modified 2019 by Guido Vollbeding.
  * libjpeg-turbo Modifications:
- * Copyright (C) 2021-2022, D. R. Commander.
+ * Copyright (C) 2021-2022, 2026, D. R. Commander.
  * For conditions of distribution and use, see the accompanying README.ijg
  * file.
  *
@@ -416,6 +416,8 @@ start_input_gif(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
   height = LM_to_uint(hdrbuf, 2);
   if (width == 0 || height == 0)
     ERREXIT(cinfo, JERR_GIF_EMPTY);
+  if (width > JPEG_MAX_DIMENSION || height > JPEG_MAX_DIMENSION)
+    ERREXIT1(cinfo, JERR_IMAGE_TOO_BIG, JPEG_MAX_DIMENSION);
 #ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
   if (sinfo->max_pixels &&
       (unsigned long long)width * height > sinfo->max_pixels)
@@ -465,6 +467,8 @@ start_input_gif(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
     height = LM_to_uint(hdrbuf, 6);
     if (width == 0 || height == 0)
       ERREXIT(cinfo, JERR_GIF_EMPTY);
+    if (width > JPEG_MAX_DIMENSION || height > JPEG_MAX_DIMENSION)
+      ERREXIT1(cinfo, JERR_IMAGE_TOO_BIG, JPEG_MAX_DIMENSION);
 #ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     if (sinfo->max_pixels &&
         (unsigned long long)width * height > sinfo->max_pixels)
