@@ -347,6 +347,16 @@ get_rgb_cmyk_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
 }
 
 
+#ifdef ZERO_BUFFERS
+
+static void *spng_malloc(size_t size)
+{
+  return calloc(1, size);
+}
+
+#endif
+
+
 /*
  * Read the file header; return image size and component count.
  */
@@ -358,8 +368,17 @@ start_input_png(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
   struct spng_ihdr ihdr;
   int png_components = 3;
   boolean use_raw_buffer;
+#ifdef ZERO_BUFFERS
+  struct spng_alloc alloc;
 
+  alloc.malloc_fn = spng_malloc;
+  alloc.realloc_fn = realloc;
+  alloc.calloc_fn = calloc;
+  alloc.free_fn = free;
+  source->ctx = spng_ctx_new2(&alloc, 0);
+#else
   source->ctx = spng_ctx_new(0);
+#endif
   if (!source->ctx)
     ERREXITS(cinfo, JERR_PNG_LIBSPNG, "Could not create context");
 
