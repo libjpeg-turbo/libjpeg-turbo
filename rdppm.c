@@ -831,17 +831,15 @@ start_input_ppm(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
 
   /* Compute the rescaling array if required. */
   if (need_rescale) {
-    long val, half_maxval;
+    size_t val, half_maxval;
 
     /* On 16-bit-int machines we have to be careful of maxval = 65535 */
     source->rescale = (_JSAMPLE *)
       (*cinfo->mem->alloc_small) ((j_common_ptr)cinfo, JPOOL_IMAGE,
-                                  (size_t)(((long)MAX(maxval, 255) + 1L) *
-                                           sizeof(_JSAMPLE)));
-    memset(source->rescale, 0, (size_t)(((long)MAX(maxval, 255) + 1L) *
-                                        sizeof(_JSAMPLE)));
-    half_maxval = maxval / 2;
-    for (val = 0; val <= (long)maxval; val++) {
+                                  (MAX(maxval, 255) + 1L) * sizeof(_JSAMPLE));
+    memset(source->rescale, 0, (MAX(maxval, 255) + 1L) * sizeof(_JSAMPLE));
+    half_maxval = (size_t)maxval / 2;
+    for (val = 0; val <= (size_t)maxval; val++) {
       /* The multiplication here must be done in 32 bits to avoid overflow */
       source->rescale[val] = (_JSAMPLE)((val * _MAXJSAMPLE + half_maxval) /
                                         maxval);
