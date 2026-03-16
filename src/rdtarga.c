@@ -360,6 +360,8 @@ start_input_tga(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
       interlace_type != 0 ||      /* currently don't allow interlaced image */
       width == 0 || height == 0)  /* image width/height must be non-zero */
     ERREXIT(cinfo, JERR_TGA_BADPARMS);
+  if (width > JPEG_MAX_DIMENSION || height > JPEG_MAX_DIMENSION)
+    ERREXIT1(cinfo, JERR_IMAGE_TOO_BIG, JPEG_MAX_DIMENSION);
   if (sinfo->max_pixels &&
       (unsigned long long)width * height > sinfo->max_pixels)
     ERREXIT1(cinfo, JERR_IMAGE_TOO_BIG, sinfo->max_pixels);

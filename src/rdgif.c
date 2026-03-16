@@ -410,6 +410,8 @@ start_input_gif(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
   height = LM_to_uint(hdrbuf, 2);
   if (width == 0 || height == 0)
     ERREXIT(cinfo, JERR_GIF_EMPTY);
+  if (width > JPEG_MAX_DIMENSION || height > JPEG_MAX_DIMENSION)
+    ERREXIT1(cinfo, JERR_IMAGE_TOO_BIG, JPEG_MAX_DIMENSION);
   if (sinfo->max_pixels &&
       (unsigned long long)width * height > sinfo->max_pixels)
     ERREXIT1(cinfo, JERR_IMAGE_TOO_BIG, sinfo->max_pixels);
@@ -457,6 +459,8 @@ start_input_gif(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
     height = LM_to_uint(hdrbuf, 6);
     if (width == 0 || height == 0)
       ERREXIT(cinfo, JERR_GIF_EMPTY);
+    if (width > JPEG_MAX_DIMENSION || height > JPEG_MAX_DIMENSION)
+      ERREXIT1(cinfo, JERR_IMAGE_TOO_BIG, JPEG_MAX_DIMENSION);
     if (sinfo->max_pixels &&
         (unsigned long long)width * height > sinfo->max_pixels)
       ERREXIT1(cinfo, JERR_IMAGE_TOO_BIG, sinfo->max_pixels);

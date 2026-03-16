@@ -367,8 +367,8 @@ start_input_png(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
 
   TRY_SPNG(spng_get_ihdr(source->ctx, &ihdr));
 
-  if (ihdr.width > 65535 || ihdr.height > 65535)
-    ERREXIT(cinfo, JERR_PNG_OUTOFRANGE);
+  if (ihdr.width > JPEG_MAX_DIMENSION || ihdr.height > JPEG_MAX_DIMENSION)
+    ERREXIT1(cinfo, JERR_IMAGE_TOO_BIG, JPEG_MAX_DIMENSION);
   if (ihdr.bit_depth != 8 && ihdr.bit_depth != 16)
     ERREXIT(cinfo, JERR_PNG_BADDEPTH);
   if (sinfo->max_pixels &&
