@@ -833,6 +833,24 @@ if(ENABLE_STATIC)
 
   add_executable(example-static example.c)
   target_link_libraries(example-static jpeg-static)
+
+  include(CheckFunctionExists)
+  check_function_exists(fmemopen HAVE_FMEMOPEN)
+  if(HAVE_FMEMOPEN)
+    add_library(bmpsizetest12-static OBJECT wrgif.c rdppm.c wrppm.c)
+    set_property(TARGET bmpsizetest12-static PROPERTY COMPILE_FLAGS
+      "-DBITS_IN_JSAMPLE=12 -DGIF_SUPPORTED -DPPM_SUPPORTED")
+    add_library(bmpsizetest16-static OBJECT rdppm.c wrppm.c)
+    set_property(TARGET bmpsizetest16-static PROPERTY COMPILE_FLAGS
+      "-DBITS_IN_JSAMPLE=16 -DPPM_SUPPORTED")
+    add_executable(bmpsizetest-static bmpsizetest.c rdbmp.c wrbmp.c
+      rdgif.c wrgif.c rdppm.c wrppm.c rdtarga.c wrtarga.c
+      $<TARGET_OBJECTS:bmpsizetest12-static>
+      $<TARGET_OBJECTS:bmpsizetest16-static>)
+    set_property(TARGET bmpsizetest-static PROPERTY COMPILE_FLAGS
+      ${CDJPEG_COMPILE_FLAGS})
+    target_link_libraries(bmpsizetest-static jpeg-static)
+  endif()
 endif()
 
 add_executable(rdjpgcom rdjpgcom.c)
@@ -1185,6 +1203,10 @@ foreach(libtype ${TEST_LIBTYPES})
 
     endforeach()
 
+  endif()
+
+  if(UNIX)
+    add_test(NAME bmpsizetest-${libtype} COMMAND bmpsizetest${suffix})
   endif()
 
   # These tests are carefully crafted to provide full coverage of as many of

@@ -124,6 +124,23 @@ target_link_libraries(example jpeg)
 add_executable(jcstest ../jcstest.c)
 target_link_libraries(jcstest jpeg)
 
+include(CheckFunctionExists)
+check_function_exists(fmemopen HAVE_FMEMOPEN)
+if(HAVE_FMEMOPEN)
+  add_library(bmpsizetest12 OBJECT ../wrgif.c ../rdppm.c ../wrppm.c)
+  set_property(TARGET bmpsizetest12 PROPERTY COMPILE_FLAGS
+    "-DBITS_IN_JSAMPLE=12 -DGIF_SUPPORTED -DPPM_SUPPORTED")
+  add_library(bmpsizetest16 OBJECT ../wrgif.c ../rdppm.c ../wrppm.c)
+  set_property(TARGET bmpsizetest16 PROPERTY COMPILE_FLAGS
+    "-DBITS_IN_JSAMPLE=16 -DPPM_SUPPORTED")
+  add_executable(bmpsizetest ../bmpsizetest.c ../rdbmp.c ../wrbmp.c
+    ../rdgif.c ../wrgif.c ../rdppm.c ../wrppm.c ../rdtarga.c ../wrtarga.c
+    $<TARGET_OBJECTS:bmpsizetest12> $<TARGET_OBJECTS:bmpsizetest16>)
+  set_property(TARGET bmpsizetest PROPERTY COMPILE_FLAGS
+    ${CDJPEG_COMPILE_FLAGS})
+  target_link_libraries(bmpsizetest jpeg)
+endif()
+
 install(TARGETS jpeg EXPORT ${CMAKE_PROJECT_NAME}Targets
   INCLUDES DESTINATION ${CMAKE_INSTALL_FULL_INCLUDEDIR}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_FULL_LIBDIR} COMPONENT lib

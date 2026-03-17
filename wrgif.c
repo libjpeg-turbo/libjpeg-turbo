@@ -5,7 +5,7 @@
  * Copyright (C) 1991-1997, Thomas G. Lane.
  * Modified 2015-2019 by Guido Vollbeding.
  * libjpeg-turbo Modifications:
- * Copyright (C) 2015, 2017, 2022-2023, D. R. Commander.
+ * Copyright (C) 2015, 2017, 2022-2023, 2026, D. R. Commander.
  * For conditions of distribution and use, see the accompanying README.ijg
  * file.
  *
@@ -553,6 +553,9 @@ _jinit_write_gif(j_decompress_ptr cinfo, boolean is_lzw)
   }
 
   /* Calculate output image dimensions so we can allocate space */
+  if (cinfo->image_width > JPEG_MAX_DIMENSION ||
+      cinfo->image_height > JPEG_MAX_DIMENSION)
+    ERREXIT1(cinfo, JERR_IMAGE_TOO_BIG, JPEG_MAX_DIMENSION);
   jpeg_calc_output_dimensions(cinfo);
 
   if (cinfo->output_components != 1) /* safety check: just one component? */
