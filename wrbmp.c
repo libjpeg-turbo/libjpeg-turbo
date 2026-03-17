@@ -5,7 +5,7 @@
  * Copyright (C) 1994-1996, Thomas G. Lane.
  * libjpeg-turbo Modifications:
  * Copyright (C) 2013, Linaro Limited.
- * Copyright (C) 2014-2015, 2017, 2019, 2022, D. R. Commander.
+ * Copyright (C) 2014-2015, 2017, 2019, 2022, 2026, D. R. Commander.
  * For conditions of distribution and use, see the accompanying README.ijg
  * file.
  *
@@ -228,7 +228,7 @@ write_bmp_header(j_decompress_ptr cinfo, bmp_dest_ptr dest)
    array[offset + 2] = (char)(((value) >> 16) & 0xFF), \
    array[offset + 3] = (char)(((value) >> 24) & 0xFF))
 
-  long headersize, bfSize;
+  size_t headersize, bfSize;
   int bits_per_pixel, cmap_entries;
 
   /* Compute colormap size and total file size */
@@ -253,7 +253,7 @@ write_bmp_header(j_decompress_ptr cinfo, bmp_dest_ptr dest)
   }
   /* File size */
   headersize = 14 + 40 + cmap_entries * 4; /* Header and colormap */
-  bfSize = headersize + (long)dest->row_width * (long)cinfo->output_height;
+  bfSize = headersize + (size_t)dest->row_width * (size_t)cinfo->output_height;
 
   /* Set unused fields of header to 0 */
   memset(bmpfileheader, 0, sizeof(bmpfileheader));
