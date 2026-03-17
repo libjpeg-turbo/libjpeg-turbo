@@ -394,6 +394,9 @@ _jinit_write_png(j_decompress_ptr cinfo)
   memset(&dest->iccp, 0, sizeof(struct spng_iccp));
 
   /* Calculate output image dimensions so we can allocate space */
+  if (cinfo->image_width > JPEG_MAX_DIMENSION ||
+      cinfo->image_height > JPEG_MAX_DIMENSION)
+    ERREXIT1(cinfo, JERR_IMAGE_TOO_BIG, JPEG_MAX_DIMENSION);
   jpeg_calc_output_dimensions(cinfo);
 
   /* Create physical I/O buffer */

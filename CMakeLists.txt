@@ -883,6 +883,26 @@ if(ENABLE_STATIC)
   if(WITH_TESTS)
     add_executable(example-static src/example.c)
     target_link_libraries(example-static jpeg-static)
+
+    include(CheckFunctionExists)
+    check_function_exists(fmemopen HAVE_FMEMOPEN)
+    if(HAVE_FMEMOPEN)
+      add_executable(bmpsizetest-static src/bmpsizetest.c
+        src/rdbmp.c src/wrbmp.c
+        src/rdgif.c src/wrapper/wrgif-8.c src/wrapper/wrgif-12.c
+        $<TARGET_OBJECTS:spng-static>
+        src/wrapper/rdpng-8.c src/wrapper/rdpng-12.c src/wrapper/rdpng-16.c
+        src/wrapper/wrpng-8.c src/wrapper/wrpng-12.c src/wrapper/wrpng-16.c
+        src/wrapper/rdppm-8.c src/wrapper/rdppm-12.c src/wrapper/rdppm-16.c
+        src/wrapper/wrppm-8.c src/wrapper/wrppm-12.c src/wrapper/wrppm-16.c
+        src/rdtarga.c src/wrtarga.c)
+      set_property(TARGET bmpsizetest-static PROPERTY COMPILE_FLAGS
+        ${CDJPEG_COMPILE_FLAGS})
+      target_link_libraries(bmpsizetest-static jpeg-static)
+      if(UNIX)
+        target_link_libraries(bmpsizetest-static m)
+      endif()
+    endif()
   endif()
 endif()
 
@@ -1260,6 +1280,10 @@ foreach(libtype ${TEST_LIBTYPES})
 
     endforeach()
 
+  endif()
+
+  if(UNIX)
+    add_test(NAME bmpsizetest-${libtype} COMMAND bmpsizetest${suffix})
   endif()
 
   # These tests are carefully crafted to provide full coverage of as many of

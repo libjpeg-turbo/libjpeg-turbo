@@ -561,6 +561,9 @@ _jinit_write_gif(j_decompress_ptr cinfo, boolean is_lzw)
   }
 
   /* Calculate output image dimensions so we can allocate space */
+  if (cinfo->image_width > JPEG_MAX_DIMENSION ||
+      cinfo->image_height > JPEG_MAX_DIMENSION)
+    ERREXIT1(cinfo, JERR_IMAGE_TOO_BIG, JPEG_MAX_DIMENSION);
   jpeg_calc_output_dimensions(cinfo);
 
   if (cinfo->output_components != 1) /* safety check: just one component? */
