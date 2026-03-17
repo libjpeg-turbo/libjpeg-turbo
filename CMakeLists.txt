@@ -784,6 +784,16 @@ if(ENABLE_STATIC)
   add_executable(jpegtran-static jpegtran.c cdjpeg.c rdswitch.c transupp.c)
   target_link_libraries(jpegtran-static jpeg-static)
   set_property(TARGET jpegtran-static PROPERTY COMPILE_FLAGS "${USE_SETMODE}")
+
+  include(CheckFunctionExists)
+  check_function_exists(fmemopen HAVE_FMEMOPEN)
+  if(HAVE_FMEMOPEN)
+    add_executable(bmpsizetest-static bmpsizetest.c rdbmp.c wrbmp.c
+      rdgif.c wrgif.c rdppm.c wrppm.c rdtarga.c wrtarga.c)
+    set_property(TARGET bmpsizetest-static PROPERTY COMPILE_FLAGS
+      ${COMPILE_FLAGS})
+    target_link_libraries(bmpsizetest-static jpeg-static)
+  endif()
 endif()
 
 add_executable(rdjpgcom rdjpgcom.c)
@@ -1148,6 +1158,10 @@ foreach(libtype ${TEST_LIBTYPES})
           PROPERTIES DEPENDS tjbench-${libtype}-tilem)
       endforeach()
     endforeach()
+  endif()
+
+  if(UNIX)
+    add_test(NAME bmpsizetest-${libtype} COMMAND bmpsizetest${suffix})
   endif()
 
   # These tests are carefully crafted to provide full coverage of as many of

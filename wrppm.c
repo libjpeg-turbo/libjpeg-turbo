@@ -5,7 +5,7 @@
  * Copyright (C) 1991-1996, Thomas G. Lane.
  * Modified 2009 by Guido Vollbeding.
  * libjpeg-turbo Modifications:
- * Copyright (C) 2017, 2019-2020, 2022, D. R. Commander.
+ * Copyright (C) 2017, 2019-2020, 2022, 2026, D. R. Commander.
  * For conditions of distribution and use, see the accompanying README.ijg
  * file.
  *
@@ -317,6 +317,9 @@ jinit_write_ppm(j_decompress_ptr cinfo)
   dest->pub.calc_buffer_dimensions = calc_buffer_dimensions_ppm;
 
   /* Calculate output image dimensions so we can allocate space */
+  if (cinfo->image_width > JPEG_MAX_DIMENSION ||
+      cinfo->image_height > JPEG_MAX_DIMENSION)
+    ERREXIT1(cinfo, JERR_IMAGE_TOO_BIG, JPEG_MAX_DIMENSION);
   jpeg_calc_output_dimensions(cinfo);
 
   /* Create physical I/O buffer */
