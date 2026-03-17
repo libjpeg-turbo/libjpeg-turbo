@@ -325,6 +325,9 @@ _jinit_write_ppm(j_decompress_ptr cinfo)
   dest->pub.calc_buffer_dimensions = calc_buffer_dimensions_ppm;
 
   /* Calculate output image dimensions so we can allocate space */
+  if (cinfo->image_width > JPEG_MAX_DIMENSION ||
+      cinfo->image_height > JPEG_MAX_DIMENSION)
+    ERREXIT1(cinfo, JERR_IMAGE_TOO_BIG, JPEG_MAX_DIMENSION);
   jpeg_calc_output_dimensions(cinfo);
 
   /* Create physical I/O buffer */

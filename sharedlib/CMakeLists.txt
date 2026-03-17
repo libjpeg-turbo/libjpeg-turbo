@@ -117,6 +117,21 @@ if(WITH_TESTS)
 
   add_executable(jcstest ../src/jcstest.c)
   target_link_libraries(jcstest jpeg)
+
+  include(CheckFunctionExists)
+  check_function_exists(fmemopen HAVE_FMEMOPEN)
+  if(HAVE_FMEMOPEN)
+    add_executable(bmpsizetest ../src/bmpsizetest.c
+      ../src/rdbmp.c ../src/wrbmp.c
+      ../src/rdgif.c ../src/wrapper/wrgif-8.c ../src/wrapper/wrgif-12.c
+      ../src/wrapper/rdppm-8.c ../src/wrapper/rdppm-12.c
+      ../src/wrapper/rdppm-16.c ../src/wrapper/wrppm-8.c
+      ../src/wrapper/wrppm-12.c ../src/wrapper/wrppm-16.c
+      ../src/rdtarga.c ../src/wrtarga.c)
+    set_property(TARGET bmpsizetest PROPERTY COMPILE_FLAGS
+      ${CDJPEG_COMPILE_FLAGS})
+    target_link_libraries(bmpsizetest jpeg)
+  endif()
 endif()
 
 install(TARGETS jpeg EXPORT ${CMAKE_PROJECT_NAME}Targets
