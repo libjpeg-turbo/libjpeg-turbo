@@ -38,7 +38,9 @@ static char *icc_filename;      /* for -icc switch */
 static JDIMENSION max_scans;    /* for -maxscans switch */
 static char *outfilename;       /* for -outfile switch */
 static boolean nooverwrite;     /* for -nooverwrite switch */
+#if TRANSFORMS_SUPPORTED
 static char *dropfilename;      /* for -drop switch */
+#endif
 static boolean report;          /* for -report switch */
 static boolean strict;          /* for -strict switch */
 static JCOPY_OPTION copyoption; /* -copy switch */
@@ -75,8 +77,6 @@ usage(void)
   fprintf(stderr, "  -grayscale     Reduce to grayscale (omit color data)\n");
   fprintf(stderr, "  -perfect       Fail if there is non-transformable edge blocks\n");
   fprintf(stderr, "  -rotate [90|180|270]         Rotate image (degrees clockwise)\n");
-#endif
-#if TRANSFORMS_SUPPORTED
   fprintf(stderr, "  -transpose     Transpose image\n");
   fprintf(stderr, "  -transverse    Transverse transpose image\n");
   fprintf(stderr, "  -trim          Drop non-transformable edge blocks\n");
@@ -142,11 +142,17 @@ parse_switches(j_compress_ptr cinfo, int argc, char **argv,
 {
   int argn;
   char *arg;
+#ifdef C_PROGRESSIVE_SUPPORTED
   boolean simple_progressive;
+#endif
+#ifdef C_MULTISCAN_FILES_SUPPORTED
   char *scansarg = NULL;        /* saves -scans parm if any */
+#endif
 
   /* Set up default JPEG parameters. */
+#ifdef C_PROGRESSIVE_SUPPORTED
   simple_progressive = FALSE;
+#endif
   icc_filename = NULL;
   max_scans = 0;
   outfilename = NULL;

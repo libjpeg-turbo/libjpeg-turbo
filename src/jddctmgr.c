@@ -6,7 +6,7 @@
  * Modified 2002-2010 by Guido Vollbeding.
  * libjpeg-turbo Modifications:
  * Copyright 2009 Pierre Ossman <ossman@cendio.se> for Cendio AB
- * Copyright (C) 2010, 2015, 2022, 2025, D. R. Commander.
+ * Copyright (C) 2010, 2015, 2022, 2025-2026, D. R. Commander.
  * For conditions of distribution and use, see the accompanying README.ijg
  * file.
  *
@@ -29,6 +29,9 @@
 #endif
 #include "jpegapicomp.h"
 
+
+#if defined(DCT_ISLOW_SUPPORTED) || defined(DCT_IFAST_SUPPORTED) || \
+    defined(DCT_FLOAT_SUPPORTED)
 
 /*
  * The decompressor input side (jdinput.c) saves away the appropriate
@@ -354,3 +357,6 @@ _jinit_inverse_dct(j_decompress_ptr cinfo)
     idct->cur_method[ci] = -1;
   }
 }
+
+#endif /* defined(DCT_ISLOW_SUPPORTED) || defined(DCT_IFAST_SUPPORTED) ||
+          defined(DCT_FLOAT_SUPPORTED) */

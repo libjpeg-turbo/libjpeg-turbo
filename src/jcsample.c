@@ -469,7 +469,9 @@ _jinit_downsampler(j_compress_ptr cinfo)
   my_downsample_ptr downsample;
   int ci;
   jpeg_component_info *compptr;
+#ifdef INPUT_SMOOTHING_SUPPORTED
   boolean smoothok = TRUE;
+#endif
 
 #ifdef C_LOSSLESS_SUPPORTED
   if (cinfo->master->lossless) {
@@ -512,7 +514,9 @@ _jinit_downsampler(j_compress_ptr cinfo)
         downsample->methods[ci] = fullsize_downsample;
     } else if (compptr->h_samp_factor * 2 == cinfo->max_h_samp_factor &&
                compptr->v_samp_factor == cinfo->max_v_samp_factor) {
+#ifdef INPUT_SMOOTHING_SUPPORTED
       smoothok = FALSE;
+#endif
 #ifdef WITH_SIMD
       if (jsimd_set_h2v1_downsample(cinfo))
         downsample->methods[ci] = jsimd_h2v1_downsample;
@@ -537,7 +541,9 @@ _jinit_downsampler(j_compress_ptr cinfo)
       }
     } else if ((cinfo->max_h_samp_factor % compptr->h_samp_factor) == 0 &&
                (cinfo->max_v_samp_factor % compptr->v_samp_factor) == 0) {
+#ifdef INPUT_SMOOTHING_SUPPORTED
       smoothok = FALSE;
+#endif
       downsample->methods[ci] = int_downsample;
     } else
       ERREXIT(cinfo, JERR_FRACT_SAMPLE_NOTIMPL);

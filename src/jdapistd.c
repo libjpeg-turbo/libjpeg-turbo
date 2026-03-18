@@ -411,7 +411,10 @@ read_and_discard_scanlines(j_decompress_ptr cinfo, JDIMENSION num_lines)
   void (*color_quantize) (j_decompress_ptr cinfo, _JSAMPARRAY input_buf,
                           _JSAMPARRAY output_buf, int num_rows) = NULL;
 
-  if (!master->using_merged_upsample && cinfo->cconvert &&
+  if (cinfo->cconvert &&
+#ifdef UPSAMPLE_MERGING_SUPPORTED
+      !master->using_merged_upsample &&
+#endif
       cinfo->cconvert->_color_convert) {
     color_convert = cinfo->cconvert->_color_convert;
     cinfo->cconvert->_color_convert = noop_convert;

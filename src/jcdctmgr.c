@@ -28,6 +28,9 @@
 #endif
 
 
+#if defined(DCT_ISLOW_SUPPORTED) || defined(DCT_IFAST_SUPPORTED) || \
+    defined(DCT_FLOAT_SUPPORTED)
+
 /* Private subobject for this module */
 
 METHODDEF(void) quantize(JCOEFPTR, DCTELEM *, DCTELEM *);
@@ -769,3 +772,6 @@ _jinit_forward_dct(j_compress_ptr cinfo)
 #endif
   }
 }
+
+#endif /* defined(DCT_ISLOW_SUPPORTED) || defined(DCT_IFAST_SUPPORTED) ||
+          defined(DCT_FLOAT_SUPPORTED) */

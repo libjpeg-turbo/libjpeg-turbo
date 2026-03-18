@@ -107,7 +107,10 @@ int main(void)
   dinfo.comp_info[2].h_samp_factor = dinfo.comp_info[2].v_samp_factor = 1;
   dinfo._min_DCT_scaled_size = DCTSIZE;
   jinit_upsampler(&dinfo);
+#if defined(DCT_ISLOW_SUPPORTED) || defined(DCT_IFAST_SUPPORTED) || \
+    defined(DCT_FLOAT_SUPPORTED)
   jinit_inverse_dct(&dinfo);
+#endif
 
   C_COVERAGE_TEST(jsimd_set_rgb_ycc);
   C_COVERAGE_TEST(jsimd_set_rgb_gray);
