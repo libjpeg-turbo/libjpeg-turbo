@@ -368,8 +368,10 @@ static int test_read_PPM(int width, int height, JDIMENSION max_pixels,
     src_mgr = jinit_read_ppm(&cinfo);
   else if (data_precision <= 12)
     src_mgr = j12init_read_ppm(&cinfo);
+#ifdef C_LOSSLESS_SUPPORTED
   else
     src_mgr = j16init_read_ppm(&cinfo);
+#endif
   if (!src_mgr)
     return -1;
   if ((file = fmemopen((void *)&ph, 80, "r")) == NULL)
@@ -427,8 +429,10 @@ static int test_write_PPM(int width, int height, int data_precision)
     dest_mgr = jinit_write_ppm(&cinfo);
   else if (data_precision <= 12)
     dest_mgr = j12init_write_ppm(&cinfo);
+#ifdef D_LOSSLESS_SUPPORTED
   else
     dest_mgr = j16init_write_ppm(&cinfo);
+#endif
   if (!dest_mgr) {
     retval = -1;
     goto bailout;

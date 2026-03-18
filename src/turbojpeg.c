@@ -174,10 +174,16 @@ static void my_progress_monitor(j_common_ptr dinfo)
   }
 }
 
+#if TRANSFORMS_SUPPORTED
+
 static const JXFORM_CODE xformtypes[TJ_NUMXOP] = {
   JXFORM_NONE, JXFORM_FLIP_H, JXFORM_FLIP_V, JXFORM_TRANSPOSE,
   JXFORM_TRANSVERSE, JXFORM_ROT_90, JXFORM_ROT_180, JXFORM_ROT_270
 };
+
+#endif
+
+#ifdef IDCT_SCALING_SUPPORTED
 
 #define NUMSF  16
 static const tjscalingfactor sf[NUMSF] = {
@@ -198,6 +204,15 @@ static const tjscalingfactor sf[NUMSF] = {
   { 1, 4 },
   { 1, 8 }
 };
+
+#else
+
+#define NUMSF  1
+static const tjscalingfactor sf[NUMSF] = {
+  { 1, 1 },
+};
+
+#endif
 
 static J_COLOR_SPACE pf2cs[TJ_NUMPF] = {
   JCS_EXT_RGB, JCS_EXT_BGR, JCS_EXT_RGBX, JCS_EXT_BGRX, JCS_EXT_XBGR,
@@ -1839,8 +1854,10 @@ DLLEXPORT int tj3DecompressHeader(tjhandle handle,
      eventually reuse this mechanism to save other markers, if needed.)
      Because ICC profiles can be large, we extract them by default but allow
      the user to override that behavior. */
+#ifdef SAVE_MARKERS_SUPPORTED
   if (this->saveMarkers == 2 || this->saveMarkers == 4)
     jpeg_save_markers(dinfo, JPEG_APP0 + 2, 0xFFFF);
+#endif
   /* jpeg_read_header() calls jpeg_abort() and returns JPEG_HEADER_TABLES_ONLY
      if the datastream is a tables-only datastream.  Since we aren't using a
      suspending data source, the only other value it can return is
@@ -2872,9 +2889,13 @@ DLLEXPORT int tj3Transform(tjhandle handle, const unsigned char *jpegBuf,
                            size_t *dstSizes, const tjtransform *t)
 {
   static const char FUNCTION_NAME[] = "tj3Transform";
+  int retval = 0;
+
+#if TRANSFORMS_SUPPORTED
+
   jpeg_transform_info *xinfo = NULL;
   jvirt_barray_ptr *srccoefs, *dstcoefs;
-  int retval = 0, i, saveMarkers = 0, srcSubsamp;
+  int i, saveMarkers = 0, srcSubsamp;
   boolean alloc = TRUE;
   struct my_progress_mgr progress;
 
@@ -3041,6 +3062,15 @@ bailout:
   free(xinfo);
   if (this->jerr.warning) retval = -1;
   return retval;
+
+#else /* TRANSFORMS_SUPPORTED */
+
+  GET_TJINSTANCE(handle, -1)
+  THROW("Lossless transformations were disabled at build time")
+bailout:
+  return retval;
+
+#endif
 }
 
 /* TurboJPEG 1.2+ */

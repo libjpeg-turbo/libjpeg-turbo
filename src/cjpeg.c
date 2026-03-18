@@ -284,17 +284,23 @@ parse_switches(j_compress_ptr cinfo, int argc, char **argv,
   int psv = 0, pt = 0;
 #endif
   boolean force_baseline;
+#ifdef C_PROGRESSIVE_SUPPORTED
   boolean simple_progressive;
+#endif
   char *qualityarg = NULL;      /* saves -quality parm if any */
   char *qtablefile = NULL;      /* saves -qtables filename if any */
   char *qslotsarg = NULL;       /* saves -qslots parm if any */
   char *samplearg = NULL;       /* saves -sample parm if any */
+#ifdef C_MULTISCAN_FILES_SUPPORTED
   char *scansarg = NULL;        /* saves -scans parm if any */
+#endif
 
   /* Set up default JPEG parameters. */
 
   force_baseline = FALSE;       /* by default, allow 16-bit quantizers */
+#ifdef C_PROGRESSIVE_SUPPORTED
   simple_progressive = FALSE;
+#endif
   is_targa = FALSE;
   icc_filename = NULL;
   outfilename = NULL;

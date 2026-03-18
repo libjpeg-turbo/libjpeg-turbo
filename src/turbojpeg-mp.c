@@ -289,6 +289,8 @@ bailout:
 
 /*************************** Packed-Pixel Image I/O **************************/
 
+#if BITS_IN_JSAMPLE != 16 || defined(C_LOSSLESS_SUPPORTED)
+
 /* TurboJPEG 3.0+ */
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
 static
@@ -299,8 +301,6 @@ _JSAMPLE *GET_NAME(_tj3LoadImageFromFileHandle, BITS_IN_JSAMPLE)
 {
   static const char FUNCTION_NAME[] =
     GET_STRING(tj3LoadImage, BITS_IN_JSAMPLE);
-
-#if BITS_IN_JSAMPLE != 16 || defined(C_LOSSLESS_SUPPORTED)
 
   int retval = 0, tempc;
   size_t pitch;
@@ -412,24 +412,9 @@ bailout:
   tj3Destroy(handle2);
   if (retval < 0) { free(dstBuf);  dstBuf = NULL; }
   return dstBuf;
-
-#else /* BITS_IN_JSAMPLE != 16 || defined(C_LOSSLESS_SUPPORTED) */
-
-  static const char ERROR_MSG[] =
-    "16-bit data precision requires lossless JPEG,\n"
-    "which was disabled at build time.";
-  _JSAMPLE *retval = NULL;
-
-  GET_TJINSTANCE(handle, NULL)
-  SNPRINTF(this->errStr, JMSG_LENGTH_MAX, "%s(): %s", FUNCTION_NAME,
-           ERROR_MSG);
-  this->isInstanceError = TRUE;  THROWG(ERROR_MSG, NULL)
-
-bailout:
-  return retval;
-
-#endif
 }
+
+#endif /* BITS_IN_JSAMPLE != 16 || defined(C_LOSSLESS_SUPPORTED) */
 
 DLLEXPORT _JSAMPLE *GET_NAME(tj3LoadImage, BITS_IN_JSAMPLE)
   (tjhandle handle, const char *filename, int *width, int align, int *height,
