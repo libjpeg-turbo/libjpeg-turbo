@@ -1299,7 +1299,7 @@ foreach(libtype ${TEST_LIBTYPES})
       set(MD5_JPEG_GRAY_ISLOW 235c90707b16e2e069f37c888b2636d9)
       set(MD5_PPM_GRAY_ISLOW 7213c10af507ad467da5578ca5ee1fca)
       set(MD5_PPM_GRAY_ISLOW_RGB e96ee81c30a6ed422d466338bd3de65d)
-      set(MD5_JPEG_420S_IFAST_OPT 7af8e60be4d9c227ec63ac9b6630855e)
+      set(MD5_JPEG_420S_ISLOW_OPT 7af8e60be4d9c227ec63ac9b6630855e)
 
       set(MD5_JPEG_3x2_FLOAT_PROG_SSE a8c17daf77b457725ec929e215b603f8)
       set(MD5_PPM_3x2_FLOAT_SSE 42876ab9e5c2f76a87d08db5fbd57956)
@@ -1370,7 +1370,7 @@ foreach(libtype ${TEST_LIBTYPES})
       set(MD5_PPM_GRAY_ISLOW_RGB 116424ac07b79e5e801f00508eab48ec)
       set(MD5_BMP_GRAY_ISLOW_565 12f78118e56a2f48b966f792fedf23cc)
       set(MD5_BMP_GRAY_ISLOW_565D bdbbd616441a24354c98553df5dc82db)
-      set(MD5_JPEG_420S_IFAST_OPT 388708217ac46273ca33086b22827ed8)
+      set(MD5_JPEG_420S_ISLOW_OPT 388708217ac46273ca33086b22827ed8)
 
       set(MD5_JPEG_3x2_FLOAT_PROG_SSE 343e3f8caf8af5986ebaf0bdc13b5c71)
       set(MD5_PPM_3x2_FLOAT_SSE 1a75f36e5904d6fc3a85a43da9ad89bb)
@@ -1544,9 +1544,9 @@ foreach(libtype ${TEST_LIBTYPES})
 
     # CC: RGB->YCC  SAMP: fullsize smooth/h2v2 smooth  FDCT: islow
     # ENT: 2-pass huff
-    add_bittest(${cjpeg} 420s-ifast-opt "-sample;2x2;-smooth;1;-dct;int;-opt"
-      ${testout}_420s_ifast_opt.jpg ${TESTIMAGES}/testorig.ppm
-      ${MD5_JPEG_420S_IFAST_OPT})
+    add_bittest(${cjpeg} 420s-islow-opt "-sample;2x2;-smooth;1;-dct;int;-opt"
+      ${testout}_420s_islow_opt.jpg ${TESTIMAGES}/testorig.ppm
+      ${MD5_JPEG_420S_ISLOW_OPT})
 
     if(FLOATTEST${sample_bits})
       # CC: RGB->YCC  SAMP: fullsize/int  FDCT: float  ENT: prog huff
