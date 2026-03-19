@@ -4,7 +4,7 @@
  * This file was part of the Independent JPEG Group's software:
  * Copyright (C) 1994-1996, Thomas G. Lane.
  * libjpeg-turbo Modifications:
- * Copyright (C) 2022, D. R. Commander.
+ * Copyright (C) 2022, 2026, D. R. Commander.
  * For conditions of distribution and use, see the accompanying README.ijg
  * file.
  *
@@ -139,7 +139,7 @@ pbm_getc(FILE *infile)
 
 
 LOCAL(unsigned int)
-read_pbm_integer(j_decompress_ptr cinfo, FILE *infile)
+read_pbm_integer(j_decompress_ptr cinfo, FILE *infile, unsigned int maxval)
 /* Read an unsigned decimal integer from the PPM file */
 /* Swallows one trailing character after the integer */
 /* Note that on a 16-bit-int machine, only values up to 64k can be read. */
@@ -162,6 +162,8 @@ read_pbm_integer(j_decompress_ptr cinfo, FILE *infile)
   while ((ch = pbm_getc(infile)) >= '0' && ch <= '9') {
     val *= 10;
     val += ch - '0';
+    if (val > maxval)
+      ERREXIT(cinfo, JERR_PPM_OUTOFRANGE);
   }
   return val;
 }
@@ -182,12 +184,14 @@ read_ppm_map(j_decompress_ptr cinfo, FILE *infile)
   c = getc(infile);             /* save format discriminator for a sec */
 
   /* while we fetch the remaining header info */
-  w = read_pbm_integer(cinfo, infile);
-  h = read_pbm_integer(cinfo, infile);
-  maxval = read_pbm_integer(cinfo, infile);
+  w = read_pbm_integer(cinfo, infile, 65535);
+  h = read_pbm_integer(cinfo, infile, 65535);
+  maxval = read_pbm_integer(cinfo, infile, 65535);
 
   if (w <= 0 || h <= 0 || maxval <= 0) /* error check */
     ERREXIT(cinfo, JERR_BAD_CMAP_FILE);
+  if (w > JPEG_MAX_DIMENSION || h > JPEG_MAX_DIMENSION)
+    ERREXIT1(cinfo, JERR_IMAGE_TOO_BIG, JPEG_MAX_DIMENSION);
 
   /* For now, we don't support rescaling from an unusual maxval. */
   if (maxval != (unsigned int)_MAXJSAMPLE)
@@ -197,9 +201,9 @@ read_ppm_map(j_decompress_ptr cinfo, FILE *infile)
   case '3':                     /* it's a text-format PPM file */
     for (row = 0; row < h; row++) {
       for (col = 0; col < w; col++) {
-        R = read_pbm_integer(cinfo, infile);
-        G = read_pbm_integer(cinfo, infile);
-        B = read_pbm_integer(cinfo, infile);
+        R = read_pbm_integer(cinfo, infile, maxval);
+        G = read_pbm_integer(cinfo, infile, maxval);
+        B = read_pbm_integer(cinfo, infile, maxval);
         add_map_entry(cinfo, R, G, B);
       }
     }
