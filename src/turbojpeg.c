@@ -64,6 +64,7 @@ struct my_error_mgr {
   jmp_buf setjmp_buffer;
   void (*emit_message) (j_common_ptr, int);
   boolean warning, stopOnWarning;
+  tjhandle tjHandle;
 };
 typedef struct my_error_mgr *my_error_ptr;
 
@@ -79,13 +80,6 @@ static void my_error_exit(j_common_ptr cinfo)
 
   (*cinfo->err->output_message) (cinfo);
   longjmp(myerr->setjmp_buffer, 1);
-}
-
-/* Based on output_message() in jerror.c */
-
-static void my_output_message(j_common_ptr cinfo)
-{
-  (*cinfo->err->format_message) (cinfo, errStr);
 }
 
 static void my_emit_message(j_common_ptr cinfo, int msg_level)
@@ -145,6 +139,20 @@ typedef struct _tjinstance {
 
 static tjhandle _tjInitCompress(tjinstance *this);
 static tjhandle _tjInitDecompress(tjinstance *this);
+
+/* Based on output_message() in jerror.c */
+
+static void my_output_message(j_common_ptr cinfo)
+{
+  my_error_ptr myerr = (my_error_ptr)cinfo->err;
+  tjinstance *this = (tjinstance *)myerr->tjHandle;
+
+  if (this) {
+    this->isInstanceError = TRUE;
+    (*cinfo->err->format_message) (cinfo, this->errStr);
+  } else
+    (*cinfo->err->format_message) (cinfo, errStr);
+}
 
 struct my_progress_mgr {
   struct jpeg_progress_mgr pub;
@@ -1163,6 +1171,7 @@ static tjhandle _tjInitCompress(tjinstance *this)
   this->jerr.pub.addon_message_table = turbojpeg_message_table;
   this->jerr.pub.first_addon_message = JMSG_FIRSTADDONCODE;
   this->jerr.pub.last_addon_message = JMSG_LASTADDONCODE;
+  this->jerr.tjHandle = (tjhandle)this;
 
   if (setjmp(this->jerr.setjmp_buffer)) {
     /* If we get here, the JPEG code has signaled an error. */
@@ -1802,6 +1811,7 @@ static tjhandle _tjInitDecompress(tjinstance *this)
   this->jerr.pub.addon_message_table = turbojpeg_message_table;
   this->jerr.pub.first_addon_message = JMSG_FIRSTADDONCODE;
   this->jerr.pub.last_addon_message = JMSG_LASTADDONCODE;
+  this->jerr.tjHandle = (tjhandle)this;
 
   if (setjmp(this->jerr.setjmp_buffer)) {
     /* If we get here, the JPEG code has signaled an error. */
