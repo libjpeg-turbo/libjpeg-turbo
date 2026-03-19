@@ -96,10 +96,7 @@ DLLEXPORT int GET_NAME(tj3Compress, BITS_IN_JSAMPLE)
   if ((row_pointer = (_JSAMPROW *)malloc(sizeof(_JSAMPROW) * height)) == NULL)
     THROW("Memory allocation failure");
 
-  if (setjmp(this->jerr.setjmp_buffer)) {
-    /* If we get here, the JPEG code has signaled an error. */
-    retval = -1;  goto bailout;
-  }
+  CATCH_LIBJPEG(this);
 
   cinfo->image_width = width;
   cinfo->image_height = height;
@@ -176,10 +173,7 @@ DLLEXPORT int GET_NAME(tj3Decompress, BITS_IN_JSAMPLE)
 
   dinfo->mem->max_memory_to_use = (long)this->maxMemory * 1048576L;
 
-  if (setjmp(this->jerr.setjmp_buffer)) {
-    /* If we get here, the JPEG code has signaled an error. */
-    retval = -1;  goto bailout;
-  }
+  CATCH_LIBJPEG(this);
 
   if (dinfo->global_state <= DSTATE_INHEADER) {
     jpeg_mem_src_tj(dinfo, jpegBuf, jpegSize);
@@ -230,10 +224,7 @@ DLLEXPORT int GET_NAME(tj3Decompress, BITS_IN_JSAMPLE)
   if ((row_pointer =
        (_JSAMPROW *)malloc(sizeof(_JSAMPROW) * croppedHeight)) == NULL)
     THROW("Memory allocation failure");
-  if (setjmp(this->jerr.setjmp_buffer)) {
-    /* If we get here, the JPEG code has signaled an error. */
-    retval = -1;  goto bailout;
-  }
+  CATCH_LIBJPEG(this);
   for (i = 0; i < (int)croppedHeight; i++) {
     if (this->bottomUp)
       row_pointer[i] = &dstBuf[(croppedHeight - i - 1) * (size_t)pitch];
@@ -331,10 +322,7 @@ _JSAMPLE *GET_NAME(_tj3LoadImageFromFileHandle, BITS_IN_JSAMPLE)
   else if (tempc == EOF)
     THROW("Input file contains no data");
 
-  if (setjmp(this2->jerr.setjmp_buffer)) {
-    /* If we get here, the JPEG code has signaled an error. */
-    retval = -1;  goto bailout;
-  }
+  CATCH_LIBJPEG(this2);
 
   cinfo->data_precision = BITS_IN_JSAMPLE;
   if (*pixelFormat == TJPF_UNKNOWN) cinfo->in_color_space = JCS_UNKNOWN;
@@ -385,10 +373,7 @@ _JSAMPLE *GET_NAME(_tj3LoadImageFromFileHandle, BITS_IN_JSAMPLE)
                                    sizeof(_JSAMPLE))) == NULL)
     THROW("Memory allocation failure");
 
-  if (setjmp(this2->jerr.setjmp_buffer)) {
-    /* If we get here, the JPEG code has signaled an error. */
-    retval = -1;  goto bailout;
-  }
+  CATCH_LIBJPEG(this2);
 
   while (cinfo->next_scanline < cinfo->image_height) {
     int i, nlines = (*src->get_pixel_rows) (cinfo, src);
@@ -508,10 +493,7 @@ DLLEXPORT int GET_NAME(tj3SaveImage, BITS_IN_JSAMPLE)
 #endif
     THROW_UNIX("Cannot open output file");
 
-  if (setjmp(this2->jerr.setjmp_buffer)) {
-    /* If we get here, the JPEG code has signaled an error. */
-    retval = -1;  goto bailout;
-  }
+  CATCH_LIBJPEG(this2);
 
   this2->dinfo.out_color_space = pf2cs[pixelFormat];
   dinfo->image_width = width;  dinfo->image_height = height;

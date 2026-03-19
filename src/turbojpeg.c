@@ -279,6 +279,13 @@ static int cs2pf[JPEG_NUMCS] = {
   retval = -1;  goto bailout; \
 }
 
+#define CATCH_LIBJPEG(this) { \
+  if (setjmp(this->jerr.setjmp_buffer)) { \
+    /* If we get here, the JPEG code has signaled an error. */ \
+    retval = -1;  goto bailout; \
+  } \
+}
+
 #define GET_INSTANCE(handle) \
   tjinstance *this = (tjinstance *)handle; \
   j_compress_ptr cinfo = NULL; \
@@ -604,9 +611,14 @@ DLLEXPORT void tj3Destroy(tjhandle handle)
   this->jerr.warning = FALSE;
   this->isInstanceError = FALSE;
 
-  if (setjmp(this->jerr.setjmp_buffer)) return;
+  /* NOTE: jpeg_destroy_*() can never throw a libjpeg error in libjpeg-turbo's
+     implementation, so this is a belt-and-suspenders measure. */
+  if (setjmp(this->jerr.setjmp_buffer)) goto destroy_decompress;
   if (this->init & COMPRESS) jpeg_destroy_compress(cinfo);
+destroy_decompress:
+  if (setjmp(this->jerr.setjmp_buffer)) goto bailout;
   if (this->init & DECOMPRESS) jpeg_destroy_decompress(dinfo);
+bailout:
   free(this->iccBuf);
   free(this->tempICCBuf);
   free(this);
@@ -1305,10 +1317,7 @@ DLLEXPORT int tj3CompressFromYUVPlanes8(tjhandle handle,
   if (this->subsamp == TJSAMP_UNKNOWN)
     THROW("TJPARAM_SUBSAMP must be specified");
 
-  if (setjmp(this->jerr.setjmp_buffer)) {
-    /* If we get here, the JPEG code has signaled an error. */
-    retval = -1;  goto bailout;
-  }
+  CATCH_LIBJPEG(this);
 
   cinfo->image_width = width;
   cinfo->image_height = height;
@@ -1357,10 +1366,7 @@ DLLEXPORT int tj3CompressFromYUVPlanes8(tjhandle handle,
     }
   }
 
-  if (setjmp(this->jerr.setjmp_buffer)) {
-    /* If we get here, the JPEG code has signaled an error. */
-    retval = -1;  goto bailout;
-  }
+  CATCH_LIBJPEG(this);
 
   for (row = 0; row < (int)cinfo->image_height;
        row += cinfo->max_v_samp_factor * DCTSIZE) {
@@ -1558,10 +1564,7 @@ DLLEXPORT int tj3EncodeYUVPlanes8(tjhandle handle, const unsigned char *srcBuf,
 
   if (pitch == 0) pitch = width * tjPixelSize[pixelFormat];
 
-  if (setjmp(this->jerr.setjmp_buffer)) {
-    /* If we get here, the JPEG code has signaled an error. */
-    retval = -1;  goto bailout;
-  }
+  CATCH_LIBJPEG(this);
 
   cinfo->image_width = width;
   cinfo->image_height = height;
@@ -1642,10 +1645,7 @@ DLLEXPORT int tj3EncodeYUVPlanes8(tjhandle handle, const unsigned char *srcBuf,
     }
   }
 
-  if (setjmp(this->jerr.setjmp_buffer)) {
-    /* If we get here, the JPEG code has signaled an error. */
-    retval = -1;  goto bailout;
-  }
+  CATCH_LIBJPEG(this);
 
   for (row = 0; row < ph0; row += cinfo->max_v_samp_factor) {
     (*cinfo->cconvert->color_convert) (cinfo, &row_pointer[row], tmpbuf, 0,
@@ -1843,10 +1843,7 @@ DLLEXPORT int tj3DecompressHeader(tjhandle handle,
   if (jpegBuf == NULL || jpegSize <= 0)
     THROW("Invalid argument");
 
-  if (setjmp(this->jerr.setjmp_buffer)) {
-    /* If we get here, the JPEG code has signaled an error. */
-    return -1;
-  }
+  CATCH_LIBJPEG(this);
 
   jpeg_mem_src_tj(dinfo, jpegBuf, jpegSize);
 
@@ -2088,10 +2085,7 @@ DLLEXPORT int tjDecompress2(tjhandle handle, const unsigned char *jpegBuf,
   if (jpegBuf == NULL || jpegSize <= 0 || width < 0 || height < 0)
     THROW("Invalid argument");
 
-  if (setjmp(this->jerr.setjmp_buffer)) {
-    /* If we get here, the JPEG code has signaled an error. */
-    retval = -1;  goto bailout;
-  }
+  CATCH_LIBJPEG(this);
 
   jpeg_mem_src_tj(dinfo, jpegBuf, jpegSize);
   jpeg_read_header(dinfo, TRUE);
@@ -2176,10 +2170,7 @@ DLLEXPORT int tj3DecompressToYUVPlanes8(tjhandle handle,
 
   dinfo->mem->max_memory_to_use = (long)this->maxMemory * 1048576L;
 
-  if (setjmp(this->jerr.setjmp_buffer)) {
-    /* If we get here, the JPEG code has signaled an error. */
-    retval = -1;  goto bailout;
-  }
+  CATCH_LIBJPEG(this);
 
   if (dinfo->global_state <= DSTATE_INHEADER) {
     jpeg_mem_src_tj(dinfo, jpegBuf, jpegSize);
@@ -2238,10 +2229,7 @@ DLLEXPORT int tj3DecompressToYUVPlanes8(tjhandle handle,
     }
   }
 
-  if (setjmp(this->jerr.setjmp_buffer)) {
-    /* If we get here, the JPEG code has signaled an error. */
-    retval = -1;  goto bailout;
-  }
+  CATCH_LIBJPEG(this);
 
   dinfo->do_fancy_upsampling = !this->fastUpsample;
   dinfo->dct_method = this->fastDCT ? JDCT_FASTEST : JDCT_ISLOW;
@@ -2321,10 +2309,7 @@ DLLEXPORT int tjDecompressToYUVPlanes(tjhandle handle,
   if (jpegBuf == NULL || jpegSize <= 0 || width < 0 || height < 0)
     THROW("Invalid argument");
 
-  if (setjmp(this->jerr.setjmp_buffer)) {
-    /* If we get here, the JPEG code has signaled an error. */
-    retval = -1;  goto bailout;
-  }
+  CATCH_LIBJPEG(this);
 
   jpeg_mem_src_tj(dinfo, jpegBuf, jpegSize);
   jpeg_read_header(dinfo, TRUE);
@@ -2371,10 +2356,7 @@ DLLEXPORT int tj3DecompressToYUV8(tjhandle handle,
       !IS_POW2(align))
     THROW("Invalid argument");
 
-  if (setjmp(this->jerr.setjmp_buffer)) {
-    /* If we get here, the JPEG code has signaled an error. */
-    retval = -1;  goto bailout;
-  }
+  CATCH_LIBJPEG(this);
 
   if (dinfo->global_state <= DSTATE_INHEADER) {
     jpeg_mem_src_tj(dinfo, jpegBuf, jpegSize);
@@ -2432,10 +2414,7 @@ DLLEXPORT int tjDecompressToYUV2(tjhandle handle, const unsigned char *jpegBuf,
   if (jpegBuf == NULL || jpegSize <= 0 || width < 0 || height < 0)
     THROW("Invalid argument");
 
-  if (setjmp(this->jerr.setjmp_buffer)) {
-    /* If we get here, the JPEG code has signaled an error. */
-    retval = -1;  goto bailout;
-  }
+  CATCH_LIBJPEG(this);
 
   jpeg_mem_src_tj(dinfo, jpegBuf, jpegSize);
   jpeg_read_header(dinfo, TRUE);
@@ -2538,8 +2517,8 @@ DLLEXPORT int tj3DecodeYUVPlanes8(tjhandle handle,
   int i, retval = 0, row, pw0, ph0, pw[MAX_COMPONENTS], ph[MAX_COMPONENTS];
   JSAMPLE *ptr;
   jpeg_component_info *compptr;
-  int (*old_read_markers) (j_decompress_ptr);
-  void (*old_reset_marker_reader) (j_decompress_ptr);
+  int (*old_read_markers) (j_decompress_ptr) = NULL;
+  void (*old_reset_marker_reader) (j_decompress_ptr) = NULL;
 
   GET_DINSTANCE(handle);
 
@@ -2555,11 +2534,6 @@ DLLEXPORT int tj3DecodeYUVPlanes8(tjhandle handle,
     THROW("Invalid argument");
   if (this->subsamp != TJSAMP_GRAY && (!srcPlanes[1] || !srcPlanes[2]))
     THROW("Invalid argument");
-
-  if (setjmp(this->jerr.setjmp_buffer)) {
-    /* If we get here, the JPEG code has signaled an error. */
-    retval = -1;  goto bailout;
-  }
 
   if (this->subsamp == TJSAMP_UNKNOWN)
     THROW("TJPARAM_SUBSAMP must be specified");
@@ -2578,6 +2552,7 @@ DLLEXPORT int tj3DecodeYUVPlanes8(tjhandle handle,
   dinfo->marker->read_markers = my_read_markers;
   old_reset_marker_reader = dinfo->marker->reset_marker_reader;
   dinfo->marker->reset_marker_reader = my_reset_marker_reader;
+  CATCH_LIBJPEG(this);
   jpeg_read_header(dinfo, TRUE);
   dinfo->marker->read_markers = old_read_markers;
   dinfo->marker->reset_marker_reader = old_reset_marker_reader;
@@ -2634,10 +2609,7 @@ DLLEXPORT int tj3DecodeYUVPlanes8(tjhandle handle,
     }
   }
 
-  if (setjmp(this->jerr.setjmp_buffer)) {
-    /* If we get here, the JPEG code has signaled an error. */
-    retval = -1;  goto bailout;
-  }
+  CATCH_LIBJPEG(this);
 
   for (row = 0; row < ph0; row += dinfo->max_v_samp_factor) {
     JDIMENSION inrow = 0, outrow = 0;
@@ -2654,6 +2626,10 @@ DLLEXPORT int tj3DecodeYUVPlanes8(tjhandle handle,
   jpeg_abort_decompress(dinfo);
 
 bailout:
+  if (old_read_markers)
+    dinfo->marker->read_markers = old_read_markers;
+  if (old_reset_marker_reader)
+    dinfo->marker->reset_marker_reader = old_reset_marker_reader;
   if (dinfo->global_state > DSTATE_START) jpeg_abort_decompress(dinfo);
   free(row_pointer);
   for (i = 0; i < MAX_COMPONENTS; i++) {
@@ -2922,10 +2898,7 @@ DLLEXPORT int tj3Transform(tjhandle handle, const unsigned char *jpegBuf,
     THROW("Memory allocation failure");
   memset(xinfo, 0, sizeof(jpeg_transform_info) * n);
 
-  if (setjmp(this->jerr.setjmp_buffer)) {
-    /* If we get here, the JPEG code has signaled an error. */
-    retval = -1;  goto bailout;
-  }
+  CATCH_LIBJPEG(this);
 
   if (dinfo->global_state <= DSTATE_INHEADER)
     jpeg_mem_src_tj(dinfo, jpegBuf, jpegSize);
@@ -3090,10 +3063,7 @@ DLLEXPORT int tjTransform(tjhandle handle, const unsigned char *jpegBuf,
   if (n < 1 || dstSizes == NULL)
     THROW("Invalid argument");
 
-  if (setjmp(this->jerr.setjmp_buffer)) {
-    /* If we get here, the JPEG code has signaled an error. */
-    retval = -1;  goto bailout;
-  }
+  CATCH_LIBJPEG(this);
 
   processFlags(handle, flags, COMPRESS);
 
