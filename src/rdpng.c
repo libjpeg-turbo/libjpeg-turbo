@@ -555,6 +555,7 @@ finish_input_png(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
   if (source->ctx) {
     spng_decode_chunks(source->ctx);
     spng_ctx_free(source->ctx);
+    source->ctx = NULL;
   }
 }
 

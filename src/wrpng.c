@@ -339,6 +339,7 @@ finish_output_png(j_decompress_ptr cinfo, djpeg_dest_ptr dinfo)
     spng_encode_chunks(dest->ctx);
     free(dest->iccp.profile);
     spng_ctx_free(dest->ctx);
+    dest->ctx = NULL;
   }
 
   /* Make sure we wrote the output file OK */
