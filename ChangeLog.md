@@ -1,7 +1,7 @@
-3.2 Evolving
-============
+3.1.90 (3.2 beta1)
+==================
 
-### Significant changes relative to 3.1.x:
+### Significant changes relative to 3.1.4:
 
 1. The legacy GNU Assembler (GAS) implementation of the Arm Neon SIMD
 extensions has been removed.  Arm builds of libjpeg-turbo must now use GCC 12
