@@ -1,7 +1,11 @@
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../src/spng)
-add_definitions(-DSPNG_STATIC -DSPNG_USE_MINIZ -D_LARGEFILE64_SOURCE)
+set(SRC ${CMAKE_SOURCE_DIR}/src/spng)
+include_directories(${SRC} ${SRC}/zlib)
+add_definitions(-DSPNG_STATIC)
 
-add_library(spng OBJECT ../../src/spng/spng.c ../../src/spng/miniz.c)
+add_library(spng OBJECT ${SRC}/spng.c ${SRC}/zlib/adler32.c
+  ${SRC}/zlib/compress.c ${SRC}/zlib/crc32.c ${SRC}/zlib/deflate.c
+  ${SRC}/zlib/inffast.c ${SRC}/zlib/inflate.c ${SRC}/zlib/inftrees.c
+  ${SRC}/zlib/trees.c ${SRC}/zlib/zutil.c)
 
 if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID MATCHES "Clang")
   target_compile_options(spng PRIVATE -w)

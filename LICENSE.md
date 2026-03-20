@@ -34,9 +34,10 @@ Modified BSD License.  (In other words, the terms of the less restrictive
 licenses are satisfied if the terms of the IJG and Modified BSD Licenses are
 satisfied.)
 
-- The libjpeg-turbo SIMD source code is covered by the
+- The libjpeg-turbo SIMD source code and zlib are covered by the
   [zlib License](https://spdx.org/licenses/Zlib.html), which is subsumed by the
-  IJG License in the context of the libjpeg API library.
+  IJG License in the context of the cjpeg and djpeg programs and the libjpeg
+  API library.
 
 - Some of the libspng source code is covered by the
   [PNG Reference Library License v2](https://spdx.org/licenses/libpng-2.0.html),
@@ -47,11 +48,6 @@ satisfied.)
   [Simplified (2-clause) BSD License](https://spdx.org/licenses/BSD-2-Clause.html),
   which is subsumed by the Modified BSD License in the context of the cjpeg and
   djpeg programs and the TurboJPEG API library.
-
-- The miniz source code is covered by the
-  [Zero-Clause BSD License](https://spdx.org/licenses/0BSD.html), which is
-  subsumed by the Modified BSD License in the context of the cjpeg and djpeg
-  programs and the TurboJPEG API library.
 
 
 Complying with the libjpeg-turbo Licenses

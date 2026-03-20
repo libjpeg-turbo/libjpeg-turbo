@@ -13,7 +13,7 @@
 #define JPEG_INTERNALS
 #include "cdjpeg.h"
 #include <setjmp.h>
-#include "spng/miniz.h"
+#include "spng/zlib/zlib.h"
 
 #define JMESSAGE(code, string)  string,
 
