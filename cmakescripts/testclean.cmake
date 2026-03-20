@@ -36,6 +36,16 @@ file(GLOB FILES
   *_441_*.ppm
   *_441_*.jpg
   *_441.yuv
+  *_410_*.bmp
+  *_410_*.png
+  *_410_*.ppm
+  *_410_*.jpg
+  *_410.yuv
+  *_24_*.bmp
+  *_24_*.png
+  *_24_*.ppm
+  *_24_*.jpg
+  *_24.yuv
   *_LOSSL*S_*.bmp
   *_LOSSL*S_*.ppm
   *_LOSSL*S_*.jpg
