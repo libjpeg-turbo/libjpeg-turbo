@@ -711,12 +711,43 @@ if(WITH_JNA)
   add_subdirectory(jna)
 endif()
 
-if(ENABLE_SHARED)
-  add_subdirectory(sharedlib)
+if(WITH_TURBOJPEG OR WITH_TOOLS OR WITH_TESTS)
+  option(WITH_SYSTEM_SPNG
+    "Build ${CMAKE_PROJECT_NAME} against the system-supplied libspng implementation rather than the implementation in the ${CMAKE_PROJECT_NAME} source tree"
+    OFF)
+  boolean_number(WITH_SYSTEM_SPNG)
+  report_option(WITH_SYSTEM_SPNG "System-supplied libspng")
+  if(WITH_SYSTEM_SPNG)
+    include(FindPkgConfig)
+    pkg_check_modules(spng REQUIRED spng IMPORTED_TARGET)
+    unset(SPNG_STATIC_SOURCES)
+    set(SPNG_LIBRARY PkgConfig::spng)
+  else()
+    option(WITH_SYSTEM_ZLIB
+      "Build ${CMAKE_PROJECT_NAME} against the system-supplied zlib implementation rather than the implementation in the ${CMAKE_PROJECT_NAME} source tree"
+      OFF)
+    boolean_number(WITH_SYSTEM_ZLIB)
+    report_option(WITH_SYSTEM_ZLIB "System-supplied zlib")
+    add_subdirectory(src/spng)
+    set(SPNG_STATIC_SOURCES $<TARGET_OBJECTS:spng-static>)
+    if(UNIX)
+      set(SPNG_LIBRARY m)
+    else()
+      unset(SPNG_LIBRARY)
+    endif()
+  endif()
+  if(WITH_SYSTEM_ZLIB OR WITH_SYSTEM_SPNG)
+    find_package(ZLIB REQUIRED)
+    unset(ZLIB_STATIC_SOURCES)
+    set(ZLIB_LIBRARY ZLIB::ZLIB)
+  else()
+    set(ZLIB_STATIC_SOURCES $<TARGET_OBJECTS:zlib-static>)
+    unset(ZLIB_LIBRARY)
+  endif()
 endif()
 
-if(WITH_TURBOJPEG OR WITH_TOOLS)
-  add_subdirectory(src/spng)
+if(ENABLE_SHARED)
+  add_subdirectory(sharedlib)
 endif()
 
 if(ENABLE_STATIC)
@@ -732,7 +763,7 @@ if(WITH_TURBOJPEG)
     src/turbojpeg.c src/transupp.c src/jdatadst-tj.c src/jdatasrc-tj.c
     src/rdbmp.c
     src/wrapper/rdpng-8.c src/wrapper/rdpng-12.c src/wrapper/rdpng-16.c
-    $<TARGET_OBJECTS:spng-static>
+    ${ZLIB_STATIC_SOURCES} ${SPNG_STATIC_SOURCES}
     src/wrapper/rdppm-8.c src/wrapper/rdppm-12.c src/wrapper/rdppm-16.c
     src/wrbmp.c
     src/wrapper/wrpng-8.c src/wrapper/wrpng-12.c src/wrapper/wrpng-16.c
@@ -746,8 +777,11 @@ if(WITH_TURBOJPEG)
         ${CMAKE_BINARY_DIR}/win/turbojpeg.rc)
     endif()
     add_library(turbojpeg SHARED ${TURBOJPEG_SOURCES})
-    if(UNIX)
-      target_link_libraries(turbojpeg m)
+    if(SPNG_LIBRARY)
+      target_link_libraries(turbojpeg ${SPNG_LIBRARY})
+    endif()
+    if(NOT WITH_SYSTEM_SPNG AND ZLIB_LIBRARY)
+      target_link_libraries(turbojpeg ${ZLIB_LIBRARY})
     endif()
     set_property(TARGET turbojpeg PROPERTY COMPILE_FLAGS
       "-DBMP_SUPPORTED -DPNG_SUPPORTED -DSPNG_STATIC -DPPM_SUPPORTED")
@@ -800,8 +834,11 @@ if(WITH_TURBOJPEG)
 
   if(ENABLE_STATIC)
     add_library(turbojpeg-static STATIC ${TURBOJPEG_SOURCES})
-    if(UNIX)
-      target_link_libraries(turbojpeg-static m)
+    if(SPNG_LIBRARY)
+      target_link_libraries(turbojpeg-static ${SPNG_LIBRARY})
+    endif()
+    if(NOT WITH_SYSTEM_SPNG AND ZLIB_LIBRARY)
+      target_link_libraries(turbojpeg-static ${ZLIB_LIBRARY})
     endif()
     set_property(TARGET turbojpeg-static PROPERTY COMPILE_FLAGS
       "-DBMP_SUPPORTED -DPNG_SUPPORTED -DSPNG_STATIC -DPPM_SUPPORTED")
@@ -838,14 +875,17 @@ if(ENABLE_STATIC)
     add_executable(cjpeg-static src/cjpeg.c src/cdjpeg.c src/rdbmp.c
       src/rdgif.c
       src/wrapper/rdpng-8.c src/wrapper/rdpng-12.c src/wrapper/rdpng-16.c
-      $<TARGET_OBJECTS:spng-static>
+      ${ZLIB_STATIC_SOURCES} ${SPNG_STATIC_SOURCES}
       src/wrapper/rdppm-8.c src/wrapper/rdppm-12.c src/wrapper/rdppm-16.c
       src/rdswitch.c src/rdtarga.c)
     set_property(TARGET cjpeg-static PROPERTY COMPILE_FLAGS
       ${CDJPEG_COMPILE_FLAGS})
     target_link_libraries(cjpeg-static jpeg-static)
-    if(UNIX)
-      target_link_libraries(cjpeg-static m)
+    if(SPNG_LIBRARY)
+      target_link_libraries(cjpeg-static ${SPNG_LIBRARY})
+    endif()
+    if(NOT WITH_SYSTEM_SPNG AND ZLIB_LIBRARY)
+      target_link_libraries(cjpeg-static ${ZLIB_LIBRARY})
     endif()
 
     add_executable(djpeg-static src/djpeg.c src/cdjpeg.c
@@ -853,14 +893,17 @@ if(ENABLE_STATIC)
       src/rdswitch.c src/wrbmp.c
       src/wrapper/wrgif-8.c src/wrapper/wrgif-12.c
       src/wrapper/wrpng-8.c src/wrapper/wrpng-12.c src/wrapper/wrpng-16.c
-      $<TARGET_OBJECTS:spng-static>
+      ${ZLIB_STATIC_SOURCES} ${SPNG_STATIC_SOURCES}
       src/wrapper/wrppm-8.c src/wrapper/wrppm-12.c src/wrapper/wrppm-16.c
       src/wrtarga.c)
     set_property(TARGET djpeg-static PROPERTY COMPILE_FLAGS
       ${CDJPEG_COMPILE_FLAGS})
     target_link_libraries(djpeg-static jpeg-static)
-    if(UNIX)
-      target_link_libraries(djpeg-static m)
+    if(SPNG_LIBRARY)
+      target_link_libraries(djpeg-static ${SPNG_LIBRARY})
+    endif()
+    if(NOT WITH_SYSTEM_SPNG AND ZLIB_LIBRARY)
+      target_link_libraries(djpeg-static ${ZLIB_LIBRARY})
     endif()
 
     add_executable(jpegtran-static src/jpegtran.c src/cdjpeg.c src/rdswitch.c
@@ -880,7 +923,7 @@ if(ENABLE_STATIC)
       add_executable(bmpsizetest-static src/bmpsizetest.c
         src/rdbmp.c src/wrbmp.c
         src/rdgif.c src/wrapper/wrgif-8.c src/wrapper/wrgif-12.c
-        $<TARGET_OBJECTS:spng-static>
+        ${ZLIB_STATIC_SOURCES} ${SPNG_STATIC_SOURCES}
         src/wrapper/rdpng-8.c src/wrapper/rdpng-12.c src/wrapper/rdpng-16.c
         src/wrapper/wrpng-8.c src/wrapper/wrpng-12.c src/wrapper/wrpng-16.c
         src/wrapper/rdppm-8.c src/wrapper/rdppm-12.c src/wrapper/rdppm-16.c
@@ -889,8 +932,11 @@ if(ENABLE_STATIC)
       set_property(TARGET bmpsizetest-static PROPERTY COMPILE_FLAGS
         ${CDJPEG_COMPILE_FLAGS})
       target_link_libraries(bmpsizetest-static jpeg-static)
-      if(UNIX)
-        target_link_libraries(bmpsizetest-static m)
+      if(SPNG_LIBRARY)
+        target_link_libraries(bmpsizetest-static ${SPNG_LIBRARY})
+      endif()
+      if(ZLIB_LIBRARY)
+        target_link_libraries(bmpsizetest-static ${ZLIB_LIBRARY})
       endif()
     endif()
   endif()
