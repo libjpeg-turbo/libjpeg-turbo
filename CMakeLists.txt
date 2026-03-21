@@ -67,7 +67,7 @@ endif()
 # build system to suit their specific needs.  Please do not file bug reports,
 # feature requests, or pull requests regarding this.
 if(NOT CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
-  message(FATAL_ERROR "The libjpeg-turbo build system cannot be integrated into another build system using add_subdirectory().  Use ExternalProject_Add() instead.")
+  message(FATAL_ERROR "The ${CMAKE_PROJECT_NAME} build system cannot be integrated into another build system using add_subdirectory().  Use ExternalProject_Add() instead.")
 endif()
 
 # CMake 3.14 and later sets CMAKE_MACOSX_BUNDLE to TRUE by default when
@@ -109,7 +109,7 @@ string(TOLOWER ${CMAKE_SYSTEM_PROCESSOR} CMAKE_SYSTEM_PROCESSOR_LC)
 set(COUNT 1)
 foreach(ARCH ${CMAKE_OSX_ARCHITECTURES})
   if(COUNT GREATER 1)
-    message(FATAL_ERROR "libjpeg-turbo contains assembly code, so it cannot be built with multiple values in CMAKE_OSX_ARCHITECTURES.")
+    message(FATAL_ERROR "${CMAKE_PROJECT_NAME} contains assembly code, so it cannot be built with multiple values in CMAKE_OSX_ARCHITECTURES.")
   endif()
   math(EXPR COUNT "${COUNT}+1")
 endforeach()
@@ -1028,7 +1028,7 @@ if(DEFINED WITH_SIMD_INT AND NOT WITH_SIMD EQUAL WITH_SIMD_INT)
 endif()
 set(WITH_SIMD_INT ${WITH_SIMD} CACHE INTERNAL "")
 set(FLOATTEST8 ${DEFAULT_FLOATTEST8} CACHE STRING
-  "The type of floating point math used by the 8-bit-per-sample floating point DCT/IDCT algorithms.  This tells the testing system which numerical results it should expect from those tests.  [sse = libjpeg-turbo x86/x86-64 SIMD extensions, no-fp-contract = generic FPU with floating point expression contraction disabled, fp-contract = generic FPU with floating point expression contraction enabled, 387 = 387 FPU, msvc = 32-bit Visual Studio + 387 FPU] (default = ${DEFAULT_FLOATTEST8})"
+  "The type of floating point math used by the 8-bit-per-sample floating point DCT/IDCT algorithms.  This tells the testing system which numerical results it should expect from those tests.  [sse = ${CMAKE_PROJECT_NAME} x86/x86-64 SIMD extensions, no-fp-contract = generic FPU with floating point expression contraction disabled, fp-contract = generic FPU with floating point expression contraction enabled, 387 = 387 FPU, msvc = 32-bit Visual Studio + 387 FPU] (default = ${DEFAULT_FLOATTEST8})"
   ${FORCE_FLOATTEST8})
 message(STATUS "FLOATTEST8 = ${FLOATTEST8}")
 
@@ -1070,7 +1070,7 @@ elseif(CPU_TYPE STREQUAL "powerpc" OR CPU_TYPE STREQUAL "arm64")
 endif()
 
 set(FLOATTEST12 ${DEFAULT_FLOATTEST12} CACHE STRING
-  "The type of floating point math used by the 12-bit-per-sample floating point DCT/IDCT algorithms.  This tells the testing system which numerical results it should expect from those tests.  [sse = libjpeg-turbo x86/x86-64 SIMD extensions, no-fp-contract = generic FPU with floating point expression contraction disabled, fp-contract = generic FPU with floating point expression contraction enabled, 387 = 387 FPU, msvc = 32-bit Visual Studio + 387 FPU] (default = ${DEFAULT_FLOATTEST12})")
+  "The type of floating point math used by the 12-bit-per-sample floating point DCT/IDCT algorithms.  This tells the testing system which numerical results it should expect from those tests.  [sse = ${CMAKE_PROJECT_NAME} x86/x86-64 SIMD extensions, no-fp-contract = generic FPU with floating point expression contraction disabled, fp-contract = generic FPU with floating point expression contraction enabled, 387 = 387 FPU, msvc = 32-bit Visual Studio + 387 FPU] (default = ${DEFAULT_FLOATTEST12})")
 message(STATUS "FLOATTEST12 = ${FLOATTEST12}")
 
 if(FLOATTEST12)
