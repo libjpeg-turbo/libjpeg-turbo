@@ -82,6 +82,12 @@ destination buffers were passed to `tj3Transform()`, multiple lossless
 transform operations were performed, and it was necessary for the library to
 re-allocate the second buffer to accommodate the second destination image.
 
+14. Fixed an oversight in the libjpeg API whereby, if a calling application
+manually set `cinfo.Ss` (the predictor selection value) to a value less than 1
+or greater than 7 after calling `jpeg_enable_lossless()` and prior to calling
+`jpeg_start_compress()`, an incorrect (all white) lossless JPEG image was
+silently generated.
+
 
 3.0.4
 =====
