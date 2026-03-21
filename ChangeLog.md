@@ -47,6 +47,12 @@ take precedence over the associated ICC profile.  Thus, `tj3Transform()` now
 ignores the associated ICC profile unless `TJXOPT_COPYNONE` is specified or
 `TJPARAM_SAVEMARKERS` is set to something other than 2 or 4.
 
+7. Fixed an oversight in the libjpeg API whereby, if a calling application
+manually set `cinfo.Ss` (the predictor selection value) to a value less than 1
+or greater than 7 after calling `jpeg_enable_lossless()` and prior to calling
+`jpeg_start_compress()`, an incorrect (all white) lossless JPEG image was
+silently generated.
+
 
 3.1.3
 =====
