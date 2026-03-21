@@ -7,7 +7,7 @@
  * Lossless JPEG Modifications:
  * Copyright (C) 1999, Ken Murchison.
  * libjpeg-turbo Modifications:
- * Copyright (C) 2014, 2017, 2021-2023, D. R. Commander.
+ * Copyright (C) 2014, 2017, 2021-2023, 2026, D. R. Commander.
  * For conditions of distribution and use, see the accompanying README.ijg
  * file.
  *
@@ -272,7 +272,7 @@ JMESSAGE(JERR_BAD_RESTART,
    (*(cinfo)->err->error_exit) ((j_common_ptr)(cinfo)))
 #define ERREXITS(cinfo, code, str) \
   ((cinfo)->err->msg_code = (code), \
-   strncpy((cinfo)->err->msg_parm.s, (str), JMSG_STR_PARM_MAX), \
+   strncpy((cinfo)->err->msg_parm.s, (str), JMSG_STR_PARM_MAX - 1), \
    (cinfo)->err->msg_parm.s[JMSG_STR_PARM_MAX - 1] = '\0', \
    (*(cinfo)->err->error_exit) ((j_common_ptr)(cinfo)))
 
