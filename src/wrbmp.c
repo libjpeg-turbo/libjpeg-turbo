@@ -368,11 +368,15 @@ write_colormap(j_decompress_ptr cinfo, bmp_dest_ptr dest, int map_colors,
 
   if (colormap != NULL) {
     if (cinfo->out_color_components == 3) {
+      register int rindex = rgb_red[cinfo->out_color_space];
+      register int gindex = rgb_green[cinfo->out_color_space];
+      register int bindex = rgb_blue[cinfo->out_color_space];
+
       /* Normal case with RGB colormap */
       for (i = 0; i < num_colors; i++) {
-        putc(colormap[2][i], outfile);
-        putc(colormap[1][i], outfile);
-        putc(colormap[0][i], outfile);
+        putc(colormap[bindex][i], outfile);
+        putc(colormap[gindex][i], outfile);
+        putc(colormap[rindex][i], outfile);
         if (map_entry_size == 4)
           putc(0, outfile);
       }
