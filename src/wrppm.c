@@ -192,9 +192,12 @@ put_demapped_rgb(j_decompress_ptr cinfo, djpeg_dest_ptr dinfo,
   register char *bufferptr;
   register int pixval;
   register _JSAMPROW ptr;
-  register _JSAMPROW color_map0 = ((_JSAMPARRAY)cinfo->colormap)[0];
-  register _JSAMPROW color_map1 = ((_JSAMPARRAY)cinfo->colormap)[1];
-  register _JSAMPROW color_map2 = ((_JSAMPARRAY)cinfo->colormap)[2];
+  register _JSAMPROW color_map0 =
+    ((_JSAMPARRAY)cinfo->colormap)[rgb_red[cinfo->out_color_space]];
+  register _JSAMPROW color_map1 =
+    ((_JSAMPARRAY)cinfo->colormap)[rgb_green[cinfo->out_color_space]];
+  register _JSAMPROW color_map2 =
+    ((_JSAMPARRAY)cinfo->colormap)[rgb_blue[cinfo->out_color_space]];
   register JDIMENSION col;
 
   ptr = dest->pub._buffer[0];
