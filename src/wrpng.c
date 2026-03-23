@@ -309,7 +309,13 @@ start_output_png(j_decompress_ptr cinfo, djpeg_dest_ptr dinfo)
   case JCS_CMYK:
     if (!IsExtRGB(cinfo->out_color_space) && cinfo->quantize_colors)
       ERREXIT(cinfo, JERR_PNG_COLORSPACE);
-    color_type = SPNG_COLOR_TYPE_TRUECOLOR;
+#if PNG_BIT_DEPTH == 8
+    if (cinfo->quantize_colors && cinfo->data_precision == PNG_BIT_DEPTH &&
+        IsExtRGB(cinfo->out_color_space))
+      color_type = SPNG_COLOR_TYPE_INDEXED;
+    else
+#endif
+      color_type = SPNG_COLOR_TYPE_TRUECOLOR;
     break;
   default:
     ERREXIT(cinfo, JERR_PNG_COLORSPACE);
@@ -323,6 +329,25 @@ start_output_png(j_decompress_ptr cinfo, djpeg_dest_ptr dinfo)
   ihdr.bit_depth = PNG_BIT_DEPTH;
   ihdr.color_type = color_type;
   TRY_SPNG(spng_set_ihdr(dest->ctx, &ihdr));
+
+#if PNG_BIT_DEPTH == 8
+  if (cinfo->quantize_colors && cinfo->data_precision == PNG_BIT_DEPTH &&
+      IsExtRGB(cinfo->out_color_space)) {
+    struct spng_plte palette;
+    unsigned int i;
+
+    palette.n_entries = cinfo->actual_number_of_colors;
+    for (i = 0; i < palette.n_entries; i++) {
+      palette.entries[i].red =
+        cinfo->colormap[rgb_red[cinfo->out_color_space]][i];
+      palette.entries[i].green =
+        cinfo->colormap[rgb_green[cinfo->out_color_space]][i];
+      palette.entries[i].blue =
+        cinfo->colormap[rgb_blue[cinfo->out_color_space]][i];
+    }
+    TRY_SPNG(spng_set_plte(dest->ctx, &palette));
+  }
+#endif
 
   TRY_SPNG(spng_encode_image(dest->ctx, NULL, 0, SPNG_FMT_PNG,
                              SPNG_ENCODE_PROGRESSIVE));
@@ -365,6 +390,12 @@ calc_buffer_dimensions_png(j_decompress_ptr cinfo, djpeg_dest_ptr dinfo)
   if (cinfo->out_color_space == JCS_GRAYSCALE)
     samples_per_row = cinfo->output_width * cinfo->out_color_components;
   else
+#if PNG_BIT_DEPTH == 8
+  if (cinfo->quantize_colors && cinfo->data_precision == PNG_BIT_DEPTH &&
+      IsExtRGB(cinfo->out_color_space))
+    samples_per_row = cinfo->output_width * cinfo->output_components;
+  else
+#endif
     samples_per_row = cinfo->output_width * 3;
   dest->buffer_width = samples_per_row * BYTESPERSAMPLE;
 }
@@ -378,6 +409,7 @@ GLOBAL(djpeg_dest_ptr)
 _jinit_write_png(j_decompress_ptr cinfo)
 {
   png_dest_ptr dest;
+  boolean use_raw_buffer = FALSE;
 
 #if BITS_IN_JSAMPLE == 8
   if (cinfo->data_precision > BITS_IN_JSAMPLE || cinfo->data_precision < 2)
@@ -408,12 +440,28 @@ _jinit_write_png(j_decompress_ptr cinfo)
   dest->iobuffer = (PNGSAMPLE *)(*cinfo->mem->alloc_small)
     ((j_common_ptr)cinfo, JPOOL_IMAGE, dest->buffer_width);
 
-  if (cinfo->quantize_colors || cinfo->data_precision != PNG_BIT_DEPTH ||
-      (cinfo->out_color_space != JCS_EXT_RGB &&
-#if RGB_RED == 0 && RGB_GREEN == 1 && RGB_BLUE == 2 && RGB_PIXELSIZE == 3
-       cinfo->out_color_space != JCS_RGB &&
+#if PNG_BIT_DEPTH == 8
+  if (cinfo->quantize_colors && cinfo->data_precision == PNG_BIT_DEPTH &&
+      IsExtRGB(cinfo->out_color_space))
+    use_raw_buffer = TRUE;
+  else
 #endif
-       cinfo->out_color_space != JCS_GRAYSCALE)) {
+  if (!cinfo->quantize_colors && cinfo->data_precision == PNG_BIT_DEPTH &&
+      (cinfo->out_color_space == JCS_EXT_RGB ||
+#if RGB_RED == 0 && RGB_GREEN == 1 && RGB_BLUE == 2 && RGB_PIXELSIZE == 3
+       cinfo->out_color_space == JCS_RGB ||
+#endif
+       cinfo->out_color_space == JCS_GRAYSCALE))
+    use_raw_buffer = TRUE;
+
+  if (use_raw_buffer) {
+    /* We will write directly from decompressor output buffer. */
+    /* Synthesize a _JSAMPARRAY pointer structure */
+    dest->pixrow = (_JSAMPROW)dest->iobuffer;
+    dest->pub._buffer = &dest->pixrow;
+    dest->pub.buffer_height = 1;
+    dest->pub.put_pixel_rows = put_pixel_rows;
+  } else {
     /* When quantizing, we need an output buffer for colormap indexes
      * that's separate from the physical I/O buffer.  We also need a
      * separate buffer if pixel format translation must take place.
@@ -460,13 +508,6 @@ _jinit_write_png(j_decompress_ptr cinfo)
                       maxval);
       }
     }
-  } else {
-    /* We will write directly from decompressor output buffer. */
-    /* Synthesize a _JSAMPARRAY pointer structure */
-    dest->pixrow = (_JSAMPROW)dest->iobuffer;
-    dest->pub._buffer = &dest->pixrow;
-    dest->pub.buffer_height = 1;
-    dest->pub.put_pixel_rows = put_pixel_rows;
   }
 
   dest->ctx = spng_ctx_new(SPNG_CTX_ENCODER);
