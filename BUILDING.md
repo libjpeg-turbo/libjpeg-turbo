@@ -8,7 +8,7 @@ Build Requirements
 
 ### All Systems
 
-- [CMake](https://cmake.org) v2.8.12 or later
+- [CMake](https://cmake.org) v3.15 or later
 
 - [NASM](https://nasm.us) or [Yasm](https://yasm.tortall.net)
   (if building x86 or x86-64 SIMD extensions)

@@ -11,24 +11,14 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..)
 
 if(MSVC_LIKE)
   # Build all configurations against shared C library
-  if(CMAKE_VERSION VERSION_EQUAL "3.15" OR
-    CMAKE_VERSION VERSION_GREATER "3.15")
-    if(CMAKE_BUILD_TYPE_UC STREQUAL "DEBUG")
-      set(CMAKE_MSVC_RUNTIME_LIBRARY MultiThreadedDebugDLL)
-    elseif(MSVC_IDE)
-      set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
-    else()
-      set(CMAKE_MSVC_RUNTIME_LIBRARY MultiThreadedDLL)
-    endif()
-    message(STATUS "Visual C++ run-time library for libjpeg API DLL: ${CMAKE_MSVC_RUNTIME_LIBRARY}")
-  elseif(MSVC)
-    foreach(var CMAKE_C_FLAGS CMAKE_C_FLAGS_DEBUG CMAKE_C_FLAGS_RELEASE
-      CMAKE_C_FLAGS_MINSIZEREL CMAKE_C_FLAGS_RELWITHDEBINFO)
-      if(${var} MATCHES "/MT")
-        string(REGEX REPLACE "/MT" "/MD" ${var} "${${var}}")
-      endif()
-    endforeach()
+  if(CMAKE_BUILD_TYPE_UC STREQUAL "DEBUG")
+    set(CMAKE_MSVC_RUNTIME_LIBRARY MultiThreadedDebugDLL)
+  elseif(MSVC_IDE)
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+  else()
+    set(CMAKE_MSVC_RUNTIME_LIBRARY MultiThreadedDLL)
   endif()
+  message(STATUS "Visual C++ run-time library for libjpeg API DLL: ${CMAKE_MSVC_RUNTIME_LIBRARY}")
 endif()
 
 foreach(src ${JPEG_SOURCES})
@@ -164,8 +154,7 @@ if(WITH_TOOLS)
   install(TARGETS cjpeg djpeg jpegtran
     RUNTIME DESTINATION ${CMAKE_INSTALL_FULL_BINDIR} COMPONENT bin)
 endif()
-if(NOT CMAKE_VERSION VERSION_LESS "3.1" AND MSVC_LIKE AND
-  CMAKE_C_LINKER_SUPPORTS_PDB)
+if(MSVC_LIKE AND CMAKE_C_LINKER_SUPPORTS_PDB)
   install(FILES "$<TARGET_PDB_FILE:jpeg>"
     DESTINATION ${CMAKE_INSTALL_FULL_BINDIR} COMPONENT bin OPTIONAL)
 endif()
