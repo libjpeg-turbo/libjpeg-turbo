@@ -2424,7 +2424,7 @@ DLLEXPORT int tj3Transform(tjhandle handle, const unsigned char *jpegBuf,
  *
  * @param handle handle to a TurboJPEG instance
  *
- * @param filename name of a file containing a packed-pixel image in true color
+ * @param filename name of a file containing a packed-pixel image in truecolor
  * PNG, grayscale PNG, PBMPLUS (PPM/PGM), or Windows BMP format.  Windows BMP
  * files require 8-bit-per-sample data precision.  When loading a PNG or
  * PBMPLUS file, the target data precision (from 2 to 8 bits per sample) can be
@@ -2481,7 +2481,7 @@ DLLEXPORT unsigned char *tj3LoadImage8(tjhandle handle, const char *filename,
  *
  * @param handle handle to a TurboJPEG instance
  *
- * @param filename name of a file containing a packed-pixel image in true color
+ * @param filename name of a file containing a packed-pixel image in truecolor
  * PNG, grayscale PNG, or PBMPLUS (PPM/PGM) format.  The target data precision
  * (from 9 to 12 bits per sample) can be specified using #TJPARAM_PRECISION and
  * defaults to 12 if #TJPARAM_PRECISION is unset or out of range.  If the data
@@ -2535,7 +2535,7 @@ DLLEXPORT short *tj3LoadImage12(tjhandle handle, const char *filename,
  *
  * @param handle handle to a TurboJPEG instance
  *
- * @param filename name of a file containing a packed-pixel image in true color
+ * @param filename name of a file containing a packed-pixel image in truecolor
  * PNG, grayscale PNG, or PBMPLUS (PPM/PGM) format.  The target data precision
  * (from 13 to 16 bits per sample) can be specified using #TJPARAM_PRECISION
  * and defaults to 16 if #TJPARAM_PRECISION is unset or out of range.  If the
@@ -2612,7 +2612,7 @@ DLLEXPORT unsigned short *tj3LoadImage16(tjhandle handle, const char *filename,
  * @param pixelFormat pixel format of the packed-pixel image (see @ref TJPF
  * "Pixel formats".)  If this parameter is set to @ref TJPF_GRAY, then the
  * image will be stored in grayscale PNG, PGM, or 8-bit-per-pixel (indexed
- * color) BMP format.  Otherwise, the image will be stored in true color PNG,
+ * color) BMP format.  Otherwise, the image will be stored in truecolor PNG,
  * PPM, or 24-bit-per-pixel BMP format.  If this parameter is set to
  * @ref TJPF_CMYK, then the CMYK pixels will be converted to RGB using a quick
  * & dirty algorithm that is suitable only for testing purposes.  (Proper
@@ -2655,7 +2655,7 @@ DLLEXPORT int tj3SaveImage8(tjhandle handle, const char *filename,
  * @param pixelFormat pixel format of the packed-pixel image (see @ref TJPF
  * "Pixel formats".)  If this parameter is set to @ref TJPF_GRAY, then the
  * image will be stored in PGM or grayscale PNG format.  Otherwise, the image
- * will be stored in PPM or true color PNG format.  If this parameter is set to
+ * will be stored in PPM or truecolor PNG format.  If this parameter is set to
  * @ref TJPF_CMYK, then the CMYK pixels will be converted to RGB using a quick
  * & dirty algorithm that is suitable only for testing purposes.  (Proper
  * conversion between CMYK and other formats requires a color management
@@ -2697,7 +2697,7 @@ DLLEXPORT int tj3SaveImage12(tjhandle handle, const char *filename,
  * @param pixelFormat pixel format of the packed-pixel image (see @ref TJPF
  * "Pixel formats".)  If this parameter is set to @ref TJPF_GRAY, then the
  * image will be stored in PGM or grayscale PNG format.  Otherwise, the image
- * will be stored in PPM or true color PNG format.  If this parameter is set to
+ * will be stored in PPM or truecolor PNG format.  If this parameter is set to
  * @ref TJPF_CMYK, then the CMYK pixels will be converted to RGB using a quick
  * & dirty algorithm that is suitable only for testing purposes.  (Proper
  * conversion between CMYK and other formats requires a color management

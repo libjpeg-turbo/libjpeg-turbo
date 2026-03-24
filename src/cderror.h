@@ -77,7 +77,7 @@ JMESSAGE(JERR_PNG_COLORSPACE, "PNG image must be grayscale or RGB")
 JMESSAGE(JERR_PNG_LIBSPNG, "libspng error: %s")
 JMESSAGE(JERR_PNG_OUTOFRANGE, "Numeric value out of range in PNG file")
 JMESSAGE(JTRC_PNG_GRAYSCALE, "%ux%u %u-bit-per-channel grayscale PNG image")
-JMESSAGE(JTRC_PNG_TRUECOLOR, "%ux%u %u-bit-per-channel true color PNG image")
+JMESSAGE(JTRC_PNG_TRUECOLOR, "%ux%u %u-bit-per-channel truecolor PNG image")
 
 JMESSAGE(JERR_PPM_COLORSPACE, "PPM output must be grayscale or RGB")
 JMESSAGE(JERR_PPM_NONNUMERIC, "Nonnumeric data in PPM file")

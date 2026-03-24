@@ -245,8 +245,8 @@ get_gray_cmyk_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
 
 METHODDEF(JDIMENSION)
 get_rgb_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
-/* This version is for reading 8-bit-per-channel or 16-bit-per-channel true
- * color or true color + alpha PNG files and converting to extended RGB.
+/* This version is for reading 8-bit-per-channel or 16-bit-per-channel
+ * truecolor or truecolor + alpha PNG files and converting to extended RGB.
  */
 {
   png_source_ptr source = (png_source_ptr)sinfo;
@@ -296,8 +296,8 @@ get_rgb_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
 
 METHODDEF(JDIMENSION)
 get_rgb_cmyk_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
-/* This version is for reading 8-bit-per-channel or 16-bit-per-channel true
- * color or true color + alpha PNG files and converting to CMYK.
+/* This version is for reading 8-bit-per-channel or 16-bit-per-channel
+ * truecolor or truecolor + alpha PNG files and converting to CMYK.
  */
 {
   png_source_ptr source = (png_source_ptr)sinfo;

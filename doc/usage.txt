@@ -53,7 +53,7 @@ or
         djpeg [switches] -outfile imagefile jpegfile
 This syntax works on all systems, so it is useful for scripts.
 
-The currently supported image file formats are: PNG (true color and grayscale),
+The currently supported image file formats are: PNG (truecolor and grayscale),
 PPM (PBMPLUS color format), PGM (PBMPLUS grayscale format), BMP, GIF [legacy
 feature], and Targa [legacy feature].  cjpeg recognizes the input image format
 automatically, with the exception of some Targa files.  You have to tell djpeg
@@ -414,7 +414,7 @@ The basic command line switches for djpeg are:
 
         -png            Select PNG output format.  Grayscale format is emitted
                         if the JPEG file is grayscale or if -grayscale is
-                        specified; otherwise true color format is emitted.
+                        specified; otherwise truecolor format is emitted.
                         16-bit-per-channel format is emitted if the output data
                         precision is greater than 8 bits.  If the JPEG file
                         contains an ICC color management profile, then it is

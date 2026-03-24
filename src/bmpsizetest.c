@@ -387,7 +387,7 @@ static int test_read_PNG(int width, int height, JDIMENSION max_pixels,
   BYTESWAP32(ph, 20, height);
   ph[24] = (data_precision > 8 ? 16 : 8);       /* Bit depth */
   ph[25] = 2;                                   /* Color type
-                                                   (2 = true color) */
+                                                   (2 = truecolor) */
   ph[26] = 0;                                   /* Compression method
                                                    (0 = deflate/inflate) */
   ph[27] = 0;                                   /* Filter method
@@ -646,8 +646,7 @@ static int test_read_TGA(int width, int height, JDIMENSION max_pixels,
 
   th[0] = 0;                            /* ID length */
   th[1] = 0;                            /* Color map type */
-  th[2] = 2;                            /* Image type
-                                           (2 = uncompressed true color) */
+  th[2] = 2;                            /* Image type (2 = uncompressed RGB) */
   th[3] = th[4] = 0;                    /* Color map first entry index */
   th[5] = th[6] = 0;                    /* Color map length */
   th[7] = 0;                            /* Color map entry size (bits) */
