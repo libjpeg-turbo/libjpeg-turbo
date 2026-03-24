@@ -28,12 +28,18 @@ message(STATUS "C++ Compiler flags = ${EFFECTIVE_CXX_FLAGS}")
 add_executable(cjpeg_fuzzer${FUZZER_SUFFIX} cjpeg.cc ../src/cdjpeg.c
   ../src/rdbmp.c ../src/rdgif.c
   ../src/wrapper/rdpng-8.c ../src/wrapper/rdpng-12.c ../src/wrapper/rdpng-16.c
-  $<TARGET_OBJECTS:spng-static>
+  ${ZLIB_STATIC_SOURCES} ${SPNG_STATIC_SOURCES}
   ../src/wrapper/rdppm-8.c ../src/wrapper/rdppm-12.c ../src/wrapper/rdppm-16.c
   ../src/rdswitch.c ../src/rdtarga.c)
 set_property(TARGET cjpeg_fuzzer${FUZZER_SUFFIX} PROPERTY COMPILE_FLAGS
   ${CDJPEG_COMPILE_FLAGS})
 target_link_libraries(cjpeg_fuzzer${FUZZER_SUFFIX} ${FUZZ_LIBRARY} jpeg-static)
+if(SPNG_LIBRARY)
+  target_link_libraries(cjpeg_fuzzer${FUZZER_SUFFIX} ${SPNG_LIBRARY})
+endif()
+if(ZLIB_LIBRARY)
+  target_link_libraries(cjpeg_fuzzer${FUZZER_SUFFIX} ${ZLIB_LIBRARY})
+endif()
 install(TARGETS cjpeg_fuzzer${FUZZER_SUFFIX}
   RUNTIME DESTINATION ${FUZZ_BINDIR} COMPONENT bin)
 
