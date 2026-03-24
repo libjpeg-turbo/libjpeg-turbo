@@ -11,6 +11,7 @@
 /* #undef Z_PREFIX */
 #define HAVE_STDARG_H 1
 #define HAVE_UNISTD_H 0
+#define NO_GZIP
 
 /*
  * If you *really* need a unique prefix for all types and library functions,
