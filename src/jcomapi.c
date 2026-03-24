@@ -61,12 +61,15 @@ jpeg_abort(j_common_ptr cinfo)
   }
 
 #ifdef WITH_PROFILE
-  if (cinfo->is_decompressor)
-    ((j_decompress_ptr)cinfo)->master->total_elapsed +=
-      getTime() - ((j_decompress_ptr)cinfo)->master->total_start;
-  else
-    ((j_compress_ptr)cinfo)->master->total_elapsed +=
-      getTime() - ((j_compress_ptr)cinfo)->master->total_start;
+  if (cinfo->is_decompressor) {
+    if (((j_decompress_ptr)cinfo)->master->total_start > 0.0)
+      ((j_decompress_ptr)cinfo)->master->total_elapsed +=
+        getTime() - ((j_decompress_ptr)cinfo)->master->total_start;
+  } else {
+    if (((j_compress_ptr)cinfo)->master->total_start > 0.0)
+      ((j_compress_ptr)cinfo)->master->total_elapsed +=
+        getTime() - ((j_compress_ptr)cinfo)->master->total_start;
+  }
 #endif
 }
 
