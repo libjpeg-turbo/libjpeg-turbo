@@ -53,11 +53,11 @@ or
         djpeg [switches] -outfile imagefile jpegfile
 This syntax works on all systems, so it is useful for scripts.
 
-The currently supported image file formats are: PNG (truecolor and grayscale),
-PPM (PBMPLUS color format), PGM (PBMPLUS grayscale format), BMP, GIF [legacy
-feature], and Targa [legacy feature].  cjpeg recognizes the input image format
-automatically, with the exception of some Targa files.  You have to tell djpeg
-which format to generate.
+The currently supported image file formats are: PNG, PPM (PBMPLUS color
+format), PGM (PBMPLUS grayscale format), BMP, GIF [legacy feature], and Targa
+[legacy feature].  cjpeg recognizes the input image format automatically, with
+the exception of some Targa files.  You have to tell djpeg which format to
+generate.
 
 JPEG files are in the defacto standard JFIF file format.  There are other,
 less widely used JPEG-based file formats, but we don't support them.

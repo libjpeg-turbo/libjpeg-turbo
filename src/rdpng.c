@@ -45,6 +45,7 @@ typedef struct {
   spng_ctx *ctx;
   uint8_t png_bit_depth, png_color_type;
   int png_alpha;
+  struct spng_plte colormap;    /* PNG colormap */
 
   /* Usually these two pointers point to the same place: */
   unsigned char *iobuffer;      /* libspng's I/O buffer */
@@ -347,6 +348,95 @@ get_rgb_cmyk_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
 }
 
 
+METHODDEF(JDIMENSION)
+get_indexed_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
+{
+/* This version is for reading 8-bit-per-channel indexed-color PNG files and
+ * converting to extended RGB or CMYK.
+ */
+  png_source_ptr source = (png_source_ptr)sinfo;
+  register _JSAMPROW ptr;
+  register JSAMPLE *bufferptr = (JSAMPLE *)source->iobuffer;
+  register _JSAMPLE *rescale = source->rescale;
+  JDIMENSION col;
+
+  get_raw_row(cinfo, sinfo);
+  ptr = source->pub._buffer[0];
+#if BITS_IN_JSAMPLE == 8
+  if (source->png_bit_depth == cinfo->data_precision) {
+    if (cinfo->in_color_space == JCS_CMYK) {
+      for (col = cinfo->image_width; col > 0; col--) {
+        JSAMPLE index = *bufferptr++;
+
+        if (index >= source->colormap.n_entries)
+          ERREXIT(cinfo, JERR_PNG_OUTOFRANGE);
+        rgb_to_cmyk(_MAXJSAMPLE, source->colormap.entries[index].red,
+                    source->colormap.entries[index].green,
+                    source->colormap.entries[index].blue, ptr, ptr + 1,
+                    ptr + 2, ptr + 3);
+        ptr += 4;
+      }
+    } else {
+      register int rindex = rgb_red[cinfo->in_color_space];
+      register int gindex = rgb_green[cinfo->in_color_space];
+      register int bindex = rgb_blue[cinfo->in_color_space];
+      register int aindex = alpha_index[cinfo->in_color_space];
+      register int ps = rgb_pixelsize[cinfo->in_color_space];
+
+      for (col = cinfo->image_width; col > 0; col--) {
+        JSAMPLE index = *bufferptr++;
+
+        if (index >= source->colormap.n_entries)
+          ERREXIT(cinfo, JERR_PNG_OUTOFRANGE);
+        ptr[rindex] = source->colormap.entries[index].red;
+        ptr[gindex] = source->colormap.entries[index].green;
+        ptr[bindex] = source->colormap.entries[index].blue;
+        if (aindex >= 0)
+          ptr[aindex] = _MAXJSAMPLE;
+        ptr += ps;
+      }
+    }
+  } else
+#endif
+  {
+    if (cinfo->in_color_space == JCS_CMYK) {
+      for (col = cinfo->image_width; col > 0; col--) {
+        JSAMPLE index = *bufferptr++;
+
+        if (index >= source->colormap.n_entries)
+          ERREXIT(cinfo, JERR_PNG_OUTOFRANGE);
+        rgb_to_cmyk((1 << cinfo->data_precision) - 1,
+                    rescale[source->colormap.entries[index].red],
+                    rescale[source->colormap.entries[index].green],
+                    rescale[source->colormap.entries[index].blue], ptr,
+                    ptr + 1, ptr + 2, ptr + 3);
+        ptr += 4;
+      }
+    } else {
+      register int rindex = rgb_red[cinfo->in_color_space];
+      register int gindex = rgb_green[cinfo->in_color_space];
+      register int bindex = rgb_blue[cinfo->in_color_space];
+      register int aindex = alpha_index[cinfo->in_color_space];
+      register int ps = rgb_pixelsize[cinfo->in_color_space];
+
+      for (col = cinfo->image_width; col > 0; col--) {
+        JSAMPLE index = *bufferptr++;
+
+        if (index >= source->colormap.n_entries)
+          ERREXIT(cinfo, JERR_PNG_OUTOFRANGE);
+        ptr[rindex] = rescale[source->colormap.entries[index].red];
+        ptr[gindex] = rescale[source->colormap.entries[index].green];
+        ptr[bindex] = rescale[source->colormap.entries[index].blue];
+        if (aindex >= 0)
+          ptr[aindex] = (1 << cinfo->data_precision) - 1;
+        ptr += ps;
+      }
+    }
+  }
+  return 1;
+}
+
+
 #ifdef ZERO_BUFFERS
 
 static void *spng_malloc(size_t size)
@@ -463,8 +553,21 @@ start_input_png(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
     }
     break;
 
+  case SPNG_COLOR_TYPE_INDEXED:
+    if (cinfo->in_color_space == JCS_UNKNOWN)
+      cinfo->in_color_space = JCS_EXT_RGB;
+    TRACEMS3(cinfo, 1, JTRC_PNG_INDEXED, ihdr.width, ihdr.height,
+             ihdr.bit_depth);
+    TRY_SPNG(spng_get_plte(source->ctx, &source->colormap));
+    if (source->png_bit_depth != 8 || source->colormap.n_entries > 256)
+      ERREXIT(cinfo, JERR_PNG_OUTOFRANGE);
+    source->pub.get_pixel_rows = get_indexed_row;
+    png_components = 1;
+    source->png_alpha = 0;
+    break;
+
   default:
-    ERREXIT(cinfo, JERR_PNG_COLORSPACE);
+    ERREXIT(cinfo, JERR_PNG_OUTOFRANGE);
   }
 
   if (IsExtRGB(cinfo->in_color_space))

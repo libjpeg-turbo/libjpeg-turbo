@@ -1869,6 +1869,11 @@ add_custom_target(croptest
   COMMAND echo croptest
   COMMAND ${BASH} ${CMAKE_CURRENT_BINARY_DIR}/test/croptest)
 
+configure_file(test/indexedcolortest.in test/indexedcolortest @ONLY)
+add_custom_target(indexedcolortest
+  COMMAND echo indexedcolortest
+  COMMAND ${BASH} ${CMAKE_CURRENT_BINARY_DIR}/test/indexedcolortest)
+
 if(WITH_TURBOJPEG)
   configure_file(test/tjbenchtest.in test/tjbenchtest @ONLY)
   configure_file(test/tjcomptest.in test/tjcomptest @ONLY)

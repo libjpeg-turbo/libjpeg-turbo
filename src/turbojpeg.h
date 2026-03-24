@@ -2424,14 +2424,14 @@ DLLEXPORT int tj3Transform(tjhandle handle, const unsigned char *jpegBuf,
  *
  * @param handle handle to a TurboJPEG instance
  *
- * @param filename name of a file containing a packed-pixel image in truecolor
- * PNG, grayscale PNG, PBMPLUS (PPM/PGM), or Windows BMP format.  Windows BMP
- * files require 8-bit-per-sample data precision.  When loading a PNG or
- * PBMPLUS file, the target data precision (from 2 to 8 bits per sample) can be
- * specified using #TJPARAM_PRECISION and defaults to 8 if #TJPARAM_PRECISION
- * is unset or out of range.  If the data precision of the PNG or PBMPLUS file
- * does not match the target data precision, then upconverting or
- * downconverting will be performed.
+ * @param filename name of a file containing a packed-pixel image in PNG,
+ * PBMPLUS (PPM/PGM), or Windows BMP format.  Windows BMP files require
+ * 8-bit-per-sample data precision.  When loading a PNG or PBMPLUS file, the
+ * target data precision (from 2 to 8 bits per sample) can be specified using
+ * #TJPARAM_PRECISION and defaults to 8 if #TJPARAM_PRECISION is unset or out
+ * of range.  If the data precision of the PNG or PBMPLUS file does not match
+ * the target data precision, then upconverting or downconverting will be
+ * performed.
  *
  * @param width pointer to an integer variable that will receive the width (in
  * pixels) of the packed-pixel image
@@ -2481,12 +2481,12 @@ DLLEXPORT unsigned char *tj3LoadImage8(tjhandle handle, const char *filename,
  *
  * @param handle handle to a TurboJPEG instance
  *
- * @param filename name of a file containing a packed-pixel image in truecolor
- * PNG, grayscale PNG, or PBMPLUS (PPM/PGM) format.  The target data precision
- * (from 9 to 12 bits per sample) can be specified using #TJPARAM_PRECISION and
- * defaults to 12 if #TJPARAM_PRECISION is unset or out of range.  If the data
- * precision of the PNG or PBMPLUS file does not match the target data
- * precision, then upconverting or downconverting will be performed.
+ * @param filename name of a file containing a packed-pixel image in PNG or
+ * PBMPLUS (PPM/PGM) format.  The target data precision (from 9 to 12 bits per
+ * sample) can be specified using #TJPARAM_PRECISION and defaults to 12 if
+ * #TJPARAM_PRECISION is unset or out of range.  If the data precision of the
+ * PNG or PBMPLUS file does not match the target data precision, then
+ * upconverting or downconverting will be performed.
  *
  * @param width pointer to an integer variable that will receive the width (in
  * pixels) of the packed-pixel image
@@ -2535,12 +2535,12 @@ DLLEXPORT short *tj3LoadImage12(tjhandle handle, const char *filename,
  *
  * @param handle handle to a TurboJPEG instance
  *
- * @param filename name of a file containing a packed-pixel image in truecolor
- * PNG, grayscale PNG, or PBMPLUS (PPM/PGM) format.  The target data precision
- * (from 13 to 16 bits per sample) can be specified using #TJPARAM_PRECISION
- * and defaults to 16 if #TJPARAM_PRECISION is unset or out of range.  If the
- * data precision of the PNG or PBMPLUS file does not match the target data
- * precision, then upconverting or downconverting will be performed.
+ * @param filename name of a file containing a packed-pixel image in PNG or
+ * PBMPLUS (PPM/PGM) format.  The target data precision (from 13 to 16 bits per
+ * sample) can be specified using #TJPARAM_PRECISION and defaults to 16 if
+ * #TJPARAM_PRECISION is unset or out of range.  If the data precision of the
+ * PNG or PBMPLUS file does not match the target data precision, then
+ * upconverting or downconverting will be performed.
  *
  * @param width pointer to an integer variable that will receive the width (in
  * pixels) of the packed-pixel image

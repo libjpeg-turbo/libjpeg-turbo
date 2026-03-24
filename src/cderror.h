@@ -72,12 +72,15 @@ JMESSAGE(JWRN_GIF_CHAR, "Bogus char 0x%02x in GIF file, ignoring")
 JMESSAGE(JWRN_GIF_ENDCODE, "Premature end of GIF image")
 JMESSAGE(JWRN_GIF_NOMOREDATA, "Ran out of GIF bits")
 
-JMESSAGE(JERR_PNG_BADDEPTH, "Only 8- and 16-bit-per-channel PNG files are supported")
-JMESSAGE(JERR_PNG_COLORSPACE, "PNG image must be grayscale or RGB")
+JMESSAGE(JERR_PNG_BADDEPTH,
+         "Only 8- and 16-bit-per-channel PNG files are supported")
+JMESSAGE(JERR_PNG_COLORSPACE,
+         "PNG output must be grayscale, truecolor, or indexed-color")
 JMESSAGE(JERR_PNG_LIBSPNG, "libspng error: %s")
 JMESSAGE(JERR_PNG_OUTOFRANGE, "Numeric value out of range in PNG file")
 JMESSAGE(JTRC_PNG_GRAYSCALE, "%ux%u %u-bit-per-channel grayscale PNG image")
 JMESSAGE(JTRC_PNG_TRUECOLOR, "%ux%u %u-bit-per-channel truecolor PNG image")
+JMESSAGE(JTRC_PNG_INDEXED, "%ux%u %u-bit-per-channel indexed-color PNG image")
 
 JMESSAGE(JERR_PPM_COLORSPACE, "PPM output must be grayscale or RGB")
 JMESSAGE(JERR_PPM_NONNUMERIC, "Nonnumeric data in PPM file")

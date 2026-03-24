@@ -107,7 +107,7 @@ in the libjpeg API by setting `cinfo->data_precision = 12` after calling
 after calling `tj3DecompressHeader()`.
 
 9. cjpeg, djpeg, `tj3LoadImage*()`, and `tj3SaveImage*()` now support
-8-bit-per-channel and 16-bit-per-channel truecolor and grayscale PNG images.
+8-bit-per-channel and 16-bit-per-channel PNG images.
 
      - By default, cjpeg transfers the embedded ICC profile from a PNG input
 image to the JPEG image, and djpeg transfers the embedded ICC profile from the

@@ -50,6 +50,7 @@ file(GLOB FILES
   *_LOSSL*S_*.ppm
   *_LOSSL*S_*.jpg
   test/croptest.log
+  test/indexedcolortest.log
   test/tjbenchtest*.log
   test/tjcomptest*.log
   test/tjdecomptest*.log
