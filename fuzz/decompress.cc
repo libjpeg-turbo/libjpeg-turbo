@@ -64,8 +64,6 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
   if (width < 1 || height < 1 || (uint64_t)width * height > 1048576)
     goto bailout;
 
-  tj3Set(handle, TJPARAM_SCANLIMIT, 100);
-
   for (pfi = 0; pfi < NUMPF; pfi++) {
     int w = width, h = height;
     int pf = pixelFormats[pfi], i;
@@ -94,7 +92,9 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
         tj3SetCroppingRegion(handle, cr);
       } else
         tj3SetCroppingRegion(handle, TJUNCROPPED);
-    }
+      tj3Set(handle, TJPARAM_SCANLIMIT, 100);
+    } else
+      tj3Set(handle, TJPARAM_SCANLIMIT, 50);
 
     if ((dstBuf = tj3Alloc(w * h * tjPixelSize[pf] * sampleSize)) == NULL)
       goto bailout;
