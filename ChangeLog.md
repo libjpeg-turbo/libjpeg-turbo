@@ -53,6 +53,12 @@ or greater than 7 after calling `jpeg_enable_lossless()` and prior to calling
 `jpeg_start_compress()`, an incorrect (all white) lossless JPEG image was
 silently generated.
 
+8. Further hardened the TurboJPEG Java API against hypothetical applications
+that may erroneously pass huge values to one of the compression, YUV encoding,
+decompression, YUV decoding, or packed-pixel image I/O methods, leading to
+signed integer overflow in the JNI wrapper's buffer size checks that rendered
+those checks ineffective.
+
 
 3.1.3
 =====

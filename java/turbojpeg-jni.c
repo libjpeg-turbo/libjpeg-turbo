@@ -314,7 +314,7 @@ static jint TJCompressor_compress
 
   actualPitch = (pitch == 0) ? width * tjPixelSize[pf] : pitch;
   if (((unsigned long long)y + height - 1ULL) * actualPitch + (x + width) *
-      tjPixelSize[pf] > (unsigned long long)((unsigned int)-1))
+      tjPixelSize[pf] > (unsigned long long)INT_MAX)
     THROW_ARG("Image is too large");
   arraySize = (y + height - 1) * actualPitch + (x + width) * tjPixelSize[pf];
   if ((*env)->GetArrayLength(env, src) * srcElementSize < arraySize)
@@ -524,7 +524,7 @@ static void TJCompressor_encodeYUV8
 
   actualPitch = (pitch == 0) ? width * tjPixelSize[pf] : pitch;
   if (((unsigned long long)y + height - 1ULL) * actualPitch + (x + width) *
-      tjPixelSize[pf] > (unsigned long long)((unsigned int)-1))
+      tjPixelSize[pf] > (unsigned long long)INT_MAX)
     THROW_ARG("Image is too large");
   arraySize = (y + height - 1) * actualPitch + (x + width) * tjPixelSize[pf];
   if ((*env)->GetArrayLength(env, src) * srcElementSize < arraySize)
@@ -870,8 +870,7 @@ static void TJDecompressor_decompress
 
   actualPitch = (pitch == 0) ? scaledWidth * tjPixelSize[pf] : pitch;
   if (((unsigned long long)y + scaledHeight - 1ULL) * actualPitch +
-      (x + scaledWidth) * tjPixelSize[pf] >
-      (unsigned long long)((unsigned int)-1))
+      (x + scaledWidth) * tjPixelSize[pf] > (unsigned long long)INT_MAX)
     THROW_ARG("Image is too large");
   arraySize = (y + scaledHeight - 1) * actualPitch +
               (x + scaledWidth) * tjPixelSize[pf];
@@ -1089,7 +1088,7 @@ static void TJDecompressor_decodeYUV8
 
   actualPitch = (pitch == 0) ? width * tjPixelSize[pf] : pitch;
   if (((unsigned long long)y + height - 1ULL) * actualPitch + (x + width) *
-      tjPixelSize[pf] > (unsigned long long)((unsigned int)-1))
+      tjPixelSize[pf] > (unsigned long long)INT_MAX)
     THROW_ARG("Image is too large");
   arraySize = (y + height - 1) * actualPitch + (x + width) * tjPixelSize[pf];
   if ((*env)->GetArrayLength(env, dst) * dstElementSize < arraySize)
@@ -1473,9 +1472,8 @@ JNIEXPORT jobject JNICALL Java_org_libjpegturbo_turbojpeg_TJCompressor_loadSourc
 
   if (pixelFormat >= org_libjpegturbo_turbojpeg_TJ_NUMPF)
     THROW_ARG("Mismatch between Java and C API");
-  if ((unsigned long long)width * (unsigned long long)height *
-      (unsigned long long)tjPixelSize[pixelFormat] >
-      (unsigned long long)((unsigned int)-1))
+  if (PAD((unsigned long long)width * tjPixelSize[pixelFormat], align) *
+      height > (unsigned long long)INT_MAX)
     THROW_ARG("Image is too large");
 
   cls = (*env)->GetObjectClass(env, obj);
@@ -1527,11 +1525,9 @@ JNIEXPORT void JNICALL Java_org_libjpegturbo_turbojpeg_TJDecompressor_saveImage
       height < 1 || pf < 0 || pf >= org_libjpegturbo_turbojpeg_TJ_NUMPF)
     THROW_ARG("Invalid argument in saveImage()");
 
-  if ((unsigned long long)width * (unsigned long long)height *
-      (unsigned long long)tjPixelSize[pf] >
-      (unsigned long long)((unsigned int)-1))
-    THROW_ARG("Image is too large");
   actualPitch = (pitch == 0) ? width * tjPixelSize[pf] : pitch;
+  if ((unsigned long long)actualPitch * height > (unsigned long long)INT_MAX)
+    THROW_ARG("Image is too large");
   arraySize = actualPitch * height;
   if ((*env)->GetArrayLength(env, jbuffer) < arraySize)
     THROW_ARG("Source buffer is not large enough");
