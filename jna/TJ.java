@@ -55,6 +55,8 @@ public final class TJ {
   // CONSTANTS
   // ==========================================================================
 
+  public static final int TURBOJPEG_VERSION_NUMBER = 3002000;
+
   public static final int NUMINIT = 3;
   public static final int INIT_COMPRESS = 0;
   public static final int INIT_DECOMPRESS = 1;
@@ -354,7 +356,11 @@ public final class TJ {
   // METHODS
   // ==========================================================================
 
-  public static native Pointer tj3Init(int initType);
+  public static native Pointer tj3InitVersion(int initType, int apiVersion);
+
+  public static Pointer tj3Init(int initType) {
+    return tj3InitVersion(initType, TURBOJPEG_VERSION_NUMBER);
+  }
 
   public static Pointer init(int initType) throws Exception {
     Pointer handle = tj3Init(initType);

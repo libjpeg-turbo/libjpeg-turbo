@@ -47,6 +47,9 @@
 #include "jpegapicomp.h"
 #include "cdjpeg.h"
 
+#undef tj3Init
+DLLEXPORT tjhandle tj3Init(int initType);
+
 extern void jpeg_mem_dest_tj(j_compress_ptr, unsigned char **, size_t *,
                              boolean);
 extern void jpeg_mem_src_tj(j_decompress_ptr, const unsigned char *, size_t);
@@ -102,9 +105,11 @@ typedef struct _tjinstance {
   struct jpeg_compress_struct cinfo;
   struct jpeg_decompress_struct dinfo;
   struct my_error_mgr jerr;
-  int init;
+  int init, apiVersion, numSamp;
   char errStr[JMSG_LENGTH_MAX];
   boolean isInstanceError;
+  unsigned char *iccBuf, *decompICCBuf;
+  size_t iccSize, decompICCSize;
   /* Parameters */
   boolean bottomUp;
   boolean noRealloc;
@@ -133,8 +138,6 @@ typedef struct _tjinstance {
   int maxMemory;
   int maxPixels;
   int saveMarkers;
-  unsigned char *iccBuf, *decompICCBuf;
-  size_t iccSize, decompICCSize;
 } tjinstance;
 
 static tjhandle _tjInitCompress(tjinstance *this);
@@ -425,9 +428,10 @@ static void setCompDefaults(tjinstance *this, int pixelFormat, boolean yuv)
 }
 
 
-static int getSubsamp(j_decompress_ptr dinfo)
+static int getSubsamp(tjinstance *this)
 {
   int retval = TJSAMP_UNKNOWN, i, k;
+  j_decompress_ptr dinfo = &this->dinfo;
 
   /* The sampling factors actually have no meaning with grayscale JPEG files,
      and in fact it's possible to generate grayscale JPEGs with sampling
@@ -436,7 +440,7 @@ static int getSubsamp(j_decompress_ptr dinfo)
   if (dinfo->num_components == 1 && dinfo->jpeg_color_space == JCS_GRAYSCALE)
     return TJSAMP_GRAY;
 
-  for (i = 0; i < TJ_NUMSAMP; i++) {
+  for (i = 0; i < this->numSamp; i++) {
     if (i == TJSAMP_GRAY) continue;
 
     if (dinfo->num_components == 3 ||
@@ -509,7 +513,7 @@ static int getSubsamp(j_decompress_ptr dinfo)
 
 static void setDecompParameters(tjinstance *this)
 {
-  this->subsamp = getSubsamp(&this->dinfo);
+  this->subsamp = getSubsamp(this);
   this->jpegWidth = this->dinfo.image_width;
   this->jpegHeight = this->dinfo.image_height;
   this->precision = this->dinfo.data_precision;
@@ -564,14 +568,26 @@ static void processFlags(tjhandle handle, int flags, int operation)
 
 /*************************** General API functions ***************************/
 
-/* TurboJPEG 3.0+ */
-DLLEXPORT tjhandle tj3Init(int initType)
+/* In the TurboJPEG v3.2+ API, tj3Init(initType) is a macro defined as
+ * tj3InitVersion(initType, TURBOJPEG_VERSION_NUMBER).  This is a similar trick
+ * to the one that the libjpeg API uses for jpeg_create_*compress().  It allows
+ * us to detect whether the caller was compiled against this version of the
+ * TurboJPEG API or an earlier version.  If it was compiled against an earlier
+ * version, then we disable any features that are API-incompatible with earlier
+ * versions.  (At the moment, that means avoiding the use of TJSAMP_410 and
+ * TJSAMP_24, since the static tjMCUWidth[] and tjMCUHeight[] arrays from
+ * earlier versions did not account for those constants.)
+ */
+
+/* TurboJPEG 3.2+ */
+DLLEXPORT tjhandle tj3InitVersion(int initType, int apiVersion)
 {
   static const char FUNCTION_NAME[] = "tj3Init";
   tjinstance *this = NULL;
   tjhandle retval = NULL;
 
-  if (initType < 0 || initType >= TJ_NUMINIT)
+  if (initType < 0 || initType >= TJ_NUMINIT || apiVersion < 1000000 ||
+      apiVersion > 999999999)
     THROWG("Invalid argument", NULL);
 
   if ((this = (tjinstance *)malloc(sizeof(tjinstance))) == NULL)
@@ -591,6 +607,9 @@ DLLEXPORT tjhandle tj3Init(int initType)
   this->scalingFactor = TJUNSCALED;
   this->saveMarkers = 2;
 
+  this->apiVersion = apiVersion;
+  this->numSamp = apiVersion >= 3002000 ? TJ_NUMSAMP : 7;
+
   switch (initType) {
   case TJINIT_COMPRESS:  return _tjInitCompress(this);
   case TJINIT_DECOMPRESS:  return _tjInitDecompress(this);
@@ -603,6 +622,12 @@ DLLEXPORT tjhandle tj3Init(int initType)
 
 bailout:
   return retval;
+}
+
+/* TurboJPEG 3.0+ */
+DLLEXPORT tjhandle tj3Init(int initType)
+{
+  return tj3InitVersion(initType, 3001000);
 }
 
 
@@ -728,7 +753,7 @@ DLLEXPORT int tj3Set(tjhandle handle, int param, int value)
     SET_PARAM(quality, 1, 100);
     break;
   case TJPARAM_SUBSAMP:
-    SET_PARAM(subsamp, 0, TJ_NUMSAMP - 1);
+    SET_PARAM(subsamp, 0, this->numSamp - 1);
     break;
   case TJPARAM_JPEGWIDTH:
     if (!(this->init & DECOMPRESS))
@@ -1246,7 +1271,7 @@ DLLEXPORT int tjCompress2(tjhandle handle, const unsigned char *srcBuf,
 
   GET_TJINSTANCE(handle, -1);
 
-  if (jpegSize == NULL || jpegSubsamp < 0 || jpegSubsamp >= TJ_NUMSAMP ||
+  if (jpegSize == NULL || jpegSubsamp < 0 || jpegSubsamp >= this->numSamp ||
       jpegQual < 0 || jpegQual > 100)
     THROW("Invalid argument");
 
@@ -1433,7 +1458,7 @@ DLLEXPORT int tjCompressFromYUVPlanes(tjhandle handle,
 
   GET_TJINSTANCE(handle, -1);
 
-  if (subsamp < 0 || subsamp >= TJ_NUMSAMP || jpegSize == NULL ||
+  if (subsamp < 0 || subsamp >= this->numSamp || jpegSize == NULL ||
       jpegQual < 0 || jpegQual > 100)
     THROW("Invalid argument");
 
@@ -1513,7 +1538,7 @@ DLLEXPORT int tjCompressFromYUV(tjhandle handle, const unsigned char *srcBuf,
 
   GET_TJINSTANCE(handle, -1);
 
-  if (subsamp < 0 || subsamp >= TJ_NUMSAMP)
+  if (subsamp < 0 || subsamp >= this->numSamp)
     THROW("Invalid argument");
 
   this->quality = jpegQual;
@@ -1692,7 +1717,7 @@ DLLEXPORT int tjEncodeYUVPlanes(tjhandle handle, const unsigned char *srcBuf,
 
   GET_TJINSTANCE(handle, -1);
 
-  if (subsamp < 0 || subsamp >= TJ_NUMSAMP)
+  if (subsamp < 0 || subsamp >= this->numSamp)
     THROW("Invalid argument");
 
   this->subsamp = subsamp;
@@ -1763,7 +1788,7 @@ DLLEXPORT int tjEncodeYUV3(tjhandle handle, const unsigned char *srcBuf,
 
   GET_TJINSTANCE(handle, -1);
 
-  if (subsamp < 0 || subsamp >= TJ_NUMSAMP)
+  if (subsamp < 0 || subsamp >= this->numSamp)
     THROW("Invalid argument");
 
   this->subsamp = subsamp;
@@ -2668,7 +2693,7 @@ DLLEXPORT int tjDecodeYUVPlanes(tjhandle handle,
 
   GET_TJINSTANCE(handle, -1);
 
-  if (subsamp < 0 || subsamp >= TJ_NUMSAMP)
+  if (subsamp < 0 || subsamp >= this->numSamp)
     THROW("Invalid argument");
 
   this->subsamp = subsamp;
@@ -2739,7 +2764,7 @@ DLLEXPORT int tjDecodeYUV(tjhandle handle, const unsigned char *srcBuf,
 
   GET_TJINSTANCE(handle, -1);
 
-  if (subsamp < 0 || subsamp >= TJ_NUMSAMP)
+  if (subsamp < 0 || subsamp >= this->numSamp)
     THROW("Invalid argument");
 
   this->subsamp = subsamp;
@@ -2795,7 +2820,7 @@ static int getTransformedSpecs(tjhandle handle, int *width, int *height,
     THROW("Instance has not been initialized for transformation");
 
   if (!width || !height || !subsamp || !transform || *width < 1 ||
-      *height < 1 || *subsamp < TJSAMP_UNKNOWN || *subsamp >= TJ_NUMSAMP)
+      *height < 1 || *subsamp < TJSAMP_UNKNOWN || *subsamp >= this->numSamp)
     THROW("Invalid argument");
 
   dstWidth = *width;  dstHeight = *height;
@@ -2956,7 +2981,7 @@ DLLEXPORT int tj3Transform(tjhandle handle, const unsigned char *jpegBuf,
       (unsigned long long)dinfo->image_width * dinfo->image_height >
       (unsigned long long)this->maxPixels)
     THROW("Image is too large");
-  srcSubsamp = getSubsamp(&this->dinfo);
+  srcSubsamp = getSubsamp(this);
 
   for (i = 0; i < n; i++) {
     if (!jtransform_request_workspace(dinfo, &xinfo[i]))
@@ -3087,7 +3112,7 @@ DLLEXPORT int tjTransform(tjhandle handle, const unsigned char *jpegBuf,
   if (this->noRealloc) {
     jpeg_mem_src_tj(dinfo, jpegBuf, jpegSize);
     jpeg_read_header(dinfo, TRUE);
-    srcSubsamp = getSubsamp(dinfo);
+    srcSubsamp = getSubsamp(this);
   }
 
   if ((sizes = (size_t *)malloc(n * sizeof(size_t))) == NULL)

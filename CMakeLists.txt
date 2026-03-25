@@ -419,7 +419,8 @@ set(TURBOJPEG_SO_MAJOR_VERSION 0)
 #    forward API/ABI compatibility.
 # 3: TurboJPEG 3.0.x API
 # 4: TurboJPEG 3.1.x API
-set(TURBOJPEG_SO_AGE 4)
+# 5: TurboJPEG 3.2.x API
+set(TURBOJPEG_SO_AGE 5)
 set(TURBOJPEG_SO_VERSION 0.${TURBOJPEG_SO_AGE}.0)
 
 

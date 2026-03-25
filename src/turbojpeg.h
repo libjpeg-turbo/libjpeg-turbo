@@ -31,6 +31,8 @@
 
 #include <stddef.h>
 
+#define TURBOJPEG_VERSION_NUMBER  3002000
+
 #if defined(_WIN32) && defined(DLLDEFINE)
 #define DLLEXPORT  __declspec(dllexport)
 #else
@@ -1272,7 +1274,13 @@ extern "C" {
  * @return a handle to the newly-created instance, or NULL if an error occurred
  * (see #tj3GetErrorStr().)
  */
+#ifdef __DOXYGEN__
 DLLEXPORT tjhandle tj3Init(int initType);
+#else
+#define tj3Init(initType)  tj3InitVersion(initType, TURBOJPEG_VERSION_NUMBER)
+#endif
+
+DLLEXPORT tjhandle tj3InitVersion(int initType, int apiVersion);
 
 
 /**
