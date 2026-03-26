@@ -114,8 +114,8 @@ for precision in 8 12; do
 	compare $OUTDIR/${basename}_gray.jpg
 	echo
 
-	for ext in png ppm bmp; do
-		if [ "$ext" = "bmp" -a $precision -eq 12 ]; then
+	for ext in png ppm bmp os2 gif gif0 tga; do
+		if [ ! "$ext" = "png" -a ! "$ext" = "ppm" -a $precision -eq 12 ]; then
 			continue
 		fi
 
@@ -123,6 +123,18 @@ for precision in 8 12; do
 			grayext=pgm
 		else
 			grayext=$ext
+		fi
+
+		if [ "$ext" = "tga" ]; then
+			extarg=-targa
+		else
+			extarg=-$ext
+		fi
+		if [ "$ext" = "os2" ]; then
+			ext=bmp
+		fi
+		if [ "$ext" = "gif0" ]; then
+			ext=gif
 		fi
 
 		compareppm()
@@ -147,7 +159,7 @@ for precision in 8 12; do
 
 		for colors in 128 256; do
 
-			runme $EXEDIR/djpeg -$ext -quantize $colors \
+			runme $EXEDIR/djpeg $extarg -quantize $colors \
 				-outfile $OUTDIR/${basename}_rgb_${colors}.$ext \
 				$OUTDIR/${basename}_rgb.jpg
 			compareppm $OUTDIR/${basename}_rgb_${colors}.$ext
@@ -155,7 +167,8 @@ for precision in 8 12; do
 				-outfile $OUTDIR/${basename}_rgb_${colors}.jpg \
 				$OUTDIR/${basename}_rgb_${colors}.$ext
 			compare $OUTDIR/${basename}_rgb_${colors}.jpg
-			if [ $precision -eq 8 -a ! "$ext" = "bmp" ]; then
+			if [ $precision -eq 8 -a ! "$ext" = "bmp" -a ! "$ext" = "gif" -a \
+				! "$ext" = "tga" ]; then
 				runme $EXEDIR/cjpeg -verbose -precision 12 -lossless 1 \
 					-outfile $OUTDIR/${basename}_12_rgb_${colors}.jpg \
 					$OUTDIR/${basename}_rgb_${colors}.$ext
@@ -163,7 +176,7 @@ for precision in 8 12; do
 			fi
 			echo
 
-			runme $EXEDIR/djpeg -grayscale -$ext -quantize $colors \
+			runme $EXEDIR/djpeg -grayscale $extarg -quantize $colors \
 				-outfile $OUTDIR/${basename}_rgb2gray_${colors}.$grayext \
 				$OUTDIR/${basename}_rgb.jpg
 			compareppm $OUTDIR/${basename}_rgb2gray_${colors}.$grayext
@@ -171,7 +184,8 @@ for precision in 8 12; do
 				-outfile $OUTDIR/${basename}_rgb2gray_${colors}.jpg \
 				$OUTDIR/${basename}_rgb2gray_${colors}.$grayext
 			compare $OUTDIR/${basename}_rgb2gray_${colors}.jpg
-			if [ $precision -eq 8 -a ! "$ext" = "bmp" ]; then
+			if [ $precision -eq 8 -a ! "$ext" = "bmp" -a ! "$ext" = "gif" -a \
+				! "$ext" = "tga" ]; then
 				runme $EXEDIR/cjpeg -verbose -precision 12 -lossless 1 \
 					-outfile $OUTDIR/${basename}_12_rgb2gray_${colors}.jpg \
 					$OUTDIR/${basename}_rgb2gray_${colors}.$grayext
@@ -179,7 +193,7 @@ for precision in 8 12; do
 			fi
 			echo
 
-			runme $EXEDIR/djpeg -$ext -quantize $colors \
+			runme $EXEDIR/djpeg $extarg -quantize $colors \
 				-outfile $OUTDIR/${basename}_gray_${colors}.$grayext \
 				$OUTDIR/${basename}_gray.jpg
 			compareppm $OUTDIR/${basename}_gray_${colors}.$grayext
@@ -187,7 +201,8 @@ for precision in 8 12; do
 				-outfile $OUTDIR/${basename}_gray_${colors}.jpg \
 				$OUTDIR/${basename}_gray_${colors}.$grayext
 			compare $OUTDIR/${basename}_gray_${colors}.jpg
-			if [ $precision -eq 8 -a ! "$ext" = "bmp" ]; then
+			if [ $precision -eq 8 -a ! "$ext" = "bmp" -a ! "$ext" = "gif" -a \
+				! "$ext" = "tga" ]; then
 				runme $EXEDIR/cjpeg -verbose -precision 12 -lossless 1 \
 					-outfile $OUTDIR/${basename}_12_gray_${colors}.jpg \
 					$OUTDIR/${basename}_gray_${colors}.$grayext
@@ -208,7 +223,7 @@ for precision in 8 12; do
 			fi
 			echo
 
-			runme $EXEDIR/djpeg -rgb -$ext -quantize $colors \
+			runme $EXEDIR/djpeg -rgb $extarg -quantize $colors \
 				-outfile $OUTDIR/${basename}_gray2rgb_${colors}.$ext \
 				$OUTDIR/${basename}_gray.jpg
 			compareppm $OUTDIR/${basename}_gray2rgb_${colors}.$ext
@@ -216,7 +231,8 @@ for precision in 8 12; do
 				-outfile $OUTDIR/${basename}_gray2rgb_${colors}.jpg \
 				$OUTDIR/${basename}_gray2rgb_${colors}.$ext
 			compare $OUTDIR/${basename}_gray2rgb_${colors}.jpg
-			if [ $precision -eq 8 -a ! "$ext" = "bmp" ]; then
+			if [ $precision -eq 8 -a ! "$ext" = "bmp" -a ! "$ext" = "gif" -a \
+				! "$ext" = "tga" ]; then
 				runme $EXEDIR/cjpeg -verbose -precision 12 -lossless 1 \
 					-outfile $OUTDIR/${basename}_12_gray2rgb_${colors}.jpg \
 					$OUTDIR/${basename}_gray2rgb_${colors}.$ext
