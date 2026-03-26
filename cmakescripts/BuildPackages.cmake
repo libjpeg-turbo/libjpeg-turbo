@@ -40,6 +40,11 @@ message(STATUS "RPM architecture = ${RPMARCH}, DEB architecture = ${DEBARCH}")
 boolean_number(CMAKE_POSITION_INDEPENDENT_CODE)
 
 configure_file(release/makerpm.in pkgscripts/makerpm)
+if(NOT WITH_JNA)
+  set(RPM_WITH_JNA %{nil})
+else()
+  set(RPM_WITH_JNA ${WITH_JNA})
+endif()
 configure_file(release/rpm.spec.in pkgscripts/rpm.spec @ONLY)
 
 add_custom_target(rpm pkgscripts/makerpm

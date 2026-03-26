@@ -3,12 +3,14 @@
 %define _bindir  @CMAKE_INSTALL_FULL_BINDIR@
 %define _datarootdir  @CMAKE_INSTALL_FULL_DATAROOTDIR@
 %define _includedir  @CMAKE_INSTALL_FULL_INCLUDEDIR@
-%define _javadir  @CMAKE_INSTALL_FULL_JAVADIR@
 %define _mandir  @CMAKE_INSTALL_FULL_MANDIR@
 %define _enable_static  @ENABLE_STATIC@
 %define _enable_shared  @ENABLE_SHARED@
 %define _with_turbojpeg  @WITH_TURBOJPEG@
-%define _with_jna  @WITH_JNA@
+%define _with_jna  @RPM_WITH_JNA@
+%if "%{_with_jna}" != ""
+%define _javadir  @CMAKE_INSTALL_FULL_JAVADIR@
+%endif
 
 %if "%{?__isa_bits:1}" == "1"
 %define _bits  %{__isa_bits}
@@ -168,7 +170,6 @@ rm -rf $RPM_BUILD_ROOT
 %doc %{_docdir}/*
 %if "%{_with_jna}" != ""
 	%dir %{_docdir}/jna
-	%doc %{_docdir}/jna/*
 %endif
 %dir %{_prefix}
 %if "%{_prefix}" == "@CMAKE_INSTALL_DEFAULT_PREFIX@" && "%{_docdir}" != "%{_prefix}/doc"
@@ -198,7 +199,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_libdir}/pkgconfig/libjpeg.pc
 %dir %{_libdir}/cmake
 %dir %{_libdir}/cmake/@CMAKE_PROJECT_NAME@
-%{_libdir}/cmake/@CMAKE_PROJECT_NAME@
+%{_libdir}/cmake/@CMAKE_PROJECT_NAME@/*
 %if "%{_with_turbojpeg}" == "1"
 	%if "%{_enable_shared}" == "1" || "%{_with_jna}" != ""
 		%{_libdir}/libturbojpeg.so.@TURBOJPEG_SO_VERSION@
