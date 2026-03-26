@@ -192,6 +192,19 @@ for precision in 8 12; do
 					-outfile $OUTDIR/${basename}_12_gray_${colors}.jpg \
 					$OUTDIR/${basename}_gray_${colors}.$grayext
 				compare $OUTDIR/${basename}_12_gray_${colors}.jpg
+				if [ "$ext" = "png" ]; then
+					magick $OUTDIR/${basename}_gray_${colors}.$grayext \
+						-define png:color-type=3 \
+						$OUTDIR/${basename}_indexedgray_${colors}.$grayext
+					runme $EXEDIR/cjpeg -verbose -precision $precision -lossless 1 \
+						-outfile $OUTDIR/${basename}_gray_${colors}.jpg \
+						$OUTDIR/${basename}_indexedgray_${colors}.$grayext
+					compare $OUTDIR/${basename}_gray_${colors}.jpg
+					runme $EXEDIR/cjpeg -verbose -precision 12 -lossless 1 \
+						-outfile $OUTDIR/${basename}_12_gray_${colors}.jpg \
+						$OUTDIR/${basename}_indexedgray_${colors}.$grayext
+					compare $OUTDIR/${basename}_12_gray_${colors}.jpg
+				fi
 			fi
 			echo
 

@@ -364,7 +364,15 @@ get_indexed_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
   ptr = source->pub._buffer[0];
 #if BITS_IN_JSAMPLE == 8
   if (source->png_bit_depth == cinfo->data_precision) {
-    if (cinfo->in_color_space == JCS_CMYK) {
+    if (cinfo->in_color_space == JCS_GRAYSCALE) {
+      for (col = cinfo->image_width; col > 0; col--) {
+        JSAMPLE index = *bufferptr++;
+
+        if (index >= source->colormap.n_entries)
+          ERREXIT(cinfo, JERR_PNG_OUTOFRANGE);
+        *ptr++ = source->colormap.entries[index].red;
+      }
+    } else if (cinfo->in_color_space == JCS_CMYK) {
       for (col = cinfo->image_width; col > 0; col--) {
         JSAMPLE index = *bufferptr++;
 
@@ -399,7 +407,15 @@ get_indexed_row(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
   } else
 #endif
   {
-    if (cinfo->in_color_space == JCS_CMYK) {
+    if (cinfo->in_color_space == JCS_GRAYSCALE) {
+      for (col = cinfo->image_width; col > 0; col--) {
+        JSAMPLE index = *bufferptr++;
+
+        if (index >= source->colormap.n_entries)
+          ERREXIT(cinfo, JERR_PNG_OUTOFRANGE);
+        *ptr++ = rescale[source->colormap.entries[index].red];
+      }
+    } else if (cinfo->in_color_space == JCS_CMYK) {
       for (col = cinfo->image_width; col > 0; col--) {
         JSAMPLE index = *bufferptr++;
 
@@ -554,17 +570,34 @@ start_input_png(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
     break;
 
   case SPNG_COLOR_TYPE_INDEXED:
-    if (cinfo->in_color_space == JCS_UNKNOWN)
-      cinfo->in_color_space = JCS_EXT_RGB;
+  {
+    int i, gray = 1;
+
     TRACEMS3(cinfo, 1, JTRC_PNG_INDEXED, ihdr.width, ihdr.height,
              ihdr.bit_depth);
     TRY_SPNG(spng_get_plte(source->ctx, &source->colormap));
     if (source->png_bit_depth != 8 || source->colormap.n_entries > 256)
       ERREXIT(cinfo, JERR_PNG_OUTOFRANGE);
+
+    for (i = 0; i < (int)source->colormap.n_entries; i++) {
+      if (source->colormap.entries[i].red !=
+          source->colormap.entries[i].green ||
+          source->colormap.entries[i].green !=
+          source->colormap.entries[i].blue)
+        gray = 0;
+    }
+
+    if ((cinfo->in_color_space == JCS_UNKNOWN ||
+         cinfo->in_color_space == JCS_RGB) && gray)
+      cinfo->in_color_space = JCS_GRAYSCALE;
+    if (cinfo->in_color_space == JCS_GRAYSCALE && !gray)
+      ERREXIT(cinfo, JERR_BAD_IN_COLORSPACE);
+
     source->pub.get_pixel_rows = get_indexed_row;
     png_components = 1;
     source->png_alpha = 0;
     break;
+  }
 
   default:
     ERREXIT(cinfo, JERR_PNG_OUTOFRANGE);
