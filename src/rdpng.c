@@ -593,7 +593,7 @@ start_input_png(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
     source->pub.buffer_height = 1;
   } else {
     unsigned int maxval = source->png_bit_depth == 16 ? 65535 : 255;
-    long val, half_maxval;
+    size_t val, half_maxval;
 
     /* Need to translate anyway, so make a separate sample buffer. */
     source->pub._buffer = (_JSAMPARRAY)(*cinfo->mem->alloc_sarray)
@@ -604,12 +604,10 @@ start_input_png(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
     /* Compute the rescaling array. */
     source->rescale = (_JSAMPLE *)
       (*cinfo->mem->alloc_small) ((j_common_ptr)cinfo, JPOOL_IMAGE,
-                                  (size_t)(((long)maxval + 1L) *
-                                           sizeof(_JSAMPLE)));
-    memset(source->rescale, 0, (size_t)(((long)maxval + 1L) *
-                                        sizeof(_JSAMPLE)));
+                                  (maxval + 1L) * sizeof(_JSAMPLE));
+    memset(source->rescale, 0, (maxval + 1L) * sizeof(_JSAMPLE));
     half_maxval = maxval / 2;
-    for (val = 0; val <= (long)maxval; val++) {
+    for (val = 0; val <= maxval; val++) {
       /* The multiplication here must be done in 32 bits to avoid overflow */
       source->rescale[val] =
         (_JSAMPLE)((val * ((1 << cinfo->data_precision) - 1) + half_maxval) /
