@@ -3,12 +3,14 @@
 %define _bindir  @CMAKE_INSTALL_FULL_BINDIR@
 %define _datarootdir  @CMAKE_INSTALL_FULL_DATAROOTDIR@
 %define _includedir  @CMAKE_INSTALL_FULL_INCLUDEDIR@
-%define _javadir  @CMAKE_INSTALL_FULL_JAVADIR@
 %define _mandir  @CMAKE_INSTALL_FULL_MANDIR@
 %define _enable_static  @ENABLE_STATIC@
 %define _enable_shared  @ENABLE_SHARED@
 %define _with_turbojpeg  @WITH_TURBOJPEG@
 %define _with_java  @WITH_JAVA@
+%if "%{_with_java}" == "1"
+%define _javadir  @CMAKE_INSTALL_FULL_JAVADIR@
+%endif
 
 %if "%{?__isa_bits:1}" == "1"
 %define _bits  %{__isa_bits}
@@ -194,7 +196,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_libdir}/pkgconfig/libjpeg.pc
 %dir %{_libdir}/cmake
 %dir %{_libdir}/cmake/@CMAKE_PROJECT_NAME@
-%{_libdir}/cmake/@CMAKE_PROJECT_NAME@
+%{_libdir}/cmake/@CMAKE_PROJECT_NAME@/*
 %if "%{_with_turbojpeg}" == "1"
 	%if "%{_enable_shared}" == "1" || "%{_with_java}" == "1"
 		%{_libdir}/libturbojpeg.so.@TURBOJPEG_SO_VERSION@
