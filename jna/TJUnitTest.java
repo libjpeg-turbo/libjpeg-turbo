@@ -1120,7 +1120,7 @@ final class TJUnitTest {
       "80c1ea7e0d9d6a0a8d12722bc349f94c", "6a13b4aefcc08f136952cb77f934c969",
       "c459ba1d57d66b5025798cba6f9cb137", "ce7e67e24d223120ba49f81278549389",
       "1ebb0a8fc1d7d1b291f07a1743710427", "b68fd59466d37a4405fef22f50708c3e",
-       "6941dae98e471279433de7edb9fe4e5", "8df69d8b7ddd4fc45675c1404f8301df"
+      "6941dae98e471279433de7edb9fe4e5",  "8df69d8b7ddd4fc45675c1404f8301df"
     };
     String[] grayPNGRefs = new String[] {
       "", "", "36b39208ebecab7e44d3e7d16540d9dd",
@@ -1130,7 +1130,7 @@ final class TJUnitTest {
       "d7d3588dc714e41e537acda1327dceaa", "1d18b75a701fae306e78d2c8d29ee8cd",
       "e65d72d45858b7f6edd22d49285086dc", "33ed8ea0a2c3faa1e24a766e0706f241",
       "8da798e493c3f0d335278dc69004444b", "f7c4aa691f459aef9e9796f2f8b10f3e",
-      "7e601698088be2559538efc750b978a5",  "580aea16346e6afb4317399539bf75e"
+      "7e601698088be2559538efc750b978a5", "580aea16346e6afb4317399539bf75e"
     };
     String[] colorPPMRefs = new String[] {
       "", "", "bad09d9ef38eda566848fb7c0b7fd0a",
