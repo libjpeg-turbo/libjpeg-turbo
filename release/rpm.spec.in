@@ -32,13 +32,16 @@
 #-->%if 1
 %if "%{_bits}" == "64"
 %define _libdir  %{_exec_prefix}/lib64
+%define _rellibdir  lib64
 %else
 %if "%{_prefix}" == "/opt/libjpeg-turbo"
 %define _libdir  %{_exec_prefix}/lib32
+%define _rellibdir  lib32
 %endif
 %endif
 #-->%else
 %define _libdir  @CMAKE_INSTALL_FULL_LIBDIR@
+%define _rellibdir  @CMAKE_INSTALL_LIBDIR@
 #-->%endif
 
 %define __requires_exclude_from  ^%{_libdir}/cmake/@CMAKE_PROJECT_NAME@/.*$
@@ -91,9 +94,9 @@ reference implementation of the JPEG standard.
 #-->  -DCMAKE_INSTALL_BINDIR=%{_bindir} \
 #-->  -DCMAKE_INSTALL_DATAROOTDIR=%{_datarootdir} \
 #-->  -DCMAKE_INSTALL_DOCDIR=%{_docdir} \
-#-->  -DCMAKE_INSTALL_INCLUDEDIR=%{_includedir} \
+#-->  -DCMAKE_INSTALL_INCLUDEDIR=@CMAKE_INSTALL_INCLUDEDIR@ \
 #-->  -DCMAKE_INSTALL_JAVADIR=%{_javadir} \
-#-->  -DCMAKE_INSTALL_LIBDIR=%{_libdir} \
+#-->  -DCMAKE_INSTALL_LIBDIR=%{_rellibdir} \
 #-->  -DCMAKE_INSTALL_MANDIR=%{_mandir} \
 #-->  -DCMAKE_INSTALL_PREFIX=%{_prefix} \
 #-->  -DCMAKE_POSITION_INDEPENDENT_CODE=@CMAKE_POSITION_INDEPENDENT_CODE@ \

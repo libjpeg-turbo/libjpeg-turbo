@@ -1,7 +1,7 @@
 3.1.90 (3.2 beta1)
 ==================
 
-### Significant changes relative to 3.1.4:
+### Significant changes relative to 3.1.4.1:
 
 1. The legacy GNU Assembler (GAS) implementation of the Arm Neon SIMD
 extensions has been removed.  Arm builds of libjpeg-turbo must now use GCC 12
@@ -142,6 +142,16 @@ the programs to fail if the specified output file exists.
 12. jpegtran now includes a `-roll` option that performs a lossless roll
 transform (shift with wraparound), which is similar in concept to the `-roll`
 option in ImageMagick and the Offset filter/tool in Photoshop and GIMP.
+
+
+3.1.4.1
+=======
+
+### Significant changes relative to 3.1.4:
+
+1. Fixed multiple issues, some long-standing and some that were regressions
+introduced in 3.1.4, that made the CMake package config files non-relocatable
+and broke the `--prefix` option to `cmake --install`.
 
 
 3.1.4
