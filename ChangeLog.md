@@ -1,3 +1,13 @@
+3.1.4.1
+=======
+
+### Significant changes relative to 3.1.4:
+
+1. Fixed multiple issues, some long-standing and some that were regressions
+introduced in 3.1.4, that made the CMake package config files non-relocatable
+and broke the `--prefix` option to `cmake --install`.
+
+
 3.1.4
 =====
 
