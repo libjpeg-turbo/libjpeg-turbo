@@ -110,7 +110,7 @@ empty_mem_output_buffer(j_compress_ptr cinfo)
   nextbuffer = (JOCTET *)MALLOC(nextsize);
 
   if (nextbuffer == NULL)
-    ERREXIT1(cinfo, JERR_OUT_OF_MEMORY, 10);
+    ERREXIT1(cinfo, JERR_OUT_OF_MEMORY, 12);
 
   memcpy(nextbuffer, dest->buffer, dest->bufsize);
 
