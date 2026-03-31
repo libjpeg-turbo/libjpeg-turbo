@@ -5,7 +5,7 @@
  * Copyright (C) 1994-1996, Thomas G. Lane.
  * Modified 2009-2012 by Guido Vollbeding.
  * libjpeg-turbo Modifications:
- * Copyright (C) 2013, 2016, 2022, D. R. Commander.
+ * Copyright (C) 2013, 2016, 2022, 2026, D. R. Commander.
  * For conditions of distribution and use, see the accompanying README.ijg
  * file.
  *
@@ -143,7 +143,7 @@ empty_mem_output_buffer(j_compress_ptr cinfo)
   nextbuffer = (JOCTET *)malloc(nextsize);
 
   if (nextbuffer == NULL)
-    ERREXIT1(cinfo, JERR_OUT_OF_MEMORY, 10);
+    ERREXIT1(cinfo, JERR_OUT_OF_MEMORY, 12);
 
   memcpy(nextbuffer, dest->buffer, dest->bufsize);
 
