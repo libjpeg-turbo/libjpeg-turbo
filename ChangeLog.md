@@ -1,3 +1,15 @@
+3.1.5 ESR
+=========
+
+### Significant changes relative to 3.1.4.1:
+
+1. Fixed a regression introduced in 3.1.4 that caused the build to fail if the
+`WITH_SIMD` CMake variable was enabled (which it is by default) and SIMD
+extensions were not available for the target CPU architecture.  (The issue can
+be worked around in the 3.1.4 and 3.1.4.1 releases by explicitly disabling the
+`WITH_SIMD` CMake variable when targeting such architectures.)
+
+
 3.1.4.1
 =======
 
