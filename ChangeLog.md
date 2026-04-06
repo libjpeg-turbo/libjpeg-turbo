@@ -1,3 +1,12 @@
+3.2
+===
+
+### Significant changes relative to 3.2 beta1:
+
+1. Fixed a regression introduced by 3.2 beta1[9] that broke Arm64EC Windows
+builds.
+
+
 3.1.90 (3.2 beta1)
 ==================
 
