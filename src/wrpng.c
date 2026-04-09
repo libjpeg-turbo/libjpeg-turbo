@@ -112,10 +112,16 @@ put_rgb(j_decompress_ptr cinfo, djpeg_dest_ptr dinfo, JDIMENSION rows_supplied)
   } else
 #endif
   {
+    unsigned int maxval = (1 << cinfo->data_precision) - 1;
     for (col = cinfo->output_width; col > 0; col--) {
-      *bufferptr++ = rescale[ptr[rindex]];
-      *bufferptr++ = rescale[ptr[gindex]];
-      *bufferptr++ = rescale[ptr[bindex]];
+      PNGSAMPLE r = (PNGSAMPLE)ptr[rindex];
+      PNGSAMPLE g = (PNGSAMPLE)ptr[gindex];
+      PNGSAMPLE b = (PNGSAMPLE)ptr[bindex];
+      if (r > maxval || g > maxval || b > maxval)
+        ERREXIT(cinfo, JERR_PNG_OUTOFRANGE);
+      *bufferptr++ = rescale[r];
+      *bufferptr++ = rescale[g];
+      *bufferptr++ = rescale[b];
       ptr += ps;
     }
   }
@@ -150,9 +156,13 @@ put_cmyk(j_decompress_ptr cinfo, djpeg_dest_ptr dinfo,
   } else
 #endif
   {
+    unsigned int maxval = (1 << cinfo->data_precision) - 1;
     for (col = cinfo->output_width; col > 0; col--) {
       _JSAMPLE r, g, b, c = *ptr++, m = *ptr++, y = *ptr++, k = *ptr++;
       cmyk_to_rgb((1 << cinfo->data_precision) - 1, c, m, y, k, &r, &g, &b);
+      if ((PNGSAMPLE)r > maxval || (PNGSAMPLE)g > maxval ||
+          (PNGSAMPLE)b > maxval)
+        ERREXIT(cinfo, JERR_PNG_OUTOFRANGE);
       *bufferptr++ = rescale[r];
       *bufferptr++ = rescale[g];
       *bufferptr++ = rescale[b];
@@ -174,11 +184,15 @@ put_gray(j_decompress_ptr cinfo, djpeg_dest_ptr dinfo,
   register PNGSAMPLE *bufferptr, *rescale = dest->rescale;
   register _JSAMPROW ptr;
   register JDIMENSION col;
+  unsigned int maxval = (1 << cinfo->data_precision) - 1;
 
   ptr = dest->pub._buffer[0];
   bufferptr = dest->iobuffer;
   for (col = cinfo->output_width; col > 0; col--) {
-    *bufferptr++ = rescale[*ptr++];
+    PNGSAMPLE gray = (PNGSAMPLE)(*ptr++);
+    if (gray > maxval)
+      ERREXIT(cinfo, JERR_PNG_OUTOFRANGE);
+    *bufferptr++ = rescale[gray];
   }
   put_pixel_rows(cinfo, dinfo, rows_supplied);
 }
@@ -218,11 +232,18 @@ put_demapped_rgb(j_decompress_ptr cinfo, djpeg_dest_ptr dinfo,
   } else
 #endif
   {
+    unsigned int maxval = (1 << cinfo->data_precision) - 1;
     for (col = cinfo->output_width; col > 0; col--) {
+      PNGSAMPLE r, g, b;
       pixval = *ptr++;
-      *bufferptr++ = rescale[color_map0[pixval]];
-      *bufferptr++ = rescale[color_map1[pixval]];
-      *bufferptr++ = rescale[color_map2[pixval]];
+      r = (PNGSAMPLE)color_map0[pixval];
+      g = (PNGSAMPLE)color_map1[pixval];
+      b = (PNGSAMPLE)color_map2[pixval];
+      if (r > maxval || g > maxval || b > maxval)
+        ERREXIT(cinfo, JERR_PNG_OUTOFRANGE);
+      *bufferptr++ = rescale[r];
+      *bufferptr++ = rescale[g];
+      *bufferptr++ = rescale[b];
     }
   }
   put_pixel_rows(cinfo, dinfo, rows_supplied);
@@ -249,8 +270,12 @@ put_demapped_gray(j_decompress_ptr cinfo, djpeg_dest_ptr dinfo,
   } else
 #endif
   {
+    unsigned int maxval = (1 << cinfo->data_precision) - 1;
     for (col = cinfo->output_width; col > 0; col--) {
-      *bufferptr++ = rescale[color_map[*ptr++]];
+      PNGSAMPLE gray = (PNGSAMPLE)color_map[*ptr++];
+      if (gray > maxval)
+        ERREXIT(cinfo, JERR_PNG_OUTOFRANGE);
+      *bufferptr++ = rescale[gray];
     }
   }
   put_pixel_rows(cinfo, dinfo, rows_supplied);

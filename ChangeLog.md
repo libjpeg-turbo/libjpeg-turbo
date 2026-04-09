@@ -6,6 +6,15 @@
 1. Fixed a regression introduced by 3.2 beta1[9] that broke Arm64EC Windows
 builds.
 
+2. Hardened the PNG writer (which is used by djpeg and `tj3SaveImage*()`)
+against applications that may erroneously attempt to write sample values that
+are out of range for the specified output data precision.  This could have
+caused a buffer overrun in the PNG writer's rescale array if the output data
+precision was not 8 or 16 bits.  The buffer overrun did not likely pose a
+security risk, since `tj3SaveImage*()` is not exposed to arbitrary external
+input data and since a caller that abused the API in the aforementioned manner
+could never work properly.
+
 
 3.1.90 (3.2 beta1)
 ==================
