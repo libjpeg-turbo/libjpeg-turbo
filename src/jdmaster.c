@@ -524,7 +524,8 @@ master_selection(j_decompress_ptr cinfo)
    * output data precision to a different value than the JPEG data precision
    * will produce unexpected results, such as a bogus output image.
    */
-  if (cinfo->data_precision != cinfo->master->jpeg_data_precision &&
+  if (cinfo->master->jpeg_data_precision &&
+      cinfo->data_precision != cinfo->master->jpeg_data_precision &&
       (cinfo->master->lossless || cinfo->data_precision != 12))
     ERREXIT1(cinfo, JERR_BAD_PRECISION, cinfo->data_precision);
 
