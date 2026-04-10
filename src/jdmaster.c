@@ -518,6 +518,16 @@ master_selection(j_decompress_ptr cinfo)
   long samplesperrow;
   JDIMENSION jd_samplesperrow;
 
+  /* When decompressing an 8-bit-per-sample lossy JPEG image, we allow the
+   * caller to request 12-bit-per-sample output in order to facilitate shadow
+   * recovery in underexposed images.  However, in all other cases, setting the
+   * output data precision to a different value than the JPEG data precision
+   * will produce unexpected results, such as a bogus output image.
+   */
+  if (cinfo->data_precision != cinfo->master->jpeg_data_precision &&
+      (cinfo->master->lossless || cinfo->data_precision != 12))
+    ERREXIT1(cinfo, JERR_BAD_PRECISION, cinfo->data_precision);
+
   /* Disable IDCT scaling and raw (downsampled) data output in lossless mode.
    * IDCT scaling is not useful in lossless mode, and it must be disabled in
    * order to properly calculate the output dimensions.  Raw data output isn't
