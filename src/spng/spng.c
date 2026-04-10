@@ -45,7 +45,7 @@
     #elif defined(__aarch64__) || defined(_M_ARM64) || defined(_M_ARM64EC) /* || defined(__ARM_NEON) */
         #define SPNG_ARM /* NOTE: only arm64 builds are tested! */
     #else
-    #if 0
+    #if 0 /* libjpeg-turbo: Silence warning */
         #pragma message "disabling SIMD optimizations for unknown target"
     #endif
         #define SPNG_DISABLE_OPT
@@ -1211,7 +1211,7 @@ static int spng__inflate_init(spng_ctx *ctx, int window_bits)
     if(inflateValidate(&ctx->zstream, validate)) return SPNG_EZLIB_INIT;
 
 #else /* This requires zlib >= 1.2.11 */
-#if 0
+#if 0 /* libjpeg-turbo: Silence warning */
     #pragma message ("inflateValidate() not available, SPNG_CTX_IGNORE_ADLER32 will be ignored")
 #endif
 #endif
@@ -3807,7 +3807,10 @@ int spng_decode_image(spng_ctx *ctx, void *out, size_t len, int fmt, int flags)
         unsigned i;
         for(i=0; i < lut_entries; i++)
         {
+#if 0 /* libjpeg-turbo: Eliminate libm dependency */
             float c = pow((float)i / max, exponent) * max;
+#endif
+            float c = 0.0f;
             if(c > max) c = max;
 
             gamma_lut[i] = (uint16_t)c;
