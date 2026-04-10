@@ -91,7 +91,7 @@ compare()
 	file=$1
 	MD5=MD5_$(echo "$(basename $file)" | tr '[:lower:]' '[:upper:]')
 	MD5=${MD5/\./_}
-	md5/md5cmp ${!MD5} $file
+	test/md5cmp ${!MD5} $file
 }
 
 for precision in 8 12; do
