@@ -4,7 +4,7 @@
  * This file was part of the Independent JPEG Group's software:
  * Copyright (C) 1994-1996, Thomas G. Lane.
  * libjpeg-turbo Modifications:
- * Copyright (C) 2010, 2015-2020, 2022-2025, D. R. Commander.
+ * Copyright (C) 2010, 2015-2020, 2022-2026, D. R. Commander.
  * Copyright (C) 2015, Google, Inc.
  * For conditions of distribution and use, see the accompanying README.ijg
  * file.
@@ -162,6 +162,9 @@ jpeg_crop_scanline(j_decompress_ptr cinfo, JDIMENSION *xoffset,
 #ifdef UPSAMPLE_MERGING_SUPPORTED
   my_master_ptr master = (my_master_ptr)cinfo->master;
 #endif
+
+  if (cinfo->raw_data_out)
+    ERREXIT(cinfo, JERR_NOTIMPL);
 
   if ((cinfo->global_state != DSTATE_SCANNING &&
        cinfo->global_state != DSTATE_BUFIMAGE) || cinfo->output_scanline != 0)
