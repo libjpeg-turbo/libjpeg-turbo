@@ -5,7 +5,7 @@ Copyright (C) 1994-2013, Thomas G. Lane, Guido Vollbeding.
 Lossless JPEG Modifications:
 Copyright (C) 1999, Ken Murchison.
 libjpeg-turbo Modifications:
-Copyright (C) 2010, 2014-2018, 2020, 2022-2024, D. R. Commander.
+Copyright (C) 2010, 2014-2018, 2020, 2022-2024, 2026, D. R. Commander.
 Copyright (C) 2015, Google, Inc.
 For conditions of distribution and use, see the accompanying README.ijg file.
 
@@ -867,7 +867,7 @@ to jpeg*_read_scanlines() (since it will actually call jpeg*_read_scanlines().)
 This function provides application programmers with the ability to decompress
 only a portion of each row in the JPEG image.  It must be called after
 jpeg_start_decompress() and before any calls to jpeg*_read_scanlines() or
-jpeg*_skip_scanlines().
+jpeg*_skip_scanlines().  (It cannot be used with raw data output.)
 
 If xoffset and width do not form a valid subset of the image row, then this
 function will generate an error.  Note that if the output image is scaled, then

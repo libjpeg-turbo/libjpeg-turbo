@@ -9,6 +9,19 @@ extensions were not available for the target CPU architecture.  (The issue can
 be worked around in the 3.1.4 and 3.1.4.1 releases by explicitly disabling the
 `WITH_SIMD` CMake variable when targeting such architectures.)
 
+2. Hardened the libjpeg API against hypothetical applications that may
+erroneously call `jpeg_crop_scanline()` with buffered-image mode and raw data
+output enabled.  `jpeg_crop_scanline()` does not work with raw data output, but
+due to an oversight, it did not throw an error if both buffered-image mode and
+raw data output were enabled.  If a hypothetical application aborted a normal
+decompression operation without reading any scanlines, started a new
+decompression operation using the same libjpeg instance with buffered-image
+mode and raw data output enabled, then called `jpeg_crop_scanline()` with
+arguments that would have caused any of the component planes to be cropped to a
+width of 1 sample, `jpeg_crop_scanline()` would have used freed memory.
+However, this did not likely pose a security risk, since an application that
+abused the API in the aforementioned manner could never work properly.
+
 
 3.1.4.1
 =======
