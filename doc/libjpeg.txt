@@ -867,7 +867,7 @@ to jpeg*_read_scanlines() (since it will actually call jpeg*_read_scanlines().)
 This function provides application programmers with the ability to decompress
 only a portion of each row in the JPEG image.  It must be called after
 jpeg_start_decompress() and before any calls to jpeg*_read_scanlines() or
-jpeg*_skip_scanlines().
+jpeg*_skip_scanlines().  (It cannot be used with raw data output.)
 
 If xoffset and width do not form a valid subset of the image row, then this
 function will generate an error.  Note that if the output image is scaled, then
