@@ -92,6 +92,8 @@ DLLEXPORT int GET_NAME(tj3Compress, BITS_IN_JSAMPLE)
     THROW("TJPARAM_SUBSAMP must be specified");
 
   if (pitch == 0) pitch = width * tjPixelSize[pixelFormat];
+  else if (pitch < width * tjPixelSize[pixelFormat])
+    THROW("Invalid argument");
 
   if ((row_pointer = (_JSAMPROW *)malloc(sizeof(_JSAMPROW) * height)) == NULL)
     THROW("Memory allocation failure");
@@ -208,6 +210,8 @@ DLLEXPORT int GET_NAME(tj3Decompress, BITS_IN_JSAMPLE)
 #endif
 
   if (pitch == 0) pitch = dinfo->output_width * tjPixelSize[pixelFormat];
+  else if (pitch < dinfo->output_width * tjPixelSize[pixelFormat])
+    THROW("Invalid argument");
 
   croppedHeight = dinfo->output_height;
 #if BITS_IN_JSAMPLE != 16
@@ -508,6 +512,8 @@ DLLEXPORT int GET_NAME(tj3SaveImage, BITS_IN_JSAMPLE)
   (*dinfo->mem->realize_virt_arrays) ((j_common_ptr)dinfo);
 
   if (pitch == 0) pitch = width * tjPixelSize[pixelFormat];
+  else if (pitch < width * tjPixelSize[pixelFormat])
+    THROW("Invalid argument");
 
   while (dinfo->output_scanline < dinfo->output_height) {
     _JSAMPLE *rowptr;
