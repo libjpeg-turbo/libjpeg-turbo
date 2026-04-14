@@ -217,7 +217,7 @@ DLLEXPORT int GET_NAME(tj3Decompress, BITS_IN_JSAMPLE)
 #endif
 
   if (pitch == 0) pitch = dinfo->output_width * tjPixelSize[pixelFormat];
-  else if (pitch < dinfo->output_width * tjPixelSize[pixelFormat])
+  else if ((JDIMENSION)pitch < dinfo->output_width * tjPixelSize[pixelFormat])
     THROW("Invalid argument");
 
   croppedHeight = dinfo->output_height;
