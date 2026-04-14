@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2009-2024 D. R. Commander.  All Rights Reserved.
+ * Copyright (C)2009-2024, 2026 D. R. Commander.  All Rights Reserved.
  * Copyright (C)2021 Alex Richardson.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -730,6 +730,8 @@ DLLEXPORT int tjCompress2(tjhandle handle, const unsigned char *srcBuf,
     THROW("tjCompress2(): Invalid argument");
 
   if (pitch == 0) pitch = width * tjPixelSize[pixelFormat];
+  else if (pitch < width * tjPixelSize[pixelFormat])
+    THROW("tjCompress2(): Invalid argument");
 
   if ((row_pointer = (JSAMPROW *)malloc(sizeof(JSAMPROW) * height)) == NULL)
     THROW("tjCompress2(): Memory allocation failure");
@@ -837,6 +839,8 @@ DLLEXPORT int tjEncodeYUVPlanes(tjhandle handle, const unsigned char *srcBuf,
     THROW("tjEncodeYUVPlanes(): Cannot generate YUV images from packed-pixel CMYK images");
 
   if (pitch == 0) pitch = width * tjPixelSize[pixelFormat];
+  else if (pitch < width * tjPixelSize[pixelFormat])
+    THROW("tjEncodeYUVPlanes(): Invalid argument");
 
   if (setjmp(this->jerr.setjmp_buffer)) {
     /* If we get here, the JPEG code has signaled an error. */
@@ -1412,6 +1416,8 @@ DLLEXPORT int tjDecompress2(tjhandle handle, const unsigned char *jpegBuf,
 
   jpeg_start_decompress(dinfo);
   if (pitch == 0) pitch = dinfo->output_width * tjPixelSize[pixelFormat];
+  else if (pitch < dinfo->output_width * tjPixelSize[pixelFormat])
+    THROW("tjDecompress2(): Invalid argument");
 
   if ((row_pointer =
        (JSAMPROW *)malloc(sizeof(JSAMPROW) * dinfo->output_height)) == NULL)
@@ -1543,6 +1549,8 @@ DLLEXPORT int tjDecodeYUVPlanes(tjhandle handle,
     THROW("tjDecodeYUVPlanes(): Cannot decode YUV images into packed-pixel CMYK images.");
 
   if (pitch == 0) pitch = width * tjPixelSize[pixelFormat];
+  else if (pitch < width * tjPixelSize[pixelFormat])
+    THROW("tjDecodeYUVPlanes(): Invalid argument");
   dinfo->image_width = width;
   dinfo->image_height = height;
 
@@ -2336,6 +2344,8 @@ DLLEXPORT int tjSaveImage(const char *filename, unsigned char *buffer,
   (*dinfo->mem->realize_virt_arrays) ((j_common_ptr)dinfo);
 
   if (pitch == 0) pitch = width * tjPixelSize[pixelFormat];
+  else if (pitch < width * tjPixelSize[pixelFormat])
+    THROWG("tjSaveImage(): Invalid argument");
 
   while (dinfo->output_scanline < dinfo->output_height) {
     unsigned char *rowptr;
