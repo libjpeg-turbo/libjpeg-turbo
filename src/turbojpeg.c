@@ -1595,6 +1595,8 @@ DLLEXPORT int tj3EncodeYUVPlanes8(tjhandle handle, const unsigned char *srcBuf,
     THROW("Cannot generate YUV images from packed-pixel CMYK images");
 
   if (pitch == 0) pitch = width * tjPixelSize[pixelFormat];
+  else if (pitch < width * tjPixelSize[pixelFormat])
+    THROW("Invalid argument");
 
   CATCH_LIBJPEG(this);
 
@@ -2581,6 +2583,8 @@ DLLEXPORT int tj3DecodeYUVPlanes8(tjhandle handle,
     THROW("Cannot decode YUV images into packed-pixel CMYK images.");
 
   if (pitch == 0) pitch = width * tjPixelSize[pixelFormat];
+  else if (pitch < width * tjPixelSize[pixelFormat])
+    THROW("Invalid argument");
   dinfo->image_width = width;
   dinfo->image_height = height;
 
