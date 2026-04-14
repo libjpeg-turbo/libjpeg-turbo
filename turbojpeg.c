@@ -1416,7 +1416,7 @@ DLLEXPORT int tjDecompress2(tjhandle handle, const unsigned char *jpegBuf,
 
   jpeg_start_decompress(dinfo);
   if (pitch == 0) pitch = dinfo->output_width * tjPixelSize[pixelFormat];
-  else if (pitch < dinfo->output_width * tjPixelSize[pixelFormat])
+  else if ((JDIMENSION)pitch < dinfo->output_width * tjPixelSize[pixelFormat])
     THROW("tjDecompress2(): Invalid argument");
 
   if ((row_pointer =
