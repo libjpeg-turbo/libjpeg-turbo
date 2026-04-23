@@ -450,6 +450,9 @@ do_crop_ext_flat(j_decompress_ptr srcinfo, j_compress_ptr dstinfo,
   for (ci = 0; ci < dstinfo->num_components; ci++) {
     compptr = dstinfo->comp_info + ci;
     comp_width = MCU_cols * compptr->h_samp_factor;
+    /* Prevent buffer overrun */
+    if (comp_width == 0)
+      ERREXIT(srcinfo, JERR_BAD_CROP_SPEC);
     comp_height = MCU_rows * compptr->v_samp_factor;
     x_crop_blocks = info->x_crop_offset * compptr->h_samp_factor;
     y_crop_blocks = info->y_crop_offset * compptr->v_samp_factor;
@@ -547,6 +550,9 @@ do_crop_ext_reflect(j_decompress_ptr srcinfo, j_compress_ptr dstinfo,
   for (ci = 0; ci < dstinfo->num_components; ci++) {
     compptr = dstinfo->comp_info + ci;
     comp_width = MCU_cols * compptr->h_samp_factor;
+    /* Prevent infinite loop */
+    if (comp_width == 0)
+      ERREXIT(srcinfo, JERR_BAD_CROP_SPEC);
     comp_height = MCU_rows * compptr->v_samp_factor;
     x_crop_blocks = info->x_crop_offset * compptr->h_samp_factor;
     y_crop_blocks = info->y_crop_offset * compptr->v_samp_factor;
