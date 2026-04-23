@@ -143,6 +143,18 @@ width of 1 sample, `jpeg_crop_scanline()` would have used freed memory.
 However, this did not likely pose a security risk, since an application that
 abused the API in the aforementioned manner could never work properly.
 
+20. Fixed a buffer overrun and subsequent segfault in jpegtran that occurred
+when attempting to use the `-crop` option to expand the width of an image
+narrower than one iMCU and fill each block in the expanded region with the DC
+coefficient of the nearest block in the input image ("flatten.")  Similarly,
+fixed an infinite loop that occurred when attempting to use the `-crop` option
+to expand the width of an image narrower than one iMCU and fill the expanded
+region with repeated reflections of the input image ("reflect.")  Because the
+flatten and reflect extensions implicitly trim partial iMCUs, they cannot work
+properly if the only iMCU column in the input image is partial, so jpegtran now
+throws an error if that is the case.  These issues were confined to the
+jpegtran application and thus did not pose a security risk.
+
 
 2.1.5.1
 =======
