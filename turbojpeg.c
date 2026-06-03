@@ -555,7 +555,8 @@ DLLEXPORT unsigned long tjBufSize(int width, int height, int jpegSubsamp)
   mcuw = tjMCUWidth[jpegSubsamp];
   mcuh = tjMCUHeight[jpegSubsamp];
   chromasf = jpegSubsamp == TJSAMP_GRAY ? 0 : 4 * 64 / (mcuw * mcuh);
-  retval = PAD(width, mcuw) * PAD(height, mcuh) * (2ULL + chromasf) + 2048ULL;
+  retval = (unsigned long long)PAD(width, mcuw) * PAD(height, mcuh) *
+           (2ULL + chromasf) + 2048ULL;
 #if ULLONG_MAX > ULONG_MAX
   if (retval > (unsigned long long)((unsigned long)-1))
     THROWG("tjBufSize(): Image is too large");
