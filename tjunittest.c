@@ -695,6 +695,8 @@ static void overflowTest(void)
 
   size = tj3JPEGBufSize(26755, 26755, TJSAMP_444);
   CHECKSIZE(tj3JPEGBufSize());
+  size = tj3JPEGBufSize(65536, 65536, TJSAMP_444);
+  CHECKSIZE(tj3JPEGBufSize());
   ulsize = tjBufSize(26755, 26755, TJSAMP_444);
   CHECKSIZEUL(tjBufSize());
   ulsize = TJBUFSIZE(26755, 26755);
