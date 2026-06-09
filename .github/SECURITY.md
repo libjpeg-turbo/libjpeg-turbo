@@ -46,3 +46,36 @@ Vulnerabilities can be reported in one of the following ways:
   that code (for example, vulnerabilities introduced by a new feature that is
   not present in a Stable release series) can optionally be reported using a
   [GitHub bug report](https://github.com/libjpeg-turbo/libjpeg-turbo/issues/new?template=bug-report.md).
+
+## AI and False Positives
+
+We do not specifically forbid the use of AI when analyzing libjpeg-turbo for
+security vulnerabilities.  However, unfortunately AI-based security tools have
+led to a flood of false positive reports against our project, and fielding
+those reports has strained the project's limited resources.  As of this
+writing, AI-based tools have yet to identify a single security vulnerability in
+libjpeg-turbo.  Thus, we require security researchers who use AI to follow
+these rules:
+
+- Sanity check the results extremely carefully.  AI is notorious for generating
+  reproducers that blatantly abuse the libjpeg and TurboJPEG APIs, such as by
+  failing to allocate enough buffer space to hold the output image.  Per above,
+  if a program can never generate a valid output image regardless of input,
+  then its failure is not a security vulnerability.  At worst, it is an
+  opportunity for API hardening.
+
+- In the security report, always indicate whether and where AI was used.  If we
+  know that the reproducer is AI-generated, then we can look for known AI
+  hallucinations rather than waste time trying to reproduce the issue first.
+
+- Never claim that an issue is a security vulnerability unless it meets the
+  definition above, and always report the issue using a
+  [GitHub bug report](https://github.com/libjpeg-turbo/libjpeg-turbo/issues/new?template=bug-report.md)
+  if it does not meet that definition.  (This ensures that known false
+  positives will be searchable in our issue tracker.)
+
+- Security reports must originate from a human.  Automatic reporting from a
+  bot/agent account is strictly forbidden and will result in the account being
+  banned from our project.
+
+Security reports that fail to adhere to these rules will be treated as spam.
