@@ -34,11 +34,11 @@ accepted unless:
       log and (if applicable) the libjpeg and TurboJPEG API documentation and
       man pages.
     - The code implementing the new feature is formatted consistently with the
-      rest of the libjpeg-turbo code base (use
+      rest of the libjpeg-turbo code base.  (Use
       [checkstyle](https://github.com/libjpeg-turbo/checkstyle) to validate
       this.)
     - The new feature does not introduce new members into the exposed libjpeg
-      API structures (doing so would break backward ABI compatibility.)
+      API structures.  (Doing so would break backward ABI compatibility.)
     - The new feature does not alter existing libjpeg-turbo usage or
       development workflows.
     - The code implementing the new feature is elegant, easily maintainable,
@@ -79,8 +79,8 @@ are unlikely to be accepted unless:
         - (if applicable) The earliest version of CMake with which the
           enhancement can be used
     - The enhancement has been tested on all of the major platforms (Mac,
-      Linux, Windows/Visual C++, Windows/MinGW) that are potentially affected
-      by it.
+      Un*x, Windows/Visual C++, Windows/MinGW) that are potentially affected by
+      it.
     - The enhancement does not introduce new build system requirements or CMake
       variables unless absolutely necessary.
     - The enhancement does not alter existing libjpeg-turbo development
@@ -93,3 +93,17 @@ are unlikely to be accepted unless:
       the upstream libjpeg-turbo build system.  Use the CMake
       `ExternalProject_Add()` function instead.
     - Enhancements that introduce new (non-CMake-based) build systems
+
+Pull Requests
+-------------
+
+This project does not allow unsolicited pull requests.  If, after discussing a
+proposed code contribution with the project maintainer, a pull request is
+warranted, then you will be given access to the pull request system.
+
+Use of AI
+---------
+
+All code and other content in the libjpeg-turbo source tree is 100%
+human-generated, and all contributions to this project intended for inclusion
+in that source tree must also be 100% human-generated.
