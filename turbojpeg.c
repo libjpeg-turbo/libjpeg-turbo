@@ -921,6 +921,8 @@ DLLEXPORT int tjEncodeYUVPlanes(tjhandle handle, const unsigned char *srcBuf,
         &_tmpbuf2_aligned[PAD(compptr->width_in_blocks * DCTSIZE, 32) * row];
     }
     pw[i] = pw0 * compptr->h_samp_factor / cinfo->max_h_samp_factor;
+    if (strides && strides[i] != 0 && strides[i] < pw[i])
+      THROW("Invalid argument");
     ph[i] = ph0 * compptr->v_samp_factor / cinfo->max_v_samp_factor;
     outbuf[i] = (JSAMPROW *)malloc(sizeof(JSAMPROW) * ph[i]);
     if (!outbuf[i])
@@ -1093,6 +1095,8 @@ DLLEXPORT int tjCompressFromYUVPlanes(tjhandle handle,
     ih = compptr->height_in_blocks * DCTSIZE;
     pw[i] = PAD(cinfo->image_width, cinfo->max_h_samp_factor) *
             compptr->h_samp_factor / cinfo->max_h_samp_factor;
+    if (strides && strides[i] != 0 && strides[i] < pw[i])
+      THROW("Invalid argument");
     ph[i] = PAD(cinfo->image_height, cinfo->max_v_samp_factor) *
             compptr->v_samp_factor / cinfo->max_v_samp_factor;
     if (iw[i] != pw[i] || ih != ph[i]) usetmpbuf = 1;
@@ -1614,6 +1618,8 @@ DLLEXPORT int tjDecodeYUVPlanes(tjhandle handle,
         &_tmpbuf_aligned[PAD(compptr->width_in_blocks * DCTSIZE, 32) * row];
     }
     pw[i] = pw0 * compptr->h_samp_factor / dinfo->max_h_samp_factor;
+    if (strides && strides[i] != 0 && strides[i] < pw[i])
+      THROW("Invalid argument");
     ph[i] = ph0 * compptr->v_samp_factor / dinfo->max_v_samp_factor;
     inbuf[i] = (JSAMPROW *)malloc(sizeof(JSAMPROW) * ph[i]);
     if (!inbuf[i])
@@ -1792,6 +1798,8 @@ DLLEXPORT int tjDecompressToYUVPlanes(tjhandle handle,
     iw[i] = compptr->width_in_blocks * dctsize;
     ih = compptr->height_in_blocks * dctsize;
     pw[i] = tjPlaneWidth(i, dinfo->output_width, jpegSubsamp);
+    if (strides && strides[i] != 0 && strides[i] < pw[i])
+      THROW("Invalid argument");
     ph[i] = tjPlaneHeight(i, dinfo->output_height, jpegSubsamp);
     if (iw[i] != pw[i] || ih != ph[i]) usetmpbuf = 1;
     th[i] = compptr->v_samp_factor * dctsize;
