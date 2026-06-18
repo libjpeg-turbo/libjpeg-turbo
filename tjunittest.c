@@ -600,6 +600,8 @@ static void overflowTest(void)
   CHECKSIZE(tjBufSize());
   size = TJBUFSIZE(26755, 26755);
   CHECKSIZE(TJBUFSIZE());
+  size = TJBUFSIZE(65536, 65536);
+  CHECKSIZE(TJBUFSIZE());
   size = tjBufSizeYUV2(37838, 1, 37838, TJSAMP_444);
   CHECKSIZE(tjBufSizeYUV2());
   size = tjBufSizeYUV2(37837, 3, 37837, TJSAMP_444);
