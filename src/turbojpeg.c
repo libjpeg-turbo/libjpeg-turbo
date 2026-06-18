@@ -1007,13 +1007,14 @@ DLLEXPORT size_t tj3YUVBufSize(int width, int align, int height, int subsamp)
     THROWG("Invalid argument", 0);
 
   nc = (subsamp == TJSAMP_GRAY ? 1 : 3);
+
   for (i = 0; i < nc; i++) {
     int pw = tj3YUVPlaneWidth(i, width, subsamp);
-    int stride = PAD(pw, align);
+    unsigned long long stride = PAD((unsigned long long)pw, align);
     int ph = tj3YUVPlaneHeight(i, height, subsamp);
 
     if (pw == 0 || ph == 0) return 0;
-    else retval += (unsigned long long)stride * ph;
+    else retval += stride * ph;
   }
 #if ULLONG_MAX > ULONG_MAX
   if (retval > (unsigned long long)((unsigned long)-1))
