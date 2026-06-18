@@ -787,6 +787,8 @@ static void overflowTest(void)
   CHECKSIZEUL(tjBufSize());
   ulsize = TJBUFSIZE(26755, 26755);
   CHECKSIZEUL(TJBUFSIZE());
+  ulsize = TJBUFSIZE(65536, 65536);
+  CHECKSIZEUL(TJBUFSIZE());
   size = tj3YUVBufSize(37838, 1, 37838, TJSAMP_444);
   CHECKSIZE(tj3YUVBufSize());
   size = tj3YUVBufSize(37837, 3, 37837, TJSAMP_444);
