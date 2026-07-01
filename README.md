@@ -168,6 +168,9 @@ supported and which aren't.
 
 #### Fully supported
 
+Note that these features are supported regardless of whether libjpeg v7 or v8
+API/ABI emulation is enabled.
+
 - **libjpeg API: IDCT scaling extensions in decompressor**<br>
   libjpeg-turbo supports IDCT scaling with scaling factors of 1/8, 1/4, 3/8,
   1/2, 5/8, 3/4, 7/8, 9/8, 5/4, 11/8, 3/2, 13/8, 7/4, 15/8, and 2/1 (only 1/4
