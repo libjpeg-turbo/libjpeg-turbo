@@ -6,5 +6,6 @@ includedir=@CMAKE_INSTALL_FULL_INCLUDEDIR@
 Name: libturbojpeg
 Description: A SIMD-accelerated JPEG codec that provides the TurboJPEG API
 Version: @VERSION@
+@LIBTURBOJPEG_REQUIRES_PRIVATE@
 Libs: -L${libdir} -lturbojpeg
 Cflags: -I${includedir}

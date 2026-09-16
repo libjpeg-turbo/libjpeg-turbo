@@ -177,6 +177,11 @@ add_custom_target(tarball pkgscripts/maketarball
 configure_file(release/libjpeg.pc.in pkgscripts/libjpeg.pc @ONLY)
 
 if(WITH_TURBOJPEG)
+  if(WITH_SYSTEM_SPNG)
+    set(LIBTURBOJPEG_REQUIRES_PRIVATE "Requires.private: spng")
+  elseif(WITH_SYSTEM_ZLIB)
+    set(LIBTURBOJPEG_REQUIRES_PRIVATE "Requires.private: zlib")
+  endif()
   configure_file(release/libturbojpeg.pc.in pkgscripts/libturbojpeg.pc @ONLY)
 endif()
 
