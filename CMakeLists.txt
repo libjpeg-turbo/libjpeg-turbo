@@ -726,8 +726,15 @@ if(WITH_JNA)
 endif()
 
 if(WITH_TURBOJPEG OR WITH_TOOLS OR WITH_TESTS)
+  # Only the in-tree version of libspng is thoroughly tested by our project
+  # (including fuzz testing) and is subject to our quality control and version
+  # control processes.  Few operating systems and packaging environments
+  # provide libspng, and the version they provide may or may not have the same
+  # bug fixes as our in-tree version.  This option should only be enabled by
+  # those who are willing to assume the quality control, version control, and
+  # support burden of the combined solution.
   option(WITH_SYSTEM_SPNG
-    "Build ${CMAKE_PROJECT_NAME} against the system-supplied libspng implementation rather than the implementation in the ${CMAKE_PROJECT_NAME} source tree"
+    "Build ${CMAKE_PROJECT_NAME} against the system-supplied libspng implementation rather than the implementation in the ${CMAKE_PROJECT_NAME} source tree (Experimental)"
     OFF)
   boolean_number(WITH_SYSTEM_SPNG)
   report_option(WITH_SYSTEM_SPNG "System-supplied libspng")
