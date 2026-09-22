@@ -35,7 +35,6 @@
  * - OS/2 BMP, GIF, and Targa output file formats [legacy feature]
  * - Color quantization and dithering [legacy feature]
  * - The floating-point IDCT method [legacy feature]
- * - Extracting an ICC color management profile
  * - Progress reporting
  * - Skipping rows (i.e. exclusive rather than inclusive partial decompression)
  * - Debug output
