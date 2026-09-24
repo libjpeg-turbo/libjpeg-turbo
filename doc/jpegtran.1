@@ -1,4 +1,4 @@
-.TH JPEGTRAN 1 "5 Aug 2026"
+.TH JPEGTRAN 1 "24 September 2026"
 .SH NAME
 jpegtran \- lossless transformation of JPEG files
 .SH SYNOPSIS
@@ -69,7 +69,8 @@ Use arithmetic coding.
 .TP
 .BI \-restart " N"
 Emit a JPEG restart marker every N MCU rows, or every N MCUs if "B" is attached
-to the number.
+to the number.  The default is to emit no restart markers, even if the source
+file contains them.
 .TP
 .BI \-scans " file"
 Use the scan script given in the specified text file.

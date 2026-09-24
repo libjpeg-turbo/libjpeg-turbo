@@ -655,7 +655,9 @@ jpegtran accepts a subset of the switches recognized by cjpeg:
         -progressive    Create progressive JPEG file.
         -arithmetic     Use arithmetic coding.
         -restart N      Emit a JPEG restart marker every N MCU rows, or every
-                        N MCUs if "B" is attached to the number.
+                        N MCUs if "B" is attached to the number.  The default
+                        is to emit no restart markers, even if the source file
+                        contains them.
         -scans file     Use the scan script given in the specified text file.
 See the previous discussion of cjpeg for more details about these switches.
 If you specify none of these switches, you get a plain baseline-JPEG output
