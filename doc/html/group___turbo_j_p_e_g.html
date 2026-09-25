@@ -2021,7 +2021,8 @@ Unless you have set <a class="el" href="group___turbo_j_p_e_g.html#ggaa0f6be63ba
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>0 if successful, or -1 if an error occurred (see <a class="el" href="group___turbo_j_p_e_g.html#ga5a23ad0776c5333cda0d7c6d826e9d29" title="Returns a descriptive error message explaining why the last command failed.">tj3GetErrorStr()</a> and <a class="el" href="group___turbo_j_p_e_g.html#gab8c8279f1415fe425ff30dbbc56013bd" title="Returns a code indicating the severity of the last error.">tj3GetErrorCode()</a>.) </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>0 if successful, or -1 if an error occurred (see <a class="el" href="group___turbo_j_p_e_g.html#ga5a23ad0776c5333cda0d7c6d826e9d29" title="Returns a descriptive error message explaining why the last command failed.">tj3GetErrorStr()</a> and <a class="el" href="group___turbo_j_p_e_g.html#gab8c8279f1415fe425ff30dbbc56013bd" title="Returns a code indicating the severity of the last error.">tj3GetErrorCode()</a>.)</dd></dl>
+<dl class="section note"><dt>Note</dt><dd>If this function returns a fatal error, then continuing to use the TurboJPEG instance is unsupported API abuse. An application that abuses the API in that manner may work in practice, but it is relying upon undefined behavior. If a fatal error occurs, then the application should destroy the TurboJPEG instance and create a new one if it wishes to safely continue decompressing images. </dd></dl>
 
 </div>
 </div>
