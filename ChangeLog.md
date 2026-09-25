@@ -63,6 +63,15 @@ algorithm with a vertical sampling factor greater than 1, the wrong number of
 scanlines were skipped and/or skipped scanlines were returned in subsequent
 calls to `jpeg*_read_scanlines()`.
 
+9. Hardened the TurboJPEG API against hypothetical applications that may
+erroneously pass an invalid image to `tj3DecompressHeader()`, ignore a fatal
+error thrown by that function, and attempt to call the function again with a
+valid image.  Under certain circumstances, this could have caused the values of
+`TJPARAM_JPEGWIDTH` and `TJPARAM_JPEGHEIGHT` to reflect the dimensions reported
+in the invalid image's header rather than the valid image's header, which might
+have caused the caller to allocate too small of a buffer to hold the
+decompressed valid image.
+
 
 3.1.4.1
 =======
