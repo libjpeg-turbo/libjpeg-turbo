@@ -1934,6 +1934,36 @@ DLLEXPORT int tj3DecompressHeader(tjhandle handle,
     THROW("Invalid data returned in header");
 
 bailout:
+/* Our decompression fuzzers intentionally ignore the return value of
+   tj3DecompressHeader() in order to improve test coverage.  Since most fuzzer
+   test cases are malformed in some way, aborting the fuzzer if
+   tj3DecompressHeader() throws an error would prevent most test cases from
+   touching the decompressor code.  However, if tj3DecompressHeader() called
+   jpeg_abort_decompress() when a fatal libjpeg error was thrown, then the
+   global state would be reset to DSTATE_START, jpeg_read_header() in
+   tj3Decompress*() would re-read the same data that triggered the libjpeg
+   error, and tj3Decompress*() would throw a fatal error.  That would also
+   prevent most test cases from touching the decompressor code.  As an example,
+   if the fuzzer inserts junk header data that the marker processor detects as
+   an unknown marker, then jpeg_read_header() will throw a fatal error, but it
+   may still be possible to decompress the rest of the image.
+
+   If we're not fuzz testing, then it is desirable to call
+   jpeg_abort_decompress() here if a fatal error occurred.  Otherwise, if a
+   misbehaved application ignores the error and calls tj3DecompressHeader()
+   again with a valid image, then the libjpeg input controller would not have
+   been reset, and jpeg_read_header() would not actually read the valid image's
+   header.  In that case, the JPEG width and height fields might still reflect
+   the dimensions reported in the malformed image's header, which might cause
+   the misbehaved application to allocate too small of a buffer to hold the
+   decompressed valid image.  To be clear, any application that continues to
+   use a TurboJPEG instance after a fatal error occurs is abusing the API, so
+   this API hardening measure should not be interpreted in any way as support
+   for or endorsement of that behavior. */
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+  if (retval == -1 && dinfo->global_state > DSTATE_START)
+    jpeg_abort_decompress(dinfo);
+#endif
   if (this->jerr.warning) retval = -1;
   return retval;
 }
