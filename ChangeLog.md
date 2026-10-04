@@ -77,6 +77,11 @@ if the same TurboJPEG instance was used to decompress or transform multiple
 JPEG images, then `tj3GetICCProfile()` and `tj3TransformBufSize()` behaved as
 if JPEG images with no ICC profile contained the last ICC profile extracted.
 
+12. `tj3TransformBufSize()` now accounts for the size of all extra markers
+(including comments, JFIF thumbnails, and Exif data) that will be copied from
+the source image to the destination image, given the current value of
+`TJPARAM_SAVEMARKERS` and the specified transform options.
+
 
 3.2.0
 =====

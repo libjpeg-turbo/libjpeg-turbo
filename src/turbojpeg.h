@@ -2350,9 +2350,10 @@ DLLEXPORT int tj3DecodeYUV8(tjhandle handle, const unsigned char *srcBuf,
  * This function is a wrapper for #tj3JPEGBufSize() that takes into account
  * cropping, transposition of the width and height (which affects the
  * destination image dimensions and level of chrominance subsampling),
- * grayscale conversion, and the ICC profile (if any) that was previously
+ * grayscale conversion, the ICC profile (if any) that was previously
  * associated with the TurboJPEG instance or extracted from the source image
- * (see #tj3SetICCProfile(), #tj3GetICCProfile(), and #TJPARAM_SAVEMARKERS.)
+ * (see #tj3SetICCProfile(), #tj3GetICCProfile(), and #TJPARAM_SAVEMARKERS),
+ * and any other extra markers in the source image (see #TJPARAM_SAVEMARKERS.)
  * The JPEG header must be read (see #tj3DecompressHeader()) prior to calling
  * this function.
  *

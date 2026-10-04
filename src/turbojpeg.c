@@ -109,7 +109,7 @@ typedef struct _tjinstance {
   char errStr[JMSG_LENGTH_MAX];
   boolean isInstanceError;
   unsigned char *iccBuf, *decompICCBuf;
-  size_t iccSize, decompICCSize;
+  size_t iccSize, decompICCSize, decompMarkerSize;
   /* Parameters */
   boolean bottomUp;
   boolean noRealloc;
@@ -1889,6 +1889,7 @@ DLLEXPORT int tj3DecompressHeader(tjhandle handle,
   int retval = 0;
   unsigned char *iccPtr = NULL;
   unsigned int iccLen = 0;
+  jpeg_saved_marker_ptr marker;
 
   GET_DINSTANCE(handle);
   if ((this->init & DECOMPRESS) == 0)
@@ -1925,6 +1926,15 @@ DLLEXPORT int tj3DecompressHeader(tjhandle handle,
     if (jpeg_read_icc_profile(dinfo, &iccPtr, &iccLen)) {
       this->decompICCBuf = iccPtr;
       this->decompICCSize = (size_t)iccLen;
+    }
+  }
+
+  /* Determine the size of all non-ICC extra markers */
+  if (this->saveMarkers >= 1 && this->saveMarkers <= 3) {
+    this->decompMarkerSize = 0;
+    for (marker = dinfo->marker_list; marker != NULL; marker = marker->next) {
+      if (marker->marker != JPEG_APP0 + 2)
+        this->decompMarkerSize += marker->data_length;
     }
   }
 
@@ -2962,6 +2972,10 @@ DLLEXPORT size_t tj3TransformBufSize(tjhandle handle,
     retval += this->decompICCSize;
   else
     retval += this->iccSize;
+
+  if (this->saveMarkers >= 1 && this->saveMarkers <= 3 &&
+      !(transform->options & TJXOPT_COPYNONE))
+    retval += this->decompMarkerSize;
 
 bailout:
   return retval;
