@@ -1919,8 +1919,10 @@ DLLEXPORT int tj3DecompressHeader(tjhandle handle,
   setDecompParameters(this);
 
   if (this->saveMarkers == 2 || this->saveMarkers == 4) {
+    free(this->decompICCBuf);
+    this->decompICCBuf = NULL;
+    this->decompICCSize = 0;
     if (jpeg_read_icc_profile(dinfo, &iccPtr, &iccLen)) {
-      free(this->decompICCBuf);
       this->decompICCBuf = iccPtr;
       this->decompICCSize = (size_t)iccLen;
     }

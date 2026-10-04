@@ -70,6 +70,13 @@ in the invalid image's header rather than the valid image's header, which might
 have caused the caller to allocate too small of a buffer to hold the
 decompressed valid image.
 
+11. If `TJPARAM_SAVEMARKERS` is set to 2 or 4, then `tj3DecompressHeader()` now
+always removes the ICC profile (if any) that was previously extracted into the
+same TurboJPEG instance.  This addresses an oversight in 3.2 beta1[10] whereby,
+if the same TurboJPEG instance was used to decompress or transform multiple
+JPEG images, then `tj3GetICCProfile()` and `tj3TransformBufSize()` behaved as
+if JPEG images with no ICC profile contained the last ICC profile extracted.
+
 
 3.2.0
 =====

@@ -981,8 +981,8 @@ enum TJPARAM {
    *
    * If this parameter is set to `2` or `4`:
    * - When decompressing, #tj3DecompressHeader() extracts the ICC profile from
-   *   a JPEG image.  #tj3GetICCProfile() can then be used to retrieve the
-   *   profile.
+   *   a JPEG image and removes any ICC profile that was previously extracted.
+   *   #tj3GetICCProfile() can then be used to retrieve the profile.
    * - When loading a PNG image using a TurboJPEG compression instance,
    *   #tj3LoadImage8(), #tj3LoadImage12(), and #tj3LoadImage16() extract the
    *   ICC profile from the PNG image and associate the profile with the
