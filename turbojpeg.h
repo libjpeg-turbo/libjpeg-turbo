@@ -1447,6 +1447,10 @@ DLLEXPORT int tj3YUVPlaneHeight(int componentID, int height, int subsamp);
  * compression functions, then `*jpegSize` is also ignored.  Upon return,
  * `*jpegSize` will contain the size of the JPEG image (in bytes.)
  *
+ * @note If #TJPARAM_NOREALLOC is not set and a pre-allocated JPEG buffer is
+ * passed to this function, then the application must not reallocate the buffer
+ * if it intends to reuse it in subsequent function calls.
+ *
  * @return 0 if successful, or -1 if an error occurred (see #tj3GetErrorStr()
  * and #tj3GetErrorCode().)
  */
@@ -1530,6 +1534,10 @@ DLLEXPORT int tj3Compress16(tjhandle handle, const unsigned short *srcBuf,
  * compression functions, then `*jpegSize` is also ignored.  Upon return,
  * `*jpegSize` will contain the size of the JPEG image (in bytes.)
  *
+ * @note If #TJPARAM_NOREALLOC is not set and a pre-allocated JPEG buffer is
+ * passed to this function, then the application must not reallocate the buffer
+ * if it intends to reuse it in subsequent function calls.
+ *
  * @return 0 if successful, or -1 if an error occurred (see #tj3GetErrorStr()
  * and #tj3GetErrorCode().)
  */
@@ -1589,6 +1597,10 @@ DLLEXPORT int tj3CompressFromYUVPlanes8(tjhandle handle,
  * JPEG buffer that is being reused from a previous call to one of the JPEG
  * compression functions, then `*jpegSize` is also ignored.  Upon return,
  * `*jpegSize` will contain the size of the JPEG image (in bytes.)
+ *
+ * @note If #TJPARAM_NOREALLOC is not set and a pre-allocated JPEG buffer is
+ * passed to this function, then the application must not reallocate the buffer
+ * if it intends to reuse it in subsequent function calls.
  *
  * @return 0 if successful, or -1 if an error occurred (see #tj3GetErrorStr()
  * and #tj3GetErrorCode().)
@@ -2111,6 +2123,10 @@ DLLEXPORT int tj3DecodeYUV8(tjhandle handle, const unsigned char *srcBuf,
  * @param transforms pointer to an array of n #tjtransform structures, each of
  * which specifies the transform parameters and/or cropping region for the
  * corresponding transformed JPEG image.
+ *
+ * @note If #TJPARAM_NOREALLOC is not set and a pre-allocated JPEG destination
+ * buffer is passed to this function, then the application must not reallocate
+ * the buffer if it intends to reuse it in subsequent function calls.
  *
  * @return 0 if successful, or -1 if an error occurred (see #tj3GetErrorStr()
  * and #tj3GetErrorCode().)
