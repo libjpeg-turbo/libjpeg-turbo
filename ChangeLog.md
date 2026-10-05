@@ -72,6 +72,10 @@ in the invalid image's header rather than the valid image's header, which might
 have caused the caller to allocate too small of a buffer to hold the
 decompressed valid image.
 
+10. Fixed a buffer overrun or "Bogus virtual array access" error in jpegtran
+that occurred when attempting to drop a grayscale image into a subsampled input
+image.
+
 
 3.1.4.1
 =======
