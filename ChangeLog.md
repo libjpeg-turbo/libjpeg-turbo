@@ -82,6 +82,10 @@ if JPEG images with no ICC profile contained the last ICC profile extracted.
 the source image to the destination image, given the current value of
 `TJPARAM_SAVEMARKERS` and the specified transform options.
 
+13. Fixed a buffer overrun or "Bogus virtual array access" error in jpegtran
+that occurred when attempting to drop a grayscale image into a subsampled input
+image.
+
 
 3.2.0
 =====
