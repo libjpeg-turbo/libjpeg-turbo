@@ -37,4 +37,7 @@ assignees: dcommander
 **If the bug is a regression, the specific commit that introduced the regression (use `git bisect` to determine this):**
 
 
+**AI tools that were used to assist in discovering or reporting this issue (you may include AI-generated test programs intended to reproduce the issue, but do NOT include or link to any AI-generated patches against libjpeg-turbo):**
+
+
 **Additional information:**
