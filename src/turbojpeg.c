@@ -1902,14 +1902,15 @@ DLLEXPORT int tj3DecompressHeader(tjhandle handle,
 
   jpeg_mem_src_tj(dinfo, jpegBuf, jpegSize);
 
-  /* Extract ICC profile if TJPARAM_SAVEMARKERS is 2 or 4.  (We could
-     eventually reuse this mechanism to save other markers, if needed.)
-     Because ICC profiles can be large, we extract them by default but allow
-     the user to override that behavior. */
-#ifdef SAVE_MARKERS_SUPPORTED
-  if (this->saveMarkers == 2 || this->saveMarkers == 4)
-    jpeg_save_markers(dinfo, JPEG_APP0 + 2, 0xFFFF);
-#endif
+  /* Extract ICC profile if TJPARAM_SAVEMARKERS is 2 or 4 and the instance is
+     initialized for decompression, and extract all extra markers (including
+     comments, JFIF thumbnails, Exif data, and ICC profile data) if
+     TJPARAM_SAVEMARKERS is not 0 and the instance is initialized for lossless
+     transformation.  Because these markers can be large, we extract them by
+     default but allow the user to override that behavior. */
+  if (this->saveMarkers == 2 || this->saveMarkers == 4 ||
+      (this->init & COMPRESS) != 0)
+    jcopy_markers_setup(dinfo, (JCOPY_OPTION)this->saveMarkers);
   /* jpeg_read_header() calls jpeg_abort() and returns JPEG_HEADER_TABLES_ONLY
      if the datastream is a tables-only datastream.  Since we aren't using a
      suspending data source, the only other value it can return is
@@ -1930,7 +1931,8 @@ DLLEXPORT int tj3DecompressHeader(tjhandle handle,
   }
 
   /* Determine the size of all non-ICC extra markers */
-  if (this->saveMarkers >= 1 && this->saveMarkers <= 3) {
+  if (this->saveMarkers >= 1 && this->saveMarkers <= 3 &&
+      (this->init & COMPRESS) != 0) {
     this->decompMarkerSize = 0;
     for (marker = dinfo->marker_list; marker != NULL; marker = marker->next) {
       if (marker->marker != JPEG_APP0 + 2)
