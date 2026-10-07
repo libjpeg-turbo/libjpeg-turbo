@@ -70,17 +70,24 @@ in the invalid image's header rather than the valid image's header, which might
 have caused the caller to allocate too small of a buffer to hold the
 decompressed valid image.
 
-11. If `TJPARAM_SAVEMARKERS` is set to 2 or 4, then `tj3DecompressHeader()` now
-always removes the ICC profile (if any) that was previously extracted into the
-same TurboJPEG instance.  This addresses an oversight in 3.2 beta1[10] whereby,
-if the same TurboJPEG instance was used to decompress or transform multiple
-JPEG images, then `tj3GetICCProfile()` and `tj3TransformBufSize()` behaved as
-if JPEG images with no ICC profile contained the last ICC profile extracted.
+11. `tj3DecompressHeader()` now always removes the ICC profile (if any) that
+was previously extracted into the TurboJPEG instance.  This addresses an
+oversight in 3.2 beta1[10] whereby, if the same TurboJPEG instance was used to
+decompress or transform multiple JPEG images, then `tj3GetICCProfile()` and
+`tj3TransformBufSize()` behaved as if JPEG images with no ICC profile contained
+the last ICC profile extracted.
 
-12. `tj3TransformBufSize()` now accounts for the size of all extra markers
-(including comments, JFIF thumbnails, and Exif data) that will be copied from
-the source image to the destination image, given the current value of
+12. `tj3TransformBufSize()` has been improved in the following ways:
+
+     - The function now accounts for the size of all extra markers (including
+comments, JFIF thumbnails, and Exif data) that will be copied from the source
+image to the destination image, given the current value of
 `TJPARAM_SAVEMARKERS` and the specified transform options.
+     - The function now returns accurate results regardless of the value of
+`TJPARAM_SAVEMARKERS` at the time `tj3DecompressHeader()` was called.  This
+reflects the fact that only the current value of `TJPARAM_SAVEMARKERS` and the
+specified transform options affect the marker copying behavior in
+`tj3Transform()`.
 
 13. Fixed a buffer overrun or "Bogus virtual array access" error in jpegtran
 that occurred when attempting to drop a grayscale image into a subsampled input

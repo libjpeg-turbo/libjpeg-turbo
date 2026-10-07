@@ -109,7 +109,7 @@ typedef struct _tjinstance {
   char errStr[JMSG_LENGTH_MAX];
   boolean isInstanceError;
   unsigned char *iccBuf, *decompICCBuf;
-  size_t iccSize, decompICCSize, decompMarkerSize;
+  size_t iccSize, decompICCSize, decompMarkerSize, decompCommentSize;
   /* Parameters */
   boolean bottomUp;
   boolean noRealloc;
@@ -1920,23 +1920,35 @@ DLLEXPORT int tj3DecompressHeader(tjhandle handle,
 
   setDecompParameters(this);
 
-  if (this->saveMarkers == 2 || this->saveMarkers == 4) {
-    free(this->decompICCBuf);
-    this->decompICCBuf = NULL;
-    this->decompICCSize = 0;
+  free(this->decompICCBuf);
+  this->decompICCBuf = NULL;
+  this->decompICCSize = 0;
+  if (this->saveMarkers == 2 || this->saveMarkers == 4 ||
+      (this->init & COMPRESS) != 0) {
     if (jpeg_read_icc_profile(dinfo, &iccPtr, &iccLen)) {
-      this->decompICCBuf = iccPtr;
+      if (this->saveMarkers == 2 || this->saveMarkers == 4)
+        this->decompICCBuf = iccPtr;
+      else
+        free(iccPtr);
       this->decompICCSize = (size_t)iccLen;
     }
   }
 
   /* Determine the size of all non-ICC extra markers */
-  if (this->saveMarkers >= 1 && this->saveMarkers <= 3 &&
-      (this->init & COMPRESS) != 0) {
+  if ((this->init & COMPRESS) != 0) {
     this->decompMarkerSize = 0;
     for (marker = dinfo->marker_list; marker != NULL; marker = marker->next) {
-      if (marker->marker != JPEG_APP0 + 2)
-        this->decompMarkerSize += marker->data_length;
+      if (marker->marker != JPEG_APP0 + 2 && marker->marker != JPEG_APP0 &&
+          marker->marker != JPEG_APP0 + 14 && marker->marker != JPEG_COM)
+        this->decompMarkerSize += marker->data_length + 4;
+    }
+  }
+
+  if ((this->init & COMPRESS) != 0) {
+    this->decompCommentSize = 0;
+    for (marker = dinfo->marker_list; marker != NULL; marker = marker->next) {
+      if (marker->marker == JPEG_COM)
+        this->decompCommentSize += marker->data_length + 4;
     }
   }
 
@@ -2969,15 +2981,20 @@ DLLEXPORT size_t tj3TransformBufSize(tjhandle handle,
   }
 
   retval = tj3JPEGBufSize(dstWidth, dstHeight, dstSubsamp);
+
   if ((this->saveMarkers == 2 || this->saveMarkers == 4) &&
       !(transform->options & TJXOPT_COPYNONE))
-    retval += this->decompICCSize;
+    retval += (this->decompICCSize ? this->decompICCSize + 16 : 0);
   else
-    retval += this->iccSize;
+    retval += (this->iccSize ? this->iccSize + 16 : 0);
+
+  if ((this->saveMarkers == 2 || this->saveMarkers == 3) &&
+      !(transform->options & TJXOPT_COPYNONE))
+    retval += this->decompMarkerSize;
 
   if (this->saveMarkers >= 1 && this->saveMarkers <= 3 &&
       !(transform->options & TJXOPT_COPYNONE))
-    retval += this->decompMarkerSize;
+    retval += this->decompCommentSize;
 
 bailout:
   return retval;
