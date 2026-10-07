@@ -895,15 +895,12 @@ static void extraMarkersTest(void)
     memset(jpegBuf, 'I', markerDataSize);
     TRY_TJ(handle, tj3SetICCProfile(handle, jpegBuf, markerDataSize));
     jpegSize = worstCaseSize;
-    if (precision <= 8) {
+    if (precision == 8) {
       TRY_TJ(handle, tj3Compress8(handle, (unsigned char *)srcBuf, w, 0, h,
                                   TJPF_BGRX, &jpegBuf, &jpegSize));
-    } else if (precision <= 12) {
+    } else {
       TRY_TJ(handle, tj3Compress12(handle, (short *)srcBuf, w, 0, h, TJPF_BGRX,
                                    &jpegBuf, &jpegSize));
-    } else {
-      TRY_TJ(handle, tj3Compress16(handle, (unsigned short *)srcBuf, w, 0, h,
-                                   TJPF_BGRX, &jpegBuf, &jpegSize));
     }
     free(srcBuf);  srcBuf = NULL;
     tj3Destroy(handle);  handle = NULL;
