@@ -1,4 +1,4 @@
-.TH JPEGTRAN 1 "24 September 2026"
+.TH JPEGTRAN 1 "7 October 2026"
 .SH NAME
 jpegtran \- lossless transformation of JPEG files
 .SH SYNOPSIS
@@ -218,9 +218,8 @@ quantization of the output image will be adapted to accommodate the higher of
 the input image quality and the drop image quality.  The trim option can be
 used with the drop option to requantize the drop image to match the input
 image.  Note that a grayscale image can be dropped into a full-color image or
-vice versa, as long as the full-color image has no vertical subsampling.  If
-the input image is grayscale and the drop image is full-color, then the
-chrominance channels from the drop image will be discarded.
+vice versa.  If the input image is grayscale and the drop image is full-color,
+then the chrominance channels from the drop image will be discarded.
 .PP
 Other not-strictly-lossless transformation switches are:
 .TP

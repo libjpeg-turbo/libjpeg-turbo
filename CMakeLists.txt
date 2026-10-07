@@ -1792,6 +1792,11 @@ add_custom_target(croptest
   COMMAND echo croptest
   COMMAND ${BASH} ${CMAKE_CURRENT_BINARY_DIR}/test/croptest)
 
+configure_file(test/droptest.in test/droptest @ONLY)
+add_custom_target(droptest
+  COMMAND echo droptest
+  COMMAND ${BASH} ${CMAKE_CURRENT_BINARY_DIR}/test/droptest)
+
 if(WITH_TURBOJPEG)
   configure_file(test/tjbenchtest.in test/tjbenchtest @ONLY)
   configure_file(test/tjcomptest.in test/tjcomptest @ONLY)
