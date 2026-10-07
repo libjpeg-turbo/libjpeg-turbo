@@ -1,0 +1,298 @@
+#!/bin/bash
+
+set -u
+set -e
+trap onexit INT
+trap onexit TERM
+trap onexit EXIT
+
+onexit()
+{
+	if [ -d $OUTDIR ]; then
+		rm -rf $OUTDIR
+	fi
+}
+
+runme()
+{
+	echo \*\*\* $*
+	$*
+}
+
+IMAGE=vgl_6548_0026a.bmp
+WIDTH=128
+HEIGHT=95
+IMGDIR=@CMAKE_SOURCE_DIR@/testimages
+OUTDIR=`mktemp -d /tmp/__droptest_output.XXXXXX`
+EXEDIR=@CMAKE_BINARY_DIR@
+
+if [ -d $OUTDIR ]; then
+	rm -rf $OUTDIR
+fi
+mkdir -p $OUTDIR
+
+exec >$EXEDIR/droptest.log 2>&1
+
+echo "==============================================================================="
+echo "$IMAGE ($WIDTH x $HEIGHT)"
+echo "==============================================================================="
+echo
+
+cp $IMGDIR/$IMAGE $OUTDIR
+basename=`basename $IMAGE .bmp`
+echo "-------------------------------------------------------------------------------"
+echo "Generating test images"
+echo "-------------------------------------------------------------------------------"
+echo
+
+SUBSAMP=(GRAY 410 24 32 23 420 422 440 444)
+SAMPARG=("-grayscale" "-sample 4x2" "-sample 2x4" "-sample 3x2" "-sample 2x3" "-sample 2x2" "-sample 2x1" "-sample 1x2" "-sample 1x1")
+MCUWIDTH=(8 32 16 24 16 16 16 8 8)
+MCUHEIGHT=(8 16 32 16 24 16 8 16 8)
+
+for sampi in {0..8}; do
+	runme $EXEDIR/cjpeg ${SAMPARG[$sampi]} \
+		-outfile $OUTDIR/${basename}_${SUBSAMP[$sampi]}.jpg \
+		$IMGDIR/${basename}.bmp
+	runme $EXEDIR/cjpeg ${SAMPARG[$sampi]} \
+		-outfile $OUTDIR/testorig_${SUBSAMP[$sampi]}.jpg \
+		$IMGDIR/testorig.ppm
+done
+echo
+
+for Y in {0..32}; do
+
+	for H in {1..32}; do
+
+		for sampi in {0..8}; do
+			EXT=ppm
+			if [ $sampi -eq 0 ]; then
+				EXT=pgm
+			fi
+
+			MCUW=${MCUWIDTH[$sampi]}
+			MCUH=${MCUHEIGHT[$sampi]}
+
+			if [ $MCUW -eq 24 ]; then
+				X=$(( (Y*MCUW)%120 ))
+			else
+				X=$(( (Y*MCUW)%128 ))
+			fi
+			W=$(( WIDTH-X-7 ))
+			if [ $Y -gt 31 ]; then
+				Y=$(( HEIGHT-H-MCUH ));
+			fi
+
+			CROPX=$(( X-(X%MCUW) ))
+			CROPW=$(( W+X-CROPX ))
+			CROPY=$(( Y-(Y%MCUH) ))
+			CROPH=$(( H+Y-CROPY ))
+
+			XFUDGE=$(( MCUW-1-(X+MCUW-1)%MCUW ))
+			DROPX=$(( X+XFUDGE ))
+			if [ $CROPW -le $XFUDGE ]; then
+				DROPW=0
+			elif (( DROPX + CROPW - XFUDGE == WIDTH )); then
+				DROPW=$(( (CROPW-XFUDGE+MCUW-1)/MCUW*MCUW ))
+			else
+				DROPW=$(( (CROPW-XFUDGE)/MCUW*MCUW ))
+			fi
+
+			YFUDGE=$(( MCUH-1-(Y+MCUH-1)%MCUH ))
+			DROPY=$(( Y+YFUDGE ))
+			if [ $CROPH -le $YFUDGE ]; then
+				DROPH=0
+			elif (( DROPY + CROPH - YFUDGE == HEIGHT )); then
+				DROPH=$(( (CROPH-YFUDGE+MCUH-1)/MCUH*MCUH ))
+			else
+				DROPH=$(( (CROPH-YFUDGE)/MCUH*MCUH ))
+			fi
+
+			echo "-------------------------------------------------------------------------------"
+			echo "${SUBSAMP[$sampi]} ${W}x${H}+${X}+${Y}"
+			echo "-------------------------------------------------------------------------------"
+			echo
+
+			if (( CROPX + CROPW >= WIDTH || CROPY + CROPH >= HEIGHT )); then
+				continue
+			fi
+
+			# Color onto color
+			$EXEDIR/jpegtran -crop ${W}x${H}+${X}+${Y} \
+				-outfile $OUTDIR/drop_${SUBSAMP[$sampi]}.jpg \
+				$OUTDIR/testorig_${SUBSAMP[$sampi]}.jpg
+			if [ $DROPW -gt 0 -a $DROPH -gt 0 ]; then
+				$EXEDIR/djpeg -nosmooth \
+					-outfile $OUTDIR/${basename}_${SUBSAMP[$sampi]}.${EXT} \
+					$OUTDIR/${basename}_${SUBSAMP[$sampi]}.jpg
+				$EXEDIR/jpegtran -crop ${DROPW}x${DROPH}+${CROPX}+${CROPY} \
+					-outfile $OUTDIR/drop_magick_${SUBSAMP[$sampi]}.jpg \
+					$OUTDIR/testorig_${SUBSAMP[$sampi]}.jpg
+				$EXEDIR/djpeg -nosmooth \
+					-outfile $OUTDIR/drop_magick_${SUBSAMP[$sampi]}.${EXT} \
+					$OUTDIR/drop_magick_${SUBSAMP[$sampi]}.jpg
+				rm $OUTDIR/drop_magick_${SUBSAMP[$sampi]}.jpg
+				magick $OUTDIR/${basename}_${SUBSAMP[$sampi]}.${EXT} \
+					$OUTDIR/drop_magick_${SUBSAMP[$sampi]}.${EXT} -gravity Northwest \
+					-geometry +${DROPX}+${DROPY} -composite \
+					$OUTDIR/${basename}_${SUBSAMP[$sampi]}_c2c_ref.${EXT}
+				rm $OUTDIR/${basename}_${SUBSAMP[$sampi]}.${EXT} \
+					$OUTDIR/drop_magick_${SUBSAMP[$sampi]}.${EXT}
+			fi
+			runme $EXEDIR/jpegtran \
+				-drop +${X}+${Y} $OUTDIR/drop_${SUBSAMP[$sampi]}.jpg \
+				-outfile $OUTDIR/${basename}_${SUBSAMP[$sampi]}_c2c.jpg \
+				$OUTDIR/${basename}_${SUBSAMP[$sampi]}.jpg
+			rm $OUTDIR/drop_${SUBSAMP[$sampi]}.jpg
+			if [ $DROPW -gt 0 -a $DROPH -gt 0 ]; then
+				$EXEDIR/djpeg -nosmooth \
+					-outfile $OUTDIR/${basename}_${SUBSAMP[$sampi]}_c2c.${EXT} \
+					$OUTDIR/${basename}_${SUBSAMP[$sampi]}_c2c.jpg
+				runme cmp $OUTDIR/${basename}_${SUBSAMP[$sampi]}_c2c.${EXT} \
+					$OUTDIR/${basename}_${SUBSAMP[$sampi]}_c2c_ref.${EXT}
+				rm $OUTDIR/${basename}_${SUBSAMP[$sampi]}_c2c_ref.${EXT} \
+					$OUTDIR/${basename}_${SUBSAMP[$sampi]}_c2c.${EXT}
+			else
+				runme cmp $OUTDIR/${basename}_${SUBSAMP[$sampi]}_c2c.jpg \
+					$OUTDIR/${basename}_${SUBSAMP[$sampi]}.jpg
+			fi
+			rm $OUTDIR/${basename}_${SUBSAMP[$sampi]}_c2c.jpg
+			echo
+
+			if [ $sampi -ne 0 ]; then
+				# Color onto grayscale
+				XFUDGE=$(( 7-(X+7)%8 ))
+				DROPX=$(( X+XFUDGE ))
+				if [ $CROPW -le $XFUDGE ]; then
+					DROPW=0
+				elif (( DROPX + CROPW - XFUDGE == WIDTH )); then
+					DROPW=$(( (CROPW-XFUDGE+7)/8*8 ))
+				else
+					DROPW=$(( (CROPW-XFUDGE)/8*8 ))
+				fi
+
+				YFUDGE=$(( 8-1-(Y+8-1)%8 ))
+				DROPY=$(( Y+YFUDGE ))
+				if [ $CROPH -le $YFUDGE ]; then
+					DROPH=0
+				elif (( DROPY + CROPH - YFUDGE == HEIGHT )); then
+					DROPH=$(( (CROPH-YFUDGE+7)/8*8 ))
+				else
+					DROPH=$(( (CROPH-YFUDGE)/8*8 ))
+				fi
+
+				$EXEDIR/jpegtran -crop ${W}x${H}+${X}+${Y} \
+					-outfile $OUTDIR/drop_${SUBSAMP[$sampi]}.jpg \
+					$OUTDIR/testorig_${SUBSAMP[$sampi]}.jpg
+				if [ $DROPW -gt 0 -a $DROPH -gt 0 ]; then
+					$EXEDIR/djpeg -nosmooth -grayscale \
+						-outfile $OUTDIR/${basename}_${SUBSAMP[$sampi]}g.pgm \
+						$OUTDIR/${basename}_${SUBSAMP[$sampi]}.jpg
+					$EXEDIR/jpegtran -crop ${DROPW}x${DROPH}+${CROPX}+${CROPY} \
+						-outfile $OUTDIR/drop_magick_${SUBSAMP[$sampi]}.jpg \
+						$OUTDIR/testorig_${SUBSAMP[$sampi]}.jpg
+					$EXEDIR/djpeg -nosmooth -grayscale \
+						-outfile $OUTDIR/drop_magick_${SUBSAMP[$sampi]}.pgm \
+						$OUTDIR/drop_magick_${SUBSAMP[$sampi]}.jpg
+					rm $OUTDIR/drop_magick_${SUBSAMP[$sampi]}.jpg
+					magick $OUTDIR/${basename}_${SUBSAMP[$sampi]}g.pgm \
+						$OUTDIR/drop_magick_${SUBSAMP[$sampi]}.pgm -gravity Northwest \
+						-geometry +${DROPX}+${DROPY} -composite \
+						$OUTDIR/${basename}_${SUBSAMP[$sampi]}_c2g_ref.pgm
+					rm $OUTDIR/${basename}_${SUBSAMP[$sampi]}g.pgm \
+						$OUTDIR/drop_magick_${SUBSAMP[$sampi]}.pgm
+				fi
+				runme $EXEDIR/jpegtran \
+					-drop +${X}+${Y} $OUTDIR/drop_${SUBSAMP[$sampi]}.jpg \
+					-outfile $OUTDIR/${basename}_${SUBSAMP[$sampi]}_c2g.jpg \
+					$OUTDIR/${basename}_GRAY.jpg
+				rm $OUTDIR/drop_${SUBSAMP[$sampi]}.jpg
+				if [ $DROPW -gt 0 -a $DROPH -gt 0 ]; then
+					$EXEDIR/djpeg -nosmooth \
+						-outfile $OUTDIR/${basename}_${SUBSAMP[$sampi]}_c2g.pgm \
+						$OUTDIR/${basename}_${SUBSAMP[$sampi]}_c2g.jpg
+					runme cmp $OUTDIR/${basename}_${SUBSAMP[$sampi]}_c2g.pgm \
+						$OUTDIR/${basename}_${SUBSAMP[$sampi]}_c2g_ref.pgm
+					rm $OUTDIR/${basename}_${SUBSAMP[$sampi]}_c2g_ref.pgm \
+						$OUTDIR/${basename}_${SUBSAMP[$sampi]}_c2g.pgm
+				else
+					runme cmp $OUTDIR/${basename}_${SUBSAMP[$sampi]}_c2g.jpg \
+						$OUTDIR/${basename}_GRAY.jpg
+				fi
+				rm $OUTDIR/${basename}_${SUBSAMP[$sampi]}_c2g.jpg
+				echo
+
+				# Grayscale onto color
+				CROPX=$(( X-(X%8) ))
+				CROPW=$(( W+X-CROPX ))
+				CROPY=$(( Y-(Y%8) ))
+				CROPH=$(( H+Y-CROPY ))
+
+				XFUDGE=$(( MCUW-1-(X+MCUW-1)%MCUW ))
+				DROPX=$(( X+XFUDGE ))
+				if [ $CROPW -le $XFUDGE ]; then
+					DROPW=0
+				elif (( DROPX + CROPW - XFUDGE == WIDTH )); then
+					DROPW=$(( (CROPW-XFUDGE+MCUW-1)/MCUW*MCUW ))
+				else
+					DROPW=$(( (CROPW-XFUDGE)/MCUW*MCUW ))
+				fi
+
+				YFUDGE=$(( MCUH-1-(Y+MCUH-1)%MCUH ))
+				DROPY=$(( Y+YFUDGE ))
+				if [ $CROPH -le $YFUDGE ]; then
+					DROPH=0
+				elif (( DROPY + CROPH - YFUDGE == HEIGHT )); then
+					DROPH=$(( (CROPH-YFUDGE+MCUH-1)/MCUH*MCUH ))
+				else
+					DROPH=$(( (CROPH-YFUDGE)/MCUH*MCUH ))
+				fi
+
+				$EXEDIR/jpegtran -crop ${W}x${H}+${X}+${Y} -grayscale \
+					-outfile $OUTDIR/drop_${SUBSAMP[$sampi]}g.jpg \
+					$OUTDIR/testorig_${SUBSAMP[$sampi]}.jpg
+				if [ $DROPW -gt 0 -a $DROPH -gt 0 ]; then
+					$EXEDIR/djpeg -nosmooth \
+						-outfile $OUTDIR/${basename}_${SUBSAMP[$sampi]}.ppm \
+						$OUTDIR/${basename}_${SUBSAMP[$sampi]}.jpg
+					$EXEDIR/jpegtran -crop ${DROPW}x${DROPH}+${CROPX}+${CROPY} \
+						-grayscale -outfile $OUTDIR/drop_magick_${SUBSAMP[$sampi]}g.jpg \
+						$OUTDIR/testorig_${SUBSAMP[$sampi]}.jpg
+					$EXEDIR/djpeg -nosmooth -rgb \
+						-outfile $OUTDIR/drop_magick_${SUBSAMP[$sampi]}g.ppm \
+						$OUTDIR/drop_magick_${SUBSAMP[$sampi]}g.jpg
+					rm $OUTDIR/drop_magick_${SUBSAMP[$sampi]}g.jpg
+					magick $OUTDIR/${basename}_${SUBSAMP[$sampi]}.ppm \
+						$OUTDIR/drop_magick_${SUBSAMP[$sampi]}g.ppm -gravity Northwest \
+						-geometry +${DROPX}+${DROPY} -composite \
+						$OUTDIR/${basename}_${SUBSAMP[$sampi]}_g2c_ref.ppm
+					rm $OUTDIR/${basename}_${SUBSAMP[$sampi]}.ppm \
+						$OUTDIR/drop_magick_${SUBSAMP[$sampi]}g.ppm
+				fi
+				runme $EXEDIR/jpegtran \
+					-drop +${X}+${Y} $OUTDIR/drop_${SUBSAMP[$sampi]}g.jpg \
+					-outfile $OUTDIR/${basename}_${SUBSAMP[$sampi]}_g2c.jpg \
+					$OUTDIR/${basename}_${SUBSAMP[$sampi]}.jpg
+				rm $OUTDIR/drop_${SUBSAMP[$sampi]}g.jpg
+				if [ $DROPW -gt 0 -a $DROPH -gt 0 ]; then
+					$EXEDIR/djpeg -nosmooth \
+						-outfile $OUTDIR/${basename}_${SUBSAMP[$sampi]}_g2c.ppm \
+						$OUTDIR/${basename}_${SUBSAMP[$sampi]}_g2c.jpg
+					runme cmp $OUTDIR/${basename}_${SUBSAMP[$sampi]}_g2c.ppm \
+						$OUTDIR/${basename}_${SUBSAMP[$sampi]}_g2c_ref.ppm
+					rm $OUTDIR/${basename}_${SUBSAMP[$sampi]}_g2c_ref.ppm \
+						$OUTDIR/${basename}_${SUBSAMP[$sampi]}_g2c.ppm
+				else
+					runme cmp $OUTDIR/${basename}_${SUBSAMP[$sampi]}_g2c.jpg \
+						$OUTDIR/${basename}_${SUBSAMP[$sampi]}.jpg
+				fi
+				rm $OUTDIR/${basename}_${SUBSAMP[$sampi]}_g2c.jpg
+				echo
+			fi
+		done
+
+	done
+
+done
+
+echo SUCCESS!

@@ -40,6 +40,7 @@ file(GLOB FILES
   *_LOSSL*S_*.ppm
   *_LOSSL*S_*.jpg
   croptest.log
+  droptest.log
   tjbenchtest*.log
   tjexampletest*.log)
 
