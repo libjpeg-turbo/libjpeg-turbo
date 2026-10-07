@@ -1564,12 +1564,14 @@ DLLEXPORT int tj3SetICCProfile(tjhandle handle, unsigned char *iccBuf,
  * upon return from this function, as it may have changed.
  *
  * @param jpegSize pointer to a size_t variable that holds the size of the JPEG
- * buffer.  If `*jpegBuf` points to a pre-allocated buffer, then `*jpegSize`
- * should be set to the size of the buffer.  Otherwise, `*jpegSize` is
- * ignored.  If `*jpegBuf` points to a JPEG buffer that is being reused from a
- * previous call to one of the JPEG compression functions, then `*jpegSize` is
- * also ignored.  Upon return, `*jpegSize` will contain the size of the JPEG
- * image (in bytes.)
+ * buffer.
+ * - If `*jpegBuf` points to a pre-allocated buffer, then `*jpegSize` should be
+ *   set to the size of the buffer.  Otherwise, `*jpegSize` is ignored.
+ * - If #TJPARAM_NOREALLOC is not set and `*jpegBuf` points to a JPEG buffer
+ *   that is being reused from a previous call to one of the JPEG compression
+ *   functions, then `*jpegSize` is also ignored.
+ * .
+ * Upon return, `*jpegSize` will contain the size of the JPEG image (in bytes.)
  *
  * @note If #TJPARAM_NOREALLOC is not set and a pre-allocated JPEG buffer is
  * passed to this function, then the application must not reallocate the buffer
@@ -1629,12 +1631,14 @@ DLLEXPORT int tj3Compress8(tjhandle handle, const unsigned char *srcBuf,
  * upon return from this function, as it may have changed.
  *
  * @param jpegSize pointer to a size_t variable that holds the size of the JPEG
- * buffer.  If `*jpegBuf` points to a pre-allocated buffer, then `*jpegSize`
- * should be set to the size of the buffer.  Otherwise, `*jpegSize` is
- * ignored.  If `*jpegBuf` points to a JPEG buffer that is being reused from a
- * previous call to one of the JPEG compression functions, then `*jpegSize` is
- * also ignored.  Upon return, `*jpegSize` will contain the size of the JPEG
- * image (in bytes.)
+ * buffer.
+ * - If `*jpegBuf` points to a pre-allocated buffer, then `*jpegSize` should be
+ *   set to the size of the buffer.  Otherwise, `*jpegSize` is ignored.
+ * - If #TJPARAM_NOREALLOC is not set and `*jpegBuf` points to a JPEG buffer
+ *   that is being reused from a previous call to one of the JPEG compression
+ *   functions, then `*jpegSize` is also ignored.
+ * .
+ * Upon return, `*jpegSize` will contain the size of the JPEG image (in bytes.)
  *
  * @note If #TJPARAM_NOREALLOC is not set and a pre-allocated JPEG buffer is
  * passed to this function, then the application must not reallocate the buffer
@@ -1695,12 +1699,14 @@ DLLEXPORT int tj3Compress12(tjhandle handle, const short *srcBuf, int width,
  * upon return from this function, as it may have changed.
  *
  * @param jpegSize pointer to a size_t variable that holds the size of the JPEG
- * buffer.  If `*jpegBuf` points to a pre-allocated buffer, then `*jpegSize`
- * should be set to the size of the buffer.  Otherwise, `*jpegSize` is
- * ignored.  If `*jpegBuf` points to a JPEG buffer that is being reused from a
- * previous call to one of the JPEG compression functions, then `*jpegSize` is
- * also ignored.  Upon return, `*jpegSize` will contain the size of the JPEG
- * image (in bytes.)
+ * buffer.
+ * - If `*jpegBuf` points to a pre-allocated buffer, then `*jpegSize` should be
+ *   set to the size of the buffer.  Otherwise, `*jpegSize` is ignored.
+ * - If #TJPARAM_NOREALLOC is not set and `*jpegBuf` points to a JPEG buffer
+ *   that is being reused from a previous call to one of the JPEG compression
+ *   functions, then `*jpegSize` is also ignored.
+ * .
+ * Upon return, `*jpegSize` will contain the size of the JPEG image (in bytes.)
  *
  * @note If #TJPARAM_NOREALLOC is not set and a pre-allocated JPEG buffer is
  * passed to this function, then the application must not reallocate the buffer
@@ -1765,12 +1771,14 @@ DLLEXPORT int tj3Compress16(tjhandle handle, const unsigned short *srcBuf,
  * upon return from this function, as it may have changed.
  *
  * @param jpegSize pointer to a size_t variable that holds the size of the JPEG
- * buffer.  If `*jpegBuf` points to a pre-allocated buffer, then `*jpegSize`
- * should be set to the size of the buffer.  Otherwise, `*jpegSize` is
- * ignored.  If `*jpegBuf` points to a JPEG buffer that is being reused from a
- * previous call to one of the JPEG compression functions, then `*jpegSize` is
- * also ignored.  Upon return, `*jpegSize` will contain the size of the JPEG
- * image (in bytes.)
+ * buffer.
+ * - If `*jpegBuf` points to a pre-allocated buffer, then `*jpegSize` should be
+ *   set to the size of the buffer.  Otherwise, `*jpegSize` is ignored.
+ * - If #TJPARAM_NOREALLOC is not set and `*jpegBuf` points to a JPEG buffer
+ *   that is being reused from a previous call to one of the JPEG compression
+ *   functions, then `*jpegSize` is also ignored.
+ * .
+ * Upon return, `*jpegSize` will contain the size of the JPEG image (in bytes.)
  *
  * @note If #TJPARAM_NOREALLOC is not set and a pre-allocated JPEG buffer is
  * passed to this function, then the application must not reallocate the buffer
@@ -1832,12 +1840,14 @@ DLLEXPORT int tj3CompressFromYUVPlanes8(tjhandle handle,
  * upon return from this function, as it may have changed.
  *
  * @param jpegSize pointer to a size_t variable that holds the size of the JPEG
- * buffer.  If `*jpegBuf` points to a pre-allocated buffer, then `*jpegSize`
- * should be set to the size of the buffer.  Otherwise, `*jpegSize` is
- * ignored.  If `*jpegBuf` points to a JPEG buffer that is being reused from a
- * previous call to one of the JPEG compression functions, then `*jpegSize` is
- * also ignored.  Upon return, `*jpegSize` will contain the size of the JPEG
- * image (in bytes.)
+ * buffer.
+ * - If `*jpegBuf` points to a pre-allocated buffer, then `*jpegSize` should be
+ *   set to the size of the buffer.  Otherwise, `*jpegSize` is ignored.
+ * - If #TJPARAM_NOREALLOC is not set and `*jpegBuf` points to a JPEG buffer
+ *   that is being reused from a previous call to one of the JPEG compression
+ *   functions, then `*jpegSize` is also ignored.
+ * .
+ * Upon return, `*jpegSize` will contain the size of the JPEG image (in bytes.)
  *
  * @note If #TJPARAM_NOREALLOC is not set and a pre-allocated JPEG buffer is
  * passed to this function, then the application must not reallocate the buffer
