@@ -838,13 +838,26 @@ bailout:
 }
 
 #define CHECK_TJ3TRANSFORMBUFSIZE() { \
-  size_t transformBufSize = tj3TransformBufSize(handle, &xform); \
+  size_t transformBufSize = tj3TransformBufSize(handle, &xform), \
+         jpegSizeWithoutMarkers, dstSize0, dstSize; \
   if (transformBufSize == 0) \
     THROW_TJ(NULL) \
   else if (transformBufSize != worstCaseSize) { \
     printf("tj3TransformBufSize() returned %lu instead of %lu\n", \
            (unsigned long)transformBufSize, (unsigned long)worstCaseSize); \
-    goto bailout; \
+    BAILOUT() \
+  } \
+  /* Validate the actual marker copying behavior. */ \
+  jpegSizeWithoutMarkers = jpegSize - app1HeaderSize - app2HeaderSize - \
+                           comHeaderSize - markerDataSize * 3; \
+  dstSize = dstSize0 = worstCaseSize - tj3JPEGBufSize(w, h, subsamp) + \
+                       jpegSizeWithoutMarkers; \
+  TRY_TJ(handle, tj3Transform(handle, jpegBuf, jpegSize, 1, &dstBuf, \
+                              &dstSize, &xform)); \
+  if (dstSize != dstSize0) { \
+    printf("tj3Transform() generated %lu instead of %lu bytes\n", \
+           (unsigned long)dstSize, (unsigned long)dstSize0); \
+    BAILOUT() \
   } \
 }
 
@@ -852,10 +865,10 @@ static void extraMarkersTest(void)
 {
   int w = 16, h = 16, i, subsamp;
   void *srcBuf = NULL;
-  unsigned char *jpegBuf = NULL, *iccBuf = NULL;
+  unsigned char *jpegBuf = NULL, *dstBuf = NULL, *iccBuf = NULL;
   tjhandle handle = NULL;
   size_t worstCaseSize = 0, jpegSize, markerDataSize = 50000,
-         app1HeaderSize = 4, app2HeaderSize = 16, comHeaderSize = 4, iccSize;
+         app1HeaderSize = 4, app2HeaderSize = 18, comHeaderSize = 4, iccSize;
   tjtransform xform;
 
   memset(&xform, 0, sizeof(tjtransform));
@@ -870,7 +883,8 @@ static void extraMarkersTest(void)
     }
     worstCaseSize = tj3JPEGBufSize(w, h, subsamp) + app1HeaderSize +
                     app2HeaderSize + comHeaderSize + markerDataSize * 3;
-    if ((jpegBuf = (unsigned char *)tj3Alloc(worstCaseSize)) == NULL)
+    if ((jpegBuf = (unsigned char *)tj3Alloc(worstCaseSize)) == NULL ||
+        (dstBuf = (unsigned char *)tj3Alloc(worstCaseSize)) == NULL)
       THROW("Memory allocation failure");
 
     if ((handle = tj3Init(TJINIT_COMPRESS)) == NULL)
@@ -1024,12 +1038,14 @@ static void extraMarkersTest(void)
 
     tj3Destroy(handle);  handle = NULL;
 
+    tj3Free(dstBuf);  dstBuf = NULL;
     tj3Free(jpegBuf);  jpegBuf = NULL;
   }
 
 bailout:
   tj3Free(iccBuf);
   tj3Destroy(handle);
+  tj3Free(dstBuf);
   tj3Free(jpegBuf);
   free(srcBuf);
 }
@@ -1629,7 +1645,7 @@ int main(int argc, char *argv[])
   if (alloc) printf("Testing automatic buffer allocation\n");
   if (doYUV) num4bf = 4;
   overflowTest();
-  if (!lossless && !alloc)
+  if (!lossless && !alloc && !doYUV)
     extraMarkersTest();
   doTest(35, 39, _3sampleFormats, 2, TJSAMP_444, "test");
   doTest(39, 41, _4sampleFormats, num4bf, TJSAMP_444, "test");

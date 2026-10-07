@@ -2984,9 +2984,9 @@ DLLEXPORT size_t tj3TransformBufSize(tjhandle handle,
 
   if ((this->saveMarkers == 2 || this->saveMarkers == 4) &&
       !(transform->options & TJXOPT_COPYNONE))
-    retval += (this->decompICCSize ? this->decompICCSize + 16 : 0);
+    retval += (this->decompICCSize ? this->decompICCSize + 18 : 0);
   else
-    retval += (this->iccSize ? this->iccSize + 16 : 0);
+    retval += (this->iccSize ? this->iccSize + 18 : 0);
 
   if ((this->saveMarkers == 2 || this->saveMarkers == 3) &&
       !(transform->options & TJXOPT_COPYNONE))
