@@ -1899,11 +1899,12 @@ DLLEXPORT int tj3EncodeYUV8(tjhandle handle, const unsigned char *srcBuf,
 /**
  * Retrieve information about a JPEG image without decompressing it, or prime
  * the decompressor with quantization and Huffman tables.  If a JPEG image is
- * passed to this function, then the @ref TJPARAM "parameters" that describe
- * the JPEG image will be set when the function returns.  If a JPEG image is
- * passed to this function and #TJPARAM_SAVEMARKERS is set to `2` or `4`, then
- * the ICC profile (if any) will be extracted from the JPEG image.
- * (#tj3GetICCProfile() can then be used to retrieve the profile.)
+ * passed to this function, then:
+ * - The @ref TJPARAM "parameters" that describe the JPEG image will be set
+ *   when the function returns.
+ * - If #TJPARAM_SAVEMARKERS is set to `2` or `4`, then the ICC profile (if
+ *   any) will be extracted from the JPEG image.  #tj3GetICCProfile() can then
+ *   be used to retrieve the profile.
  *
  * @param handle handle to a TurboJPEG instance that has been initialized for
  * decompression
@@ -2289,9 +2290,10 @@ DLLEXPORT int tj3DecodeYUV8(tjhandle handle, const unsigned char *srcBuf,
  * This function is a wrapper for #tj3JPEGBufSize() that takes into account
  * cropping, transposition of the width and height (which affects the
  * destination image dimensions and level of chrominance subsampling),
- * grayscale conversion, and the ICC profile (if any) that was previously
+ * grayscale conversion, the ICC profile (if any) that was previously
  * associated with the TurboJPEG instance (see #tj3SetICCProfile()) or
  * extracted from the source image (see #tj3GetICCProfile() and
+ * #TJPARAM_SAVEMARKERS), and any other extra markers in the source image (see
  * #TJPARAM_SAVEMARKERS.)  The JPEG header must be read (see
  * tj3DecompressHeader()) prior to calling this function.
  *

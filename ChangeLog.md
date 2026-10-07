@@ -72,7 +72,19 @@ in the invalid image's header rather than the valid image's header, which might
 have caused the caller to allocate too small of a buffer to hold the
 decompressed valid image.
 
-10. Fixed a buffer overrun or "Bogus virtual array access" error in jpegtran
+10. `tj3TransformBufSize()` has been improved in the following ways:
+
+     - The function now accounts for the size of all extra markers (including
+comments, JFIF thumbnails, and Exif data) that will be copied from the source
+image to the destination image, given the current value of
+`TJPARAM_SAVEMARKERS` and the specified transform options.
+     - The function now returns accurate results regardless of the value of
+`TJPARAM_SAVEMARKERS` at the time `tj3DecompressHeader()` was called.  This
+reflects the fact that only the current value of `TJPARAM_SAVEMARKERS` and the
+specified transform options affect the marker copying behavior in
+`tj3Transform()`.
+
+11. Fixed a buffer overrun or "Bogus virtual array access" error in jpegtran
 that occurred when attempting to drop a grayscale image into a subsampled input
 image.
 

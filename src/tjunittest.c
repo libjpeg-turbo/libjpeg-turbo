@@ -829,6 +829,225 @@ bailout:
 }
 
 
+#define BYTESWAP16(array, index, value) { \
+  array[index] = (unsigned char)((unsigned int)(value) >> 8); \
+  array[index + 1] = (unsigned char)((unsigned int)(value) & 0xFF); \
+}
+
+#define CHECK_TJ3TRANSFORMBUFSIZE() { \
+  size_t transformBufSize = tj3TransformBufSize(handle, &xform), \
+         jpegSizeWithoutMarkers, dstSize0, dstSize; \
+  if (transformBufSize == 0) \
+    THROW_TJ(NULL) \
+  else if (transformBufSize != worstCaseSize) { \
+    printf("tj3TransformBufSize() returned %lu instead of %lu\n", \
+           (unsigned long)transformBufSize, (unsigned long)worstCaseSize); \
+    BAILOUT() \
+  } \
+  /* Validate the actual marker copying behavior. */ \
+  jpegSizeWithoutMarkers = jpegSize - app1HeaderSize - app2HeaderSize - \
+                           comHeaderSize - markerDataSize * 3; \
+  dstSize = dstSize0 = worstCaseSize - tj3JPEGBufSize(w, h, subsamp) + \
+                       jpegSizeWithoutMarkers; \
+  TRY_TJ(handle, tj3Transform(handle, jpegBuf, jpegSize, 1, &dstBuf, \
+                              &dstSize, &xform)); \
+  if (dstSize != dstSize0) { \
+    printf("tj3Transform() generated %lu instead of %lu bytes\n", \
+           (unsigned long)dstSize, (unsigned long)dstSize0); \
+    BAILOUT() \
+  } \
+}
+
+static void extraMarkersTest(void)
+{
+  int w = 16, h = 16, i, subsamp;
+  void *srcBuf = NULL;
+  unsigned char *jpegBuf = NULL, *dstBuf = NULL, *iccBuf = NULL;
+  tjhandle handle = NULL;
+  size_t worstCaseSize = 0, jpegSize, markerDataSize = 50000,
+         app1HeaderSize = 4, app2HeaderSize = 18, comHeaderSize = 4, iccSize;
+  tjtransform xform;
+
+  memset(&xform, 0, sizeof(tjtransform));
+
+  for (subsamp = 0; subsamp < TJ_NUMSAMP; subsamp++) {
+    /* Generate a JPEG image with APP1, APP2 (ICC), and COM markers. */
+    if ((srcBuf = malloc(w * h * 4 * sampleSize)) == NULL)
+      THROW("Memory allocation failure");
+    for (i = 0; i < w * h * 4; i++) {
+      if (random() < RAND_MAX / 2) setVal(srcBuf, i, 0);
+      else setVal(srcBuf, i, maxSample);
+    }
+    worstCaseSize = tj3JPEGBufSize(w, h, subsamp) + app1HeaderSize +
+                    app2HeaderSize + comHeaderSize + markerDataSize * 3;
+    if ((jpegBuf = (unsigned char *)tj3Alloc(worstCaseSize)) == NULL ||
+        (dstBuf = (unsigned char *)tj3Alloc(worstCaseSize)) == NULL)
+      THROW("Memory allocation failure");
+
+    if ((handle = tj3Init(TJINIT_COMPRESS)) == NULL)
+      THROW_TJ(NULL);
+    TRY_TJ(handle, tj3Set(handle, TJPARAM_NOREALLOC, 0));
+    TRY_TJ(handle, tj3Set(handle, TJPARAM_QUALITY, 100));
+    TRY_TJ(handle, tj3Set(handle, TJPARAM_SUBSAMP, subsamp));
+    memset(jpegBuf, 'I', markerDataSize);
+    TRY_TJ(handle, tj3SetICCProfile(handle, jpegBuf, markerDataSize));
+    jpegSize = worstCaseSize;
+    if (precision <= 8) {
+      TRY_TJ(handle, tj3Compress8(handle, (unsigned char *)srcBuf, w, 0, h,
+                                  TJPF_BGRX, &jpegBuf, &jpegSize));
+    } else if (precision <= 12) {
+      TRY_TJ(handle, tj3Compress12(handle, (short *)srcBuf, w, 0, h, TJPF_BGRX,
+                                   &jpegBuf, &jpegSize));
+    } else {
+      TRY_TJ(handle, tj3Compress16(handle, (unsigned short *)srcBuf, w, 0, h,
+                                   TJPF_BGRX, &jpegBuf, &jpegSize));
+    }
+    free(srcBuf);  srcBuf = NULL;
+    tj3Destroy(handle);  handle = NULL;
+
+    /* Move JPEG header and image data to make room for additional markers. */
+    memcpy(&jpegBuf[2 + app1HeaderSize + comHeaderSize + markerDataSize * 2],
+           &jpegBuf[2], jpegSize - 2);
+    /* Add APP1 marker */
+    i = 2;
+    jpegBuf[i++] = 0xFF;
+    jpegBuf[i++] = 0xE1;
+    BYTESWAP16(jpegBuf, i, markerDataSize + 2);
+    i += 2;
+    memset(&jpegBuf[i], '1', markerDataSize);
+    i += markerDataSize;
+    /* Add COM marker */
+    jpegBuf[i++] = 0xFF;
+    jpegBuf[i++] = 0xFE;
+    BYTESWAP16(jpegBuf, i, markerDataSize + 2);
+    i += 2;
+    memset(&jpegBuf[i], 'C', markerDataSize);
+    i += markerDataSize;
+    jpegSize += app1HeaderSize + comHeaderSize + markerDataSize * 2;
+
+    /* Verify that tj3TransformBufSize() returns the correct buffer size for
+       all TJPARAM_SAVEMARKERS values and transform options, irrespective of
+       the value of TJPARAM_SAVEMARKERS when tj3DecompressHeader() was
+       called. */
+    if ((handle = tj3Init(TJINIT_TRANSFORM)) == NULL)
+      THROW_TJ(NULL);
+
+    TRY_TJ(handle, tj3Set(handle, TJPARAM_SAVEMARKERS, 2));
+    TRY_TJ(handle, tj3DecompressHeader(handle, jpegBuf, jpegSize));
+    TRY_TJ(handle, tj3GetICCProfile(handle, &iccBuf, &iccSize));
+    if (iccBuf == NULL || iccSize != markerDataSize)
+      THROW("ICC profile was not extracted");
+    tj3Free(iccBuf);  iccBuf = NULL;
+    CHECK_TJ3TRANSFORMBUFSIZE();
+    TRY_TJ(handle, tj3Set(handle, TJPARAM_SAVEMARKERS, 0));
+    worstCaseSize = tj3JPEGBufSize(w, h, subsamp);
+    CHECK_TJ3TRANSFORMBUFSIZE();
+
+    xform.options = TJXOPT_COPYNONE;
+    CHECK_TJ3TRANSFORMBUFSIZE();
+    xform.options = 0;
+
+    TRY_TJ(handle, tj3Set(handle, TJPARAM_SAVEMARKERS, 0));
+    TRY_TJ(handle, tj3DecompressHeader(handle, jpegBuf, jpegSize));
+    if (tj3GetICCProfile(handle, &iccBuf, &iccSize) != -1 || iccBuf != NULL ||
+        iccSize != 0)
+      THROW("ICC profile was extracted unexpectedly");
+    CHECK_TJ3TRANSFORMBUFSIZE();
+    TRY_TJ(handle, tj3Set(handle, TJPARAM_SAVEMARKERS, 2));
+    worstCaseSize = tj3JPEGBufSize(w, h, subsamp) + app1HeaderSize +
+                    app2HeaderSize + comHeaderSize + markerDataSize * 3;
+    CHECK_TJ3TRANSFORMBUFSIZE();
+
+    TRY_TJ(handle, tj3Set(handle, TJPARAM_SAVEMARKERS, 4));
+    TRY_TJ(handle, tj3DecompressHeader(handle, jpegBuf, jpegSize));
+    TRY_TJ(handle, tj3GetICCProfile(handle, &iccBuf, &iccSize));
+    if (iccBuf == NULL || iccSize != markerDataSize)
+      THROW("ICC profile was not extracted");
+    tj3Free(iccBuf);  iccBuf = NULL;
+    worstCaseSize = tj3JPEGBufSize(w, h, subsamp) + app2HeaderSize +
+                    markerDataSize;
+    CHECK_TJ3TRANSFORMBUFSIZE();
+    TRY_TJ(handle, tj3Set(handle, TJPARAM_SAVEMARKERS, 3));
+    worstCaseSize = tj3JPEGBufSize(w, h, subsamp) + app1HeaderSize +
+                    comHeaderSize + markerDataSize * 2;
+    CHECK_TJ3TRANSFORMBUFSIZE();
+
+    TRY_TJ(handle, tj3DecompressHeader(handle, jpegBuf, jpegSize));
+    if (tj3GetICCProfile(handle, &iccBuf, &iccSize) != -1 || iccBuf != NULL ||
+        iccSize != 0)
+      THROW("ICC profile was extracted unexpectedly");
+    CHECK_TJ3TRANSFORMBUFSIZE();
+    TRY_TJ(handle, tj3Set(handle, TJPARAM_SAVEMARKERS, 4));
+    worstCaseSize = tj3JPEGBufSize(w, h, subsamp) + app2HeaderSize +
+                    markerDataSize;
+    CHECK_TJ3TRANSFORMBUFSIZE();
+
+    TRY_TJ(handle, tj3Set(handle, TJPARAM_SAVEMARKERS, 1));
+    TRY_TJ(handle, tj3DecompressHeader(handle, jpegBuf, jpegSize));
+    if (tj3GetICCProfile(handle, &iccBuf, &iccSize) != -1 || iccBuf != NULL ||
+        iccSize != 0)
+      THROW("ICC profile was extracted unexpectedly");
+    worstCaseSize = tj3JPEGBufSize(w, h, subsamp) + comHeaderSize +
+                    markerDataSize;
+    CHECK_TJ3TRANSFORMBUFSIZE();
+    TRY_TJ(handle, tj3Set(handle, TJPARAM_SAVEMARKERS, 0));
+    worstCaseSize = tj3JPEGBufSize(w, h, subsamp);
+    CHECK_TJ3TRANSFORMBUFSIZE();
+
+    tj3Destroy(handle);  handle = NULL;
+
+    /* Verify that ICC profile extraction works properly for all
+       TJPARAM_SAVEMARKERS values in pure decompression instances. */
+    if ((handle = tj3Init(TJINIT_DECOMPRESS)) == NULL)
+      THROW_TJ(NULL);
+
+    TRY_TJ(handle, tj3Set(handle, TJPARAM_SAVEMARKERS, 0));
+    TRY_TJ(handle, tj3DecompressHeader(handle, jpegBuf, jpegSize));
+    if (tj3GetICCProfile(handle, &iccBuf, &iccSize) != -1 || iccBuf != NULL ||
+        iccSize != 0)
+      THROW("ICC profile was extracted unexpectedly");
+
+    TRY_TJ(handle, tj3Set(handle, TJPARAM_SAVEMARKERS, 2));
+    TRY_TJ(handle, tj3DecompressHeader(handle, jpegBuf, jpegSize));
+    TRY_TJ(handle, tj3GetICCProfile(handle, &iccBuf, &iccSize));
+    if (iccBuf == NULL || iccSize != markerDataSize)
+      THROW("ICC profile was not extracted");
+    tj3Free(iccBuf);  iccBuf = NULL;
+
+    TRY_TJ(handle, tj3Set(handle, TJPARAM_SAVEMARKERS, 3));
+    TRY_TJ(handle, tj3DecompressHeader(handle, jpegBuf, jpegSize));
+    if (tj3GetICCProfile(handle, &iccBuf, &iccSize) != -1 || iccBuf != NULL ||
+        iccSize != 0)
+      THROW("ICC profile was extracted unexpectedly");
+
+    TRY_TJ(handle, tj3Set(handle, TJPARAM_SAVEMARKERS, 4));
+    TRY_TJ(handle, tj3DecompressHeader(handle, jpegBuf, jpegSize));
+    TRY_TJ(handle, tj3GetICCProfile(handle, &iccBuf, &iccSize));
+    if (iccBuf == NULL || iccSize != markerDataSize)
+      THROW("ICC profile was not extracted");
+    tj3Free(iccBuf);  iccBuf = NULL;
+
+    TRY_TJ(handle, tj3Set(handle, TJPARAM_SAVEMARKERS, 1));
+    TRY_TJ(handle, tj3DecompressHeader(handle, jpegBuf, jpegSize));
+    if (tj3GetICCProfile(handle, &iccBuf, &iccSize) != -1 || iccBuf != NULL ||
+        iccSize != 0)
+      THROW("ICC profile was extracted unexpectedly");
+
+    tj3Destroy(handle);  handle = NULL;
+
+    tj3Free(dstBuf);  dstBuf = NULL;
+    tj3Free(jpegBuf);  jpegBuf = NULL;
+  }
+
+bailout:
+  tj3Free(iccBuf);
+  tj3Destroy(handle);
+  tj3Free(dstBuf);
+  tj3Free(jpegBuf);
+  free(srcBuf);
+}
+
+
 static void bufSizeTest(void)
 {
   int w, h, i, subsamp;
@@ -1357,6 +1576,8 @@ int main(int argc, char *argv[])
   if (alloc) printf("Testing automatic buffer allocation\n");
   if (doYUV) num4bf = 4;
   overflowTest();
+  if (!lossless && !alloc && !doYUV)
+    extraMarkersTest();
   doTest(35, 39, _3sampleFormats, 2, TJSAMP_444, "test");
   doTest(39, 41, _4sampleFormats, num4bf, TJSAMP_444, "test");
   doTest(41, 35, _3sampleFormats, 2, TJSAMP_422, "test");
