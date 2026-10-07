@@ -89,9 +89,8 @@ reflects the fact that only the current value of `TJPARAM_SAVEMARKERS` and the
 specified transform options affect the marker copying behavior in
 `tj3Transform()`.
 
-13. Fixed a buffer overrun or "Bogus virtual array access" error in jpegtran
-that occurred when attempting to drop a grayscale image into a subsampled input
-image.
+13. Fixed issues in jpegtran that prevented a grayscale image from being
+dropped into a subsampled input image or vice versa.
 
 
 3.2.0
