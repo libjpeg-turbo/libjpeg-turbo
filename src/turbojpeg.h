@@ -1932,7 +1932,7 @@ DLLEXPORT int tj3EncodeYUV8(tjhandle handle, const unsigned char *srcBuf,
  * @return 0 if successful, or -1 if an error occurred (see #tj3GetErrorStr()
  * and #tj3GetErrorCode().)
  *
- * @note If this function returns a fatal error, then continuing to use the
+ * @warning If this function returns a fatal error, then continuing to use the
  * TurboJPEG instance is unsupported API abuse.  An application that abuses the
  * API in that manner may work in practice, but it is relying upon undefined
  * behavior.  If a fatal error occurs, then the application should destroy the
