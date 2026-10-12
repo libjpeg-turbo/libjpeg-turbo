@@ -1045,6 +1045,189 @@ bailout:
 }
 
 
+static void bufReuseTest(void)
+{
+  int w = 16, h = 16, i;
+  unsigned char *srcBuf = NULL, *jpegSRCBuf = NULL;
+  unsigned char *jpegBufs[2] = { NULL, NULL };
+  unsigned char *oldJPEGBufs[2] = { NULL, NULL };
+  tjhandle handle = NULL;
+  size_t worstCaseSize, jpegSRCSize, jpegSizes[2] = { 0, 0 };
+  tjtransform xforms[2];
+
+  memset(xforms, 0, 2 * sizeof(tjtransform));
+
+  if ((srcBuf = (unsigned char *)malloc(w * h * 4 * sampleSize)) == NULL)
+    THROW("Memory allocation failure");
+  for (i = 0; i < w * h * 4; i++) {
+    if (random() < RAND_MAX / 2) setVal(srcBuf, i, 0);
+    else setVal(srcBuf, i, maxSample);
+  }
+  worstCaseSize = tj3JPEGBufSize(w, h, TJSAMP_444);
+  if ((jpegBufs[0] = (unsigned char *)tj3Alloc(worstCaseSize)) == NULL)
+    THROW("Memory allocation failure");
+
+  if ((handle = tj3Init(TJINIT_TRANSFORM)) == NULL)
+    THROW_TJ(NULL);
+  TRY_TJ(handle, tj3Set(handle, TJPARAM_QUALITY, 100));
+  TRY_TJ(handle, tj3Set(handle, TJPARAM_SUBSAMP, TJSAMP_444));
+
+  /* Automatic destination buffer (re)allocation disabled */
+  TRY_TJ(handle, tj3Set(handle, TJPARAM_NOREALLOC, 1));
+
+  /* Verify that no error occurs when the destination buffer is pre-allocated
+     to the worst-case size. */
+  jpegSizes[0] = worstCaseSize;
+  TRY_TJ(handle, tj3Compress8(handle, srcBuf, w, 0, h, TJPF_BGRX, &jpegBufs[0],
+                              &jpegSizes[0]));
+
+  /* Verify that an error occurs when the destination buffer is reused but the
+     buffer size is not re-specified. */
+  if (tj3Compress8(handle, srcBuf, w, 0, h, TJPF_BGRX, &jpegBufs[0],
+                   &jpegSizes[0]) != -1 ||
+      strcmp(tj3GetErrorStr(handle),
+             "Buffer passed to JPEG library is too small"))
+    THROW("tj3Compress8() succeeded unexpectedly");
+  /* Re-specify the destination buffer size. */
+  jpegSizes[0] = worstCaseSize;
+  TRY_TJ(handle, tj3Compress8(handle, srcBuf, w, 0, h, TJPF_BGRX, &jpegBufs[0],
+                              &jpegSizes[0]));
+
+  /* Automatic destination buffer (re)allocation enabled */
+  TRY_TJ(handle, tj3Set(handle, TJPARAM_NOREALLOC, 0));
+
+  /* Verify that no reallocation occurs when the destination buffer is
+     pre-allocated to the worst-case size and that the buffer size is ignored
+     when the destination buffer is reused. */
+  oldJPEGBufs[0] = jpegBufs[0];
+  jpegSizes[0] = 0;
+  TRY_TJ(handle, tj3Compress8(handle, srcBuf, w, 0, h, TJPF_BGRX, &jpegBufs[0],
+                              &jpegSizes[0]));
+  if (jpegBufs[0] != oldJPEGBufs[0])
+    THROW("JPEG buffer unexpectedly reallocated")
+
+  /* Verify that reallocation occurs when the destination buffer is
+     pre-allocated but too small and that the destination manager doesn't leak
+     memory when reallocating a pre-allocated destination buffer. */
+  if ((jpegBufs[1] = (unsigned char *)tj3Alloc(100)) == NULL)
+    THROW("Memory allocation failure");
+  oldJPEGBufs[1] = jpegBufs[1];
+  jpegSizes[1] = 100;
+  TRY_TJ(handle, tj3Compress8(handle, srcBuf, w, 0, h, TJPF_BGRX, &jpegBufs[1],
+                              &jpegSizes[1]));
+  if (jpegBufs[1] == oldJPEGBufs[1])
+    THROW("JPEG buffer was not reallocated")
+
+  jpegSRCSize = jpegSizes[1];
+  if ((jpegSRCBuf = (unsigned char *)tj3Alloc(jpegSRCSize)) == NULL)
+    THROW("Memory allocation failure");
+  memcpy(jpegSRCBuf, jpegBufs[1], jpegSRCSize);
+
+  /* Verify that the destination buffer from a prior tj3Compress*() call can be
+     reused as the first destination buffer in tj3Transform() without
+     re-specifying the buffer size and that reallocation occurs when the second
+     destination buffer is pre-allocated but too small. */
+  oldJPEGBufs[1] = jpegBufs[0];
+  jpegBufs[0] = oldJPEGBufs[0] = jpegBufs[1];
+  jpegBufs[1] = oldJPEGBufs[1];
+  jpegSizes[1] = jpegSizes[0];
+  jpegSizes[0] = 0;
+  TRY_TJ(handle, tj3Transform(handle, jpegSRCBuf, jpegSRCSize, 2, jpegBufs,
+                              jpegSizes, xforms));
+  if (jpegBufs[0] != oldJPEGBufs[0])
+    THROW("JPEG buffer unexpectedly reallocated")
+  if (jpegBufs[1] == oldJPEGBufs[1])
+    THROW("JPEG buffer was not reallocated")
+
+  /* Verify that both destination buffers can be reused without re-specifying
+     the buffer sizes. */
+  oldJPEGBufs[1] = jpegBufs[1];
+  jpegSizes[0] = jpegSizes[1] = 1;
+  TRY_TJ(handle, tj3Transform(handle, jpegSRCBuf, jpegSRCSize, 2, jpegBufs,
+                              jpegSizes, xforms));
+  if (jpegBufs[0] != oldJPEGBufs[0] || jpegBufs[1] != oldJPEGBufs[1])
+    THROW("JPEG buffer unexpectedly reallocated")
+
+  /* Verify that the destination manager doesn't leak memory when reallocating
+     pre-allocated destination buffers. */
+  free(jpegBufs[0]);  jpegBufs[0] = NULL;
+  free(jpegBufs[1]);  jpegBufs[1] = NULL;
+
+  jpegSizes[0] = 100;
+  if ((jpegBufs[0] = oldJPEGBufs[0] =
+       (unsigned char *)tj3Alloc(jpegSizes[0])) == NULL)
+    THROW("Memory allocation failure");
+  jpegSizes[1] = 50;
+  if ((jpegBufs[1] = oldJPEGBufs[1] =
+       (unsigned char *)tj3Alloc(jpegSizes[1])) == NULL)
+    THROW("Memory allocation failure");
+  TRY_TJ(handle, tj3Transform(handle, jpegSRCBuf, jpegSRCSize, 2, jpegBufs,
+                              jpegSizes, xforms));
+  if (jpegBufs[0] == oldJPEGBufs[0] || jpegBufs[1] == oldJPEGBufs[1])
+    THROW("JPEG buffer was not reallocated")
+
+  /* Verify that the destination buffers can only be reused with the
+     corresponding transforms. */
+  oldJPEGBufs[1] = jpegBufs[0];
+  jpegBufs[0] = oldJPEGBufs[0] = jpegBufs[1];
+  jpegBufs[1] = oldJPEGBufs[1];
+  TRY_TJ(handle, tj3Transform(handle, jpegSRCBuf, jpegSRCSize, 2, jpegBufs,
+                              jpegSizes, xforms));
+  if (jpegBufs[0] == oldJPEGBufs[0] || jpegBufs[1] == oldJPEGBufs[1])
+    THROW("JPEG buffer was not reallocated")
+
+  /* Verify that the first destination buffer from a prior tj3Transform() call
+     can be reused in tj3Compress*() without re-specifying the buffer size. */
+  oldJPEGBufs[0] = jpegBufs[0];
+  jpegSizes[0] = 1;
+  TRY_TJ(handle, tj3Compress8(handle, srcBuf, w, 0, h, TJPF_BGRX, &jpegBufs[0],
+                              &jpegSizes[0]));
+  if (jpegBufs[0] != oldJPEGBufs[0])
+    THROW("JPEG buffer unexpectedly reallocated")
+
+  /* Verify that tj3Transform() no longer tracks the second destination
+     buffer. */
+  oldJPEGBufs[1] = jpegBufs[1];
+  jpegSizes[0] = 1;
+  TRY_TJ(handle, tj3Transform(handle, jpegSRCBuf, jpegSRCSize, 2, jpegBufs,
+                              jpegSizes, xforms));
+  if (jpegBufs[0] != oldJPEGBufs[0])
+    THROW("JPEG buffer unexpectedly reallocated")
+  if (jpegBufs[1] == oldJPEGBufs[1])
+    THROW("JPEG buffer was not reallocated")
+
+  /* Verify that tj3Transform() properly handles a caller that erroneously
+     specifies the same destination buffer twice.  (If the first destination
+     buffer has to be reallocated, then this would cause a use-after-free
+     issue.) */
+  free(jpegBufs[1]);  jpegBufs[1] = NULL;
+
+  jpegBufs[1] = jpegBufs[0];
+  jpegSizes[1] = jpegSizes[0];
+  if (tj3Transform(handle, jpegSRCBuf, jpegSRCSize, 2, jpegBufs, jpegSizes,
+                   xforms) != -1 ||
+      strcmp(tj3GetErrorStr(handle),
+             "tj3Transform(): Duplicate destination buffer")) {
+    jpegBufs[1] = NULL;
+    THROW("tj3Transform() succeeded unexpectedly");
+  }
+  jpegBufs[1] = NULL;
+
+  /* Verify that tj3Transform() allows multiple destination buffers to be
+     NULL. */
+  free(jpegBufs[0]);  jpegBufs[0] = NULL;
+  TRY_TJ(handle, tj3Transform(handle, jpegSRCBuf, jpegSRCSize, 2, jpegBufs,
+                              jpegSizes, xforms));
+
+bailout:
+  tj3Destroy(handle);
+  tj3Free(jpegBufs[0]);
+  tj3Free(jpegBufs[1]);
+  free(jpegSRCBuf);
+  free(srcBuf);
+}
+
+
 static void bufSizeTest(void)
 {
   int w, h, i, subsamp;
@@ -1575,6 +1758,8 @@ int main(int argc, char *argv[])
   overflowTest();
   if (!lossless && !alloc && !doYUV)
     extraMarkersTest();
+  if (!lossless && alloc && !doYUV && precision == 8)
+    bufReuseTest();
   doTest(35, 39, _3sampleFormats, 2, TJSAMP_444, "test");
   doTest(39, 41, _4sampleFormats, num4bf, TJSAMP_444, "test");
   doTest(41, 35, _3sampleFormats, 2, TJSAMP_422, "test");

@@ -106,6 +106,8 @@ enum { COMPRESS = 1, DECOMPRESS = 2 };
 
 typedef struct _tjinstance {
   struct jpeg_compress_struct cinfo;
+  struct jpeg_destination_mgr **dstMgrs;
+  int nDstMgrs;
   struct jpeg_decompress_struct dinfo;
   struct my_error_mgr jerr;
   int init;
@@ -345,6 +347,21 @@ static int cs2pf[JPEG_NUMCS] = {
   } \
   this->jerr.warning = FALSE; \
   this->isInstanceError = FALSE;
+
+#define CHECK_DESTINATION_MGRS(n) { \
+  if (n != this->nDstMgrs) { \
+    struct jpeg_destination_mgr **newDstMgrs = \
+      (struct jpeg_destination_mgr **) \
+        realloc(this->dstMgrs, n * sizeof(struct jpeg_destination_mgr *)); \
+    if (!newDstMgrs) \
+      THROW("Memory allocation failure"); \
+    this->dstMgrs = newDstMgrs; \
+    if (n > this->nDstMgrs) \
+      memset(&this->dstMgrs[this->nDstMgrs], 0, \
+             (n - this->nDstMgrs) * sizeof(struct jpeg_destination_mgr *)); \
+    this->nDstMgrs = n; \
+  } \
+}
 
 static int getPixelFormat(int pixelSize, int flags)
 {
@@ -632,6 +649,7 @@ destroy_decompress:
   if (setjmp(this->jerr.setjmp_buffer)) goto bailout;
   if (this->init & DECOMPRESS) jpeg_destroy_decompress(dinfo);
 bailout:
+  free(this->dstMgrs);
   free(this->iccBuf);
   free(this->tempICCBuf);
   free(this);
@@ -1168,9 +1186,11 @@ DLLEXPORT int tjPlaneHeight(int componentID, int height, int subsamp)
 
 static tjhandle _tjInitCompress(tjinstance *this)
 {
+  static const char FUNCTION_NAME[] = "tj3Init";
   static unsigned char buffer[1];
   unsigned char *buf = buffer;
   size_t size = 1;
+  tjhandle retval = (tjhandle)this;
 
   /* This is also straight out of example.c */
   this->cinfo.err = jpeg_std_error(&this->jerr.pub);
@@ -1185,15 +1205,23 @@ static tjhandle _tjInitCompress(tjinstance *this)
   if (setjmp(this->jerr.setjmp_buffer)) {
     /* If we get here, the JPEG code has signaled an error. */
     free(this);
-    return NULL;
+    retval = NULL;  goto bailout;
   }
 
   jpeg_create_compress(&this->cinfo);
   /* Make an initial call so it will create the destination manager */
   jpeg_mem_dest_tj(&this->cinfo, &buf, &size, 0);
+  this->dstMgrs = (struct jpeg_destination_mgr **)
+    malloc(sizeof(struct jpeg_destination_mgr *));
+  if (!this->dstMgrs)
+    THROWG("Memory allocation failure", NULL);
+  this->dstMgrs[0] = this->cinfo.dest;
+  this->nDstMgrs = 1;
 
   this->init |= COMPRESS;
-  return (tjhandle)this;
+
+bailout:
+  return retval;
 }
 
 /* TurboJPEG 1.0+ */
@@ -1340,7 +1368,10 @@ DLLEXPORT int tj3CompressFromYUVPlanes8(tjhandle handle,
   cinfo->data_precision = 8;
 
   if (this->noRealloc) alloc = FALSE;
+  CHECK_DESTINATION_MGRS(1);
+  cinfo->dest = this->dstMgrs[0];
   jpeg_mem_dest_tj(cinfo, jpegBuf, jpegSize, alloc);
+  this->dstMgrs[0] = cinfo->dest;
   setCompDefaults(this, TJPF_RGB, TRUE);
   cinfo->raw_data_in = TRUE;
 
@@ -2960,6 +2991,17 @@ bailout:
 }
 
 
+#if TRANSFORMS_SUPPORTED
+
+static int compareDstBufs(const void *dstBuf1, const void *dstBuf2)
+{
+  if ((unsigned char *)dstBuf1 < (unsigned char *)dstBuf2) return -1;
+  else if ((unsigned char *)dstBuf1 > (unsigned char *)dstBuf2) return 1;
+  return 0;
+}
+
+#endif
+
 /* TurboJPEG 3.0+ */
 DLLEXPORT int tj3Transform(tjhandle handle, const unsigned char *jpegBuf,
                            size_t jpegSize, int n, unsigned char **dstBufs,
@@ -2975,6 +3017,7 @@ DLLEXPORT int tj3Transform(tjhandle handle, const unsigned char *jpegBuf,
   int i, saveMarkers = 0, srcSubsamp;
   boolean alloc = TRUE;
   struct my_progress_mgr progress;
+  unsigned char **tmpDstBufs = NULL;
 
   GET_INSTANCE(handle);
   if ((this->init & COMPRESS) == 0 || (this->init & DECOMPRESS) == 0)
@@ -3061,10 +3104,31 @@ DLLEXPORT int tj3Transform(tjhandle handle, const unsigned char *jpegBuf,
 
   srccoefs = jpeg_read_coefficients(dinfo);
 
+  if (n > 1) {
+    if ((tmpDstBufs =
+         (unsigned char **)malloc(n * sizeof(unsigned char *))) == NULL)
+      THROW("Memory allocation failure");
+    memset(tmpDstBufs, 0, n * sizeof(unsigned char *));
+    for (i = 0; i < n; i++) {
+      if (!(t[i].options & TJXOPT_NOOUTPUT))
+        tmpDstBufs[i] = dstBufs[i];
+    }
+    qsort(tmpDstBufs, n, sizeof(unsigned char *), compareDstBufs);
+    for (i = 0; i < n - 1; i++) {
+      if (tmpDstBufs[i] && tmpDstBufs[i] == tmpDstBufs[i + 1])
+        THROW("Duplicate destination buffer");
+    }
+    free(tmpDstBufs);  tmpDstBufs = NULL;
+  }
+
   for (i = 0; i < n; i++) {
     if (this->noRealloc) alloc = FALSE;
-    if (!(t[i].options & TJXOPT_NOOUTPUT))
+    if (!(t[i].options & TJXOPT_NOOUTPUT)) {
+      CHECK_DESTINATION_MGRS(n);
+      cinfo->dest = this->dstMgrs[i];
       jpeg_mem_dest_tj(cinfo, &dstBufs[i], &dstSizes[i], alloc);
+      this->dstMgrs[i] = cinfo->dest;
+    }
     jpeg_copy_critical_parameters(dinfo, cinfo);
     dstcoefs = jtransform_adjust_parameters(dinfo, cinfo, srccoefs, &xinfo[i]);
     if (this->optimize || t[i].options & TJXOPT_OPTIMIZE)
@@ -3132,6 +3196,7 @@ bailout:
     if (alloc) (*cinfo->dest->term_destination) (cinfo);
     jpeg_abort_compress(cinfo);
   }
+  free(tmpDstBufs);
   if (dinfo->global_state > DSTATE_START) jpeg_abort_decompress(dinfo);
   free(xinfo);
   if (this->jerr.warning) retval = -1;

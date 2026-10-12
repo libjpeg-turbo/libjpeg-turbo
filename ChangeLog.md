@@ -87,6 +87,13 @@ specified transform options affect the marker copying behavior in
 11. Fixed issues in jpegtran that prevented a grayscale image from being
 dropped into a subsampled input image or vice versa.
 
+12. Hardened the TurboJPEG API against hypothetical applications that may
+erroneously attempt to use the same insufficiently large pre-allocated
+destination buffer for multiple simultaneous transform operations in
+`tj3Transform()`.  This caused a use-after-free issue, because the
+caller-specified destination buffer was no longer valid after the first
+transform operation reallocated it.
+
 
 3.1.4.1
 =======
