@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['r_0',['r',['../structtjtransform.html#ac324e5e442abec8a961e5bf219db12cf',1,'tjtransform']]]
+  ['management_0',['JPEG Destination Buffer Management',['../group___turbo_j_p_e_g.html#autotoc_md1',1,'']]]
 ];
