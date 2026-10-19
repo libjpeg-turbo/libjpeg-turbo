@@ -47,9 +47,15 @@ else()
 endif()
 configure_file(release/rpm.spec.in pkgscripts/rpm.spec @ONLY)
 
-add_custom_target(rpm pkgscripts/makerpm
-  DEPENDS rdjpgcom wrjpgcom cjpeg djpeg jpegtran
-  SOURCES pkgscripts/makerpm)
+if(GENERATOR_IS_MULTI_CONFIG)
+  add_custom_target(rpm pkgscripts/makerpm -config $<CONFIG>
+    DEPENDS rdjpgcom wrjpgcom cjpeg djpeg jpegtran
+    SOURCES pkgscripts/makerpm)
+else()
+  add_custom_target(rpm pkgscripts/makerpm
+    DEPENDS rdjpgcom wrjpgcom cjpeg djpeg jpegtran
+    SOURCES pkgscripts/makerpm)
+endif()
 
 configure_file(release/makesrpm.in pkgscripts/makesrpm)
 
@@ -60,8 +66,13 @@ add_custom_target(srpm pkgscripts/makesrpm
 configure_file(release/makedpkg.in pkgscripts/makedpkg)
 configure_file(release/deb-control.in pkgscripts/deb-control)
 
-add_custom_target(deb pkgscripts/makedpkg
-  SOURCES pkgscripts/makedpkg)
+if(GENERATOR_IS_MULTI_CONFIG)
+  add_custom_target(deb pkgscripts/makedpkg -config $<CONFIG>
+    SOURCES pkgscripts/makedpkg)
+else()
+  add_custom_target(deb pkgscripts/makedpkg
+    SOURCES pkgscripts/makedpkg)
+endif()
 
 endif() # Linux
 
@@ -105,7 +116,7 @@ if(WITH_JNA)
 endif()
 
 if(GENERATOR_IS_MULTI_CONFIG)
-  set(INST_DEFS ${INST_DEFS} "-DBUILDDIR=${CMAKE_CFG_INTDIR}\\")
+  set(INST_DEFS ${INST_DEFS} "-DBUILDDIR=$<CONFIG>\\")
 else()
   set(INST_DEFS ${INST_DEFS} "-DBUILDDIR=")
 endif()
@@ -154,8 +165,13 @@ configure_file(release/Distribution.xml.in pkgscripts/Distribution.xml)
 configure_file(release/Welcome.rtf.in pkgscripts/Welcome.rtf)
 configure_file(release/uninstall.in pkgscripts/uninstall)
 
-add_custom_target(dmg pkgscripts/makemacpkg
-  SOURCES pkgscripts/makemacpkg)
+if(GENERATOR_IS_MULTI_CONFIG)
+  add_custom_target(dmg pkgscripts/makemacpkg -config $<CONFIG>
+    SOURCES pkgscripts/makemacpkg)
+else()
+  add_custom_target(dmg pkgscripts/makemacpkg
+    SOURCES pkgscripts/makemacpkg)
+endif()
 
 endif() # APPLE
 
@@ -171,8 +187,13 @@ add_custom_target(dist
 
 configure_file(release/maketarball.in pkgscripts/maketarball)
 
-add_custom_target(tarball pkgscripts/maketarball
-  SOURCES pkgscripts/maketarball)
+if(GENERATOR_IS_MULTI_CONFIG)
+  add_custom_target(tarball pkgscripts/maketarball -config $<CONFIG>
+    SOURCES pkgscripts/maketarball)
+else()
+  add_custom_target(tarball pkgscripts/maketarball
+    SOURCES pkgscripts/maketarball)
+endif()
 
 configure_file(release/libjpeg.pc.in pkgscripts/libjpeg.pc @ONLY)
 

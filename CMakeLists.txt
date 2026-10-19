@@ -81,12 +81,6 @@ set(CMAKE_MACOSX_BUNDLE FALSE)
 
 get_property(GENERATOR_IS_MULTI_CONFIG GLOBAL PROPERTY
   GENERATOR_IS_MULTI_CONFIG)
-# If the GENERATOR_IS_MULTI_CONFIG property doesn't exist (CMake < 3.9), then
-# set the GENERATOR_IS_MULTI_CONFIG variable manually if the generator is
-# Visual Studio or Xcode (the only multi-config generators in CMake < 3.9).
-if(NOT GENERATOR_IS_MULTI_CONFIG AND (MSVC_IDE OR XCODE))
-  set(GENERATOR_IS_MULTI_CONFIG TRUE)
-endif()
 
 string(TIMESTAMP DEFAULT_BUILD "%Y%m%d")
 set(BUILD ${DEFAULT_BUILD} CACHE STRING "Build string (default: ${DEFAULT_BUILD})")
@@ -457,7 +451,7 @@ if(MSVC_LIKE)
     # Use the static C library for all build types
     if(CMAKE_BUILD_TYPE_UC STREQUAL "DEBUG")
       set(CMAKE_MSVC_RUNTIME_LIBRARY MultiThreadedDebug)
-    elseif(MSVC_IDE)
+    elseif(GENERATOR_IS_MULTI_CONFIG)
       set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
     else()
       set(CMAKE_MSVC_RUNTIME_LIBRARY MultiThreaded)

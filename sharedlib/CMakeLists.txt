@@ -13,7 +13,7 @@ if(MSVC_LIKE)
   # Build all configurations against shared C library
   if(CMAKE_BUILD_TYPE_UC STREQUAL "DEBUG")
     set(CMAKE_MSVC_RUNTIME_LIBRARY MultiThreadedDebugDLL)
-  elseif(MSVC_IDE)
+  elseif(GENERATOR_IS_MULTI_CONFIG)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
   else()
     set(CMAKE_MSVC_RUNTIME_LIBRARY MultiThreadedDLL)

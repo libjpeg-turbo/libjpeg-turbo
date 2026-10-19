@@ -15,8 +15,33 @@ onexit()
 	fi
 }
 
-if [ -f @PKGNAME@-@VERSION@.@RPMARCH@.rpm ]; then
-	rm -f @PKGNAME@-@VERSION@.@RPMARCH@.rpm
+usage()
+{
+	echo "$0 [-config <config>]"
+	exit 1
+}
+
+CONFIG=
+OUTDIR=.
+
+while [ $# -gt 0 ]; do
+	case $1 in
+	-h*)
+		usage 0
+		;;
+	-config)
+		if [ $# -gt 1 ]; then
+			if [[ ! "$2" =~ -.* ]]; then
+				CONFIG=$2;  OUTDIR=./$CONFIG;  shift
+			fi
+		fi
+		;;
+	esac
+	shift
+done
+
+if [ -f $OUTDIR/@PKGNAME@-@VERSION@.@RPMARCH@.rpm ]; then
+	rm -f $OUTDIR/@PKGNAME@-@VERSION@.@RPMARCH@.rpm
 fi
 
 umask 022
@@ -24,7 +49,19 @@ TMPDIR=`mktemp -d /tmp/@CMAKE_PROJECT_NAME@-build.XXXXXX`
 
 mkdir -p $TMPDIR/RPMS
 ln -fs `pwd` $TMPDIR/BUILD
-rpmbuild -bb --define "_blddir $TMPDIR/buildroot" --define "_topdir $TMPDIR" \
-	--define "__strip @CMAKE_STRIP@" --target @RPMARCH@ pkgscripts/rpm.spec; \
+
+STRIP=@CMAKE_STRIP@
+if [ "$CONFIG" = "Debug" ]; then
+	STRIP=/bin/true
+fi
+if [ "$CONFIG" = "" ]; then
+	rpmbuild -bb --define "_blddir $TMPDIR/buildroot" \
+		--define "_topdir $TMPDIR" --define "__strip $STRIP" \
+		--target @RPMARCH@ pkgscripts/rpm.spec
+else
+	rpmbuild -bb --define "_blddir $TMPDIR/buildroot" \
+		--define "_topdir $TMPDIR" --define "__strip $STRIP" \
+		--define "_config $CONFIG" --target @RPMARCH@ pkgscripts/rpm.spec
+fi
 cp $TMPDIR/RPMS/@RPMARCH@/@PKGNAME@-@VERSION@-@BUILD@.@RPMARCH@.rpm \
-	@PKGNAME@-@VERSION@.@RPMARCH@.rpm
+	$OUTDIR/@PKGNAME@-@VERSION@.@RPMARCH@.rpm

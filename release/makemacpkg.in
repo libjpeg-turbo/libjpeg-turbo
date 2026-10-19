@@ -43,7 +43,7 @@ safedirmove ()
 
 usage()
 {
-	echo "$0 [-lipo [path to lipo]]"
+	echo "$0 [-lipo <path to lipo>] [-config <config>]"
 	exit 1
 }
 
@@ -55,6 +55,8 @@ BUILDDIRSECONDARY=@SECONDARY_BUILD@
 MACOS_APP_CERT_NAME="@MACOS_APP_CERT_NAME@"
 MACOS_INST_CERT_NAME="@MACOS_INST_CERT_NAME@"
 LIPO=lipo
+CONFIG=
+OUTDIR=.
 
 PREFIX=@CMAKE_INSTALL_PREFIX@
 BINDIR=@CMAKE_INSTALL_FULL_BINDIR@
@@ -76,12 +78,19 @@ while [ $# -gt 0 ]; do
 			fi
 		fi
 		;;
+	-config)
+		if [ $# -gt 1 ]; then
+			if [[ ! "$2" =~ -.* ]]; then
+				CONFIG=$2;  OUTDIR=./$CONFIG;  shift
+			fi
+		fi
+		;;
 	esac
 	shift
 done
 
-if [ -f $PKGNAME-$VERSION.dmg ]; then
-	rm -f $PKGNAME-$VERSION.dmg
+if [ -f $OUTDIR/$PKGNAME-$VERSION.dmg ]; then
+	rm -f $OUTDIR/$PKGNAME-$VERSION.dmg
 fi
 
 umask 022
@@ -89,7 +98,11 @@ TMPDIR=`mktemp -d /tmp/$PKGNAME-build.XXXXXX`
 PKGROOT=$TMPDIR/pkg/Package_Root
 mkdir -p $PKGROOT
 
-DESTDIR=$PKGROOT @CMAKE_MAKE_PROGRAM@ install
+if [ "$CONFIG" = "" ]; then
+	DESTDIR=$PKGROOT @CMAKE_COMMAND@ --build . -t install
+else
+	DESTDIR=$PKGROOT @CMAKE_COMMAND@ --build . -t install --config $CONFIG
+fi
 
 if [ "$PREFIX" = "@CMAKE_INSTALL_DEFAULT_PREFIX@" -a "$DOCDIR" = "@CMAKE_INSTALL_DEFAULT_PREFIX@/doc" ]; then
 	mkdir -p $PKGROOT/Library/Documentation
@@ -111,7 +124,11 @@ install_secondarybuild()
 	fi
 	mkdir -p $TMPDIR/dist.secondary
 	pushd $BUILDDIR
-	DESTDIR=$TMPDIR/dist.secondary @CMAKE_MAKE_PROGRAM@ install
+	if [ "$CONFIG" = "" ]; then
+		DESTDIR=$TMPDIR/dist.secondary @CMAKE_COMMAND@ --build . -t install
+	else
+		DESTDIR=$TMPDIR/dist.secondary @CMAKE_COMMAND@ --build . -t install --config $CONFIG
+	fi
 	popd
 	for file in $LIBJPEG_DSO_NAME libjpeg.a $TURBOJPEG_DSO_NAME libturbojpeg.a; do
 		$LIPO -create \
@@ -183,6 +200,6 @@ if [ "$MACOS_APP_CERT_NAME" != "" ]; then
 	codesign -s "$MACOS_APP_CERT_NAME" --timestamp $TMPDIR/$PKGNAME-$VERSION.dmg
 	codesign -vv $TMPDIR/$PKGNAME-$VERSION.dmg
 fi
-cp $TMPDIR/$PKGNAME-$VERSION.dmg .
+cp $TMPDIR/$PKGNAME-$VERSION.dmg $OUTDIR
 
 exit

@@ -21,30 +21,58 @@ uid()
 	id | cut -f2 -d = | cut -f1 -d \(;
 }
 
+usage()
+{
+	echo "$0 [-config <config>]"
+	exit 1
+}
+
 PKGNAME=@PKGNAME@
 VERSION=@VERSION@
 ARCH=@CPU_TYPE@
 OS=@CMAKE_SYSTEM_NAME@
 PREFIX=@CMAKE_INSTALL_PREFIX@
+CONFIG=
+OUTDIR=.
+
+while [ $# -gt 0 ]; do
+	case $1 in
+	-h*)
+		usage 0
+		;;
+	-config)
+		if [ $# -gt 1 ]; then
+			if [[ ! "$2" =~ -.* ]]; then
+				CONFIG=$2;  OUTDIR=./$CONFIG;  shift
+			fi
+		fi
+		;;
+	esac
+	shift
+done
 
 umask 022
-rm -f $PKGNAME-$VERSION-$OS-$ARCH.tar.bz2
+rm -f $OUTDIR/$PKGNAME-$VERSION-$OS-$ARCH.tar.bz2
 TMPDIR=`mktemp -d /tmp/$PKGNAME-build.XXXXXX`
 mkdir -p $TMPDIR/install
 
-DESTDIR=$TMPDIR/install @CMAKE_MAKE_PROGRAM@ install
+if [ "$CONFIG" = "" ]; then
+	DESTDIR=$TMPDIR/install @CMAKE_COMMAND@ --build . -t install
+else
+	DESTDIR=$TMPDIR/install @CMAKE_COMMAND@ --build . -t install --config $CONFIG
+fi
 echo tartest >$TMPDIR/tartest
 GNUTAR=0
 BSDTAR=0
 tar cf $TMPDIR/tartest.tar --owner=root --group=root -C $TMPDIR tartest >/dev/null 2>&1 && GNUTAR=1
 if [ "$GNUTAR" = "1" ]; then
-	tar cf - --owner=root --group=root -C $TMPDIR/install .$PREFIX | bzip2 -c >$PKGNAME-$VERSION-$OS-$ARCH.tar.bz2
+	tar cf - --owner=root --group=root -C $TMPDIR/install .$PREFIX | bzip2 -c >$OUTDIR/$PKGNAME-$VERSION-$OS-$ARCH.tar.bz2
 else
 	tar cf $TMPDIR/tartest.tar --uid 0 --gid 0 -C $TMPDIR tartest >/dev/null 2>&1 && BSDTAR=1
 	if [ "$BSDTAR" = "1" ]; then
-		tar cf - --uid=0 --gid=0 -C $TMPDIR/install .$PREFIX | bzip2 -c >$PKGNAME-$VERSION-$OS-$ARCH.tar.bz2
+		tar cf - --uid=0 --gid=0 -C $TMPDIR/install .$PREFIX | bzip2 -c >$OUTDIR/$PKGNAME-$VERSION-$OS-$ARCH.tar.bz2
 	else
-		tar cf - -C $TMPDIR/install .$PREFIX | bzip2 -c >$PKGNAME-$VERSION-$OS-$ARCH.tar.bz2
+		tar cf - -C $TMPDIR/install .$PREFIX | bzip2 -c >$OUTDIR/$PKGNAME-$VERSION-$OS-$ARCH.tar.bz2
 	fi
 fi
 

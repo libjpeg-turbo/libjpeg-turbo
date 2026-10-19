@@ -64,12 +64,16 @@ makedeb()
 	fi
 
 	umask 022
-	rm -f $PKGNAME\_$VERSION\_$DEBARCH.deb
+	rm -f $OUTDIR/$PKGNAME\_$VERSION\_$DEBARCH.deb
 	TMPDIR=`mktemp -d /tmp/$PKGNAME-build.XXXXXX`
 	mkdir $TMPDIR/DEBIAN
 
 	if [ $SUPPLEMENT = 1 ]; then
-		DESTDIR=$TMPDIR @CMAKE_MAKE_PROGRAM@ install
+		if [ "$CONFIG" = "" ]; then
+			DESTDIR=$TMPDIR @CMAKE_COMMAND@ --build . -t install
+		else
+			DESTDIR=$TMPDIR @CMAKE_COMMAND@ --build . -t install --config $CONFIG
+		fi
 		rm -rf $TMPDIR$BINDIR
 		if [ "$DATAROOTDIR" != "$PREFIX" ]; then
 			rm -rf $TMPDIR$DATAROOTDIR
@@ -81,7 +85,11 @@ makedeb()
 		rm -rf $TMPDIR$INCLUDEDIR
 		rm -rf $TMPDIR$MANDIR
 	else
-		DESTDIR=$TMPDIR @CMAKE_MAKE_PROGRAM@ install
+		if [ "$CONFIG" = "" ]; then
+			DESTDIR=$TMPDIR @CMAKE_COMMAND@ --build . -t install
+		else
+			DESTDIR=$TMPDIR @CMAKE_COMMAND@ --build . -t install --config $CONFIG
+		fi
 		if [ "$PREFIX" = "@CMAKE_INSTALL_DEFAULT_PREFIX@" -a "$DOCDIR" = "@CMAKE_INSTALL_DEFAULT_PREFIX@/doc" ]; then
 			safedirmove $TMPDIR/$DOCDIR $TMPDIR/usr/share/doc/$PKGNAME-$VERSION $TMPDIR/__tmpdoc
 			ln -fs /usr/share/doc/$DIRNAME-$VERSION $TMPDIR$DOCDIR
@@ -96,7 +104,13 @@ makedeb()
 	/sbin/ldconfig -n $TMPDIR$LIBDIR
 
 	$SUDO chown -Rh root:root $TMPDIR/*
-	dpkg -b $TMPDIR $PKGNAME\_$VERSION\_$DEBARCH.deb
+	dpkg -b $TMPDIR $OUTDIR/$PKGNAME\_$VERSION\_$DEBARCH.deb
+}
+
+usage()
+{
+	echo "$0 [-config <config>]"
+	exit 1
 }
 
 PKGNAME=@PKGNAME@
@@ -110,6 +124,24 @@ INCLUDEDIR=@CMAKE_INSTALL_FULL_INCLUDEDIR@
 JAVADIR=@CMAKE_INSTALL_FULL_JAVADIR@
 LIBDIR=@CMAKE_INSTALL_FULL_LIBDIR@
 MANDIR=@CMAKE_INSTALL_FULL_MANDIR@
+CONFIG=
+OUTDIR=.
+
+while [ $# -gt 0 ]; do
+	case $1 in
+	-h*)
+		usage 0
+		;;
+	-config)
+		if [ $# -gt 1 ]; then
+			if [[ ! "$2" =~ -.* ]]; then
+				CONFIG=$2;  OUTDIR=./$CONFIG;  shift
+			fi
+		fi
+		;;
+	esac
+	shift
+done
 
 if [ ! `uid` -eq 0 ]; then
 	SUDO=sudo
