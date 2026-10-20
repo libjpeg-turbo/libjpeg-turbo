@@ -122,15 +122,18 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
     } else
       srcBuf = imgBuf;
 
-    dstSize = maxBufSize = tj3JPEGBufSize(width, height, tests[ti].subsamp);
+    maxBufSize = tj3JPEGBufSize(width, height, tests[ti].subsamp);
     if (tj3Get(handle, TJPARAM_NOREALLOC)) {
+      tj3Free(dstBuf);
+      dstSize = maxBufSize;
       if ((dstBuf = (unsigned char *)tj3Alloc(dstSize)) == NULL)
         goto bailout;
     } else if (dstBuf == NULL) {
       if ((dstBuf = (unsigned char *)tj3Alloc(100)) == NULL)
         goto bailout;
       dstSize = 100;
-    }
+    } else
+      dstSize = 0;
 
     if (size >= 34)
       tj3SetICCProfile(handle, (unsigned char *)&data[2], 32);
@@ -145,8 +148,10 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
         sum += dstBuf[i];
     }
 
-    tj3Free(dstBuf);
-    dstBuf = NULL;
+    if (tj3Get(handle, TJPARAM_NOREALLOC)) {
+      tj3Free(dstBuf);
+      dstBuf = NULL;
+    }
     tj3Free(imgBuf);
     imgBuf = NULL;
 

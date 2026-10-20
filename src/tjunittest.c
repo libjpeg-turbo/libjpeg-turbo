@@ -1088,10 +1088,6 @@ static void bufReuseTest(void)
       strcmp(tj3GetErrorStr(handle),
              "Buffer passed to JPEG library is too small"))
     THROW("tj3Compress8() succeeded unexpectedly");
-  /* Re-specify the destination buffer size. */
-  jpegSizes[0] = worstCaseSize;
-  TRY_TJ(handle, tj3Compress8(handle, srcBuf, w, 0, h, TJPF_BGRX, &jpegBufs[0],
-                              &jpegSizes[0]));
 
   /* Automatic destination buffer (re)allocation enabled */
   TRY_TJ(handle, tj3Set(handle, TJPARAM_NOREALLOC, 0));
@@ -1100,6 +1096,11 @@ static void bufReuseTest(void)
      pre-allocated to the worst-case size and that the buffer size is ignored
      when the destination buffer is reused. */
   oldJPEGBufs[0] = jpegBufs[0];
+  jpegSizes[0] = worstCaseSize;
+  TRY_TJ(handle, tj3Compress8(handle, srcBuf, w, 0, h, TJPF_BGRX, &jpegBufs[0],
+                              &jpegSizes[0]));
+  if (jpegBufs[0] != oldJPEGBufs[0])
+    THROW("JPEG buffer unexpectedly reallocated")
   jpegSizes[0] = 0;
   TRY_TJ(handle, tj3Compress8(handle, srcBuf, w, 0, h, TJPF_BGRX, &jpegBufs[0],
                               &jpegSizes[0]));
