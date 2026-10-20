@@ -1447,7 +1447,7 @@ DLLEXPORT int tj3YUVPlaneHeight(int componentID, int height, int subsamp);
  * compression functions, then `*jpegSize` is also ignored.  Upon return,
  * `*jpegSize` will contain the size of the JPEG image (in bytes.)
  *
- * @note If #TJPARAM_NOREALLOC is not set and a pre-allocated JPEG buffer is
+ * @warning If #TJPARAM_NOREALLOC is not set and a pre-allocated JPEG buffer is
  * passed to this function, then the application must not reallocate the buffer
  * if it intends to reuse it in subsequent function calls.
  *
@@ -1534,7 +1534,7 @@ DLLEXPORT int tj3Compress16(tjhandle handle, const unsigned short *srcBuf,
  * compression functions, then `*jpegSize` is also ignored.  Upon return,
  * `*jpegSize` will contain the size of the JPEG image (in bytes.)
  *
- * @note If #TJPARAM_NOREALLOC is not set and a pre-allocated JPEG buffer is
+ * @warning If #TJPARAM_NOREALLOC is not set and a pre-allocated JPEG buffer is
  * passed to this function, then the application must not reallocate the buffer
  * if it intends to reuse it in subsequent function calls.
  *
@@ -1598,7 +1598,7 @@ DLLEXPORT int tj3CompressFromYUVPlanes8(tjhandle handle,
  * compression functions, then `*jpegSize` is also ignored.  Upon return,
  * `*jpegSize` will contain the size of the JPEG image (in bytes.)
  *
- * @note If #TJPARAM_NOREALLOC is not set and a pre-allocated JPEG buffer is
+ * @warning If #TJPARAM_NOREALLOC is not set and a pre-allocated JPEG buffer is
  * passed to this function, then the application must not reallocate the buffer
  * if it intends to reuse it in subsequent function calls.
  *
@@ -1738,7 +1738,7 @@ DLLEXPORT int tj3EncodeYUV8(tjhandle handle, const unsigned char *srcBuf,
  * @return 0 if successful, or -1 if an error occurred (see #tj3GetErrorStr()
  * and #tj3GetErrorCode().)
  *
- * @note If this function returns a fatal error, then continuing to use the
+ * @warning If this function returns a fatal error, then continuing to use the
  * TurboJPEG instance is unsupported API abuse.  An application that abuses the
  * API in that manner may work in practice, but it is relying upon undefined
  * behavior.  If a fatal error occurs, then the application should destroy the
@@ -2124,9 +2124,9 @@ DLLEXPORT int tj3DecodeYUV8(tjhandle handle, const unsigned char *srcBuf,
  * which specifies the transform parameters and/or cropping region for the
  * corresponding transformed JPEG image.
  *
- * @note If #TJPARAM_NOREALLOC is not set and a pre-allocated JPEG destination
- * buffer is passed to this function, then the application must not reallocate
- * the buffer if it intends to reuse it in subsequent function calls.
+ * @warning If #TJPARAM_NOREALLOC is not set and a pre-allocated JPEG
+ * destination buffer is passed to this function, then the application must not
+ * reallocate the buffer if it intends to reuse it in subsequent function calls.
  *
  * @return 0 if successful, or -1 if an error occurred (see #tj3GetErrorStr()
  * and #tj3GetErrorCode().)
