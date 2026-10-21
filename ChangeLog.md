@@ -94,6 +94,16 @@ destination buffer for multiple simultaneous transform operations in
 caller-specified destination buffer was no longer valid after the first
 transform operation reallocated it.
 
+13. Fixed multiple issues in the standalone (non-merged) RGB565 color
+converters that occurred when attempting to decompress more than one scanline
+at a time from a vertically subsampled JPEG image.  These issues caused a
+buffer overrun and subsequent segfault if the output image rows were not 4-byte
+aligned and both the vertical sampling factor and the number of scanlines
+decompressed at a time were greater than 2.  In other cases, the issues caused
+incorrect dithered output.  The issues could not be reproduced using djpeg
+(which decompresses one scanline at a time) and were not known to exist in any
+other applications.
+
 
 3.1.4.1
 =======
