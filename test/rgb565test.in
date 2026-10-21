@@ -1,0 +1,165 @@
+#!/bin/bash
+
+set -e
+set -u
+trap onexit INT
+trap onexit TERM
+trap onexit EXIT
+
+onexit()
+{
+	if [ -d $OUTDIR ]; then
+		rm -rf $OUTDIR
+	fi
+}
+
+runme()
+{
+	echo \*\*\* $*
+	$*
+}
+
+IMGDIR=@CMAKE_SOURCE_DIR@/testimages
+OUTDIR=`mktemp -d /tmp/__rgb565test_output.XXXXXX`
+EXEDIR=@CMAKE_BINARY_DIR@
+
+if [ -d $OUTDIR ]; then
+	rm -rf $OUTDIR
+fi
+mkdir -p $OUTDIR
+
+exec >$EXEDIR/test/rgb565test.log 2>&1
+
+MD5_TESTORIG_YCC_1X4_RGB565D_BMP=05d9d66a052df0f4d43b315eb1e1a287
+MD5_TESTORIG_YCC_1X4_RGB565_BMP=3034dd4eb24255943011363d8ed0ed5d
+MD5_TESTORIG_YCC_1X4_RGB565_NOSIMD_BMP=3034dd4eb24255943011363d8ed0ed5d
+MD5_TESTORIG_RGB_1X4_RGB565D_BMP=0b0278840fab52bd300f1589e2e06bf5
+MD5_TESTORIG_RGB_1X4_RGB565_BMP=1d47efa4a2a17aa4643870bcace511dc
+MD5_TESTORIG_GRAY_1X4_RGB565D_BMP=bdbbd616441a24354c98553df5dc82db
+MD5_TESTORIG_GRAY_1X4_RGB565_BMP=12f78118e56a2f48b966f792fedf23cc
+
+MD5_NARROW_YCC_1X4_RGB565D_BMP=5e057f0f245874f3624ae82ee31ad49c
+MD5_NARROW_YCC_1X4_RGB565_BMP=e3696da8fd6ce98f53c1b54ee2a8ede1
+MD5_NARROW_YCC_1X4_RGB565_NOSIMD_BMP=e3696da8fd6ce98f53c1b54ee2a8ede1
+MD5_NARROW_RGB_1X4_RGB565D_BMP=d43dbc1228c3ae7cf25079f8191f6a61
+MD5_NARROW_RGB_1X4_RGB565_BMP=d20eacbc88bcf235bfa2e1f4e64c897c
+MD5_NARROW_GRAY_1X4_RGB565D_BMP=3b5320a2479ae01c311722d496bddeff
+MD5_NARROW_GRAY_1X4_RGB565_BMP=f64ea0988227495e72c00ff56cc4f065
+
+MD5_TESTORIG_YCC_2X2_RGB565D_BMP=ddee0dea2c21aa638d39f90ca9aaa57f
+MD5_TESTORIG_YCC_2X2_RGB565_BMP=f20a145942fc9d5d772be517e6cce98c
+MD5_TESTORIG_YCC_2X2_RGB565_NOSIMD_BMP=f20a145942fc9d5d772be517e6cce98c
+MD5_TESTORIG_RGB_2X2_RGB565D_BMP=e9d417fb08669965f3eb39c76f9b0154
+MD5_TESTORIG_RGB_2X2_RGB565_BMP=6c85ded97974f3a68d783da90b1e68d7
+MD5_TESTORIG_GRAY_2X2_RGB565D_BMP=bdbbd616441a24354c98553df5dc82db
+MD5_TESTORIG_GRAY_2X2_RGB565_BMP=12f78118e56a2f48b966f792fedf23cc
+
+MD5_NARROW_YCC_2X2_RGB565D_BMP=16c1e2ef361a535d851c1f45f74b9f5b
+MD5_NARROW_YCC_2X2_RGB565_BMP=9e6e81f1237887889505ceedcd9c751c
+MD5_NARROW_YCC_2X2_RGB565_NOSIMD_BMP=9e6e81f1237887889505ceedcd9c751c
+MD5_NARROW_RGB_2X2_RGB565D_BMP=7eb86921fa39b912195e2be7f40811a2
+MD5_NARROW_RGB_2X2_RGB565_BMP=84e2815d7121e3fea57bfd6f61462834
+MD5_NARROW_GRAY_2X2_RGB565D_BMP=3b5320a2479ae01c311722d496bddeff
+MD5_NARROW_GRAY_2X2_RGB565_BMP=f64ea0988227495e72c00ff56cc4f065
+
+compare()
+{
+	file=$1
+	MD5=MD5_$(echo "$(basename $file)" | tr '[:lower:]' '[:upper:]')
+	MD5=${MD5/\./_}
+	MD5=${MD5//-/_}
+	test/md5cmp ${!MD5} $file
+}
+
+dotest()
+{
+	for clr in ycc rgb gray; do
+		BASENAME=${IMG}-${clr}-${samp}
+
+		runme $EXEDIR/djpeg -rgb565 -nosmooth -bmp \
+			-outfile $OUTDIR/$BASENAME-rgb565D.bmp $OUTDIR/$BASENAME.jpg
+		magick $OUTDIR/$BASENAME-rgb565D.bmp $OUTDIR/$BASENAME-rgb565D-ref.ppm
+		compare $OUTDIR/$BASENAME-rgb565D.bmp
+		rm $OUTDIR/$BASENAME-rgb565D.bmp
+		runme $EXEDIR/djpeg -rgb565 -nosmooth -bmp -dither none \
+			-outfile $OUTDIR/$BASENAME-rgb565.bmp $OUTDIR/$BASENAME.jpg
+		magick $OUTDIR/$BASENAME-rgb565.bmp $OUTDIR/$BASENAME-rgb565-ref.ppm
+		compare $OUTDIR/$BASENAME-rgb565.bmp
+		rm $OUTDIR/$BASENAME-rgb565.bmp
+		if [ "$clr" = "ycc" ]; then
+			JSIMD_FORCENONE=1 runme $EXEDIR/djpeg -rgb565 -nosmooth -bmp -dither none \
+				-outfile $OUTDIR/$BASENAME-rgb565-nosimd.bmp $OUTDIR/$BASENAME.jpg
+			compare $OUTDIR/$BASENAME-rgb565-nosimd.bmp
+			rm $OUTDIR/$BASENAME-rgb565-nosimd.bmp
+		fi
+		echo
+
+		runme $EXEDIR/djpeg -rgb565 -nosmooth \
+			-outfile $OUTDIR/$BASENAME-rgb565D.ppm $OUTDIR/$BASENAME.jpg
+		cmp $OUTDIR/$BASENAME-rgb565D.ppm $OUTDIR/$BASENAME-rgb565D-ref.ppm
+		rm $OUTDIR/$BASENAME-rgb565D.ppm $OUTDIR/$BASENAME-rgb565D-ref.ppm
+		runme $EXEDIR/djpeg -rgb565 -nosmooth -dither none \
+			-outfile $OUTDIR/$BASENAME-rgb565.ppm $OUTDIR/$BASENAME.jpg
+		cmp $OUTDIR/$BASENAME-rgb565.ppm $OUTDIR/$BASENAME-rgb565-ref.ppm
+		rm $OUTDIR/$BASENAME-rgb565.ppm
+		if [ "$clr" = "ycc" ]; then
+			JSIMD_FORCENONE=1 runme $EXEDIR/djpeg -nosmooth -rgb565 -dither none \
+				-outfile $OUTDIR/$BASENAME-rgb565-nosimd.ppm $OUTDIR/$BASENAME.jpg
+			cmp $OUTDIR/$BASENAME-rgb565-nosimd.ppm $OUTDIR/$BASENAME-rgb565-ref.ppm
+			rm $OUTDIR/$BASENAME-rgb565-nosimd.ppm
+		fi
+		rm $OUTDIR/$BASENAME-rgb565-ref.ppm $OUTDIR/$BASENAME.jpg
+	echo
+	done
+}
+
+for samp in 1x4 2x2; do
+
+	echo "-------------------------------------------------------------------------------"
+	echo "testorig (227x149) $samp subsampling"
+	echo "-------------------------------------------------------------------------------"
+	echo
+
+	runme $EXEDIR/cjpeg -sample $samp \
+		-outfile $OUTDIR/testorig-ycc-$samp.jpg $IMGDIR/testorig.ppm
+	runme $EXEDIR/cjpeg -sample $samp -rgb \
+		-outfile $OUTDIR/testorig-rgb-$samp.jpg $IMGDIR/testorig.ppm
+	runme $EXEDIR/cjpeg -sample $samp -grayscale \
+		-outfile $OUTDIR/testorig-gray-$samp.jpg $IMGDIR/testorig.ppm
+	echo
+
+	IMG=testorig
+	dotest
+
+	echo "-------------------------------------------------------------------------------"
+	echo "narrow (1x8) $samp subsampling"
+	echo "-------------------------------------------------------------------------------"
+	echo
+
+	echo "P3" > $OUTDIR/narrow.ppm
+	echo "1 8" >> $OUTDIR/narrow.ppm
+	echo "255" >> $OUTDIR/narrow.ppm
+	echo "0 0 0" >> $OUTDIR/narrow.ppm
+	echo "255 0 0" >> $OUTDIR/narrow.ppm
+	echo "255 255 0" >> $OUTDIR/narrow.ppm
+	echo "0 255 0" >> $OUTDIR/narrow.ppm
+	echo "0 255 255" >> $OUTDIR/narrow.ppm
+	echo "0 0 255" >> $OUTDIR/narrow.ppm
+	echo "255 0 255" >> $OUTDIR/narrow.ppm
+	echo "255 255 255" >> $OUTDIR/narrow.ppm
+
+	runme $EXEDIR/cjpeg -sample $samp \
+		-outfile $OUTDIR/narrow-ycc-$samp.jpg $OUTDIR/narrow.ppm
+	runme $EXEDIR/cjpeg -sample $samp -rgb \
+		-outfile $OUTDIR/narrow-rgb-$samp.jpg $OUTDIR/narrow.ppm
+	runme $EXEDIR/cjpeg -sample $samp -grayscale \
+		-outfile $OUTDIR/narrow-gray-$samp.jpg $OUTDIR/narrow.ppm
+	rm $OUTDIR/narrow.ppm
+	echo
+
+	IMG=narrow
+	dotest
+
+done
+
+echo GREAT SUCCESS!
