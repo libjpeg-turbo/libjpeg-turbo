@@ -1906,6 +1906,11 @@ add_custom_target(indexedcolortest
   COMMAND echo indexedcolortest
   COMMAND ${BASH} ${CMAKE_CURRENT_BINARY_DIR}/test/indexedcolortest)
 
+configure_file(test/rgb565test.in test/rgb565test @ONLY)
+add_custom_target(rgb565test
+  COMMAND echo rgb565test
+  COMMAND ${BASH} ${CMAKE_CURRENT_BINARY_DIR}/test/rgb565test)
+
 if(WITH_TURBOJPEG)
   configure_file(test/tjbenchtest.in test/tjbenchtest @ONLY)
   configure_file(test/tjcomptest.in test/tjcomptest @ONLY)
