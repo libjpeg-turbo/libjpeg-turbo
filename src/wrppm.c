@@ -19,6 +19,7 @@
  * an ordinary stdio stream.
  */
 
+
 #include "cmyk.h"
 #include "cdjpeg.h"             /* Common decls for cjpeg/djpeg applications */
 
@@ -99,6 +100,8 @@ static INLINE boolean is_big_endian(void)
  * output buffer is physically the same as the fwrite buffer.
  */
 
+#ifndef DJPEG_MULTILINE
+
 METHODDEF(void)
 put_pixel_rows(j_decompress_ptr cinfo, djpeg_dest_ptr dinfo,
                JDIMENSION rows_supplied)
@@ -107,6 +110,8 @@ put_pixel_rows(j_decompress_ptr cinfo, djpeg_dest_ptr dinfo,
 
   fwrite(dest->iobuffer, 1, dest->buffer_width, dest->pub.output_file);
 }
+
+#endif
 
 #endif
 
@@ -123,14 +128,20 @@ copy_pixel_rows(j_decompress_ptr cinfo, djpeg_dest_ptr dinfo,
   ppm_dest_ptr dest = (ppm_dest_ptr)dinfo;
   register char *bufferptr;
   register _JSAMPROW ptr;
-  register JDIMENSION col;
+  register JDIMENSION row = 0, col;
 
-  ptr = dest->pub._buffer[0];
-  bufferptr = dest->iobuffer;
-  for (col = dest->samples_per_row; col > 0; col--) {
-    PUTPPMSAMPLE(bufferptr, *ptr++);
+#ifdef DJPEG_MULTILINE
+  for (row = 0; row < MIN(dest->pub.buffer_height, rows_supplied); row++) {
+#endif
+    ptr = dest->pub._buffer[row];
+    bufferptr = dest->iobuffer;
+    for (col = dest->samples_per_row; col > 0; col--) {
+      PUTPPMSAMPLE(bufferptr, *ptr++);
+    }
+    fwrite(dest->iobuffer, 1, dest->buffer_width, dest->pub.output_file);
+#ifdef DJPEG_MULTILINE
   }
-  fwrite(dest->iobuffer, 1, dest->buffer_width, dest->pub.output_file);
+#endif
 }
 
 
@@ -144,21 +155,27 @@ put_rgb(j_decompress_ptr cinfo, djpeg_dest_ptr dinfo, JDIMENSION rows_supplied)
   ppm_dest_ptr dest = (ppm_dest_ptr)dinfo;
   register char *bufferptr;
   register _JSAMPROW ptr;
-  register JDIMENSION col;
+  register JDIMENSION row = 0, col;
   register int rindex = rgb_red[cinfo->out_color_space];
   register int gindex = rgb_green[cinfo->out_color_space];
   register int bindex = rgb_blue[cinfo->out_color_space];
   register int ps = rgb_pixelsize[cinfo->out_color_space];
 
-  ptr = dest->pub._buffer[0];
-  bufferptr = dest->iobuffer;
-  for (col = cinfo->output_width; col > 0; col--) {
-    PUTPPMSAMPLE(bufferptr, ptr[rindex]);
-    PUTPPMSAMPLE(bufferptr, ptr[gindex]);
-    PUTPPMSAMPLE(bufferptr, ptr[bindex]);
-    ptr += ps;
+#ifdef DJPEG_MULTILINE
+  for (row = 0; row < MIN(dest->pub.buffer_height, rows_supplied); row++) {
+#endif
+    ptr = dest->pub._buffer[row];
+    bufferptr = dest->iobuffer;
+    for (col = cinfo->output_width; col > 0; col--) {
+      PUTPPMSAMPLE(bufferptr, ptr[rindex]);
+      PUTPPMSAMPLE(bufferptr, ptr[gindex]);
+      PUTPPMSAMPLE(bufferptr, ptr[bindex]);
+      ptr += ps;
+    }
+    fwrite(dest->iobuffer, 1, dest->buffer_width, dest->pub.output_file);
+#ifdef DJPEG_MULTILINE
   }
-  fwrite(dest->iobuffer, 1, dest->buffer_width, dest->pub.output_file);
+#endif
 }
 
 
@@ -175,25 +192,31 @@ put_rgb565(j_decompress_ptr cinfo, djpeg_dest_ptr dinfo,
   ppm_dest_ptr dest = (ppm_dest_ptr)dinfo;
   register char *bufferptr;
   register unsigned short *ptr;
-  register JDIMENSION col;
+  register JDIMENSION row = 0, col;
   boolean big_endian = is_big_endian();
 
-  ptr = (unsigned short *)dest->pub._buffer[0];
-  bufferptr = dest->iobuffer;
-  for (col = cinfo->output_width; col > 0; col--) {
-    if (big_endian) {
-      bufferptr[0] = *ptr & 0xF8;
-      bufferptr[1] = ((*ptr << 5) & 0xE0) | ((*ptr >> 11) & 0x1C);
-      bufferptr[2] = (*ptr >> 5) & 0xF8;
-    } else {
-      bufferptr[0] = (*ptr >> 8) & 0xF8;
-      bufferptr[1] = (*ptr >> 3) & 0xFC;
-      bufferptr[2] = (*ptr << 3) & 0xF8;
+#ifdef DJPEG_MULTILINE
+  for (row = 0; row < MIN(dest->pub.buffer_height, rows_supplied); row++) {
+#endif
+    ptr = (unsigned short *)dest->pub._buffer[row];
+    bufferptr = dest->iobuffer;
+    for (col = cinfo->output_width; col > 0; col--) {
+      if (big_endian) {
+        bufferptr[0] = *ptr & 0xF8;
+        bufferptr[1] = ((*ptr << 5) & 0xE0) | ((*ptr >> 11) & 0x1C);
+        bufferptr[2] = (*ptr >> 5) & 0xF8;
+      } else {
+        bufferptr[0] = (*ptr >> 8) & 0xF8;
+        bufferptr[1] = (*ptr >> 3) & 0xFC;
+        bufferptr[2] = (*ptr << 3) & 0xF8;
+      }
+      bufferptr += 3;
+      ptr++;
     }
-    bufferptr += 3;
-    ptr++;
+    fwrite(dest->iobuffer, 1, dest->buffer_width, dest->pub.output_file);
+#ifdef DJPEG_MULTILINE
   }
-  fwrite(dest->iobuffer, 1, dest->buffer_width, dest->pub.output_file);
+#endif
 }
 
 #endif
@@ -210,18 +233,24 @@ put_cmyk(j_decompress_ptr cinfo, djpeg_dest_ptr dinfo,
   ppm_dest_ptr dest = (ppm_dest_ptr)dinfo;
   register char *bufferptr;
   register _JSAMPROW ptr;
-  register JDIMENSION col;
+  register JDIMENSION row = 0, col;
 
-  ptr = dest->pub._buffer[0];
-  bufferptr = dest->iobuffer;
-  for (col = cinfo->output_width; col > 0; col--) {
-    _JSAMPLE r, g, b, c = *ptr++, m = *ptr++, y = *ptr++, k = *ptr++;
-    cmyk_to_rgb(PPM_MAXVAL, c, m, y, k, &r, &g, &b);
-    PUTPPMSAMPLE(bufferptr, r);
-    PUTPPMSAMPLE(bufferptr, g);
-    PUTPPMSAMPLE(bufferptr, b);
+#ifdef DJPEG_MULTILINE
+  for (row = 0; row < MIN(dest->pub.buffer_height, rows_supplied); row++) {
+#endif
+    ptr = dest->pub._buffer[row];
+    bufferptr = dest->iobuffer;
+    for (col = cinfo->output_width; col > 0; col--) {
+      _JSAMPLE r, g, b, c = *ptr++, m = *ptr++, y = *ptr++, k = *ptr++;
+      cmyk_to_rgb(PPM_MAXVAL, c, m, y, k, &r, &g, &b);
+      PUTPPMSAMPLE(bufferptr, r);
+      PUTPPMSAMPLE(bufferptr, g);
+      PUTPPMSAMPLE(bufferptr, b);
+    }
+    fwrite(dest->iobuffer, 1, dest->buffer_width, dest->pub.output_file);
+#ifdef DJPEG_MULTILINE
   }
-  fwrite(dest->iobuffer, 1, dest->buffer_width, dest->pub.output_file);
+#endif
 }
 
 
@@ -244,17 +273,23 @@ put_demapped_rgb(j_decompress_ptr cinfo, djpeg_dest_ptr dinfo,
     ((_JSAMPARRAY)cinfo->colormap)[rgb_green[cinfo->out_color_space]];
   register _JSAMPROW color_map2 =
     ((_JSAMPARRAY)cinfo->colormap)[rgb_blue[cinfo->out_color_space]];
-  register JDIMENSION col;
+  register JDIMENSION row = 0, col;
 
-  ptr = dest->pub._buffer[0];
-  bufferptr = dest->iobuffer;
-  for (col = cinfo->output_width; col > 0; col--) {
-    pixval = *ptr++;
-    PUTPPMSAMPLE(bufferptr, color_map0[pixval]);
-    PUTPPMSAMPLE(bufferptr, color_map1[pixval]);
-    PUTPPMSAMPLE(bufferptr, color_map2[pixval]);
+#ifdef DJPEG_MULTILINE
+  for (row = 0; row < MIN(dest->pub.buffer_height, rows_supplied); row++) {
+#endif
+    ptr = dest->pub._buffer[row];
+    bufferptr = dest->iobuffer;
+    for (col = cinfo->output_width; col > 0; col--) {
+      pixval = *ptr++;
+      PUTPPMSAMPLE(bufferptr, color_map0[pixval]);
+      PUTPPMSAMPLE(bufferptr, color_map1[pixval]);
+      PUTPPMSAMPLE(bufferptr, color_map2[pixval]);
+    }
+    fwrite(dest->iobuffer, 1, dest->buffer_width, dest->pub.output_file);
+#ifdef DJPEG_MULTILINE
   }
-  fwrite(dest->iobuffer, 1, dest->buffer_width, dest->pub.output_file);
+#endif
 }
 
 
@@ -266,14 +301,20 @@ put_demapped_gray(j_decompress_ptr cinfo, djpeg_dest_ptr dinfo,
   register char *bufferptr;
   register _JSAMPROW ptr;
   register _JSAMPROW color_map = ((_JSAMPARRAY)cinfo->colormap)[0];
-  register JDIMENSION col;
+  register JDIMENSION row = 0, col;
 
-  ptr = dest->pub._buffer[0];
-  bufferptr = dest->iobuffer;
-  for (col = cinfo->output_width; col > 0; col--) {
-    PUTPPMSAMPLE(bufferptr, color_map[*ptr++]);
+#ifdef DJPEG_MULTILINE
+  for (row = 0; row < MIN(dest->pub.buffer_height, rows_supplied); row++) {
+#endif
+    ptr = dest->pub._buffer[row];
+    bufferptr = dest->iobuffer;
+    for (col = cinfo->output_width; col > 0; col--) {
+      PUTPPMSAMPLE(bufferptr, color_map[*ptr++]);
+    }
+    fwrite(dest->iobuffer, 1, dest->buffer_width, dest->pub.output_file);
+#ifdef DJPEG_MULTILINE
   }
-  fwrite(dest->iobuffer, 1, dest->buffer_width, dest->pub.output_file);
+#endif
 }
 
 
@@ -395,7 +436,7 @@ _jinit_write_ppm(j_decompress_ptr cinfo)
   dest->iobuffer = (char *)(*cinfo->mem->alloc_small)
     ((j_common_ptr)cinfo, JPOOL_IMAGE, dest->buffer_width);
 
-#if BITS_IN_JSAMPLE == 8
+#if BITS_IN_JSAMPLE == 8 && !defined(DJPEG_MULTILINE)
   if (cinfo->quantize_colors ||
       (cinfo->out_color_space != JCS_EXT_RGB &&
 #if RGB_RED == 0 && RGB_GREEN == 1 && RGB_BLUE == 2 && RGB_PIXELSIZE == 3
@@ -408,10 +449,26 @@ _jinit_write_ppm(j_decompress_ptr cinfo)
      * that's separate from the physical I/O buffer.  We also need a
      * separate buffer if pixel format translation must take place.
      */
+#if BITS_IN_JSAMPLE == 8 && defined(DJPEG_MULTILINE)
+    /* Allocate the sample array manually to ensure that the rows are
+     * contiguous in memory, which further exercises esoteric code paths in the
+     * library.
+     */
+    JDIMENSION row_width = cinfo->output_width * cinfo->output_components;
+    dest->pub._buffer = (JSAMPARRAY)(*cinfo->mem->alloc_small)
+      ((j_common_ptr)cinfo, JPOOL_IMAGE, 4 * sizeof(JSAMPROW));
+    dest->pub._buffer[0] = (JSAMPROW)(*cinfo->mem->alloc_small)
+      ((j_common_ptr)cinfo, JPOOL_IMAGE, row_width * 4);
+    dest->pub._buffer[1] = dest->pub._buffer[0] + row_width;
+    dest->pub._buffer[2] = dest->pub._buffer[1] + row_width;
+    dest->pub._buffer[3] = dest->pub._buffer[2] + row_width;
+    dest->pub.buffer_height = 4;
+#else
     dest->pub._buffer = (_JSAMPARRAY)(*cinfo->mem->alloc_sarray)
       ((j_common_ptr)cinfo, JPOOL_IMAGE,
        cinfo->output_width * cinfo->output_components, (JDIMENSION)1);
     dest->pub.buffer_height = 1;
+#endif
     if (!cinfo->quantize_colors) {
       if (IsExtRGB(cinfo->out_color_space))
         dest->pub.put_pixel_rows = put_rgb;
@@ -428,7 +485,7 @@ _jinit_write_ppm(j_decompress_ptr cinfo)
     else
       dest->pub.put_pixel_rows = put_demapped_rgb;
   }
-#if BITS_IN_JSAMPLE == 8
+#if BITS_IN_JSAMPLE == 8 && !defined(DJPEG_MULTILINE)
   else {
     /* We will fwrite() directly from decompressor output buffer. */
     /* Synthesize a _JSAMPARRAY pointer structure */

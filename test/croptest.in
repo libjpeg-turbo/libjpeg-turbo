@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Uncomment #define DJPEG_MULTILINE in cdjpeg.h to fully exercise all of the
+# partial image decompression code paths.
+
 set -u
 set -e
 trap onexit INT

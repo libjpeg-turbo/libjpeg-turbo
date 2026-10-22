@@ -13,8 +13,19 @@
  * cjpeg and djpeg.  It is NOT used by the core JPEG library.
  */
 
+/* Uncomment this to make djpeg process more than one scanline at a time when
+ * writing PBMPLUS (PPM/PGM) files, which exercises esoteric code paths in the
+ * library that would otherwise be difficult to test.
+ *
+#define DJPEG_MULTILINE
+ */
+
 #define JPEG_CJPEG_DJPEG        /* define proper options in jconfig.h */
+#ifdef DJPEG_MULTILINE
+#define JPEG_INTERNALS
+#else
 #define JPEG_INTERNAL_OPTIONS   /* cjpeg.c,djpeg.c need to see xxx_SUPPORTED */
+#endif
 #include "jinclude.h"
 #include "jpeglib.h"
 #include "jerror.h"             /* get library error codes too */

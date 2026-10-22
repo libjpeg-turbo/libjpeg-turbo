@@ -808,8 +808,12 @@ main(int argc, char **argv)
     if (cinfo.data_precision == 8) {
       /* Process data */
       while (cinfo.output_scanline < skip_start) {
+        JDIMENSION max_lines = dest_mgr->buffer_height;
+#ifdef DJPEG_MULTILINE
+        max_lines = MIN(max_lines, skip_start - cinfo.output_scanline);
+#endif
         num_scanlines = jpeg_read_scanlines(&cinfo, dest_mgr->buffer,
-                                            dest_mgr->buffer_height);
+                                            max_lines);
         (*dest_mgr->put_pixel_rows) (&cinfo, dest_mgr, num_scanlines);
       }
       if ((tmp = jpeg_skip_scanlines(&cinfo, skip_end - skip_start + 1)) !=
@@ -826,8 +830,12 @@ main(int argc, char **argv)
     } else if (cinfo.data_precision == 12) {
       /* Process data */
       while (cinfo.output_scanline < skip_start) {
+        JDIMENSION max_lines = dest_mgr->buffer_height;
+#ifdef DJPEG_MULTILINE
+        max_lines = MIN(max_lines, skip_start - cinfo.output_scanline);
+#endif
         num_scanlines = jpeg12_read_scanlines(&cinfo, dest_mgr->buffer12,
-                                              dest_mgr->buffer_height);
+                                              max_lines);
         (*dest_mgr->put_pixel_rows) (&cinfo, dest_mgr, num_scanlines);
       }
       if ((tmp = jpeg12_skip_scanlines(&cinfo, skip_end - skip_start + 1)) !=
@@ -885,8 +893,13 @@ main(int argc, char **argv)
         exit(EXIT_FAILURE);
       }
       while (cinfo.output_scanline < crop_y + crop_height) {
+        JDIMENSION max_lines = dest_mgr->buffer_height;
+#ifdef DJPEG_MULTILINE
+        max_lines = MIN(max_lines,
+                        crop_y + crop_height - cinfo.output_scanline);
+#endif
         num_scanlines = jpeg_read_scanlines(&cinfo, dest_mgr->buffer,
-                                            dest_mgr->buffer_height);
+                                            max_lines);
         (*dest_mgr->put_pixel_rows) (&cinfo, dest_mgr, num_scanlines);
       }
       if ((tmp =
@@ -905,8 +918,13 @@ main(int argc, char **argv)
         exit(EXIT_FAILURE);
       }
       while (cinfo.output_scanline < crop_y + crop_height) {
+        JDIMENSION max_lines = dest_mgr->buffer_height;
+#ifdef DJPEG_MULTILINE
+        max_lines = MIN(max_lines,
+                        crop_y + crop_height - cinfo.output_scanline);
+#endif
         num_scanlines = jpeg12_read_scanlines(&cinfo, dest_mgr->buffer12,
-                                              dest_mgr->buffer_height);
+                                              max_lines);
         (*dest_mgr->put_pixel_rows) (&cinfo, dest_mgr, num_scanlines);
       }
       if ((tmp =
