@@ -82,6 +82,15 @@ typedef ppm_dest_struct *ppm_dest_ptr;
 
 #if BITS_IN_JSAMPLE == 8
 
+static INLINE boolean is_big_endian(void)
+{
+  int test_value = 1;
+  if (*(char *)&test_value != 1)
+    return TRUE;
+  return FALSE;
+}
+
+
 /*
  * Write some pixel data.
  * In this module rows_supplied will always be 1.
@@ -151,6 +160,43 @@ put_rgb(j_decompress_ptr cinfo, djpeg_dest_ptr dinfo, JDIMENSION rows_supplied)
   }
   fwrite(dest->iobuffer, 1, dest->buffer_width, dest->pub.output_file);
 }
+
+
+#if BITS_IN_JSAMPLE == 8
+
+/*
+ * Convert RGB565 to RGB.
+ */
+
+METHODDEF(void)
+put_rgb565(j_decompress_ptr cinfo, djpeg_dest_ptr dinfo,
+           JDIMENSION rows_supplied)
+{
+  ppm_dest_ptr dest = (ppm_dest_ptr)dinfo;
+  register char *bufferptr;
+  register unsigned short *ptr;
+  register JDIMENSION col;
+  boolean big_endian = is_big_endian();
+
+  ptr = (unsigned short *)dest->pub._buffer[0];
+  bufferptr = dest->iobuffer;
+  for (col = cinfo->output_width; col > 0; col--) {
+    if (big_endian) {
+      bufferptr[0] = *ptr & 0xF8;
+      bufferptr[1] = ((*ptr << 5) & 0xE0) | ((*ptr >> 11) & 0x1C);
+      bufferptr[2] = (*ptr >> 5) & 0xF8;
+    } else {
+      bufferptr[0] = (*ptr >> 8) & 0xF8;
+      bufferptr[1] = (*ptr >> 3) & 0xFC;
+      bufferptr[2] = (*ptr << 3) & 0xF8;
+    }
+    bufferptr += 3;
+    ptr++;
+  }
+  fwrite(dest->iobuffer, 1, dest->buffer_width, dest->pub.output_file);
+}
+
+#endif
 
 
 /*
@@ -258,6 +304,9 @@ start_output_ppm(j_decompress_ptr cinfo, djpeg_dest_ptr dinfo)
   case JCS_EXT_BGRA:
   case JCS_EXT_ABGR:
   case JCS_EXT_ARGB:
+#if BITS_IN_JSAMPLE == 8
+  case JCS_RGB565:
+#endif
   case JCS_CMYK:
     if (!IsExtRGB(cinfo->out_color_space) && cinfo->quantize_colors)
       ERREXIT(cinfo, JERR_PPM_COLORSPACE);
@@ -366,6 +415,10 @@ _jinit_write_ppm(j_decompress_ptr cinfo)
     if (!cinfo->quantize_colors) {
       if (IsExtRGB(cinfo->out_color_space))
         dest->pub.put_pixel_rows = put_rgb;
+#if BITS_IN_JSAMPLE == 8
+      else if (cinfo->out_color_space == JCS_RGB565)
+        dest->pub.put_pixel_rows = put_rgb565;
+#endif
       else if (cinfo->out_color_space == JCS_CMYK)
         dest->pub.put_pixel_rows = put_cmyk;
       else
