@@ -178,7 +178,7 @@ jobs:
           path: c:/ljt.nightly/files/libjpeg-turbo-*.exe
       - name: Sign artifact
         if: ${{github.event_name == 'push' && contains(github.ref, 'refs/tags/')}}
-        uses: signpath/github-action-submit-signing-request@v1.1
+        uses: signpath/github-action-submit-signing-request@v3
         with:
           api-token: ${{secrets.SIGNPATH_API_TOKEN}}
           organization-id: 3bc964ce-257b-4362-829f-1df1f087f5a0
