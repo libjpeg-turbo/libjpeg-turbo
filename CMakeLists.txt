@@ -1372,13 +1372,13 @@ foreach(libtype ${TEST_LIBTYPES})
       set(MD5_JPEG_RGB_ISLOW2 b811e5ad807beb9384e51ef6a47f715d)
       set(MD5_PPM_RGB_ISLOW 00a257f5393fef8821f2b88ac7421291)
       set(MD5_BMP_RGB_ISLOW_565 f07d2e75073e4bb10f6c6f4d36e2e3be)
-      set(MD5_BMP_RGB_ISLOW_565D 4cfa0928ef3e6bb626d7728c924cfda4)
+      set(MD5_PPM_RGB_ISLOW_565D cad7899c270831ec79dc110f05df5c80)
       set(MD5_JPEG_422_IFAST_OPT 2540287b79d913f91665e660303ab2c8)
       set(MD5_PPM_422_IFAST 35bd6b3f833bad23de82acea847129fa)
       set(MD5_JPEG_440_ISLOW 538bc02bd4b4658fd85de6ece6cbeda6)
       set(MD5_PPM_440_ISLOW 11e7eab7ef7ef3276934bb7e7b6bb377)
       set(MD5_PPM_422M_IFAST 8dbc65323d62cca7c91ba02dd1cfa81d)
-      set(MD5_BMP_422M_IFAST_565 3294bd4d9a1f2b3d08ea6020d0db7065)
+      set(MD5_PPM_422M_IFAST_565 5c6d88c2dff62622fa29670ec1384368)
       set(MD5_BMP_422M_IFAST_565D da98c9c7b6039511be4a79a878a9abc1)
       set(MD5_JPEG_420_IFAST_Q100_PROG 0ba15f9dab81a703505f835f9dbbac6d)
       set(MD5_PPM_420_Q100_IFAST 5a732542015c278ff43635e473a8a294)
@@ -1387,7 +1387,7 @@ foreach(libtype ${TEST_LIBTYPES})
       set(MD5_PPM_GRAY_ISLOW 8d3596c56eace32f205deccc229aa5ed)
       set(MD5_PPM_GRAY_ISLOW_RGB 116424ac07b79e5e801f00508eab48ec)
       set(MD5_BMP_GRAY_ISLOW_565 12f78118e56a2f48b966f792fedf23cc)
-      set(MD5_BMP_GRAY_ISLOW_565D bdbbd616441a24354c98553df5dc82db)
+      set(MD5_PPM_GRAY_ISLOW_565D 0d8df13bfb812bcbd40fd389398d1b2c)
       set(MD5_JPEG_420S_ISLOW_OPT 388708217ac46273ca33086b22827ed8)
 
       set(MD5_JPEG_3x2_FLOAT_PROG_SSE 343e3f8caf8af5986ebaf0bdc13b5c71)
@@ -1426,10 +1426,10 @@ foreach(libtype ${TEST_LIBTYPES})
       set(MD5_PPM_420M_ISLOW_1_4 79cd778f8bf1a117690052cacdd54eca)
       set(MD5_PPM_420M_ISLOW_1_8 391b3d4aca640c8567d6f8745eb2142f)
       set(MD5_BMP_420_ISLOW_256 4980185e3776e89bd931736e1cddeee6)
-      set(MD5_BMP_420_ISLOW_565 bf9d13e16c4923b92e1faa604d7922cb)
+      set(MD5_PPM_420_ISLOW_565 70efe087dd300ed1900fd077755c3f08)
       set(MD5_BMP_420_ISLOW_565D 6bde71526acc44bcff76f696df8638d2)
       set(MD5_BMP_420M_ISLOW_565 8dc0185245353cfa32ad97027342216f)
-      set(MD5_BMP_420M_ISLOW_565D ce034037d212bc403330df6f915c161b)
+      set(MD5_PPM_420M_ISLOW_565D 2077a19977c92ca9e5676af9b08e5b7a)
       set(MD5_JPEG_LOSSLESS fc777b82d42d835ae1282ba1ee87c209)
       set(MD5_PPM_LOSSLESS 64072f1dbdc5b3a187777788604971a5)
       set(MD5_PPM_420_ISLOW_SKIP15_31 c4c65c1e43d7275cd50328a61e6534f0)
@@ -1474,9 +1474,9 @@ foreach(libtype ${TEST_LIBTYPES})
         ${MD5_BMP_RGB_ISLOW_565} ${cjpeg}-${libtype}-rgb-islow)
 
       # CC: RGB->RGB565 (dithered)  SAMP: fullsize  IDCT: islow  ENT: huff
-      add_bittest(${djpeg} rgb-islow-565D "-dct;int;-rgb565;-bmp"
-        ${testout}_rgb_islow_565D.bmp ${testout}_rgb_islow.jpg
-        ${MD5_BMP_RGB_ISLOW_565D} ${cjpeg}-${libtype}-rgb-islow)
+      add_bittest(${djpeg} rgb-islow-565D "-dct;int;-rgb565"
+        ${testout}_rgb_islow_565D.ppm ${testout}_rgb_islow.jpg
+        ${MD5_PPM_RGB_ISLOW_565D} ${cjpeg}-${libtype}-rgb-islow)
     endif()
 
     # CC: RGB->YCC  SAMP: fullsize/h2v1  FDCT: ifast  ENT: 2-pass huff
@@ -1507,9 +1507,9 @@ foreach(libtype ${TEST_LIBTYPES})
     if(sample_bits EQUAL 8)
       # CC: YCC->RGB565  SAMP: h2v1 merged  IDCT: ifast  ENT: huff
       add_bittest(${djpeg} 422m-ifast-565
-        "-dct;int;-nosmooth;-rgb565;-dither;none;-bmp"
-        ${testout}_422m_ifast_565.bmp ${testout}_422_ifast_opt.jpg
-        ${MD5_BMP_422M_IFAST_565} ${cjpeg}-${libtype}-422-ifast-opt)
+        "-dct;int;-nosmooth;-rgb565;-dither;none"
+        ${testout}_422m_ifast_565.ppm ${testout}_422_ifast_opt.jpg
+        ${MD5_PPM_422M_IFAST_565} ${cjpeg}-${libtype}-422-ifast-opt)
 
       # CC: YCC->RGB565 (dithered)  SAMP: h2v1 merged  IDCT: ifast  ENT: huff
       add_bittest(${djpeg} 422m-ifast-565D "-dct;int;-nosmooth;-rgb565;-bmp"
@@ -1555,9 +1555,9 @@ foreach(libtype ${TEST_LIBTYPES})
         ${MD5_BMP_GRAY_ISLOW_565} ${cjpeg}-${libtype}-gray-islow)
 
       # CC: Gray->RGB565 (dithered)  SAMP: fullsize  IDCT: islow  ENT: huff
-      add_bittest(${djpeg} gray-islow-565D "-dct;int;-rgb565;-bmp"
-        ${testout}_gray_islow_565D.bmp ${testout}_gray_islow.jpg
-        ${MD5_BMP_GRAY_ISLOW_565D} ${cjpeg}-${libtype}-gray-islow)
+      add_bittest(${djpeg} gray-islow-565D "-dct;int;-rgb565"
+        ${testout}_gray_islow_565D.ppm ${testout}_gray_islow.jpg
+        ${MD5_PPM_GRAY_ISLOW_565D} ${cjpeg}-${libtype}-gray-islow)
     endif()
 
     # CC: RGB->YCC  SAMP: fullsize smooth/h2v2 smooth  FDCT: islow
@@ -1651,9 +1651,9 @@ foreach(libtype ${TEST_LIBTYPES})
         ${MD5_BMP_420_ISLOW_256})
 
       # CC: YCC->RGB565  SAMP: h2v2 fancy  IDCT: islow  ENT: huff
-      add_bittest(${djpeg} 420-islow-565 "-dct;int;-rgb565;-dither;none;-bmp"
-        ${testout}_420_islow_565.bmp ${TESTIMAGES}/${TESTORIG}
-        ${MD5_BMP_420_ISLOW_565})
+      add_bittest(${djpeg} 420-islow-565 "-dct;int;-rgb565;-dither;none"
+        ${testout}_420_islow_565.ppm ${TESTIMAGES}/${TESTORIG}
+        ${MD5_PPM_420_ISLOW_565})
 
       # CC: YCC->RGB565 (dithered)  SAMP: h2v2 fancy  IDCT: islow  ENT: huff
       add_bittest(${djpeg} 420-islow-565D "-dct;int;-rgb565;-bmp"
@@ -1667,9 +1667,9 @@ foreach(libtype ${TEST_LIBTYPES})
         ${MD5_BMP_420M_ISLOW_565})
 
       # CC: YCC->RGB565 (dithered)  SAMP: h2v2 merged  IDCT: islow  ENT: huff
-      add_bittest(${djpeg} 420m-islow-565D "-dct;int;-nosmooth;-rgb565;-bmp"
-        ${testout}_420m_islow_565D.bmp ${TESTIMAGES}/${TESTORIG}
-        ${MD5_BMP_420M_ISLOW_565D})
+      add_bittest(${djpeg} 420m-islow-565D "-dct;int;-nosmooth;-rgb565"
+        ${testout}_420m_islow_565D.ppm ${TESTIMAGES}/${TESTORIG}
+        ${MD5_PPM_420M_ISLOW_565D})
     endif()
 
     # Lossless (all arguments other than -lossless and -restart should have no
