@@ -164,7 +164,7 @@ else()
 endif()
 
 if(MSVC_IDE)
-  set(OBJDIR "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>")
+  set(OBJDIR "${CMAKE_CURRENT_BINARY_DIR}/$(Configuration)")
   string(REGEX REPLACE " " ";" CMAKE_ASM_NASM_FLAGS "${CMAKE_ASM_NASM_FLAGS}")
 elseif(XCODE)
   set(OBJDIR "${CMAKE_CURRENT_BINARY_DIR}")
