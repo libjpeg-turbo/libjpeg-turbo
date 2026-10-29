@@ -145,6 +145,7 @@
 #    define uncompress_z          z_uncompress_z
 #    define uncompress2_z         z_uncompress2_z
 #  endif
+#  define z_errmsg              z_z_errmsg
 #  define zError                z_zError
 #  ifndef Z_SOLO
 #    define zcalloc               z_zcalloc
