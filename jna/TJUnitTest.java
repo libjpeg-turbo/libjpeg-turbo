@@ -518,7 +518,7 @@ final class TJUnitTest {
 
           // Verify that TJ.tj3CompressFromYUVPlanes8() produces the same
           // results.
-          dstSize.getValue().setValue(dstBufSize);
+          dstSize.setValue(new NativeLong(dstBufSize));
           if (dstBuf.getValue() != null && dstSize.getValue().longValue() != 0)
             dstBuf.getValue().clear(dstSize.getValue().longValue());
           TJ.compressFromYUVPlanes8(handle, yuvPlanes, w, yuvStrides, h,
@@ -723,6 +723,7 @@ final class TJUnitTest {
     try (TJ.Handle chandle = new TJ.Handle(TJ.INIT_COMPRESS);
          TJ.Handle dhandle = new TJ.Handle(TJ.INIT_DECOMPRESS)) {
 
+      TJ.set(chandle, TJ.PARAM_NOREALLOC, alloc ? 0 : 1);
       if (lossless) {
         TJ.set(chandle, TJ.PARAM_LOSSLESS, 1);
         TJ.set(chandle, TJ.PARAM_LOSSLESSPSV, ((psv++ - 1) % 7) + 1);
