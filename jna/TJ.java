@@ -304,7 +304,7 @@ public final class TJ {
   public static final class Exception extends IOException {
     public Exception(String message, int code) {
       super(message);
-      if (errorCode >= 0 && errorCode < NUMERR)
+      if (code >= 0 && code < NUMERR)
         errorCode = code;
     }
 
