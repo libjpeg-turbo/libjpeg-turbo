@@ -33,7 +33,7 @@ jobs:
           echo "GPG_KEY_PASS=${{secrets.GPG_KEY_PASS}}" >>$HOME/src/buildscripts/gpgsign
       - name: Build
         run: |
-          docker run -v $HOME/src/ljt.nightly:/root/src/ljt.nightly -v $HOME/src/buildscripts:/root/src/buildscripts -v $GITHUB_WORKSPACE:/root/src/libjpeg-turbo -v $HOME/.gnupg:/root/.gnupg -v $HOME/rpmkeys:/rpmkeys -t dcommander/buildljt:$BRANCH bash -c "rpm --import /rpmkeys/LJTPR-GPG-KEY && ~/src/buildscripts/buildljt -d /root/src/libjpeg-turbo -v"
+          docker run --security-opt seccomp=unconfined -v $HOME/src/ljt.nightly:/root/src/ljt.nightly -v $HOME/src/buildscripts:/root/src/buildscripts -v $GITHUB_WORKSPACE:/root/src/libjpeg-turbo -v $HOME/.gnupg:/root/.gnupg -v $HOME/rpmkeys:/rpmkeys -t dcommander/buildljt:$BRANCH bash -c "rpm --import /rpmkeys/LJTPR-GPG-KEY && ~/src/buildscripts/buildljt -d /root/src/libjpeg-turbo -v"
           sudo chown -R runner:runner $HOME/src/ljt.nightly
           mv $HOME/src/ljt.nightly/latest/log-${{github.job}}.txt $HOME/src/ljt.nightly/latest/files/
       - name: Configure AWS
@@ -232,12 +232,13 @@ jobs:
             -DCMAKE_C_COMPILER=gcc-14 \
             -DWITH_SYSTEM_ZLIB=1 \
             -DWITH_JNA=/usr/share/java/jna.jar \
+            -DFLOATTEST12=fp-contract \
             ..
           export NUMCPUS=`grep -c '^processor' /proc/cpuinfo`
           make -j$NUMCPUS --load-average=$NUMCPUS
           ctest -j$NUMCPUS
           JSIMD_FORCESSE2=1 ctest -j$NUMCPUS
-          cmake -DFLOATTEST8=no-fp-contract ..
+          cmake -DFLOATTEST8=fp-contract ..
           JSIMD_FORCENONE=1 ctest -j$NUMCPUS
           popd
   linux-jpeg8:
@@ -248,7 +249,7 @@ jobs:
         uses: actions/checkout@v4
       - name: Set up build
         run: |
-          sudo apt -y install nasm libspng-dev libjna-java
+          sudo apt -y install nasm libspng-dev libjna-java clang-17
       - name: Build
         env:
           CTEST_OUTPUT_ON_FAILURE: 1
