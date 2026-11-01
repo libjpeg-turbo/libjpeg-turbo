@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2015 Viktor Szathmáry.  All Rights Reserved.
- * Copyright (C) 2017-2018 D. R. Commander.  All Rights Reserved.
+ * Copyright (C) 2017-2018, 2026 D. R. Commander.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -54,7 +54,7 @@ public class TJException extends IOException {
   @SuppressWarnings("checkstyle:JavadocMethod")
   public TJException(String message, int code) {
     super(message);
-    if (errorCode >= 0 && errorCode < TJ.NUMERR)
+    if (code >= 0 && code < TJ.NUMERR)
       errorCode = code;
   }
 
