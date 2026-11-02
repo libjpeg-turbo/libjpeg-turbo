@@ -349,7 +349,7 @@ final class TJBench {
                        int subsamp, int jpegQual, String fileName)
                        throws Exception {
     TJ.PointerReference[] jpegBufs = null;
-    Memory yuvBuf = null;
+    Memory tmpBuf = null, yuvBuf = null;
     double start, elapsed, elapsedEncode;
     int iter;
     long totalJpegSize;
@@ -363,7 +363,10 @@ final class TJBench {
         (long)pitch * (long)h * (long)sampleSize > 0xFFFFFFFFL)
       throw new Exception("Image is too large");
 
-    try (Memory tmpBuf = new Memory(pitch * h * sampleSize)) {
+    try {
+
+      if (doTile)
+        tmpBuf = new Memory(pitch * h * sampleSize);
 
       if (quiet == 0)
         System.out.format(">>>>>  %s (%s) <--> %d-bit JPEG (%s %s%d)  <<<<<\n",
@@ -404,13 +407,6 @@ final class TJBench {
                             bottomUp ? "BU" : "TD", precision,
                             lossless ? "LOSSLS" : SUBNAME_LONG[subsamp],
                             jpegQual);
-        for (int i = 0; i < h; i++) {
-          ByteBuffer srcBB = srcBuf.getByteBuffer(w * ps * i * sampleSize,
-                                                  w * ps * sampleSize);
-          ByteBuffer tmpBB = tmpBuf.getByteBuffer(pitch * i * sampleSize,
-                                                  w * ps * sampleSize);
-          tmpBB.put(srcBB);
-        }
 
         TJ.set(handle, TJ.PARAM_NOREALLOC, noRealloc ? 1 : 0);
         TJ.set(handle, TJ.PARAM_SUBSAMP, subsamp);
@@ -574,6 +570,7 @@ final class TJBench {
           TJ.free(jpegBufs[i].pointer);
       }
       if (yuvBuf != null) yuvBuf.close();
+      if (tmpBuf != null) tmpBuf.close();
 
     }
   }

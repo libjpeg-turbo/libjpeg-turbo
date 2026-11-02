@@ -366,7 +366,11 @@ for image in $IMAGES; do
 				runme cmp $OUTDIR/${basename}_LOSSLS_PSV${TJQUAL}_${SCALE}.${EXT} $OUTDIR/${basename}_${samp}_${scale}_djpeg.${EXT}
 				rm $OUTDIR/${basename}_LOSSLS_PSV${TJQUAL}_${SCALE}.${EXT}
 			else
-				runme $TJBENCH $OUTDIR/${basename}_${samp}_Q${TJQUAL}.jpg $FMTARG -s ${scalearg} -q -be 0.01 -w 0 $YUVARG $ALLOCARG $ENTROPYARG $LOSSLSARG
+				if [ "$scale" = "15_8" -o "$scale" = "3_2" ]; then
+					runme $TJBENCH $OUTDIR/$image $TJQUAL -pre $PRECISION -su ${samp} -pi rgb $FMTARG -s ${scalearg} -q -be 0.01 -w 0 $YUVARG $ALLOCARG $ENTROPYARG $LOSSLSARG
+				else
+					runme $TJBENCH $OUTDIR/${basename}_${samp}_Q${TJQUAL}.jpg $FMTARG -s ${scalearg} -q -be 0.01 -w 0 $YUVARG $ALLOCARG $ENTROPYARG $LOSSLSARG
+				fi
 				runme cmp $OUTDIR/${basename}_${samp}_Q${TJQUAL}_${SCALE}.${EXT} $OUTDIR/${basename}_${samp}_${scale}_djpeg.${EXT}
 				rm $OUTDIR/${basename}_${samp}_Q${TJQUAL}_${SCALE}.${EXT}
 			fi
