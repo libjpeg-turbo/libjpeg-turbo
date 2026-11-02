@@ -170,6 +170,11 @@ cases, the issues caused incorrect dithered output.  The issues could not be
 reproduced using djpeg (which decompresses one scanline at a time) and were not
 known to exist in any other applications.
 
+26. Fixed a buffer overrun in TJBench (both C and Java versions) that occurred
+when testing both compression and decompression with a decompression scaling
+factor greater than 1.  This issue was confined to the TJBench application and
+thus did not pose a security risk.
+
 
 3.0.4
 =====

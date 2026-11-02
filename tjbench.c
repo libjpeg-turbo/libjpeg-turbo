@@ -384,13 +384,15 @@ static int fullTest(tjhandle handle, void *srcBuf, int w, int h, int subsamp,
   int ntilesw = 1, ntilesh = 1, pitch = w * ps;
   const char *pfStr = pixFormatStr[pf];
 
+  if (doTile) {
 #if ULLONG_MAX > SIZE_MAX
-  if ((unsigned long long)pitch * (unsigned long long)h *
-      (unsigned long long)sampleSize > (unsigned long long)((size_t)-1))
-    THROW("allocating temporary image buffer", "Image is too large");
+    if ((unsigned long long)pitch * (unsigned long long)h *
+        (unsigned long long)sampleSize > (unsigned long long)((size_t)-1))
+      THROW("allocating temporary image buffer", "Image is too large");
 #endif
-  if ((tmpBuf = malloc((size_t)pitch * h * sampleSize)) == NULL)
-    THROW_UNIX("allocating temporary image buffer");
+    if ((tmpBuf = malloc((size_t)pitch * h * sampleSize)) == NULL)
+      THROW_UNIX("allocating temporary image buffer");
+  }
 
   if (!quiet)
     printf(">>>>>  %s (%s) <--> %d-bit JPEG (%s %s%d)  <<<<<\n", pfStr,
@@ -429,15 +431,6 @@ static int fullTest(tjhandle handle, void *srcBuf, int w, int h, int subsamp,
     if (quiet == 1)
       printf("%-4s(%s)  %-2d/%-6s %-3d   ", pfStr, bottomUp ? "BU" : "TD",
              precision, lossless ? "LOSSLS" : subNameLong[subsamp], jpegQual);
-    if (precision == 8) {
-      for (i = 0; i < h; i++)
-        memcpy(&((unsigned char *)tmpBuf)[pitch * i],
-               &((unsigned char *)srcBuf)[w * ps * i], w * ps);
-    } else {
-      for (i = 0; i < h; i++)
-        memcpy(&((unsigned short *)tmpBuf)[pitch * i],
-               &((unsigned short *)srcBuf)[w * ps * i], w * ps * sampleSize);
-    }
 
     if (tj3Set(handle, TJPARAM_NOREALLOC, noRealloc) == -1)
       THROW_TJ();
