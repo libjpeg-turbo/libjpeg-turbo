@@ -10,6 +10,8 @@ testing both compression and decompression with a decompression scaling factor
 greater than 1
      - A double free in the JNA version that occurred if the decompression
 operation failed when testing only decompression without a transform operation
+     - A memory leak in the JNA version that occurred when testing tiled
+compression or decompression
 
     These issues were confined to the TJBench application and thus did not pose
 a security risk.

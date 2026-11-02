@@ -560,6 +560,11 @@ final class TJBench {
         else if (quiet == 1)
           System.out.println("N/A");
 
+        for (int i = 0; i < ntilesw * ntilesh; i++)
+          TJ.free(jpegBufs[i].pointer);
+        jpegBufs = null;
+        jpegSizes = null;
+
         if (tilew == w && tileh == h) break;
       }
 
@@ -824,6 +829,10 @@ final class TJBench {
         else if (quiet == 1)
           System.out.println("N/A");
 
+        if (doTransform) {
+          for (int i = 0; i < ntilesw * ntilesh; i++)
+            TJ.free(jpegBufs[i].pointer);
+        }
         jpegBufs = null;
         jpegSizes = null;
 
