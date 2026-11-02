@@ -832,7 +832,7 @@ final class TJBench {
 
     } finally {  // try (handle)
 
-      if (jpegBufs != null) {
+      if (doTransform && jpegBufs != null) {
         for (int i = 0; i < ntilesw * ntilesh; i++)
           TJ.free(jpegBufs[i].pointer);
       }

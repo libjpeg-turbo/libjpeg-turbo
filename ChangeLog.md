@@ -3,10 +3,16 @@
 
 ### Significant changes relative to 3.2.1:
 
-1. Fixed a buffer overrun in TJBench (both C and Java versions) that occurred
-when testing both compression and decompression with a decompression scaling
-factor greater than 1.  This issue was confined to the TJBench application and
-thus did not pose a security risk.
+1. Fixed multiple issues in TJBench:
+
+     - A buffer overrun in both the C and JNA versions that occurred when
+testing both compression and decompression with a decompression scaling factor
+greater than 1
+     - A double free in the JNA version that occurred if the decompression
+operation failed when testing only decompression without a transform operation
+
+    These issues were confined to the TJBench application and thus did not pose
+a security risk.
 
 
 3.2.1
