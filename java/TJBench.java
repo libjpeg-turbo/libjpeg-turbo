@@ -334,7 +334,7 @@ final class TJBench {
   static void fullTest(TJCompressor tjc, Object srcBuf, int w, int h,
                        int subsamp, int jpegQual, String fileName)
                        throws Exception {
-    Object tmpBuf;
+    Object tmpBuf = null;
     byte[][] jpegBufs;
     int[] jpegSizes;
     double start, elapsed, elapsedEncode;
@@ -344,12 +344,14 @@ final class TJBench {
     String pfStr = PIXFORMATSTR[pf];
     YUVImage yuvImage = null;
 
-    if ((long)pitch * (long)h > (long)Integer.MAX_VALUE)
-      throw new Exception("Image is too large");
-    if (precision <= 8)
-      tmpBuf = new byte[pitch * h];
-    else
-      tmpBuf = new short[pitch * h];
+    if (doTile) {
+      if ((long)pitch * (long)h > (long)Integer.MAX_VALUE)
+        throw new Exception("Image is too large");
+      if (precision <= 8)
+        tmpBuf = new byte[pitch * h];
+      else
+        tmpBuf = new short[pitch * h];
+    }
 
     if (quiet == 0)
       System.out.format(">>>>>  %s (%s) <--> %d-bit JPEG (%s %s%d)  <<<<<\n",
@@ -390,15 +392,6 @@ final class TJBench {
                           bottomUp ? "BU" : "TD", precision,
                           lossless ? "LOSSLS" : SUBNAME_LONG[subsamp],
                           jpegQual);
-      if (precision <= 8) {
-        for (int i = 0; i < h; i++)
-          System.arraycopy((byte[])srcBuf, w * ps * i, (byte[])tmpBuf,
-                           pitch * i, w * ps);
-      } else {
-        for (int i = 0; i < h; i++)
-          System.arraycopy((short[])srcBuf, w * ps * i, (short[])tmpBuf,
-                           pitch * i, w * ps);
-      }
 
       if (doYUV) {
         yuvImage = new YUVImage(tilew, yuvAlign, tileh, subsamp);
