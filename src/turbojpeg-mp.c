@@ -453,7 +453,9 @@ bailout:
   GET_TJINSTANCE(handle, NULL)
   SNPRINTF(this->errStr, JMSG_LENGTH_MAX, "%s(): %s", FUNCTION_NAME,
            ERROR_MSG);
-  this->isInstanceError = TRUE;  THROWG(ERROR_MSG, NULL)
+  this->isInstanceError = TRUE;
+  this->jerr.warning = FALSE;
+  THROWG(ERROR_MSG, NULL)
 
 bailout:
   return retval;

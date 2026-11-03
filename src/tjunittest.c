@@ -829,6 +829,156 @@ bailout:
 }
 
 
+#define CHECK_ERRSTR(str) { \
+  if (strcmp(tj3GetErrorStr(handle), str) || \
+      strcmp(tj3GetErrorStr(handle), str)) { \
+    printf("tj3GetErrorStr() returned\n\"%s\"\ninstead of\n\"%s\"\n", \
+           tj3GetErrorStr(handle), str); \
+    BAILOUT(); \
+  } \
+}
+
+#define CHECK_ERRCODE(code) { \
+  if (tj3GetErrorCode(handle) != code) { \
+    printf("tj3GetErrorCode() returned %d instead of %d\n", \
+           tj3GetErrorCode(handle), code); \
+    BAILOUT(); \
+  } \
+}
+
+static void errorTest(void)
+{
+  /* Ensure that warnings and fatal errors are reported correctly. */
+  int w = 2, h = 2, i;
+  void *rgbBuf = NULL;
+  unsigned char *jpegBuf = NULL, *tmpBuf = NULL;
+  size_t jpegSize;
+  tjhandle handle = NULL;
+
+  if ((rgbBuf = malloc(w * h * 4 * sampleSize)) == NULL)
+    THROW("Memory allocation failure");
+  for (i = 0; i < w * h * 4; i++) {
+    if (random() < RAND_MAX / 2) setVal(rgbBuf, i, 0);
+    else setVal(rgbBuf, i, maxSample);
+  }
+  jpegSize = tj3JPEGBufSize(w, h, TJSAMP_444);
+  if ((jpegBuf = (unsigned char *)tj3Alloc(jpegSize)) == NULL)
+    THROW("Memory allocation failure");
+
+  if ((handle = tj3Init(TJINIT_COMPRESS)) == NULL)
+    THROW_TJ(NULL);
+  TRY_TJ(handle, tj3Set(handle, TJPARAM_NOREALLOC, !alloc));
+  if (lossless) {
+    TRY_TJ(handle, tj3Set(handle, TJPARAM_LOSSLESS, lossless));
+    TRY_TJ(handle, tj3Set(handle, TJPARAM_LOSSLESSPSV, ((psv++ - 1) % 7) + 1));
+  } else {
+    TRY_TJ(handle, tj3Set(handle, TJPARAM_QUALITY, 100));
+    TRY_TJ(handle, tj3Set(handle, TJPARAM_SUBSAMP, TJSAMP_444));
+  }
+  if (precision <= 8) {
+    TRY_TJ(handle, tj3Compress8(handle, (unsigned char *)rgbBuf, w, 0, h,
+                                TJPF_RGBX, &jpegBuf, &jpegSize));
+  } else if (precision <= 12) {
+    TRY_TJ(handle, tj3Compress12(handle, (short *)rgbBuf, w, 0, h, TJPF_RGBX,
+                                 &jpegBuf, &jpegSize));
+  } else {
+    TRY_TJ(handle, tj3Compress16(handle, (unsigned short *)rgbBuf, w, 0, h,
+                                 TJPF_RGBX, &jpegBuf, &jpegSize));
+  }
+  tj3Destroy(handle);  handle = NULL;
+
+  if ((handle = tj3Init(TJINIT_DECOMPRESS)) == NULL)
+    THROW_TJ(NULL);
+  if (precision <= 8) {
+    TRY_TJ(handle, tj3Decompress8(handle, jpegBuf, jpegSize,
+                                  (unsigned char *)rgbBuf, 0, TJPF_RGBX));
+  } else if (precision <= 12) {
+    TRY_TJ(handle, tj3Decompress12(handle, jpegBuf, jpegSize, (short *)rgbBuf,
+                                   0, TJPF_RGBX));
+  } else {
+    TRY_TJ(handle, tj3Decompress16(handle, jpegBuf, jpegSize,
+                                   (unsigned short *)rgbBuf, 0, TJPF_RGBX));
+  }
+
+  /* Insert junk data after SOI marker */
+  if ((tmpBuf = (unsigned char *)tj3Alloc(jpegSize + 2)) == NULL)
+    THROW("Memory allocation failure");
+  memcpy(tmpBuf, jpegBuf, 2);
+  memset(&tmpBuf[2], 'X', 2);
+  memcpy(&tmpBuf[4], &jpegBuf[2], jpegSize - 2);
+  tj3Free(jpegBuf);
+  jpegBuf = tmpBuf;
+  jpegSize += 2;
+
+  if (precision <= 8) {
+    if (tj3Decompress8(handle, jpegBuf, jpegSize, (unsigned char *)rgbBuf, 0,
+                       TJPF_RGBX) != -1)
+      THROW("tj3Decompress8() succeeded unexpectedly")
+  } else if (precision <= 12) {
+    if (tj3Decompress12(handle, jpegBuf, jpegSize, (short *)rgbBuf, 0,
+                        TJPF_RGBX) != -1)
+      THROW("tj3Decompress8() succeeded unexpectedly")
+  } else {
+    if (tj3Decompress16(handle, jpegBuf, jpegSize, (unsigned short *)rgbBuf, 0,
+                        TJPF_RGBX) != -1)
+      THROW("tj3Decompress16() succeeded unexpectedly")
+  }
+  if (lossless)
+    CHECK_ERRSTR("Corrupt JPEG data: 2 extraneous bytes before marker 0xee")
+  else
+    CHECK_ERRSTR("Corrupt JPEG data: 2 extraneous bytes before marker 0xe0")
+  CHECK_ERRCODE(TJERR_WARNING)
+
+  /* Fatal error should supercede warning */
+  TRY_TJ(handle, tj3Set(handle, TJPARAM_MAXPIXELS, 3));
+  if (precision <= 8) {
+    if (tj3Decompress8(handle, jpegBuf, jpegSize, (unsigned char *)rgbBuf, 0,
+                       TJPF_RGBX) != -1)
+      THROW("tj3Decompress8() succeeded unexpectedly")
+    CHECK_ERRSTR("tj3Decompress8(): Image is too large")
+  } else if (precision <= 12) {
+    if (tj3Decompress12(handle, jpegBuf, jpegSize, (short *)rgbBuf, 0,
+                        TJPF_RGBX) != -1)
+      THROW("tj3Decompress12() succeeded unexpectedly")
+    CHECK_ERRSTR("tj3Decompress12(): Image is too large")
+  } else {
+    if (tj3Decompress16(handle, jpegBuf, jpegSize, (unsigned short *)rgbBuf, 0,
+                        TJPF_RGBX) != -1)
+      THROW("tj3Decompress16() succeeded unexpectedly")
+    CHECK_ERRSTR("tj3Decompress16(): Image is too large")
+  }
+  CHECK_ERRCODE(TJERR_FATAL)
+
+  /* If TJPARAM_STOPONWARNING is set, then the warning (which is processed in
+     jpeg_read_header()) should cause tj3Decompress*() to abort before it
+     checks the pixel limit. */
+  TRY_TJ(handle, tj3Set(handle, TJPARAM_STOPONWARNING, 1));
+  if (precision <= 8) {
+    if (tj3Decompress8(handle, jpegBuf, jpegSize, (unsigned char *)rgbBuf, 0,
+                       TJPF_RGBX) != -1)
+      THROW("tj3Decompress8() succeeded unexpectedly")
+  } else if (precision <= 12) {
+    if (tj3Decompress12(handle, jpegBuf, jpegSize, (short *)rgbBuf, 0,
+                        TJPF_RGBX) != -1)
+      THROW("tj3Decompress8() succeeded unexpectedly")
+  } else {
+    if (tj3Decompress16(handle, jpegBuf, jpegSize, (unsigned short *)rgbBuf, 0,
+                        TJPF_RGBX) != -1)
+      THROW("tj3Decompress16() succeeded unexpectedly")
+  }
+  if (lossless)
+    CHECK_ERRSTR("Corrupt JPEG data: 2 extraneous bytes before marker 0xee")
+  else
+    CHECK_ERRSTR("Corrupt JPEG data: 2 extraneous bytes before marker 0xe0")
+  CHECK_ERRCODE(TJERR_WARNING)
+
+bailout:
+  tj3Destroy(handle);
+  tj3Free(jpegBuf);
+  free(rgbBuf);
+}
+
+
 #define BYTESWAP16(array, index, value) { \
   array[index] = (unsigned char)((unsigned int)(value) >> 8); \
   array[index + 1] = (unsigned char)((unsigned int)(value) & 0xFF); \
@@ -1757,6 +1907,8 @@ int main(int argc, char *argv[])
   if (alloc) printf("Testing automatic buffer allocation\n");
   if (doYUV) num4bf = 4;
   overflowTest();
+  if (!doYUV)
+    errorTest();
   if (!lossless && !alloc && !doYUV)
     extraMarkersTest();
   if (!lossless && alloc && !doYUV && precision == 8)
