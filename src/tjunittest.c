@@ -854,7 +854,7 @@ static void errorTest(void)
   /* Ensure that warnings and fatal errors are reported correctly. */
   int w = 2, h = 2, i;
   void *rgbBuf = NULL;
-  unsigned char *jpegBuf = NULL;
+  unsigned char *jpegBuf = NULL, *tmpBuf = NULL;
   size_t jpegSize;
   tjhandle handle = NULL;
 
@@ -865,7 +865,7 @@ static void errorTest(void)
     else setVal(rgbBuf, i, maxSample);
   }
   jpegSize = tj3JPEGBufSize(w, h, TJSAMP_444);
-  if ((jpegBuf = tj3Alloc(jpegSize + 2)) == NULL)
+  if ((jpegBuf = (unsigned char *)tj3Alloc(jpegSize)) == NULL)
     THROW("Memory allocation failure");
 
   if ((handle = tj3Init(TJINIT_COMPRESS)) == NULL)
@@ -904,8 +904,13 @@ static void errorTest(void)
   }
 
   /* Insert junk data after SOI marker */
-  memcpy(&jpegBuf[4], &jpegBuf[2], jpegSize - 2);
-  memset(&jpegBuf[2], 'X', 2);
+  if ((tmpBuf = (unsigned char *)tj3Alloc(jpegSize + 2)) == NULL)
+    THROW("Memory allocation failure");
+  memcpy(tmpBuf, jpegBuf, 2);
+  memset(&tmpBuf[2], 'X', 2);
+  memcpy(&tmpBuf[4], &jpegBuf[2], jpegSize - 2);
+  tj3Free(jpegBuf);
+  jpegBuf = tmpBuf;
   jpegSize += 2;
 
   if (precision <= 8) {
