@@ -264,6 +264,7 @@ static int cs2pf[JPEG_NUMCS] = {
   SNPRINTF(this->errStr, JMSG_LENGTH_MAX, "%s(): %s\n%s", FUNCTION_NAME, m, \
            strerrorBuf); \
   this->isInstanceError = TRUE; \
+  this->jerr.warning = FALSE; \
   SNPRINTF(errStr, JMSG_LENGTH_MAX, "%s(): %s\n%s", FUNCTION_NAME, m, \
            strerrorBuf); \
   retval = -1;  goto bailout; \
@@ -273,6 +274,7 @@ static int cs2pf[JPEG_NUMCS] = {
   SNPRINTF(this->errStr, JMSG_LENGTH_MAX, "%s(): %s\n%s", FUNCTION_NAME, m, \
            strerror(errno)); \
   this->isInstanceError = TRUE; \
+  this->jerr.warning = FALSE; \
   SNPRINTF(errStr, JMSG_LENGTH_MAX, "%s(): %s\n%s", FUNCTION_NAME, m, \
            strerror(errno)); \
   retval = -1;  goto bailout; \
@@ -280,13 +282,16 @@ static int cs2pf[JPEG_NUMCS] = {
 #endif
 #define THROWRV(m, rv) { \
   SNPRINTF(this->errStr, JMSG_LENGTH_MAX, "%s(): %s", FUNCTION_NAME, m); \
-  this->isInstanceError = TRUE;  THROWG(m, rv) \
+  this->isInstanceError = TRUE; \
+  this->jerr.warning = FALSE; \
+  THROWG(m, rv) \
 }
 #define THROW(m)  THROWRV(m, -1)
 #define THROWI(format, val1, val2) { \
   SNPRINTF(this->errStr, JMSG_LENGTH_MAX, "%s(): " format, FUNCTION_NAME, \
            val1, val2); \
   this->isInstanceError = TRUE; \
+  this->jerr.warning = FALSE; \
   SNPRINTF(errStr, JMSG_LENGTH_MAX, "%s(): " format, FUNCTION_NAME, val1, \
            val2); \
   retval = -1;  goto bailout; \
@@ -709,10 +714,9 @@ DLLEXPORT char *tj3GetErrorStr(tjhandle handle)
 {
   tjinstance *this = (tjinstance *)handle;
 
-  if (this && this->isInstanceError) {
-    this->isInstanceError = FALSE;
+  if (this && this->isInstanceError)
     return this->errStr;
-  } else
+  else
     return errStr;
 }
 

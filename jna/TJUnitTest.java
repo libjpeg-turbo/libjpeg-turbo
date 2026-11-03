@@ -829,6 +829,162 @@ final class TJUnitTest {
       throw new Exception("TJ.yuvPlaneHeight() overflow");
   }
 
+  static void checkErrStr(TJ.Handle handle, String str) throws Exception {
+    if (!TJ.tj3GetErrorStr(handle).equals(str) ||
+        !TJ.tj3GetErrorStr(handle).equals(str))
+      throw new Exception("TJ.tj3GetErrorStr() returned\n\"" +
+                          TJ.tj3GetErrorStr(handle) + "\"\ninstead of\n\"" +
+                          str + "\"");
+  }
+
+  static void checkErrCode(TJ.Handle handle, int code) throws Exception {
+    if (TJ.tj3GetErrorCode(handle) != code)
+      throw new Exception("TJ.tj3GetErrorCode() returned " +
+                          TJ.tj3GetErrorCode(handle) + " instead of " + code);
+  }
+
+  static void errorTest() throws Exception {
+    // Ensure that warnings and fatal errors are reported correctly.
+    int w = 2, h = 2, i;
+    PointerByReference jpegBuf = new PointerByReference();
+    NativeLongByReference jpegSize = new NativeLongByReference();
+    Random r = new Random();
+
+    try (Memory rgbBuf = new Memory(w * h * 4 * sampleSize)) {
+
+      for (i = 0; i < w * h * 4; i++)
+        setVal(rgbBuf, i, r.nextInt(2) * maxSample);
+      jpegSize.setValue(TJ.jpegBufSize(w, h, TJ.SAMP_444));
+      NativeLong newJpegSize =
+        new NativeLong(jpegSize.getValue().longValue() + 2);
+      jpegBuf.setValue(TJ.alloc(newJpegSize));
+
+      try (TJ.Handle handle = new TJ.Handle(TJ.INIT_COMPRESS)) {
+
+        TJ.set(handle, TJ.PARAM_NOREALLOC, alloc ? 0 : 1);
+        if (lossless) {
+          TJ.set(handle, TJ.PARAM_LOSSLESS, 1);
+          TJ.set(handle, TJ.PARAM_LOSSLESSPSV, ((psv++ - 1) % 7) + 1);
+        } else {
+          TJ.set(handle, TJ.PARAM_QUALITY, 100);
+          TJ.set(handle, TJ.PARAM_SUBSAMP, TJ.SAMP_444);
+        }
+        if (precision <= 8)
+          TJ.compress8(handle, rgbBuf, w, 0, h, TJ.PF_RGBX, jpegBuf, jpegSize);
+        else if (precision <= 12)
+          TJ.compress12(handle, rgbBuf, w, 0, h, TJ.PF_RGBX, jpegBuf,
+                        jpegSize);
+        else
+          TJ.compress16(handle, rgbBuf, w, 0, h, TJ.PF_RGBX, jpegBuf,
+                        jpegSize);
+
+      }  // try (handle)
+
+      try (TJ.Handle handle = new TJ.Handle(TJ.INIT_DECOMPRESS)) {
+
+        if (precision <= 8)
+          TJ.decompress8(handle, jpegBuf.getValue(), jpegSize.getValue(),
+                         rgbBuf, 0, TJ.PF_RGBX);
+        else if (precision <= 12)
+          TJ.decompress12(handle, jpegBuf.getValue(), jpegSize.getValue(),
+                          rgbBuf, 0, TJ.PF_RGBX);
+        else
+          TJ.decompress16(handle, jpegBuf.getValue(), jpegSize.getValue(),
+                          rgbBuf, 0, TJ.PF_RGBX);
+
+        // Insert junk data after SOI marker
+        ByteBuffer srcBB =
+          jpegBuf.getValue().getByteBuffer(2, jpegSize.getValue().longValue() -
+                                           2);
+        ByteBuffer dstBB =
+          jpegBuf.getValue().getByteBuffer(4, jpegSize.getValue().longValue() -
+                                           2);
+        dstBB.put(srcBB);
+        jpegBuf.getValue().setMemory(2, 2, (byte)'X');
+        jpegSize.setValue(newJpegSize);
+
+        if (precision <= 8) {
+          if (TJ.tj3Decompress8(handle, jpegBuf.getValue(),
+                                jpegSize.getValue(), rgbBuf, 0,
+                                TJ.PF_RGBX) != -1)
+            throw new Exception("TJ.tj3Decompress8() succeeded unexpectedly");
+        } else if (precision <= 12) {
+          if (TJ.tj3Decompress12(handle, jpegBuf.getValue(),
+                                 jpegSize.getValue(), rgbBuf, 0,
+                                 TJ.PF_RGBX) != -1)
+            throw new Exception("TJ.tj3Decompress12() succeeded unexpectedly");
+        } else {
+          if (TJ.tj3Decompress16(handle, jpegBuf.getValue(),
+                                 jpegSize.getValue(), rgbBuf, 0,
+                                 TJ.PF_RGBX) != -1)
+            throw new Exception("TJ.tj3Decompress16() succeeded unexpectedly");
+        }
+        if (lossless)
+          checkErrStr(handle,
+                      "Corrupt JPEG data: 2 extraneous bytes before marker 0xee");
+        else
+          checkErrStr(handle,
+                      "Corrupt JPEG data: 2 extraneous bytes before marker 0xe0");
+        checkErrCode(handle, TJ.ERR_WARNING);
+
+        // Fatal error should supercede warning
+        TJ.set(handle, TJ.PARAM_MAXPIXELS, 3);
+        if (precision <= 8) {
+          if (TJ.tj3Decompress8(handle, jpegBuf.getValue(),
+                                jpegSize.getValue(), rgbBuf, 0,
+                                TJ.PF_RGBX) != -1)
+            throw new Exception("TJ.tj3Decompress8() succeeded unexpectedly");
+          checkErrStr(handle, "tj3Decompress8(): Image is too large");
+        } else if (precision <= 12) {
+          if (TJ.tj3Decompress12(handle, jpegBuf.getValue(),
+                                 jpegSize.getValue(), rgbBuf, 0,
+                                 TJ.PF_RGBX) != -1)
+            throw new Exception("TJ.tj3Decompress12() succeeded unexpectedly");
+          checkErrStr(handle, "tj3Decompress12(): Image is too large");
+        } else {
+          if (TJ.tj3Decompress16(handle, jpegBuf.getValue(),
+                                 jpegSize.getValue(), rgbBuf, 0,
+                                 TJ.PF_RGBX) != -1)
+            throw new Exception("TJ.tj3Decompress16() succeeded unexpectedly");
+          checkErrStr(handle, "tj3Decompress16(): Image is too large");
+        }
+        checkErrCode(handle, TJ.ERR_FATAL);
+
+        // If TJ.PARAM_STOPONWARNING is set, then the warning (which is
+        // processed in jpeg_read_header()) should cause TJ.tj3Decompress*() to
+        // abort before it checks the pixel limit.
+        TJ.set(handle, TJ.PARAM_STOPONWARNING, 1);
+        if (precision <= 8) {
+          if (TJ.tj3Decompress8(handle, jpegBuf.getValue(),
+                                jpegSize.getValue(), rgbBuf, 0,
+                                TJ.PF_RGBX) != -1)
+            throw new Exception("TJ.tj3Decompress8() succeeded unexpectedly");
+        } else if (precision <= 12) {
+          if (TJ.tj3Decompress12(handle, jpegBuf.getValue(),
+                                 jpegSize.getValue(), rgbBuf, 0,
+                                 TJ.PF_RGBX) != -1)
+            throw new Exception("TJ.tj3Decompress12() succeeded unexpectedly");
+        } else {
+          if (TJ.tj3Decompress16(handle, jpegBuf.getValue(),
+                                 jpegSize.getValue(), rgbBuf, 0,
+                                 TJ.PF_RGBX) != -1)
+            throw new Exception("TJ.tj3Decompress16() succeeded unexpectedly");
+        }
+        if (lossless)
+          checkErrStr(handle,
+                      "Corrupt JPEG data: 2 extraneous bytes before marker 0xee");
+        else
+          checkErrStr(handle,
+                      "Corrupt JPEG data: 2 extraneous bytes before marker 0xe0");
+        checkErrCode(handle, TJ.ERR_WARNING);
+
+      }  // try (handle)
+
+    } finally {  // try (rgbBuf)
+      TJ.free(jpegBuf.getValue());
+    }
+  }
+
   static void byteSwap16(PointerByReference buf, int index, long value) {
     buf.getValue().setByte(index, (byte)((int)value >> 8));
     buf.getValue().setByte(index + 1, (byte)((int)value & 0xFF));
@@ -1657,6 +1813,8 @@ final class TJUnitTest {
       if (doYUV)
         FORMATS_4SAMPLE[4] = -1;
       overflowTest();
+      if (!doYUV)
+        errorTest();
       if (!lossless && !alloc && !doYUV)
         extraMarkersTest();
       doTest(35, 39, FORMATS_3SAMPLE, TJ.SAMP_444, testName);
