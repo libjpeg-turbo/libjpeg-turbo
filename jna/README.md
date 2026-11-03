@@ -215,20 +215,6 @@ instance should be passed by value instead of by reference.  Thus,
 
   The `TJ.setCroppingRegion()` convenience method does that automatically.
 
-- When using `TJ.tj3TransformBufSize()`, you can convert a `TJ.Transform`
-  instance into a `TJ.Transform.ByValue` instance as follows:
-
-  ```
-  TJ.Transform t = new TJ.Transform();
-  ...
-  NativeLong transformBufSize =
-      TJ.tj3TransformBufSize(handle, new TJ.Transform.ByValue(t));
-  if (transformBufSize.longValue() == 0)
-      handleError();
-  ```
-
-  The `TJ.transformBufSize()` convenience method does that automatically.
-
 ### Further Reading
 
 Refer to the JNA documentation, the TurboJPEG C API documentation, and the

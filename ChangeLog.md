@@ -26,6 +26,11 @@ error message.
 (non-fatal error) in the same function call, then `tj3GetErrorCode()` returned
 `TJERR_WARNING` instead of `TJERR_FATAL`.
 
+3. Fixed an issue in TurboJPEG/JNA whereby `TJ.tj3TransformBufSize()` passed
+the `TJ.Transform` structure to the underlying C function by value instead of
+by reference.  With certain platforms, compilers, and JNA versions, this caused
+the method to produce incorrect results or crash the JVM.
+
 
 3.2.1
 =====

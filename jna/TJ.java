@@ -269,20 +269,6 @@ public final class TJ {
       this.customFilter = customFilter;
     }
 
-    public static class ByValue extends Transform implements
-      Structure.ByValue {
-      public ByValue() {}
-
-      public ByValue(Region r, int op, int options, Pointer data,
-                     CustomFilterFunc customFilter) {
-        super(r, op, options, data, customFilter);
-      }
-
-      public ByValue(Transform t) {
-        super(t.r, t.op, t.options, t.data, t.customFilter);
-      }
-    }
-
     protected final List<String> getFieldOrder() {
       return Arrays.asList("r", "op", "options", "data", "customFilter");
     }
@@ -802,15 +788,12 @@ public final class TJ {
   // --------------------------------------------------------------------------
 
   public static native NativeLong
-    tj3TransformBufSize(Pointer handle, Transform.ByValue transform);
+    tj3TransformBufSize(Pointer handle, Transform transform);
 
   public static NativeLong transformBufSize(Pointer handle,
                                             Transform transform)
                                             throws Exception {
-    Transform.ByValue t =
-      (transform instanceof Transform.ByValue ?
-       (Transform.ByValue)transform : new Transform.ByValue(transform));
-    NativeLong retval = tj3TransformBufSize(handle, t);
+    NativeLong retval = tj3TransformBufSize(handle, transform);
     if (retval.longValue() == 0)
       throw new Exception(tj3GetErrorStr(handle), tj3GetErrorCode(handle));
     return retval;
