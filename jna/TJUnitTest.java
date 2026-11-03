@@ -566,6 +566,7 @@ final class TJUnitTest {
     boolean bottomUp = (TJ.get(handle, TJ.PARAM_BOTTOMUP) == 1);
 
     TJ.setScalingFactor(handle, sf);
+    TJ.set(handle, TJ.PARAM_FASTDCT, 0);
 
     TJ.decompressHeader(handle, jpegBuf, jpegSize);
     headerWidth = TJ.get(handle, TJ.PARAM_JPEGWIDTH);
@@ -595,6 +596,13 @@ final class TJUnitTest {
           if (sf.num != 1 || sf.denom != 1)
             System.out.format("%d/%d ... ", sf.num, sf.denom);
           else System.out.print("... ");
+
+          // This should have no effect, but it will cause libjpeg-turbo 3.2.0
+          // and prior to produce incorrect chrominance values when
+          // decompressing a 4:2:0, 4:1:0, or 2:4 JPEG image with a scaling
+          // factor of 1/2.
+          if (sf.num != 1 || sf.denom != 1)
+            TJ.set(handle, TJ.PARAM_FASTDCT, 1);
 
           yuvBuf.clear(yuvSize);
           TJ.decompressToYUV8(handle, jpegBuf, jpegSize, yuvBuf, yuvAlign);
