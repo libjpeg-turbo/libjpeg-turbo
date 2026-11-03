@@ -91,24 +91,24 @@ copy.
 
 ### `size_t` Arguments and Return Values
 
-A `size_t` value is implemented as a `com.sun.jna.NativeLong` instance, which
-wraps a 4-byte integer when using a 32-bit JVM (not much of a thing anymore)
-and an 8-byte integer when using a 64-bit JVM.  Callers initialize a
-`NativeLong` instance with a Java `long` primitive (always 64-bit), so it is
-necessary for callers to guard against 32-bit overflow if `NativeLong.SIZE` is
-4.  (The same is true when initializing a `size_t` variable in C.)
+A `size_t` value is implemented as a `TJ.SizeT` instance, which wraps a 4-byte
+integer when using a 32-bit JVM (not much of a thing anymore) and an 8-byte
+integer when using a 64-bit JVM.  Callers initialize a `TJ.SizeT` instance with
+a Java `long` primitive (always 64-bit), so it is necessary for callers to
+guard against 32-bit overflow if `Native.SIZE_T_SIZE` is 4.  (The same is true
+when initializing a `size_t` variable in C.)
 
 ### JPEG Destination Buffers
 
 JPEG destination buffer arguments are implemented as a
 `com.sun.jna.ptr.PointerByReference` instance (the equivalent of `void **`) and
-a `com.sun.jna.ptr.NativeLongByReference` instance (the equivalent of
-`size_t *`.)  The `com.sun.jna.Pointer` instance wrapped by
-`PointerByReference` is null by default, and the `NativeLong` instance wrapped
-by `NativeLongByReference` is 0 by default.  Thus, you can simply do:
+a `TJ.SizeTByReference` instance (the equivalent of `size_t *`.)  The
+`com.sun.jna.Pointer` instance wrapped by `PointerByReference` is null by
+default, and the `TJ.SizeT` instance wrapped by `TJ.SizeTByReference` is 0 by
+default.  Thus, you can simply do:
 
 ```
-NativeLongByReference jpegSize = new NativeLongByReference();
+TJ.SizeTByReference jpegSize = new TJ.SizeTByReference();
 PointerByReference jpegBuf = new PointerByReference();
 ```
 
@@ -116,9 +116,9 @@ if you want the JPEG destination buffer to be fully and automatically
 allocated.  Otherwise, you can do:
 
 ```
-NativeLong jpegBufSize = new NativeLong(longValue);
-// or NativeLong jpegBufSize = TJ.jpegBufSize(width, height, jpegSubsamp);
-NativeLongByReference jpegSize = new NativeLongByReference(jpegBufSize);
+TJ.SizeT jpegBufSize = new TJ.SizeT(longValue);
+// or TJ.SizeT jpegBufSize = TJ.jpegBufSize(width, height, jpegSubsamp);
+TJ.SizeTByReference jpegSize = new TJ.SizeTByReference(jpegBufSize);
 PointerByReference jpegBuf = new PointerByReference(TJ.alloc(jpegBufSize));
 ```
 
@@ -154,24 +154,24 @@ To represent an array of structures, JNA uses a single instance of a
   TJ.Transform[] xform = (TJ.Transform[])(new TJ.Transform().toArray(2));
   ```
 
-### Arrays of `Pointer` or `NativeLong` Instances
+### Arrays of `Pointer` or `TJ.SizeT` Instances
 
-JNA doesn't allow for passing an array of `Pointer` or `NativeLong` instances,
+JNA doesn't allow for passing an array of `Pointer` or `TJ.SizeT` instances,
 which are needed by `TJ.tj3EncodeYUVPlanes8()`,
 `TJ.tj3CompressFromYUVPlanes8()`, `TJ.tj3DecompressToYUVPlanes8()`,
 `TJ.tj3DecodeYUVPlanes8()`, and `TJ.tj3Transform()`.  Thus, TurboJPEG/JNA
 provides two `Structure` subclasses, `TJ.PointerReference` and
-`TJ.NativeLongReference`, that can be passed as arrays.  Per above, use
+`TJ.SizeTReference`, that can be passed as arrays.  Per above, use
 `Structure.toArray()` to ensure that the arrays are allocated contiguously.
 For example:
 
 ```
 TJ.PointerReference[] dstBufs =
-  (TJ.PointerReference[])(new TJ.PointersByReference().toArray(2));
+  (TJ.PointerReference[])(new TJ.PointerReference().toArray(2));
 dstBufs[0].pointer = jpegBuf0;
 dstBufs[1].pointer = jpegBuf1;
-TJ.NativeLongReference[] dstSizes =
-  (TJ.NativeLongReference[])(new TJ.NativeLongsByReference().toArray(2));
+TJ.SizeTReference[] dstSizes =
+  (TJ.SizeTReference[])(new TJ.SizeTReference().toArray(2));
 dstSizes[0].value = jpegSize0;
 dstSizes[1].value = jpegSize1;
 ```
@@ -183,7 +183,7 @@ Then you can simply pass the first members of the arrays to
 `TJ.encodeYUVPlanes8()`, `TJ.compressFromYUVPlanes8()`,
 `TJ.decompressToYUVPlanes8()`, `TJ.decodeYUVPlanes8()`, and `TJ.transform()`
 convenience methods accept `TJ.PointerReference[]` and
-`TJ.NativeLongReference[]` arguments and pass the first members internally.
+`TJ.SizeTReference[]` arguments and pass the first members internally.
 
 ### Passing Structures By Value
 

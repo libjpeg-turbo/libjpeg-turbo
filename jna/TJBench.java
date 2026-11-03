@@ -43,7 +43,7 @@ final class TJBench {
   private static String ext = null;
   private static boolean compOnly, decompOnly, write = true, doTile, doYUV;
   private static int sampleSize, pf = TJ.PF_BGR, quiet = 0, yuvAlign = 1;
-  private static NativeLong iccSize;
+  private static TJ.SizeT iccSize;
 
   static final String[] PIXFORMATSTR = {
     "RGB", "BGR", "RGBX", "BGRX", "XBGR", "XRGB", "GRAY", "", "", "", "",
@@ -160,7 +160,7 @@ final class TJBench {
 
   // Decompression test
   static void decomp(TJ.PointerReference[] jpegBufs,
-                     TJ.NativeLongReference[] jpegSizes, Memory dstBuf, int w,
+                     TJ.SizeTReference[] jpegSizes, Memory dstBuf, int w,
                      int h, int subsamp, int jpegQual, String fileName,
                      int tilew, int tileh) throws Exception {
     String tempStr, sizeStr, qualStr = new String("");
@@ -226,7 +226,7 @@ final class TJBench {
       if (doYUV) {
         int width = doTile ? tilew : scaledw;
         int height = doTile ? tileh : scaledh;
-        NativeLong yuvSize = TJ.yuvBufSize(width, yuvAlign, height, subsamp);
+        TJ.SizeT yuvSize = TJ.yuvBufSize(width, yuvAlign, height, subsamp);
         yuvBuf = new Memory(yuvSize.longValue());
         for (long i = 0; i < yuvSize.longValue(); i++)
           yuvBuf.setByte(i, (byte)127);
@@ -351,13 +351,13 @@ final class TJBench {
     double start, elapsed, elapsedEncode;
     int iter;
     long totalJpegSize;
-    TJ.NativeLongReference[] jpegBufSizes = null, jpegSizes;
-    NativeLong yuvSize = null;
+    TJ.SizeTReference[] jpegBufSizes = null, jpegSizes;
+    TJ.SizeT yuvSize = null;
     int ps = TJ.PIXEL_SIZE[pf];
     int ntilesw = 1, ntilesh = 1, pitch = w * ps;
     String pfStr = PIXFORMATSTR[pf];
 
-    if (NativeLong.SIZE == 4 &&
+    if (Native.SIZE_T_SIZE == 4 &&
         (long)pitch * (long)h * (long)sampleSize > 0xFFFFFFFFL)
       throw new Exception("Image is too large");
 
@@ -384,14 +384,14 @@ final class TJBench {
 
         jpegBufs = (TJ.PointerReference[])
           (new TJ.PointerReference().toArray(ntilesw * ntilesh));
-        jpegSizes = (TJ.NativeLongReference[])
-          (new TJ.NativeLongReference().toArray(ntilesw * ntilesh));
+        jpegSizes = (TJ.SizeTReference[])
+          (new TJ.SizeTReference().toArray(ntilesw * ntilesh));
 
         if (noRealloc) {
-          jpegBufSizes = (TJ.NativeLongReference[])
-            (new TJ.NativeLongReference().toArray(ntilesw * ntilesh));
+          jpegBufSizes = (TJ.SizeTReference[])
+            (new TJ.SizeTReference().toArray(ntilesw * ntilesh));
           for (int i = 0; i < ntilesw * ntilesh; i++) {
-            NativeLong jpegBufSize = TJ.jpegBufSize(tilew, tileh, subsamp);
+            TJ.SizeT jpegBufSize = TJ.jpegBufSize(tilew, tileh, subsamp);
             jpegBufSize.setValue(jpegBufSize.longValue() +
                                  iccSize.longValue());
             jpegBufs[i].pointer = TJ.alloc(jpegBufSize);
@@ -450,8 +450,8 @@ final class TJBench {
               }
               PointerByReference jpegBuf =
                 new PointerByReference(jpegBufs[tile].pointer);
-              NativeLongByReference jpegSize =
-                new NativeLongByReference(jpegSizes[tile].value);
+              TJ.SizeTByReference jpegSize =
+                new TJ.SizeTByReference(jpegSizes[tile].value);
               if (doYUV) {
                 double startEncode = getTime();
 
@@ -582,8 +582,8 @@ final class TJBench {
   static void decompTest(String fileName) throws Exception {
     TJ.PointerReference[] jpegBufs = null;
     Memory srcBuf;
-    TJ.NativeLongReference[] jpegBufSizes = null, jpegSizes;
-    NativeLong srcSize;
+    TJ.SizeTReference[] jpegBufSizes = null, jpegSizes;
+    TJ.SizeT srcSize;
     long totalJpegSize;
     TJ.Transform[] t;
     double start, elapsed;
@@ -599,7 +599,7 @@ final class TJBench {
       doTransform = true;
 
     try (FileInputStream fis = new FileInputStream(fileName)) {
-      srcSize = new NativeLong(fis.available());
+      srcSize = new TJ.SizeT(fis.available());
       if (srcSize.longValue() < 1)
         throw new Exception("Input file contains no data");
       srcBuf = new Memory(srcSize.longValue());
@@ -684,8 +684,8 @@ final class TJBench {
 
         jpegBufs = (TJ.PointerReference[])
           (new TJ.PointerReference().toArray(ntilesw * ntilesh));
-        jpegSizes = (TJ.NativeLongReference[])
-          (new TJ.NativeLongReference().toArray(ntilesw * ntilesh));
+        jpegSizes = (TJ.SizeTReference[])
+          (new TJ.SizeTReference().toArray(ntilesw * ntilesh));
 
         tsubsamp = (xformOpt & TJ.XOPT_GRAY) != 0 ? TJ.SAMP_GRAY : subsamp;
         if (xformOp == TJ.XOP_TRANSPOSE || xformOp == TJ.XOP_TRANSVERSE ||
@@ -705,8 +705,8 @@ final class TJBench {
         }
 
         if (noRealloc && doTransform)
-          jpegBufSizes = (TJ.NativeLongReference[])
-            (new TJ.NativeLongReference().toArray(ntilesw * ntilesh));
+          jpegBufSizes = (TJ.SizeTReference[])
+            (new TJ.SizeTReference().toArray(ntilesw * ntilesh));
 
         tw = w;  th = h;  ttilew = tilew;  ttileh = tileh;
         if (quiet == 0) {
@@ -753,7 +753,7 @@ final class TJBench {
               t[tile].options = xformOpt | TJ.XOPT_TRIM;
               t[tile].customFilter = customFilter;
               if ((t[tile].options & TJ.XOPT_NOOUTPUT) == 0 && noRealloc) {
-                NativeLong jpegBufSize = TJ.transformBufSize(handle, t[tile]);
+                TJ.SizeT jpegBufSize = TJ.transformBufSize(handle, t[tile]);
                 jpegBufs[tile].pointer = TJ.alloc(jpegBufSize);
                 jpegBufSizes[tile].value = jpegBufSize;
               }
@@ -1401,7 +1401,7 @@ final class TJBench {
         else
           srcBuf = TJ.loadImage16(handle, argv[0], width, 1, height,
                                   pixelFormat);
-        NativeLongByReference iccSizeRef = new NativeLongByReference();
+        TJ.SizeTByReference iccSizeRef = new TJ.SizeTByReference();
         TJ.getICCProfile(handle, null, iccSizeRef);
         iccSize = iccSizeRef.getValue();
         w = width.getValue();

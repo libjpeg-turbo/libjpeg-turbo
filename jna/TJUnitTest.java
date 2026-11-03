@@ -418,12 +418,11 @@ final class TJUnitTest {
     return retval;
   }
 
-  static void writeJPEG(Pointer jpegBuf, NativeLong jpegBufSize,
+  static void writeJPEG(Pointer jpegBuf, long jpegBufSize,
                         String filename) throws Exception {
     File file = new File(filename);
     try (FileOutputStream fos = new FileOutputStream(file)) {
-      fos.getChannel().write(jpegBuf.getByteBuffer(0,
-                                                   jpegBufSize.longValue()));
+      fos.getChannel().write(jpegBuf.getByteBuffer(0, jpegBufSize));
     }
   }
 
@@ -435,7 +434,7 @@ final class TJUnitTest {
   }
 
   static void compTest(Pointer handle, PointerByReference dstBuf,
-                       NativeLongByReference dstSize, int w, int h, int pf,
+                       TJ.SizeTByReference dstSize, int w, int h, int pf,
                        String baseName) throws Exception {
     String tempStr;
     String pfStr = PIXFORMATSTR[pf];
@@ -450,8 +449,8 @@ final class TJUnitTest {
 
       initBuf(srcBuf, w, h, pf, bottomUp);
 
-      if (dstBuf.getValue() != null && dstSize.getValue().longValue() != 0)
-        dstBuf.getValue().clear(dstSize.getValue().longValue());
+      if (dstBuf.getValue() != null && dstSize.longValue() != 0)
+        dstBuf.getValue().clear(dstSize.longValue());
 
       if (doYUV) {
         int nc = (subsamp == TJ.SAMP_GRAY ? 1 : 3);
@@ -481,7 +480,7 @@ final class TJUnitTest {
             Pointer yuvPtr = yuvBuf;
             for (int i = 0; i < yuvPlanes.length; i++) {
               int planeWidth, planeHeight;
-              NativeLong planeSize;
+              TJ.SizeT planeSize;
 
               planeWidth = TJ.yuvPlaneWidth(i, w, subsamp);
               planeHeight = TJ.yuvPlaneHeight(i, h, subsamp);
@@ -510,20 +509,20 @@ final class TJUnitTest {
           // and  TJ.PARAM_COLORSPACE.
           TJ.set(handle, TJ.PARAM_LOSSLESS, 1);
           TJ.set(handle, TJ.PARAM_COLORSPACE, TJ.CS_RGB);
-          long dstBufSize = dstSize.getValue().longValue();
+          long dstBufSize = dstSize.longValue();
           TJ.compressFromYUV8(handle, yuvBuf, w, yuvAlign, h, dstBuf, dstSize);
           String md5ref = getMD5Sum(dstBuf.getValue(),
-                                    dstSize.getValue().intValue());
+                                    (int)dstSize.longValue());
 
           // Verify that TJ.tj3CompressFromYUVPlanes8() produces the same
           // results.
-          dstSize.setValue(new NativeLong(dstBufSize));
-          if (dstBuf.getValue() != null && dstSize.getValue().longValue() != 0)
-            dstBuf.getValue().clear(dstSize.getValue().longValue());
+          dstSize.setValue(dstBufSize);
+          if (dstBuf.getValue() != null && dstSize.longValue() != 0)
+            dstBuf.getValue().clear(dstSize.longValue());
           TJ.compressFromYUVPlanes8(handle, yuvPlanes, w, yuvStrides, h,
                                     dstBuf, dstSize);
           String md5sum = getMD5Sum(dstBuf.getValue(),
-                                    dstSize.getValue().intValue());
+                                    (int)dstSize.longValue());
           if (!md5sum.equalsIgnoreCase(md5ref))
             throw new Exception("JPEG image has an MD5 sum of " + md5sum +
                                 ".  Should be " + md5ref);
@@ -552,18 +551,18 @@ final class TJUnitTest {
     else
       tempStr = baseName + "_enc" + precision + "_" + pfStr + "_" + buStr +
                 "_" + SUBNAME[subsamp] + "_Q" + jpegQual + ".jpg";
-    writeJPEG(dstBuf.getValue(), dstSize.getValue(), tempStr);
+    writeJPEG(dstBuf.getValue(), dstSize.longValue(), tempStr);
     System.out.println("Done.\n  Result in " + tempStr);
   }
 
-  static void decompTest(Pointer handle, Pointer jpegBuf, NativeLong jpegSize,
+  static void decompTest(Pointer handle, Pointer jpegBuf, TJ.SizeT jpegSize,
                          int w, int h, int pf, String baseName, int subsamp,
                          TJ.ScalingFactor sf) throws Exception {
     boolean success = true;
     int headerWidth = 0, headerHeight = 0, headerSubsamp;
     int scaledWidth = TJ.scaled(w, sf);
     int scaledHeight = TJ.scaled(h, sf);
-    NativeLong dstSize;
+    TJ.SizeT dstSize;
     boolean bottomUp = (TJ.get(handle, TJ.PARAM_BOTTOMUP) == 1);
 
     TJ.setScalingFactor(handle, sf);
@@ -578,7 +577,7 @@ final class TJUnitTest {
     if (headerWidth != w || headerHeight != h || headerSubsamp != subsamp)
       throw new Exception("Incorrect JPEG header");
 
-    dstSize = new NativeLong(scaledWidth * scaledHeight * TJ.PIXEL_SIZE[pf]);
+    dstSize = new TJ.SizeT(scaledWidth * scaledHeight * TJ.PIXEL_SIZE[pf]);
 
     try (Memory dstBuf = new Memory(dstSize.longValue() * sampleSize)) {
 
@@ -615,7 +614,7 @@ final class TJUnitTest {
           Pointer yuvPtr = yuvBuf;
           for (int i = 0; i < yuvPlanes.length; i++) {
             int planeWidth, planeHeight;
-            NativeLong planeSize;
+            TJ.SizeT planeSize;
 
             planeWidth = TJ.yuvPlaneWidth(i, scaledWidth, subsamp);
             planeHeight = TJ.yuvPlaneHeight(i, scaledHeight, subsamp);
@@ -685,7 +684,7 @@ final class TJUnitTest {
     }  // try (dstBuf)
   }
 
-  static void decompTest(Pointer handle, Pointer jpegBuf, NativeLong jpegSize,
+  static void decompTest(Pointer handle, Pointer jpegBuf, TJ.SizeT jpegSize,
                          int w, int h, int pf, String baseName, int subsamp)
                          throws Exception {
     if (lossless) {
@@ -715,8 +714,8 @@ final class TJUnitTest {
   static void doTest(int w, int h, int[] formats, int subsamp, String baseName)
                      throws Exception {
     PointerByReference dstBuf = new PointerByReference();
-    NativeLongByReference size = new NativeLongByReference();
-    NativeLong bufSize = new NativeLong(0);
+    TJ.SizeTByReference size = new TJ.SizeTByReference();
+    TJ.SizeT bufSize = new TJ.SizeT(0);
 
     if (lossless && subsamp != TJ.SAMP_GRAY)
       subsamp = TJ.SAMP_444;
@@ -783,7 +782,7 @@ final class TJUnitTest {
 
   static void overflowTest() throws Exception {
     // Ensure that the various buffer size methods don't overflow
-    NativeLong size = new NativeLong(1);
+    TJ.SizeT size = new TJ.SizeT(1);
     int intSize = 1;
     boolean exception = false;
 
@@ -848,7 +847,7 @@ final class TJUnitTest {
     // Ensure that warnings and fatal errors are reported correctly.
     int w = 2, h = 2, i;
     PointerByReference jpegBuf = new PointerByReference();
-    NativeLongByReference jpegSize = new NativeLongByReference();
+    TJ.SizeTByReference jpegSize = new TJ.SizeTByReference();
     Random r = new Random();
 
     try (Memory rgbBuf = new Memory(w * h * 4 * sampleSize)) {
@@ -856,8 +855,7 @@ final class TJUnitTest {
       for (i = 0; i < w * h * 4; i++)
         setVal(rgbBuf, i, r.nextInt(2) * maxSample);
       jpegSize.setValue(TJ.jpegBufSize(w, h, TJ.SAMP_444));
-      NativeLong newJpegSize =
-        new NativeLong(jpegSize.getValue().longValue() + 2);
+      TJ.SizeT newJpegSize = new TJ.SizeT(jpegSize.longValue() + 2);
       jpegBuf.setValue(TJ.alloc(newJpegSize));
 
       try (TJ.Handle handle = new TJ.Handle(TJ.INIT_COMPRESS)) {
@@ -895,11 +893,9 @@ final class TJUnitTest {
 
         // Insert junk data after SOI marker
         ByteBuffer srcBB =
-          jpegBuf.getValue().getByteBuffer(2, jpegSize.getValue().longValue() -
-                                           2);
+          jpegBuf.getValue().getByteBuffer(2, jpegSize.longValue() - 2);
         ByteBuffer dstBB =
-          jpegBuf.getValue().getByteBuffer(4, jpegSize.getValue().longValue() -
-                                           2);
+          jpegBuf.getValue().getByteBuffer(4, jpegSize.longValue() - 2);
         dstBB.put(srcBB);
         jpegBuf.getValue().setMemory(2, 2, (byte)'X');
         jpegSize.setValue(newJpegSize);
@@ -993,7 +989,7 @@ final class TJUnitTest {
 
   static void checktj3TransformBufSize(TJ.Handle handle,
                                        PointerByReference jpegBuf,
-                                       NativeLongByReference jpegSize,
+                                       TJ.SizeTByReference jpegSize,
                                        int w, int h, int subsamp,
                                        TJ.PointerReference[] dstBuf,
                                        TJ.Transform[] xform,
@@ -1001,21 +997,21 @@ final class TJUnitTest {
                                        long app1HeaderSize,
                                        long app2HeaderSize,
                                        long comHeaderSize) throws Exception {
-    NativeLong transformBufSize = TJ.transformBufSize(handle, xform[0]);
+    TJ.SizeT transformBufSize = TJ.transformBufSize(handle, xform[0]);
     if (transformBufSize.longValue() != worstCaseSize)
       throw new Exception("TJ.tj3TransformBufSize() returned " +
                          transformBufSize.longValue() + " instead of " +
                          worstCaseSize);
 
     // Validate the actual marker copying behavior.
-    long jpegSizeWithoutMarkers = jpegSize.getValue().longValue() -
-                                  app1HeaderSize - app2HeaderSize -
-                                  comHeaderSize - markerDataSize * 3;
+    long jpegSizeWithoutMarkers = jpegSize.longValue() - app1HeaderSize -
+                                  app2HeaderSize - comHeaderSize -
+                                  markerDataSize * 3;
     long dstSize0 = worstCaseSize - TJ.jpegBufSize(w, h, subsamp).longValue() +
                     jpegSizeWithoutMarkers;
-    TJ.NativeLongReference[] dstSize =
-      (TJ.NativeLongReference[])(new TJ.NativeLongReference().toArray(1));
-    dstSize[0].value = new NativeLong(dstSize0);
+    TJ.SizeTReference[] dstSize =
+      (TJ.SizeTReference[])(new TJ.SizeTReference().toArray(1));
+    dstSize[0].value = new TJ.SizeT(dstSize0);
     TJ.transform(handle, jpegBuf.getValue(), jpegSize.getValue(), 1, dstBuf,
                  dstSize, xform);
     if (dstSize[0].value.longValue() != dstSize0)
@@ -1032,8 +1028,8 @@ final class TJUnitTest {
       (TJ.PointerReference[])(new TJ.PointerReference().toArray(1));
     long worstCaseSize, markerDataSize = 50000, app1HeaderSize = 4,
         app2HeaderSize = 18, comHeaderSize = 4;
-    NativeLongByReference jpegSize = new NativeLongByReference(),
-      iccSize = new NativeLongByReference();
+    TJ.SizeTByReference jpegSize = new TJ.SizeTByReference(),
+      iccSize = new TJ.SizeTByReference();
     TJ.Transform[] xform = (TJ.Transform[])(new TJ.Transform().toArray(1));
     Random r = new Random();
 
@@ -1045,8 +1041,8 @@ final class TJUnitTest {
         worstCaseSize = TJ.jpegBufSize(w, h, subsamp).longValue() +
                         app1HeaderSize + app2HeaderSize + comHeaderSize +
                         markerDataSize * 3;
-        jpegBuf.setValue(TJ.alloc(new NativeLong(worstCaseSize)));
-        dstBuf[0].pointer = TJ.alloc(new NativeLong(worstCaseSize));
+        jpegBuf.setValue(TJ.alloc(new TJ.SizeT(worstCaseSize)));
+        dstBuf[0].pointer = TJ.alloc(new TJ.SizeT(worstCaseSize));
 
         try (Memory srcBuf = new Memory(w * h * 4 * sampleSize);
              TJ.Handle handle = new TJ.Handle(TJ.INIT_COMPRESS)) {
@@ -1058,8 +1054,8 @@ final class TJUnitTest {
           TJ.set(handle, TJ.PARAM_SUBSAMP, subsamp);
           jpegBuf.getValue().setMemory(0, markerDataSize, (byte)'I');
           TJ.setICCProfile(handle, jpegBuf.getValue(),
-                           new NativeLong(markerDataSize));
-          jpegSize.setValue(new NativeLong(worstCaseSize));
+                           new TJ.SizeT(markerDataSize));
+          jpegSize.setValue(new TJ.SizeT(worstCaseSize));
           if (precision == 8)
             TJ.compress8(handle, srcBuf, w, 0, h, TJ.PF_BGRX, jpegBuf,
                          jpegSize);
@@ -1070,13 +1066,11 @@ final class TJUnitTest {
 
         // Move JPEG header and image data to make room for additional markers.
         ByteBuffer srcBB =
-          jpegBuf.getValue().getByteBuffer(2, jpegSize.getValue().longValue() -
-                                           2);
+          jpegBuf.getValue().getByteBuffer(2, jpegSize.longValue() - 2);
         ByteBuffer dstBB =
           jpegBuf.getValue().getByteBuffer(2 + app1HeaderSize + comHeaderSize +
                                            markerDataSize * 2,
-                                           jpegSize.getValue().longValue() -
-                                           2);
+                                           jpegSize.longValue() - 2);
         dstBB.put(srcBB);
         // Add APP1 marker
         i = 2;
@@ -1093,9 +1087,8 @@ final class TJUnitTest {
         i += 2;
         jpegBuf.getValue().setMemory(i, markerDataSize, (byte)'C');
         i += markerDataSize;
-        jpegSize.setValue(new NativeLong(jpegSize.getValue().longValue() +
-                                         app1HeaderSize + comHeaderSize +
-                                         markerDataSize * 2));
+        jpegSize.setValue(new TJ.SizeT(jpegSize.longValue() + app1HeaderSize +
+                                       comHeaderSize + markerDataSize * 2));
 
         // Verify that TJ.tj3TransformBufSize() returns the correct buffer size
         // for all TJ.PARAM_SAVEMARKERS values and transform options,
@@ -1107,7 +1100,7 @@ final class TJUnitTest {
           TJ.decompressHeader(handle, jpegBuf.getValue(), jpegSize.getValue());
           TJ.getICCProfile(handle, iccBuf, iccSize);
           if (iccBuf.getValue() == null ||
-              iccSize.getValue().longValue() != markerDataSize)
+              iccSize.longValue() != markerDataSize)
             throw new Exception("ICC profile was not extracted");
           TJ.free(iccBuf.getValue());  iccBuf.setValue(null);
           checktj3TransformBufSize(handle, jpegBuf, jpegSize, w, h, subsamp,
@@ -1131,7 +1124,7 @@ final class TJUnitTest {
           TJ.set(handle, TJ.PARAM_SAVEMARKERS, 0);
           TJ.decompressHeader(handle, jpegBuf.getValue(), jpegSize.getValue());
           if (TJ.tj3GetICCProfile(handle, iccBuf, iccSize) != -1 ||
-             iccBuf.getValue() != null || iccSize.getValue().longValue() != 0)
+             iccBuf.getValue() != null || iccSize.longValue() != 0)
             throw new Exception("ICC profile was extracted unexpectedly");
           checktj3TransformBufSize(handle, jpegBuf, jpegSize, w, h, subsamp,
                                    dstBuf, xform, worstCaseSize,
@@ -1150,7 +1143,7 @@ final class TJUnitTest {
           TJ.decompressHeader(handle, jpegBuf.getValue(), jpegSize.getValue());
           TJ.getICCProfile(handle, iccBuf, iccSize);
           if (iccBuf.getValue() == null ||
-              iccSize.getValue().longValue() != markerDataSize)
+              iccSize.longValue() != markerDataSize)
             throw new Exception("ICC profile was not extracted");
           TJ.free(iccBuf.getValue());  iccBuf.setValue(null);
           worstCaseSize = TJ.jpegBufSize(w, h, subsamp).longValue() +
@@ -1169,7 +1162,7 @@ final class TJUnitTest {
 
           TJ.decompressHeader(handle, jpegBuf.getValue(), jpegSize.getValue());
           if (TJ.tj3GetICCProfile(handle, iccBuf, iccSize) != -1 ||
-             iccBuf.getValue() != null || iccSize.getValue().longValue() != 0)
+             iccBuf.getValue() != null || iccSize.longValue() != 0)
             throw new Exception("ICC profile was extracted unexpectedly");
           checktj3TransformBufSize(handle, jpegBuf, jpegSize, w, h, subsamp,
                                    dstBuf, xform, worstCaseSize,
@@ -1186,7 +1179,7 @@ final class TJUnitTest {
           TJ.set(handle, TJ.PARAM_SAVEMARKERS, 1);
           TJ.decompressHeader(handle, jpegBuf.getValue(), jpegSize.getValue());
           if (TJ.tj3GetICCProfile(handle, iccBuf, iccSize) != -1 ||
-             iccBuf.getValue() != null || iccSize.getValue().longValue() != 0)
+             iccBuf.getValue() != null || iccSize.longValue() != 0)
             throw new Exception("ICC profile was extracted unexpectedly");
           worstCaseSize = TJ.jpegBufSize(w, h, subsamp).longValue() +
                           comHeaderSize + markerDataSize;
@@ -1210,35 +1203,35 @@ final class TJUnitTest {
           TJ.set(handle, TJ.PARAM_SAVEMARKERS, 0);
           TJ.decompressHeader(handle, jpegBuf.getValue(), jpegSize.getValue());
           if (TJ.tj3GetICCProfile(handle, iccBuf, iccSize) != -1 ||
-             iccBuf.getValue() != null || iccSize.getValue().longValue() != 0)
+             iccBuf.getValue() != null || iccSize.longValue() != 0)
             throw new Exception("ICC profile was extracted unexpectedly");
 
           TJ.set(handle, TJ.PARAM_SAVEMARKERS, 2);
           TJ.decompressHeader(handle, jpegBuf.getValue(), jpegSize.getValue());
           TJ.getICCProfile(handle, iccBuf, iccSize);
           if (iccBuf.getValue() == null ||
-              iccSize.getValue().longValue() != markerDataSize)
+              iccSize.longValue() != markerDataSize)
             throw new Exception("ICC profile was not extracted");
           TJ.free(iccBuf.getValue());  iccBuf.setValue(null);
 
           TJ.set(handle, TJ.PARAM_SAVEMARKERS, 3);
           TJ.decompressHeader(handle, jpegBuf.getValue(), jpegSize.getValue());
           if (TJ.tj3GetICCProfile(handle, iccBuf, iccSize) != -1 ||
-             iccBuf.getValue() != null || iccSize.getValue().longValue() != 0)
+             iccBuf.getValue() != null || iccSize.longValue() != 0)
             throw new Exception("ICC profile was extracted unexpectedly");
 
           TJ.set(handle, TJ.PARAM_SAVEMARKERS, 4);
           TJ.decompressHeader(handle, jpegBuf.getValue(), jpegSize.getValue());
           TJ.getICCProfile(handle, iccBuf, iccSize);
           if (iccBuf.getValue() == null ||
-              iccSize.getValue().longValue() != markerDataSize)
+              iccSize.longValue() != markerDataSize)
             throw new Exception("ICC profile was not extracted");
           TJ.free(iccBuf.getValue());  iccBuf.setValue(null);
 
           TJ.set(handle, TJ.PARAM_SAVEMARKERS, 1);
           TJ.decompressHeader(handle, jpegBuf.getValue(), jpegSize.getValue());
           if (TJ.tj3GetICCProfile(handle, iccBuf, iccSize) != -1 ||
-             iccBuf.getValue() != null || iccSize.getValue().longValue() != 0)
+             iccBuf.getValue() != null || iccSize.longValue() != 0)
             throw new Exception("ICC profile was extracted unexpectedly");
 
         }  // try (handle)
@@ -1258,10 +1251,9 @@ final class TJUnitTest {
   static void compress8PR(Pointer handle, Pointer srcBuf, int width, int pitch,
                           int height, int pixelFormat,
                           TJ.PointerReference jpegBuf,
-                          TJ.NativeLongReference jpegSize) throws Exception {
+                          TJ.SizeTReference jpegSize) throws Exception {
     PointerByReference tmpJPEGBuf = new PointerByReference(jpegBuf.pointer);
-    NativeLongByReference tmpJPEGSize =
-      new NativeLongByReference(jpegSize.value);
+    TJ.SizeTByReference tmpJPEGSize = new TJ.SizeTByReference(jpegSize.value);
 
     TJ.compress8(handle, srcBuf, width, pitch, height, pixelFormat, tmpJPEGBuf,
                  tmpJPEGSize);
@@ -1273,11 +1265,10 @@ final class TJUnitTest {
   static int tj3Compress8PR(Pointer handle, Pointer srcBuf, int width,
                             int pitch, int height, int pixelFormat,
                             TJ.PointerReference jpegBuf,
-                            TJ.NativeLongReference jpegSize) {
+                            TJ.SizeTReference jpegSize) {
     int retval = 0;
     PointerByReference tmpJPEGBuf = new PointerByReference(jpegBuf.pointer);
-    NativeLongByReference tmpJPEGSize =
-      new NativeLongByReference(jpegSize.value);
+    TJ.SizeTByReference tmpJPEGSize = new TJ.SizeTByReference(jpegSize.value);
 
     retval = TJ.tj3Compress8(handle, srcBuf, width, pitch, height, pixelFormat,
                              tmpJPEGBuf, tmpJPEGSize);
@@ -1300,7 +1291,7 @@ final class TJUnitTest {
       for (int i = 0; i < w * h * 4; i++)
         setVal(srcBuf, i, r.nextInt(2) * maxSample);
       long worstCaseSize = TJ.jpegBufSize(w, h, TJ.SAMP_444).longValue();
-      jpegBufs[0].pointer = TJ.alloc(new NativeLong(worstCaseSize));
+      jpegBufs[0].pointer = TJ.alloc(new TJ.SizeT(worstCaseSize));
 
       TJ.set(handle, TJ.PARAM_QUALITY, 100);
       TJ.set(handle, TJ.PARAM_SUBSAMP, TJ.SAMP_444);
@@ -1310,9 +1301,9 @@ final class TJUnitTest {
 
       // Verify that no error occurs when the destination buffer is
       // pre-allocated to the worst-case size.
-      TJ.NativeLongReference[] jpegSizes =
-        (TJ.NativeLongReference[])(new TJ.NativeLongReference().toArray(2));
-      jpegSizes[0].value = new NativeLong(worstCaseSize);
+      TJ.SizeTReference[] jpegSizes =
+        (TJ.SizeTReference[])(new TJ.SizeTReference().toArray(2));
+      jpegSizes[0].value = new TJ.SizeT(worstCaseSize);
       compress8PR(handle, srcBuf, w, 0, h, TJ.PF_BGRX, jpegBufs[0],
                   jpegSizes[0]);
 
@@ -1347,7 +1338,7 @@ final class TJUnitTest {
       // Verify that reallocation occurs when the destination buffer is
       // pre-allocated but too small and that the destination manager doesn't
       // leak memory when reallocating a pre-allocated destination buffer.
-      jpegBufs[1].pointer = TJ.alloc(new NativeLong(100));
+      jpegBufs[1].pointer = TJ.alloc(new TJ.SizeT(100));
       oldJPEGBufs[1].pointer = jpegBufs[1].pointer;
       jpegSizes[1].value.setValue(100);
       compress8PR(handle, srcBuf, w, 0, h, TJ.PF_BGRX, jpegBufs[1],
@@ -1355,7 +1346,7 @@ final class TJUnitTest {
       if (jpegBufs[1].pointer.equals(oldJPEGBufs[1].pointer))
         throw new Exception("JPEG buffer was not reallocated");
 
-      NativeLong jpegSRCSize = new NativeLong(jpegSizes[0].value.longValue());
+      TJ.SizeT jpegSRCSize = new TJ.SizeT(jpegSizes[0].value.longValue());
       jpegSRCBuf = TJ.alloc(jpegSRCSize);
       ByteBuffer srcBB =
         jpegBufs[1].pointer.getByteBuffer(0, jpegSRCSize.longValue());
@@ -1471,7 +1462,7 @@ final class TJUnitTest {
 
   static void bufSizeTest() throws Exception {
     PointerByReference dstBuf = new PointerByReference();
-    NativeLongByReference dstSize = new NativeLongByReference();
+    TJ.SizeTByReference dstSize = new TJ.SizeTByReference();
     int numSamp = TJ.NUMSAMP;
     Random r = new Random();
 
@@ -1519,7 +1510,7 @@ final class TJUnitTest {
                 // buffer size to 0 while reusing the destination buffer
                 // pointer.
                 if (alloc && (w > 1 || h > 1))
-                  dstSize.setValue(new NativeLong(0));
+                  dstSize.setValue(new TJ.SizeT(0));
                 if (precision <= 8)
                   TJ.compress8(handle, srcBuf, w, 0, h, TJ.PF_BGRX, dstBuf,
                                dstSize);
@@ -1556,7 +1547,7 @@ final class TJUnitTest {
                               dstBuf.getValue(), yuvAlign);
               } else {
                 if (alloc && (h > 1 || w > 1))
-                  dstSize.setValue(new NativeLong(0));
+                  dstSize.setValue(new TJ.SizeT(0));
                 if (precision <= 8)
                   TJ.compress8(handle, srcBuf, h, 0, w, TJ.PF_BGRX, dstBuf,
                                dstSize);

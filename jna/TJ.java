@@ -29,11 +29,11 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
+import com.sun.jna.ptr.ByReference;
 import com.sun.jna.Callback;
 import com.sun.jna.ptr.IntByReference;
+import com.sun.jna.IntegerType;
 import com.sun.jna.Native;
-import com.sun.jna.NativeLong;
-import com.sun.jna.ptr.NativeLongByReference;
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 import com.sun.jna.Structure;
@@ -170,6 +170,55 @@ public final class TJ {
   // STRUCTURES AND NESTED CLASSES
   // ==========================================================================
 
+  // size_t
+
+  public static class SizeT extends IntegerType {
+    public SizeT() {
+      this(0);
+    }
+
+    public SizeT(long value) {
+      super(Native.SIZE_T_SIZE, value, true);
+    }
+  }
+
+  public static final class SizeTByReference extends ByReference {
+    public SizeTByReference() {
+      this(0);
+    }
+
+    public SizeTByReference(long value) {
+      super(Native.SIZE_T_SIZE);
+      setValue(value);
+    }
+
+    public SizeTByReference(SizeT value) {
+      this(value.longValue());
+    }
+
+    public void setValue(long value) {
+      if (Native.SIZE_T_SIZE == 8)
+        getPointer().setLong(0, value);
+      else
+        getPointer().setInt(0, (int)value);
+    }
+
+    public void setValue(SizeT value) {
+      setValue(value.longValue());
+    }
+
+    public long longValue() {
+      if (Native.SIZE_T_SIZE == 8)
+        return getPointer().getLong(0);
+      else
+        return getPointer().getInt(0) & 0xFFFFFFFFL;
+    }
+
+    public SizeT getValue() {
+      return new SizeT(longValue());
+    }
+  }
+
   // tjscalingfactor
 
   @FieldOrder({ "num", "denom" })
@@ -301,7 +350,7 @@ public final class TJ {
   }
 
   // These com.sun.jna.Structure subclasses allow us to do the equivalent of
-  // passing an array of PointerByReference or NativeLongByReference instances,
+  // passing an array of PointerByReference or SizeTByReference instances,
   // since JNA does not allow that.  They are used solely by the lossless
   // transformation methods.
 
@@ -315,8 +364,8 @@ public final class TJ {
   };
 
   @FieldOrder("value")
-  public static class NativeLongReference extends Structure {
-    public NativeLong value;
+  public static class SizeTReference extends Structure {
+    public SizeT value;
 
     protected final List<String> getFieldOrder() {
       return Arrays.asList("value");
@@ -389,9 +438,9 @@ public final class TJ {
 
   // --------------------------------------------------------------------------
 
-  public static native Pointer tj3Alloc(NativeLong bytes);
+  public static native Pointer tj3Alloc(SizeT bytes);
 
-  public static Pointer alloc(NativeLong bytes) {
+  public static Pointer alloc(SizeT bytes) {
     return tj3Alloc(bytes);
   }
 
@@ -405,12 +454,12 @@ public final class TJ {
 
   // --------------------------------------------------------------------------
 
-  public static native NativeLong tj3JPEGBufSize(int width, int height,
-                                                 int jpegSubsamp);
+  public static native SizeT tj3JPEGBufSize(int width, int height,
+                                            int jpegSubsamp);
 
-  public static NativeLong jpegBufSize(int width, int height, int jpegSubsamp)
-                                       throws Exception {
-    NativeLong retval = tj3JPEGBufSize(width, height, jpegSubsamp);
+  public static SizeT jpegBufSize(int width, int height, int jpegSubsamp)
+                                  throws Exception {
+    SizeT retval = tj3JPEGBufSize(width, height, jpegSubsamp);
     if (retval.longValue() == 0)
       throw new Exception(tj3GetErrorStr(null), tj3GetErrorCode(null));
     return retval;
@@ -418,12 +467,12 @@ public final class TJ {
 
   // --------------------------------------------------------------------------
 
-  public static native NativeLong tj3YUVBufSize(int width, int align,
-                                                int height, int subsamp);
+  public static native SizeT tj3YUVBufSize(int width, int align, int height,
+                                           int subsamp);
 
-  public static NativeLong yuvBufSize(int width, int align, int height,
-                                      int subsamp) throws Exception {
-    NativeLong retval = tj3YUVBufSize(width, align, height, subsamp);
+  public static SizeT yuvBufSize(int width, int align, int height, int subsamp)
+                                 throws Exception {
+    SizeT retval = tj3YUVBufSize(width, align, height, subsamp);
     if (retval.longValue() == 0)
       throw new Exception(tj3GetErrorStr(null), tj3GetErrorCode(null));
     return retval;
@@ -431,15 +480,14 @@ public final class TJ {
 
   // --------------------------------------------------------------------------
 
-  public static native NativeLong tj3YUVPlaneSize(int componentID, int width,
-                                                  int stride, int height,
-                                                  int subsamp);
+  public static native SizeT tj3YUVPlaneSize(int componentID, int width,
+                                             int stride, int height,
+                                             int subsamp);
 
-  public static NativeLong yuvPlaneSize(int componentID, int width, int stride,
-                                        int height, int subsamp)
-                                        throws Exception {
-    NativeLong retval = tj3YUVPlaneSize(componentID, width, stride, height,
-                                        subsamp);
+  public static SizeT yuvPlaneSize(int componentID, int width, int stride,
+                                   int height, int subsamp) throws Exception {
+    SizeT retval = tj3YUVPlaneSize(componentID, width, stride, height,
+                                   subsamp);
     if (retval.longValue() == 0)
       throw new Exception(tj3GetErrorStr(null), tj3GetErrorCode(null));
     return retval;
@@ -474,10 +522,10 @@ public final class TJ {
   // --------------------------------------------------------------------------
 
   public static native int tj3SetICCProfile(Pointer handle, Pointer iccBuf,
-                                            NativeLong iccSize);
+                                            SizeT iccSize);
 
   public static void setICCProfile(Pointer handle, Pointer iccBuf,
-                                    NativeLong iccSize) throws Exception {
+                                   SizeT iccSize) throws Exception {
     if (tj3SetICCProfile(handle, iccBuf, iccSize) < 0)
       throw new Exception(tj3GetErrorStr(handle), tj3GetErrorCode(handle));
   }
@@ -488,13 +536,12 @@ public final class TJ {
                                         int width, int pitch, int height,
                                         int pixelFormat,
                                         PointerByReference jpegBuf,
-                                        NativeLongByReference jpegSize);
+                                        SizeTByReference jpegSize);
 
   public static void compress8(Pointer handle, Pointer srcBuf, int width,
                                int pitch, int height, int pixelFormat,
                                PointerByReference jpegBuf,
-                               NativeLongByReference jpegSize)
-                               throws Exception {
+                               SizeTByReference jpegSize) throws Exception {
     if (tj3Compress8(handle, srcBuf, width, pitch, height, pixelFormat,
                      jpegBuf, jpegSize) < 0)
       throw new Exception(tj3GetErrorStr(handle), tj3GetErrorCode(handle));
@@ -506,13 +553,12 @@ public final class TJ {
                                          int width, int pitch, int height,
                                          int pixelFormat,
                                          PointerByReference jpegBuf,
-                                         NativeLongByReference jpegSize);
+                                         SizeTByReference jpegSize);
 
   public static void compress12(Pointer handle, Pointer srcBuf, int width,
                                 int pitch, int height, int pixelFormat,
                                 PointerByReference jpegBuf,
-                                NativeLongByReference jpegSize)
-                                throws Exception {
+                                SizeTByReference jpegSize) throws Exception {
     if (tj3Compress12(handle, srcBuf, width, pitch, height, pixelFormat,
                       jpegBuf, jpegSize) < 0)
       throw new Exception(tj3GetErrorStr(handle), tj3GetErrorCode(handle));
@@ -524,13 +570,12 @@ public final class TJ {
                                          int width, int pitch, int height,
                                          int pixelFormat,
                                          PointerByReference jpegBuf,
-                                         NativeLongByReference jpegSize);
+                                         SizeTByReference jpegSize);
 
   public static void compress16(Pointer handle, Pointer srcBuf, int width,
                                 int pitch, int height, int pixelFormat,
                                 PointerByReference jpegBuf,
-                                NativeLongByReference jpegSize)
-                                throws Exception {
+                                SizeTByReference jpegSize) throws Exception {
     if (tj3Compress16(handle, srcBuf, width, pitch, height, pixelFormat,
                       jpegBuf, jpegSize) < 0)
       throw new Exception(tj3GetErrorStr(handle), tj3GetErrorCode(handle));
@@ -544,14 +589,14 @@ public final class TJ {
     tj3CompressFromYUVPlanes8(Pointer handle, PointerReference srcPlanes,
                               int width, int[] strides, int height,
                               PointerByReference jpegBuf,
-                              NativeLongByReference jpegSize);
+                              SizeTByReference jpegSize);
 
   public static void compressFromYUVPlanes8(Pointer handle,
                                             PointerReference[] srcPlanes,
                                             int width, int[] strides,
                                             int height,
                                             PointerByReference jpegBuf,
-                                            NativeLongByReference jpegSize)
+                                            SizeTByReference jpegSize)
                                             throws Exception {
     if (tj3CompressFromYUVPlanes8(handle, srcPlanes[0], width, strides, height,
                                   jpegBuf, jpegSize) < 0)
@@ -564,12 +609,12 @@ public final class TJ {
                                                int width, int align,
                                                int height,
                                                PointerByReference jpegBuf,
-                                               NativeLongByReference jpegSize);
+                                               SizeTByReference jpegSize);
 
   public static void compressFromYUV8(Pointer handle, Pointer srcBuf,
                                       int width, int align, int height,
                                       PointerByReference jpegBuf,
-                                      NativeLongByReference jpegSize)
+                                      SizeTByReference jpegSize)
                                       throws Exception {
     if (tj3CompressFromYUV8(handle, srcBuf, width, align, height, jpegBuf,
                             jpegSize) < 0)
@@ -612,10 +657,10 @@ public final class TJ {
   // --------------------------------------------------------------------------
 
   public static native int tj3DecompressHeader(Pointer handle, Pointer jpegBuf,
-                                               NativeLong jpegSize);
+                                               SizeT jpegSize);
 
   public static void decompressHeader(Pointer handle, Pointer jpegBuf,
-                                      NativeLong jpegSize) throws Exception {
+                                      SizeT jpegSize) throws Exception {
     if (tj3DecompressHeader(handle, jpegBuf, jpegSize) < 0)
       throw new Exception(tj3GetErrorStr(handle), tj3GetErrorCode(handle));
   }
@@ -624,11 +669,10 @@ public final class TJ {
 
   public static native int tj3GetICCProfile(Pointer handle,
                                             PointerByReference iccBuf,
-                                            NativeLongByReference iccSize);
+                                            SizeTByReference iccSize);
 
   public static void getICCProfile(Pointer handle, PointerByReference iccBuf,
-                                   NativeLongByReference iccSize)
-                                   throws Exception {
+                                   SizeTByReference iccSize) throws Exception {
     if (tj3GetICCProfile(handle, iccBuf, iccSize) < 0)
       throw new Exception(tj3GetErrorStr(handle), tj3GetErrorCode(handle));
   }
@@ -681,12 +725,12 @@ public final class TJ {
   // --------------------------------------------------------------------------
 
   public static native int tj3Decompress8(Pointer handle, Pointer jpegBuf,
-                                          NativeLong jpegSize, Pointer dstBuf,
+                                          SizeT jpegSize, Pointer dstBuf,
                                           int pitch, int pixelFormat);
 
   public static void decompress8(Pointer handle, Pointer jpegBuf,
-                                 NativeLong jpegSize, Pointer dstBuf,
-                                 int pitch, int pixelFormat) throws Exception {
+                                 SizeT jpegSize, Pointer dstBuf, int pitch,
+                                 int pixelFormat) throws Exception {
     if (tj3Decompress8(handle, jpegBuf, jpegSize, dstBuf, pitch,
                        pixelFormat) < 0)
       throw new Exception(tj3GetErrorStr(handle), tj3GetErrorCode(handle));
@@ -695,13 +739,12 @@ public final class TJ {
   // --------------------------------------------------------------------------
 
   public static native int tj3Decompress12(Pointer handle, Pointer jpegBuf,
-                                           NativeLong jpegSize, Pointer dstBuf,
+                                           SizeT jpegSize, Pointer dstBuf,
                                            int pitch, int pixelFormat);
 
   public static void decompress12(Pointer handle, Pointer jpegBuf,
-                                  NativeLong jpegSize, Pointer dstBuf,
-                                  int pitch, int pixelFormat)
-                                  throws Exception {
+                                  SizeT jpegSize, Pointer dstBuf, int pitch,
+                                  int pixelFormat) throws Exception {
     if (tj3Decompress12(handle, jpegBuf, jpegSize, dstBuf, pitch,
                         pixelFormat) < 0)
       throw new Exception(tj3GetErrorStr(handle), tj3GetErrorCode(handle));
@@ -710,13 +753,12 @@ public final class TJ {
   // --------------------------------------------------------------------------
 
   public static native int tj3Decompress16(Pointer handle, Pointer jpegBuf,
-                                           NativeLong jpegSize, Pointer dstBuf,
+                                           SizeT jpegSize, Pointer dstBuf,
                                            int pitch, int pixelFormat);
 
   public static void decompress16(Pointer handle, Pointer jpegBuf,
-                                  NativeLong jpegSize, Pointer dstBuf,
-                                  int pitch, int pixelFormat)
-                                  throws Exception {
+                                  SizeT jpegSize, Pointer dstBuf, int pitch,
+                                  int pixelFormat) throws Exception {
     if (tj3Decompress16(handle, jpegBuf, jpegSize, dstBuf, pitch,
                         pixelFormat) < 0)
       throw new Exception(tj3GetErrorStr(handle), tj3GetErrorCode(handle));
@@ -725,12 +767,11 @@ public final class TJ {
   // --------------------------------------------------------------------------
 
   public static native int
-    tj3DecompressToYUVPlanes8(Pointer handle, Pointer jpegBuf,
-                              NativeLong jpegSize, PointerReference dstPlanes,
-                              int[] strides);
+    tj3DecompressToYUVPlanes8(Pointer handle, Pointer jpegBuf, SizeT jpegSize,
+                              PointerReference dstPlanes, int[] strides);
 
   public static void decompressToYUVPlanes8(Pointer handle, Pointer jpegBuf,
-                                            NativeLong jpegSize,
+                                            SizeT jpegSize,
                                             PointerReference[] dstPlanes,
                                             int[] strides) throws Exception {
     if (tj3DecompressToYUVPlanes8(handle, jpegBuf, jpegSize, dstPlanes[0],
@@ -740,13 +781,12 @@ public final class TJ {
 
   // --------------------------------------------------------------------------
 
-  public static native int tj3DecompressToYUV8(Pointer handle,
-                                               Pointer jpegBuf,
-                                               NativeLong jpegSize,
-                                               Pointer dstBuf, int align);
+  public static native int tj3DecompressToYUV8(Pointer handle, Pointer jpegBuf,
+                                               SizeT jpegSize, Pointer dstBuf,
+                                               int align);
 
   public static void decompressToYUV8(Pointer handle, Pointer jpegBuf,
-                                      NativeLong jpegSize, Pointer dstBuf,
+                                      SizeT jpegSize, Pointer dstBuf,
                                       int align) throws Exception {
     if (tj3DecompressToYUV8(handle, jpegBuf, jpegSize, dstBuf, align) < 0)
       throw new Exception(tj3GetErrorStr(handle), tj3GetErrorCode(handle));
@@ -787,13 +827,12 @@ public final class TJ {
 
   // --------------------------------------------------------------------------
 
-  public static native NativeLong
+  public static native SizeT
     tj3TransformBufSize(Pointer handle, Transform transform);
 
-  public static NativeLong transformBufSize(Pointer handle,
-                                            Transform transform)
-                                            throws Exception {
-    NativeLong retval = tj3TransformBufSize(handle, transform);
+  public static SizeT transformBufSize(Pointer handle, Transform transform)
+                                       throws Exception {
+    SizeT retval = tj3TransformBufSize(handle, transform);
     if (retval.longValue() == 0)
       throw new Exception(tj3GetErrorStr(handle), tj3GetErrorCode(handle));
     return retval;
@@ -802,15 +841,15 @@ public final class TJ {
   // --------------------------------------------------------------------------
 
   public static native int tj3Transform(Pointer handle, Pointer jpegBuf,
-                                        NativeLong jpegSize, int n,
+                                        SizeT jpegSize, int n,
                                         PointerReference dstBufs,
-                                        NativeLongReference dstSizes,
+                                        SizeTReference dstSizes,
                                         Transform transforms);
 
   public static void transform(Pointer handle, Pointer jpegBuf,
-                               NativeLong jpegSize, int n,
+                               SizeT jpegSize, int n,
                                PointerReference[] dstBufs,
-                               NativeLongReference[] dstSizes,
+                               SizeTReference[] dstSizes,
                                Transform[] transforms) throws Exception {
     if (tj3Transform(handle, jpegBuf, jpegSize, n, dstBufs[0], dstSizes[0],
                      transforms[0]) < 0)

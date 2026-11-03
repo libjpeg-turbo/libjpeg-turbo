@@ -168,9 +168,9 @@ final class TJTran {
         saveMarkers = 1, stopOnWarning = -1, subsamp;
       TJ.Transform[] xform = (TJ.Transform[])(new TJ.Transform().toArray(1));
       String iccFilename = null;
-      NativeLong srcSize;
-      TJ.NativeLongReference[] dstSize =
-        (TJ.NativeLongReference[])(new TJ.NativeLongReference().toArray(1));
+      TJ.SizeT srcSize;
+      TJ.SizeTReference[] dstSize =
+        (TJ.SizeTReference[])(new TJ.SizeTReference().toArray(1));
       Pointer srcBuf, iccBuf;
       int iccSize = 0;
 
@@ -301,7 +301,7 @@ final class TJTran {
 
         File inFile = new File(argv[i++]);
         try (FileInputStream fis = new FileInputStream(inFile)) {
-          srcSize = new NativeLong(fis.available());
+          srcSize = new TJ.SizeT(fis.available());
           if (srcSize.longValue() < 1)
             throw new Exception("Input file contains no data");
           srcBuf = new Memory(srcSize.longValue());
@@ -358,7 +358,7 @@ final class TJTran {
             iccBuf = new Memory(iccSize);
             fis.getChannel().read(iccBuf.getByteBuffer(0, iccSize));
           }
-          TJ.setICCProfile(tjInstance, iccBuf, new NativeLong(iccSize));
+          TJ.setICCProfile(tjInstance, iccBuf, new TJ.SizeT(iccSize));
         }
 
         try {

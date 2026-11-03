@@ -173,7 +173,7 @@ final class TJDecomp {
       TJ.Region croppingRegion = TJ.UNCROPPED;
       TJ.ScalingFactor scalingFactor = TJ.UNSCALED;
       String iccFilename = null;
-      NativeLong jpegSize;
+      TJ.SizeT jpegSize;
       long sampleSize;
       int width, height;
       Pointer jpegBuf, dstBuf;
@@ -289,7 +289,7 @@ final class TJDecomp {
 
         File jpegFile = new File(argv[i++]);
         try (FileInputStream fis = new FileInputStream(jpegFile)) {
-          jpegSize = new NativeLong(fis.available());
+          jpegSize = new TJ.SizeT(fis.available());
           if (jpegSize.longValue() < 1)
             throw new Exception("Input file contains no data");
           jpegBuf = new Memory(jpegSize.longValue());
@@ -313,7 +313,7 @@ final class TJDecomp {
           TJ.set(tjInstance, TJ.PARAM_SAVEMARKERS, 0);
 
         if (iccFilename != null) {
-          NativeLongByReference iccSize = new NativeLongByReference();
+          TJ.SizeTByReference iccSize = new TJ.SizeTByReference();
           PointerByReference iccBuf = new PointerByReference();
 
           try {
@@ -324,8 +324,7 @@ final class TJDecomp {
               File iccFile = new File(iccFilename);
               try (FileOutputStream fos = new FileOutputStream(iccFile)) {
                 Pointer iccPtr = iccBuf.getValue();
-                ByteBuffer bb =
-                  iccPtr.getByteBuffer(0, iccSize.getValue().longValue());
+                ByteBuffer bb = iccPtr.getByteBuffer(0, iccSize.longValue());
                 fos.getChannel().write(bb);
               }
             }

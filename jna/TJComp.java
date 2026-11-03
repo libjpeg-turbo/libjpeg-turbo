@@ -152,7 +152,7 @@ final class TJComp {
       IntByReference width = new IntByReference(),
         height = new IntByReference(),
         pixelFormat = new IntByReference(TJ.PF_UNKNOWN);
-      NativeLongByReference jpegSize = new NativeLongByReference();
+      TJ.SizeTByReference jpegSize = new TJ.SizeTByReference();
 
       for (i = 0; i < argv.length; i++) {
         if (matchArg(argv[i], "-arithmetic", 2))
@@ -310,7 +310,7 @@ final class TJComp {
               throw new Exception("ICC profile contains no data");
             try (Memory iccBuf = new Memory(iccSize)) {
               fis.getChannel().read(iccBuf.getByteBuffer(0, iccSize));
-              TJ.setICCProfile(tjInstance, iccBuf, new NativeLong(iccSize));
+              TJ.setICCProfile(tjInstance, iccBuf, new TJ.SizeT(iccSize));
             }
           }
         }
@@ -333,7 +333,7 @@ final class TJComp {
       File outFile = new File(argv[++i]);
       try (FileOutputStream fos = new FileOutputStream(outFile)) {
         ByteBuffer bb =
-          jpegBuf.getValue().getByteBuffer(0, jpegSize.getValue().longValue());
+          jpegBuf.getValue().getByteBuffer(0, jpegSize.longValue());
         fos.getChannel().write(bb);
       }
     } catch (Exception e) {
