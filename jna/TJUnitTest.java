@@ -1255,6 +1255,220 @@ final class TJUnitTest {
     }
   }
 
+  static void compress8PR(Pointer handle, Pointer srcBuf, int width, int pitch,
+                          int height, int pixelFormat,
+                          TJ.PointerReference jpegBuf,
+                          TJ.NativeLongReference jpegSize) throws Exception {
+    PointerByReference tmpJPEGBuf = new PointerByReference(jpegBuf.pointer);
+    NativeLongByReference tmpJPEGSize =
+      new NativeLongByReference(jpegSize.value);
+
+    TJ.compress8(handle, srcBuf, width, pitch, height, pixelFormat, tmpJPEGBuf,
+                 tmpJPEGSize);
+
+    jpegBuf.pointer = tmpJPEGBuf.getValue();
+    jpegSize.value = tmpJPEGSize.getValue();
+  }
+
+  static int tj3Compress8PR(Pointer handle, Pointer srcBuf, int width,
+                            int pitch, int height, int pixelFormat,
+                            TJ.PointerReference jpegBuf,
+                            TJ.NativeLongReference jpegSize) {
+    int retval = 0;
+    PointerByReference tmpJPEGBuf = new PointerByReference(jpegBuf.pointer);
+    NativeLongByReference tmpJPEGSize =
+      new NativeLongByReference(jpegSize.value);
+
+    retval = TJ.tj3Compress8(handle, srcBuf, width, pitch, height, pixelFormat,
+                             tmpJPEGBuf, tmpJPEGSize);
+
+    jpegBuf.pointer = tmpJPEGBuf.getValue();
+    jpegSize.value = tmpJPEGSize.getValue();
+    return retval;
+  }
+
+  static void bufReuseTest() throws Exception {
+    int w = 16, h = 16;
+    Pointer jpegSRCBuf = null;
+    TJ.PointerReference[] jpegBufs =
+      (TJ.PointerReference[])(new TJ.PointerReference().toArray(2));
+    Random r = new Random();
+
+    try (Memory srcBuf = new Memory(w * h * 4 * sampleSize);
+         TJ.Handle handle = new TJ.Handle(TJ.INIT_TRANSFORM)) {
+
+      for (int i = 0; i < w * h * 4; i++)
+        setVal(srcBuf, i, r.nextInt(2) * maxSample);
+      long worstCaseSize = TJ.jpegBufSize(w, h, TJ.SAMP_444).longValue();
+      jpegBufs[0].pointer = TJ.alloc(new NativeLong(worstCaseSize));
+
+      TJ.set(handle, TJ.PARAM_QUALITY, 100);
+      TJ.set(handle, TJ.PARAM_SUBSAMP, TJ.SAMP_444);
+
+      // Automatic destination buffer (re)allocation disabled
+      TJ.set(handle, TJ.PARAM_NOREALLOC, 1);
+
+      // Verify that no error occurs when the destination buffer is
+      // pre-allocated to the worst-case size.
+      TJ.NativeLongReference[] jpegSizes =
+        (TJ.NativeLongReference[])(new TJ.NativeLongReference().toArray(2));
+      jpegSizes[0].value = new NativeLong(worstCaseSize);
+      compress8PR(handle, srcBuf, w, 0, h, TJ.PF_BGRX, jpegBufs[0],
+                  jpegSizes[0]);
+
+      // Verify that an error occurs when the destination buffer is reused but
+      // the buffer size is not re-specified.
+      if (tj3Compress8PR(handle, srcBuf, w, 0, h, TJ.PF_BGRX, jpegBufs[0],
+                         jpegSizes[0]) != -1 ||
+          !TJ.tj3GetErrorStr(handle).equals(
+                                 "Buffer passed to JPEG library is too small"))
+        throw new Exception("TJ.tj3Compress8() succeeded unexpectedly");
+
+      // Automatic destination buffer (re)allocation enabled
+      TJ.set(handle, TJ.PARAM_NOREALLOC, 0);
+
+      // Verify that no reallocation occurs when the destination buffer is
+      // pre-allocated to the worst-case size and that the buffer size is
+      // ignored when the destination buffer is reused.
+      TJ.PointerReference[] oldJPEGBufs =
+        (TJ.PointerReference[])(new TJ.PointerReference().toArray(2));
+      oldJPEGBufs[0].pointer = jpegBufs[0].pointer;
+      jpegSizes[0].value.setValue(worstCaseSize);
+      compress8PR(handle, srcBuf, w, 0, h, TJ.PF_BGRX, jpegBufs[0],
+                  jpegSizes[0]);
+      if (!jpegBufs[0].pointer.equals(oldJPEGBufs[0].pointer))
+        throw new Exception("JPEG buffer unexpectedly reallocated");
+      jpegSizes[0].value.setValue(0);
+      compress8PR(handle, srcBuf, w, 0, h, TJ.PF_BGRX, jpegBufs[0],
+                  jpegSizes[0]);
+      if (!jpegBufs[0].pointer.equals(oldJPEGBufs[0].pointer))
+        throw new Exception("JPEG buffer unexpectedly reallocated");
+
+      // Verify that reallocation occurs when the destination buffer is
+      // pre-allocated but too small and that the destination manager doesn't
+      // leak memory when reallocating a pre-allocated destination buffer.
+      jpegBufs[1].pointer = TJ.alloc(new NativeLong(100));
+      oldJPEGBufs[1].pointer = jpegBufs[1].pointer;
+      jpegSizes[1].value.setValue(100);
+      compress8PR(handle, srcBuf, w, 0, h, TJ.PF_BGRX, jpegBufs[1],
+                  jpegSizes[1]);
+      if (jpegBufs[1].pointer.equals(oldJPEGBufs[1].pointer))
+        throw new Exception("JPEG buffer was not reallocated");
+
+      NativeLong jpegSRCSize = new NativeLong(jpegSizes[0].value.longValue());
+      jpegSRCBuf = TJ.alloc(jpegSRCSize);
+      ByteBuffer srcBB =
+        jpegBufs[1].pointer.getByteBuffer(0, jpegSRCSize.longValue());
+      ByteBuffer dstBB = jpegSRCBuf.getByteBuffer(0, jpegSRCSize.longValue());
+      dstBB.put(srcBB);
+
+      // Verify that the destination buffer from a prior TJ.tj3Compress*() call
+      // can be reused as the first destination buffer in TJ.tj3Transform()
+      // without re-specifying the buffer size and that reallocation occurs
+      // when the second destination buffer is pre-allocated but too small.
+      oldJPEGBufs[1].pointer = jpegBufs[0].pointer;
+      jpegBufs[0].pointer = oldJPEGBufs[0].pointer = jpegBufs[1].pointer;
+      jpegBufs[1].pointer = oldJPEGBufs[1].pointer;
+      jpegSizes[1].value.setValue(jpegSizes[0].value.longValue());
+      jpegSizes[0].value.setValue(0);
+      TJ.Transform[] xforms = (TJ.Transform[])(new TJ.Transform().toArray(2));
+      TJ.transform(handle, jpegSRCBuf, jpegSRCSize, 2, jpegBufs, jpegSizes,
+                   xforms);
+      if (!jpegBufs[0].pointer.equals(oldJPEGBufs[0].pointer))
+        throw new Exception("JPEG buffer unexpectedly reallocated");
+      if (jpegBufs[1].pointer.equals(oldJPEGBufs[1].pointer))
+        throw new Exception("JPEG buffer was not reallocated");
+
+      // Verify that both destination buffers can be reused without
+      // re-specifying the buffer sizes.
+      oldJPEGBufs[1].pointer = jpegBufs[1].pointer;
+      jpegSizes[0].value.setValue(1);
+      jpegSizes[1].value.setValue(1);
+      TJ.transform(handle, jpegSRCBuf, jpegSRCSize, 2, jpegBufs, jpegSizes,
+                   xforms);
+      if (!jpegBufs[0].pointer.equals(oldJPEGBufs[0].pointer) ||
+          !jpegBufs[1].pointer.equals(oldJPEGBufs[1].pointer))
+        throw new Exception("JPEG buffer unexpectedly reallocated");
+
+      // Verify that the destination manager doesn't leak memory when
+      // reallocating pre-allocated destination buffers.
+      TJ.free(jpegBufs[0].pointer);  jpegBufs[0].pointer = null;
+      TJ.free(jpegBufs[1].pointer);  jpegBufs[1].pointer = null;
+
+      jpegSizes[0].value.setValue(100);
+      jpegBufs[0].pointer = oldJPEGBufs[0].pointer =
+        TJ.alloc(jpegSizes[0].value);
+      jpegSizes[1].value.setValue(50);
+      jpegBufs[1].pointer = oldJPEGBufs[1].pointer =
+        TJ.alloc(jpegSizes[1].value);
+      TJ.transform(handle, jpegSRCBuf, jpegSRCSize, 2, jpegBufs, jpegSizes,
+                   xforms);
+      if (jpegBufs[0].pointer.equals(oldJPEGBufs[0].pointer) ||
+          jpegBufs[1].pointer.equals(oldJPEGBufs[1].pointer))
+        throw new Exception("JPEG buffer was not reallocated");
+
+      // Verify that the destination buffers can only be reused with the
+      // corresponding transforms.
+      oldJPEGBufs[1].pointer = jpegBufs[0].pointer;
+      jpegBufs[0].pointer = oldJPEGBufs[0].pointer = jpegBufs[1].pointer;
+      jpegBufs[1].pointer = oldJPEGBufs[1].pointer;
+      TJ.transform(handle, jpegSRCBuf, jpegSRCSize, 2, jpegBufs, jpegSizes,
+                   xforms);
+      if (jpegBufs[0].pointer.equals(oldJPEGBufs[0].pointer) ||
+          jpegBufs[1].pointer.equals(oldJPEGBufs[1].pointer))
+        throw new Exception("JPEG buffer was not reallocated");
+
+      // Verify that the first destination buffer from a prior
+      // TJ.tj3Transform() call can be reused in TJ.tj3Compress*() without
+      // re-specifying the buffer size.
+      oldJPEGBufs[0].pointer = jpegBufs[0].pointer;
+      jpegSizes[0].value.setValue(1);
+      compress8PR(handle, srcBuf, w, 0, h, TJ.PF_BGRX, jpegBufs[0],
+                  jpegSizes[0]);
+      if (!jpegBufs[0].pointer.equals(oldJPEGBufs[0].pointer))
+        throw new Exception("JPEG buffer unexpectedly reallocated");
+
+      // Verify that TJ.tj3Transform() no longer tracks the second destination
+      // buffer.
+      oldJPEGBufs[1].pointer = jpegBufs[1].pointer;
+      jpegSizes[0].value.setValue(1);
+      TJ.transform(handle, jpegSRCBuf, jpegSRCSize, 2, jpegBufs, jpegSizes,
+                   xforms);
+      if (!jpegBufs[0].pointer.equals(oldJPEGBufs[0].pointer))
+        throw new Exception("JPEG buffer unexpectedly reallocated");
+      if (jpegBufs[1].pointer.equals(oldJPEGBufs[1].pointer))
+        throw new Exception("JPEG buffer was not reallocated");
+
+      // Verify that TJ.tj3Transform() properly handles a caller that
+      // erroneously specifies the same destination buffer twice.  (If the
+      // first destination buffer has to be reallocated, then this would cause
+      // a use-after-free issue.)
+      TJ.free(jpegBufs[1].pointer);  jpegBufs[1].pointer = null;
+
+      jpegBufs[1].pointer = jpegBufs[0].pointer;
+      jpegSizes[1].value.setValue(jpegSizes[0].value.longValue());
+      if (TJ.tj3Transform(handle, jpegSRCBuf, jpegSRCSize, 2, jpegBufs[0],
+                         jpegSizes[0], xforms[0]) != -1 ||
+          !TJ.tj3GetErrorStr(handle).equals(
+                             "tj3Transform(): Duplicate destination buffer")) {
+        jpegBufs[1].pointer = null;
+        throw new Exception("TJ.tj3Transform() succeeded unexpectedly");
+      }
+      jpegBufs[1].pointer = null;
+
+      // Verify that TJ.tj3Transform() allows multiple destination buffers to
+      // be NULL.
+      TJ.free(jpegBufs[0].pointer);  jpegBufs[0].pointer = null;
+      TJ.transform(handle, jpegSRCBuf, jpegSRCSize, 2, jpegBufs, jpegSizes,
+                   xforms);
+
+    } finally {
+      TJ.free(jpegBufs[0].pointer);
+      TJ.free(jpegBufs[1].pointer);
+      TJ.free(jpegSRCBuf);
+    }
+  }
+
   static void bufSizeTest() throws Exception {
     PointerByReference dstBuf = new PointerByReference();
     NativeLongByReference dstSize = new NativeLongByReference();
@@ -1818,6 +2032,8 @@ final class TJUnitTest {
         errorTest();
       if (!lossless && !alloc && !doYUV)
         extraMarkersTest();
+      if (!lossless && alloc && !doYUV && precision == 8)
+        bufReuseTest();
       doTest(35, 39, FORMATS_3SAMPLE, TJ.SAMP_444, testName);
       doTest(39, 41, FORMATS_4SAMPLE, TJ.SAMP_444, testName);
       doTest(41, 35, FORMATS_3SAMPLE, TJ.SAMP_422, testName);
