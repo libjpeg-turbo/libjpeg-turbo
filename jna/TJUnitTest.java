@@ -27,6 +27,7 @@
 // This program tests the various code paths in TurboJPEG/JNA
 
 import java.io.*;
+import java.nio.*;
 import java.util.*;
 import java.nio.file.*;
 
@@ -828,6 +829,275 @@ final class TJUnitTest {
       throw new Exception("TJ.yuvPlaneHeight() overflow");
   }
 
+  static void byteSwap16(PointerByReference buf, int index, long value) {
+    buf.getValue().setByte(index, (byte)((int)value >> 8));
+    buf.getValue().setByte(index + 1, (byte)((int)value & 0xFF));
+  }
+
+  static void checktj3TransformBufSize(TJ.Handle handle,
+                                       PointerByReference jpegBuf,
+                                       NativeLongByReference jpegSize,
+                                       int w, int h, int subsamp,
+                                       TJ.PointerReference[] dstBuf,
+                                       TJ.Transform[] xform,
+                                       long worstCaseSize, long markerDataSize,
+                                       long app1HeaderSize,
+                                       long app2HeaderSize,
+                                       long comHeaderSize) throws Exception {
+    NativeLong transformBufSize = TJ.transformBufSize(handle, xform[0]);
+    if (transformBufSize.longValue() != worstCaseSize)
+      throw new Exception("TJ.tj3TransformBufSize() returned " +
+                         transformBufSize.longValue() + " instead of " +
+                         worstCaseSize);
+
+    // Validate the actual marker copying behavior.
+    long jpegSizeWithoutMarkers = jpegSize.getValue().longValue() -
+                                  app1HeaderSize - app2HeaderSize -
+                                  comHeaderSize - markerDataSize * 3;
+    long dstSize0 = worstCaseSize - TJ.jpegBufSize(w, h, subsamp).longValue() +
+                    jpegSizeWithoutMarkers;
+    TJ.NativeLongReference[] dstSize =
+      (TJ.NativeLongReference[])(new TJ.NativeLongReference().toArray(1));
+    dstSize[0].value = new NativeLong(dstSize0);
+    TJ.transform(handle, jpegBuf.getValue(), jpegSize.getValue(), 1, dstBuf,
+                 dstSize, xform);
+    if (dstSize[0].value.longValue() != dstSize0)
+      throw new Exception("TJ.tj3Transform() generated " +
+                          dstSize[0].value.longValue() + " instead of " +
+                          dstSize0 + " bytes");
+  }
+
+  static void extraMarkersTest() throws Exception {
+    int w = 16, h = 16, i;
+    PointerByReference jpegBuf = new PointerByReference(),
+      iccBuf = new PointerByReference();
+    TJ.PointerReference[] dstBuf =
+      (TJ.PointerReference[])(new TJ.PointerReference().toArray(1));
+    long worstCaseSize, markerDataSize = 50000, app1HeaderSize = 4,
+        app2HeaderSize = 18, comHeaderSize = 4;
+    NativeLongByReference jpegSize = new NativeLongByReference(),
+      iccSize = new NativeLongByReference();
+    TJ.Transform[] xform = (TJ.Transform[])(new TJ.Transform().toArray(1));
+    Random r = new Random();
+
+    try {
+
+      for (int subsamp = 0; subsamp < TJ.NUMSAMP; subsamp++) {
+
+        // Generate a JPEG image with APP1, APP2 (ICC), and COM markers.
+        worstCaseSize = TJ.jpegBufSize(w, h, subsamp).longValue() +
+                        app1HeaderSize + app2HeaderSize + comHeaderSize +
+                        markerDataSize * 3;
+        jpegBuf.setValue(TJ.alloc(new NativeLong(worstCaseSize)));
+        dstBuf[0].pointer = TJ.alloc(new NativeLong(worstCaseSize));
+
+        try (Memory srcBuf = new Memory(w * h * 4 * sampleSize);
+             TJ.Handle handle = new TJ.Handle(TJ.INIT_COMPRESS)) {
+          for (i = 0; i < w * h * 4; i++)
+            setVal(srcBuf, i, r.nextInt(2) * maxSample);
+
+          TJ.set(handle, TJ.PARAM_NOREALLOC, 0);
+          TJ.set(handle, TJ.PARAM_QUALITY, 100);
+          TJ.set(handle, TJ.PARAM_SUBSAMP, subsamp);
+          jpegBuf.getValue().setMemory(0, markerDataSize, (byte)'I');
+          TJ.setICCProfile(handle, jpegBuf.getValue(),
+                           new NativeLong(markerDataSize));
+          jpegSize.setValue(new NativeLong(worstCaseSize));
+          if (precision == 8)
+            TJ.compress8(handle, srcBuf, w, 0, h, TJ.PF_BGRX, jpegBuf,
+                         jpegSize);
+          else
+            TJ.compress12(handle, srcBuf, w, 0, h, TJ.PF_BGRX, jpegBuf,
+                          jpegSize);
+        }
+
+        // Move JPEG header and image data to make room for additional markers.
+        ByteBuffer srcBB =
+          jpegBuf.getValue().getByteBuffer(2, jpegSize.getValue().longValue() -
+                                           2);
+        ByteBuffer dstBB =
+          jpegBuf.getValue().getByteBuffer(2 + app1HeaderSize + comHeaderSize +
+                                           markerDataSize * 2,
+                                           jpegSize.getValue().longValue() -
+                                           2);
+        dstBB.put(srcBB);
+        // Add APP1 marker
+        i = 2;
+        jpegBuf.getValue().setByte(i++, (byte)0xFF);
+        jpegBuf.getValue().setByte(i++, (byte)0xE1);
+        byteSwap16(jpegBuf, i, markerDataSize + 2);
+        i += 2;
+        jpegBuf.getValue().setMemory(i, markerDataSize, (byte)'1');
+        i += markerDataSize;
+        // Add COM marker
+        jpegBuf.getValue().setByte(i++, (byte)0xFF);
+        jpegBuf.getValue().setByte(i++, (byte)0xFE);
+        byteSwap16(jpegBuf, i, markerDataSize + 2);
+        i += 2;
+        jpegBuf.getValue().setMemory(i, markerDataSize, (byte)'C');
+        i += markerDataSize;
+        jpegSize.setValue(new NativeLong(jpegSize.getValue().longValue() +
+                                         app1HeaderSize + comHeaderSize +
+                                         markerDataSize * 2));
+
+        // Verify that TJ.tj3TransformBufSize() returns the correct buffer size
+        // for all TJ.PARAM_SAVEMARKERS values and transform options,
+        // irrespective of the value of TJ.PARAM_SAVEMARKERS when
+        // TJ.tj3DecompressHeader() was called.
+        try (TJ.Handle handle = new TJ.Handle(TJ.INIT_TRANSFORM)) {
+
+          TJ.set(handle, TJ.PARAM_SAVEMARKERS, 2);
+          TJ.decompressHeader(handle, jpegBuf.getValue(), jpegSize.getValue());
+          TJ.getICCProfile(handle, iccBuf, iccSize);
+          if (iccBuf.getValue() == null ||
+              iccSize.getValue().longValue() != markerDataSize)
+            throw new Exception("ICC profile was not extracted");
+          TJ.free(iccBuf.getValue());  iccBuf.setValue(null);
+          checktj3TransformBufSize(handle, jpegBuf, jpegSize, w, h, subsamp,
+                                   dstBuf, xform, worstCaseSize,
+                                   markerDataSize, app1HeaderSize,
+                                   app2HeaderSize, comHeaderSize);
+          TJ.set(handle, TJ.PARAM_SAVEMARKERS, 0);
+          worstCaseSize = TJ.jpegBufSize(w, h, subsamp).longValue();
+          checktj3TransformBufSize(handle, jpegBuf, jpegSize, w, h, subsamp,
+                                   dstBuf, xform, worstCaseSize,
+                                   markerDataSize, app1HeaderSize,
+                                   app2HeaderSize, comHeaderSize);
+
+          xform[0].options = TJ.XOPT_COPYNONE;
+          checktj3TransformBufSize(handle, jpegBuf, jpegSize, w, h, subsamp,
+                                   dstBuf, xform, worstCaseSize,
+                                   markerDataSize, app1HeaderSize,
+                                   app2HeaderSize, comHeaderSize);
+          xform[0].options = 0;
+
+          TJ.set(handle, TJ.PARAM_SAVEMARKERS, 0);
+          TJ.decompressHeader(handle, jpegBuf.getValue(), jpegSize.getValue());
+          if (TJ.tj3GetICCProfile(handle, iccBuf, iccSize) != -1 ||
+             iccBuf.getValue() != null || iccSize.getValue().longValue() != 0)
+            throw new Exception("ICC profile was extracted unexpectedly");
+          checktj3TransformBufSize(handle, jpegBuf, jpegSize, w, h, subsamp,
+                                   dstBuf, xform, worstCaseSize,
+                                   markerDataSize, app1HeaderSize,
+                                   app2HeaderSize, comHeaderSize);
+          TJ.set(handle, TJ.PARAM_SAVEMARKERS, 2);
+          worstCaseSize = TJ.jpegBufSize(w, h, subsamp).longValue() +
+                          app1HeaderSize + app2HeaderSize + comHeaderSize +
+                          markerDataSize * 3;
+          checktj3TransformBufSize(handle, jpegBuf, jpegSize, w, h, subsamp,
+                                   dstBuf, xform, worstCaseSize,
+                                   markerDataSize, app1HeaderSize,
+                                   app2HeaderSize, comHeaderSize);
+
+          TJ.set(handle, TJ.PARAM_SAVEMARKERS, 4);
+          TJ.decompressHeader(handle, jpegBuf.getValue(), jpegSize.getValue());
+          TJ.getICCProfile(handle, iccBuf, iccSize);
+          if (iccBuf.getValue() == null ||
+              iccSize.getValue().longValue() != markerDataSize)
+            throw new Exception("ICC profile was not extracted");
+          TJ.free(iccBuf.getValue());  iccBuf.setValue(null);
+          worstCaseSize = TJ.jpegBufSize(w, h, subsamp).longValue() +
+                          app2HeaderSize + markerDataSize;
+          checktj3TransformBufSize(handle, jpegBuf, jpegSize, w, h, subsamp,
+                                   dstBuf, xform, worstCaseSize,
+                                   markerDataSize, app1HeaderSize,
+                                   app2HeaderSize, comHeaderSize);
+          TJ.set(handle, TJ.PARAM_SAVEMARKERS, 3);
+          worstCaseSize = TJ.jpegBufSize(w, h, subsamp).longValue() +
+                          app1HeaderSize + comHeaderSize + markerDataSize * 2;
+          checktj3TransformBufSize(handle, jpegBuf, jpegSize, w, h, subsamp,
+                                   dstBuf, xform, worstCaseSize,
+                                   markerDataSize, app1HeaderSize,
+                                   app2HeaderSize, comHeaderSize);
+
+          TJ.decompressHeader(handle, jpegBuf.getValue(), jpegSize.getValue());
+          if (TJ.tj3GetICCProfile(handle, iccBuf, iccSize) != -1 ||
+             iccBuf.getValue() != null || iccSize.getValue().longValue() != 0)
+            throw new Exception("ICC profile was extracted unexpectedly");
+          checktj3TransformBufSize(handle, jpegBuf, jpegSize, w, h, subsamp,
+                                   dstBuf, xform, worstCaseSize,
+                                   markerDataSize, app1HeaderSize,
+                                   app2HeaderSize, comHeaderSize);
+          TJ.set(handle, TJ.PARAM_SAVEMARKERS, 4);
+          worstCaseSize = TJ.jpegBufSize(w, h, subsamp).longValue() +
+                          app2HeaderSize + markerDataSize;
+          checktj3TransformBufSize(handle, jpegBuf, jpegSize, w, h, subsamp,
+                                   dstBuf, xform, worstCaseSize,
+                                   markerDataSize, app1HeaderSize,
+                                   app2HeaderSize, comHeaderSize);
+
+          TJ.set(handle, TJ.PARAM_SAVEMARKERS, 1);
+          TJ.decompressHeader(handle, jpegBuf.getValue(), jpegSize.getValue());
+          if (TJ.tj3GetICCProfile(handle, iccBuf, iccSize) != -1 ||
+             iccBuf.getValue() != null || iccSize.getValue().longValue() != 0)
+            throw new Exception("ICC profile was extracted unexpectedly");
+          worstCaseSize = TJ.jpegBufSize(w, h, subsamp).longValue() +
+                          comHeaderSize + markerDataSize;
+          checktj3TransformBufSize(handle, jpegBuf, jpegSize, w, h, subsamp,
+                                   dstBuf, xform, worstCaseSize,
+                                   markerDataSize, app1HeaderSize,
+                                   app2HeaderSize, comHeaderSize);
+          TJ.set(handle, TJ.PARAM_SAVEMARKERS, 0);
+          worstCaseSize = TJ.jpegBufSize(w, h, subsamp).longValue();
+          checktj3TransformBufSize(handle, jpegBuf, jpegSize, w, h, subsamp,
+                                   dstBuf, xform, worstCaseSize,
+                                   markerDataSize, app1HeaderSize,
+                                   app2HeaderSize, comHeaderSize);
+
+        }  // try (handle)
+
+        // Verify that ICC profile extraction works properly for all
+        // TJ.PARAM_SAVEMARKERS values in pure decompression instances.
+        try (TJ.Handle handle = new TJ.Handle(TJ.INIT_DECOMPRESS)) {
+
+          TJ.set(handle, TJ.PARAM_SAVEMARKERS, 0);
+          TJ.decompressHeader(handle, jpegBuf.getValue(), jpegSize.getValue());
+          if (TJ.tj3GetICCProfile(handle, iccBuf, iccSize) != -1 ||
+             iccBuf.getValue() != null || iccSize.getValue().longValue() != 0)
+            throw new Exception("ICC profile was extracted unexpectedly");
+
+          TJ.set(handle, TJ.PARAM_SAVEMARKERS, 2);
+          TJ.decompressHeader(handle, jpegBuf.getValue(), jpegSize.getValue());
+          TJ.getICCProfile(handle, iccBuf, iccSize);
+          if (iccBuf.getValue() == null ||
+              iccSize.getValue().longValue() != markerDataSize)
+            throw new Exception("ICC profile was not extracted");
+          TJ.free(iccBuf.getValue());  iccBuf.setValue(null);
+
+          TJ.set(handle, TJ.PARAM_SAVEMARKERS, 3);
+          TJ.decompressHeader(handle, jpegBuf.getValue(), jpegSize.getValue());
+          if (TJ.tj3GetICCProfile(handle, iccBuf, iccSize) != -1 ||
+             iccBuf.getValue() != null || iccSize.getValue().longValue() != 0)
+            throw new Exception("ICC profile was extracted unexpectedly");
+
+          TJ.set(handle, TJ.PARAM_SAVEMARKERS, 4);
+          TJ.decompressHeader(handle, jpegBuf.getValue(), jpegSize.getValue());
+          TJ.getICCProfile(handle, iccBuf, iccSize);
+          if (iccBuf.getValue() == null ||
+              iccSize.getValue().longValue() != markerDataSize)
+            throw new Exception("ICC profile was not extracted");
+          TJ.free(iccBuf.getValue());  iccBuf.setValue(null);
+
+          TJ.set(handle, TJ.PARAM_SAVEMARKERS, 1);
+          TJ.decompressHeader(handle, jpegBuf.getValue(), jpegSize.getValue());
+          if (TJ.tj3GetICCProfile(handle, iccBuf, iccSize) != -1 ||
+             iccBuf.getValue() != null || iccSize.getValue().longValue() != 0)
+            throw new Exception("ICC profile was extracted unexpectedly");
+
+        }  // try (handle)
+
+        TJ.free(dstBuf[0].pointer);  dstBuf[0].pointer = null;
+        TJ.free(jpegBuf.getValue());  jpegBuf.setValue(null);
+
+      }  // for (subsamp)
+
+    } finally {
+      TJ.free(iccBuf.getValue());
+      TJ.free(dstBuf[0].pointer);
+      TJ.free(jpegBuf.getValue());
+    }
+  }
+
   static void bufSizeTest() throws Exception {
     PointerByReference dstBuf = new PointerByReference();
     NativeLongByReference dstSize = new NativeLongByReference();
@@ -1387,6 +1657,8 @@ final class TJUnitTest {
       if (doYUV)
         FORMATS_4SAMPLE[4] = -1;
       overflowTest();
+      if (!lossless && !alloc && !doYUV)
+        extraMarkersTest();
       doTest(35, 39, FORMATS_3SAMPLE, TJ.SAMP_444, testName);
       doTest(39, 41, FORMATS_4SAMPLE, TJ.SAMP_444, testName);
       doTest(41, 35, FORMATS_3SAMPLE, TJ.SAMP_422, testName);
