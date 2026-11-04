@@ -91,21 +91,25 @@ copy.
 
 ### `size_t` Arguments and Return Values
 
-A `size_t` value is implemented as a `TJ.SizeT` instance, which wraps a 4-byte
+A `size_t` value is implemented as an instance of `TJ.SizeT`, a convenience
+class that works identically to `com.sun.jna.NativeLong` but wraps a 4-byte
 integer when using a 32-bit JVM (not much of a thing anymore) and an 8-byte
-integer when using a 64-bit JVM.  Callers initialize a `TJ.SizeT` instance with
-a Java `long` primitive (always 64-bit), so it is necessary for callers to
-guard against 32-bit overflow if `Native.SIZE_T_SIZE` is 4.  (The same is true
-when initializing a `size_t` variable in C.)
+integer when using a 64-bit JVM.  (`com.sun.jna.NativeLong` cannot be used
+because, on 64-bit Windows platforms, `size_t` is 8 bytes but `long` is 4
+bytes.)  Callers initialize a `TJ.SizeT` instance with a Java `long` primitive
+(always 64-bit), so it is necessary for callers to guard against 32-bit
+overflow if `TJ.SizeT.SIZE` is 4.  (The same is true when initializing a
+`size_t` variable in C.)
 
 ### JPEG Destination Buffers
 
 JPEG destination buffer arguments are implemented as a
 `com.sun.jna.ptr.PointerByReference` instance (the equivalent of `void **`) and
-a `TJ.SizeTByReference` instance (the equivalent of `size_t *`.)  The
-`com.sun.jna.Pointer` instance wrapped by `PointerByReference` is null by
-default, and the `TJ.SizeT` instance wrapped by `TJ.SizeTByReference` is 0 by
-default.  Thus, you can simply do:
+an instance of `TJ.SizeTByReference` (the equivalent of `size_t *`), a
+convenience class that works identically to
+`com.sun.jna.ptr.NativeLongByReference`.  The `com.sun.jna.Pointer` instance
+wrapped by `PointerByReference` is null by default, and the `TJ.SizeT` instance
+wrapped by `TJ.SizeTByReference` is 0 by default.  Thus, you can simply do:
 
 ```
 TJ.SizeTByReference jpegSize = new TJ.SizeTByReference();
@@ -123,15 +127,15 @@ PointerByReference jpegBuf = new PointerByReference(TJ.alloc(jpegBufSize));
 ```
 
 to pre-allocate the JPEG destination buffer, which will be re-allocated as
-needed.  As with the TurboJPEG C API, a compression or lossless transformation
-operation may change the JPEG destination buffer pointer unless
-`TJ.PARAM_NOREALLOC` is set, so call `jpegBuf.getValue()` and
-`jpegSize.longValue()` to obtain the buffer pointer and size after one of these
-operations.
+needed.  As with the TurboJPEG C API, a compression operation may change the
+JPEG destination buffer pointer unless `TJ.PARAM_NOREALLOC` is set, so call
+`jpegBuf.getValue()` and `jpegSize.longValue()` to obtain the buffer pointer
+and size after such an operation.
 
 ### Arrays of Structures
 
-To represent an array of structures, JNA uses a single instance of a
+Because an array passed to a native method must be allocated in contiguous
+memory, an array of structures is represented as a single instance of a
 `com.sun.jna.Structure` subclass that points to the head of the array.  Thus,
 
 - The `TJ.tj3GetScalingFactors()` native method returns a `TJ.ScalingFactor`
@@ -141,14 +145,14 @@ To represent an array of structures, JNA uses a single instance of a
   performs the type cast internally and returns a `TJ.ScalingFactor[]`
   instance.
 
-- The `TJ.tj3Transform()` native mathod accepts a `TJ.Transform` instance that
+- The `TJ.tj3Transform()` native method accepts a `TJ.Transform` instance that
   points to the first member of a `TJ.Transform[]` array.  To pass the entire
   array, simply pass the first member.  The `TJ.transform()` convenience
-  method accepts a `TJ.Transform[]` argument and passes the first member internally.
+  method accepts a `TJ.Transform[]` argument and passes the first member
+  internally.
 
-- To pass an array of structures to a native method, it is necessary to
-  allocate the array in contiguous memory.  This is accomplished with
-  `Structure.toArray()`.  For example:
+- To allocate an array of structures in contiguous memory, use
+  `com.sun.jna.Structure.toArray()`.  For example:
 
   ```
   TJ.Transform[] xform = (TJ.Transform[])(new TJ.Transform().toArray(2));
@@ -156,14 +160,15 @@ To represent an array of structures, JNA uses a single instance of a
 
 ### Arrays of `Pointer` or `TJ.SizeT` Instances
 
-JNA doesn't allow for passing an array of `Pointer` or `TJ.SizeT` instances,
-which are needed by `TJ.tj3EncodeYUVPlanes8()`,
+Per above, an array passed to a native method must be allocated in contiguous
+memory.  Thus, TurboJPEG/JNA cannot pass an array of `com.sun.jna.ptr.Pointer`
+or `TJ.SizeT` instances to `TJ.tj3EncodeYUVPlanes8()`,
 `TJ.tj3CompressFromYUVPlanes8()`, `TJ.tj3DecompressToYUVPlanes8()`,
-`TJ.tj3DecodeYUVPlanes8()`, and `TJ.tj3Transform()`.  Thus, TurboJPEG/JNA
-provides two `Structure` subclasses, `TJ.PointerReference` and
+`TJ.tj3DecodeYUVPlanes8()`, or `TJ.tj3Transform()`.  Instead, it provides two
+`com.sun.jna.Structure` subclasses, `TJ.PointerReference` and
 `TJ.SizeTReference`, that can be passed as arrays.  Per above, use
-`Structure.toArray()` to ensure that the arrays are allocated contiguously.
-For example:
+`com.sun.jna.Structure.toArray()` to ensure that the arrays are allocated
+contiguously.  For example:
 
 ```
 TJ.PointerReference[] dstBufs =

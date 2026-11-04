@@ -173,12 +173,14 @@ public final class TJ {
   // size_t
 
   public static class SizeT extends IntegerType {
+    public static final int SIZE = Native.SIZE_T_SIZE;
+
     public SizeT() {
       this(0);
     }
 
     public SizeT(long value) {
-      super(Native.SIZE_T_SIZE, value, true);
+      super(SIZE, value, true);
     }
   }
 

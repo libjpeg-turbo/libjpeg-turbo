@@ -35,15 +35,16 @@ the method to produce incorrect results or crash the JVM.
 `tj3YUVPlaneSize()` threw an error ("Image is too large") on 64-bit Windows
 platforms if the return value would have exceeded 2^32 - 1.
 
-5. TurboJPEG/JNA now uses new convenience classes (`TJ.SizeT` and
-`TJ.SizeTByReference`), rather than `NativeLong` and `NativeLongByReference`,
-to represent the C `size_t` data type.  Because Windows is LLP64, `long` (and,
-by extension, `NativeLong`) is a 32-bit data type on that platform.  Attempting
-to use `NativeLong` to represent `size_t` caused issues with the various
-`size_t` arguments and return values in the TurboJPEG API on 64-bit Windows
-platforms, including integer overflow and wraparound, reading from
-uninitialized memory, and buffer overruns.  These issues were confined to
-TurboJPEG/JNA, which is example code, so they did not pose a security risk.
+5. TurboJPEG/JNA now uses new convenience classes (`TJ.SizeT`,
+`TJ.SizeTByReference`, and `TJ.SizeTReference`), rather than `NativeLong`,
+`NativeLongByReference`, and `TJ.NativeLongReference`, to represent the C
+`size_t` data type.  Because Windows is LLP64, `long` (and, by extension,
+`NativeLong`) is a 32-bit data type on that platform.  Attempting to use
+`NativeLong` to represent `size_t` caused issues with the various `size_t`
+arguments and return values in the TurboJPEG API on 64-bit Windows platforms,
+including integer overflow and wraparound, reading from uninitialized memory,
+and buffer overruns.  These issues were confined to TurboJPEG/JNA, which is
+example code, so they did not pose a security risk.
 
 
 3.2.1

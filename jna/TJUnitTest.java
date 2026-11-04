@@ -768,7 +768,7 @@ final class TJUnitTest {
 
   static void checkSize(long size, boolean exception, String function)
                         throws Exception {
-    if (Native.SIZE_T_SIZE == 8) {
+    if (TJ.SizeT.SIZE == 8) {
       if (size == 0)
         throw new Exception(function + " unexpected error");
       if (size < 0xFFFFFFFFL)

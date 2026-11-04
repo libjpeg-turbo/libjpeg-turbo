@@ -357,7 +357,7 @@ final class TJBench {
     int ntilesw = 1, ntilesh = 1, pitch = w * ps;
     String pfStr = PIXFORMATSTR[pf];
 
-    if (Native.SIZE_T_SIZE == 4 &&
+    if (TJ.SizeT.SIZE == 4 &&
         (long)pitch * (long)h * (long)sampleSize > 0xFFFFFFFFL)
       throw new Exception("Image is too large");
 
