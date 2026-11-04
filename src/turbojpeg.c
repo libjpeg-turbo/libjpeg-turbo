@@ -45,6 +45,7 @@
 #include "tjutil.h"
 #include "transupp.h"
 #include "jpegapicomp.h"
+#include "jconfigint.h"
 #include "cdjpeg.h"
 
 #undef tj3Init
@@ -1013,8 +1014,8 @@ DLLEXPORT size_t tj3JPEGBufSize(int width, int height, int jpegSubsamp)
   chromasf = jpegSubsamp == TJSAMP_GRAY ? 0 : 4 * 64 / (mcuw * mcuh);
   retval = (unsigned long long)PAD(width, mcuw) * PAD(height, mcuh) *
            (2ULL + chromasf) + 2048ULL;
-#if ULLONG_MAX > ULONG_MAX
-  if (retval > (unsigned long long)((unsigned long)-1))
+#if SIZEOF_SIZE_T != 8
+  if (retval > (unsigned long long)((size_t)-1))
     THROWG("Image is too large", 0);
 #endif
 
@@ -1026,12 +1027,16 @@ bailout:
 DLLEXPORT unsigned long tjBufSize(int width, int height, int jpegSubsamp)
 {
   static const char FUNCTION_NAME[] = "tjBufSize";
-  size_t retval;
+  unsigned long long retval;
 
   if (jpegSubsamp < 0)
     THROWG("Invalid argument", 0);
 
   retval = tj3JPEGBufSize(width, height, jpegSubsamp);
+#if ULLONG_MAX > ULONG_MAX
+  if (retval > (unsigned long long)((unsigned long)-1))
+    THROWG("Image is too large", 0);
+#endif
 
 bailout:
   return (retval == 0) ? (unsigned long)-1 : (unsigned long)retval;
@@ -1081,8 +1086,8 @@ DLLEXPORT size_t tj3YUVBufSize(int width, int align, int height, int subsamp)
     if (pw == 0 || ph == 0) return 0;
     else retval += stride * ph;
   }
-#if ULLONG_MAX > ULONG_MAX
-  if (retval > (unsigned long long)((unsigned long)-1))
+#if SIZEOF_SIZE_T != 8
+  if (retval > (unsigned long long)((size_t)-1))
     THROWG("Image is too large", 0);
 #endif
 
@@ -1094,7 +1099,15 @@ bailout:
 DLLEXPORT unsigned long tjBufSizeYUV2(int width, int align, int height,
                                       int subsamp)
 {
-  size_t retval = tj3YUVBufSize(width, align, height, subsamp);
+  unsigned long long retval = tj3YUVBufSize(width, align, height, subsamp);
+#if ULLONG_MAX > ULONG_MAX
+  static const char FUNCTION_NAME[] = "tjBufSizeYUV2";
+
+  if (retval > (unsigned long long)((unsigned long)-1))
+    THROWG("Image is too large", 0);
+
+bailout:
+#endif
   return (retval == 0) ? (unsigned long)-1 : (unsigned long)retval;
 }
 
@@ -1130,8 +1143,8 @@ DLLEXPORT size_t tj3YUVPlaneSize(int componentID, int width, int stride,
   else stride = abs(stride);
 
   retval = (unsigned long long)stride * (ph - 1) + pw;
-#if ULLONG_MAX > ULONG_MAX
-  if (retval > (unsigned long long)((unsigned long)-1))
+#if SIZEOF_SIZE_T != 8
+  if (retval > (unsigned long long)((size_t)-1))
     THROWG("Image is too large", 0);
 #endif
 
@@ -1143,8 +1156,17 @@ bailout:
 DLLEXPORT unsigned long tjPlaneSizeYUV(int componentID, int width, int stride,
                                        int height, int subsamp)
 {
-  size_t retval = tj3YUVPlaneSize(componentID, width, stride, height, subsamp);
-  return (retval == 0) ? -1 : (unsigned long)retval;
+  unsigned long long retval =
+    tj3YUVPlaneSize(componentID, width, stride, height, subsamp);
+#if ULLONG_MAX > ULONG_MAX
+  static const char FUNCTION_NAME[] = "tjPlaneSizeYUV";
+
+  if (retval > (unsigned long long)((unsigned long)-1))
+    THROWG("Image is too large", 0);
+
+bailout:
+#endif
+  return (retval == 0) ? (unsigned long)-1 : (unsigned long)retval;
 }
 
 

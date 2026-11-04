@@ -769,11 +769,14 @@ final class TJUnitTest {
 
   static void checkSize(long size, boolean exception, String function)
                         throws Exception {
-    if (NativeLong.SIZE == 8) {
-      if (size != 0 && size < 0xFFFFFFFFL)
+    if (Native.SIZE_T_SIZE == 8) {
+      if (size == 0)
+        throw new Exception(function + " unexpected error");
+      if (size < 0xFFFFFFFFL)
         throw new Exception(function + " overflow");
     } else {
-      if (!exception)
+      if (!exception ||
+          !TJ.tj3GetErrorStr(null).endsWith("Image is too large"))
         throw new Exception(function + " overflow");
     }
   }
@@ -796,17 +799,15 @@ final class TJUnitTest {
     } catch (Exception e) { exception = true; }
     checkSize(size.longValue(), exception, "TJ.yuvBufSize()");
 
-    try {
-      exception = false;
-      size = TJ.yuvBufSize(37837, 3, 37837, TJ.SAMP_444);
-    } catch (Exception e) { exception = true; }
-    checkSize(size.longValue(), exception, "TJ.yuvBufSize()");
+    size = TJ.tj3YUVBufSize(37837, 3, 37837, TJ.SAMP_444);
+    if (size.longValue() != 0 ||
+        !TJ.tj3GetErrorStr(null).endsWith("Invalid argument"))
+      throw new Exception("TJ.tj3YUVBufSize() unexpected success");
 
-    try {
-      exception = false;
-      size = TJ.yuvBufSize(37837, -1, 37837, TJ.SAMP_444);
-    } catch (Exception e) { exception = true; }
-    checkSize(size.longValue(), exception, "TJ.yuvBufSize()");
+    size = TJ.tj3YUVBufSize(37837, -1, 37837, TJ.SAMP_444);
+    if (size.longValue() != 0 ||
+        !TJ.tj3GetErrorStr(null).endsWith("Invalid argument"))
+      throw new Exception("TJ.tj3YUVBufSize() unexpected success");
 
     try {
       exception = false;

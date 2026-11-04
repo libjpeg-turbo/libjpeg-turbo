@@ -759,21 +759,28 @@ bailout:
 
 #if SIZEOF_SIZE_T == 8
 #define CHECKSIZE(function) { \
-  if (size && size < (size_t)0xFFFFFFFF) \
-    THROW(#function " overflow"); \
-}
-#define CHECKSIZEUL(function) { \
-  if ((unsigned long long)ulsize < (unsigned long long)0xFFFFFFFF) \
+  if (size == 0) \
+    THROW(#function " unexpected error"); \
+  if (size < (size_t)0xFFFFFFFF) \
     THROW(#function " overflow"); \
 }
 #else
 #define CHECKSIZE(function) { \
-  if (size != 0 || !strcmp(tj3GetErrorStr(NULL), "No error")) \
+  if (size != 0 || !strstr(tj3GetErrorStr(NULL), "Image is too large")) \
     THROW(#function " overflow"); \
 }
+#endif
+#if ULLONG_MAX > ULONG_MAX
 #define CHECKSIZEUL(function) { \
   if (ulsize != (unsigned long)(-1) || \
-      !strcmp(tj3GetErrorStr(NULL), "No error")) \
+      !strstr(tj3GetErrorStr(NULL), "Image is too large")) \
+    THROW(#function " overflow"); \
+}
+#else
+#define CHECKSIZEUL(function) { \
+  if (ulsize == (unsigned long)(-1)) \
+    THROW(#function " unexpected error"); \
+  if ((unsigned long long)ulsize < (unsigned long long)0xFFFFFFFF) \
     THROW(#function " overflow"); \
 }
 #endif
@@ -802,18 +809,24 @@ static void overflowTest(void)
   size = tj3YUVBufSize(37838, 1, 37838, TJSAMP_444);
   CHECKSIZE(tj3YUVBufSize());
   size = tj3YUVBufSize(37837, 3, 37837, TJSAMP_444);
-  CHECKSIZE(tj3YUVBufSize());
+  if (size != 0 || !strstr(tj3GetErrorStr(NULL), "Invalid argument"))
+    THROW("tj3YUVBufSize() unexpected success")
   size = tj3YUVBufSize(37837, -1, 37837, TJSAMP_444);
-  CHECKSIZE(tj3YUVBufSize());
+  if (size != 0 || !strstr(tj3GetErrorStr(NULL), "Invalid argument"))
+    THROW("tj3YUVBufSize() unexpected success")
   size = tj3YUVBufSize(1024 * 1024 * 1024, 1024 * 1024 * 1024,
                        1024 * 1024 * 1024, TJSAMP_420);
   CHECKSIZE(tj3YUVBufSize());
   ulsize = tjBufSizeYUV2(37838, 1, 37838, TJSAMP_444);
   CHECKSIZEUL(tjBufSizeYUV2());
   ulsize = tjBufSizeYUV2(37837, 3, 37837, TJSAMP_444);
-  CHECKSIZEUL(tjBufSizeYUV2());
+  if (ulsize != (unsigned long)(-1) ||
+      !strstr(tj3GetErrorStr(NULL), "Invalid argument"))
+    THROW("tjBufSizeYUV2() unexpected success")
   ulsize = tjBufSizeYUV2(37837, -1, 37837, TJSAMP_444);
-  CHECKSIZEUL(tjBufSizeYUV2());
+  if (ulsize != (unsigned long)(-1) ||
+      !strstr(tj3GetErrorStr(NULL), "Invalid argument"))
+    THROW("tjBufSizeYUV2() unexpected success")
   ulsize = TJBUFSIZEYUV(37838, 37838, TJSAMP_444);
   CHECKSIZEUL(TJBUFSIZEYUV());
   ulsize = tjBufSizeYUV(37838, 37838, TJSAMP_444);

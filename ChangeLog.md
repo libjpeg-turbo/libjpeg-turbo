@@ -31,6 +31,10 @@ the `TJ.Transform` structure to the underlying C function by value instead of
 by reference.  With certain platforms, compilers, and JNA versions, this caused
 the method to produce incorrect results or crash the JVM.
 
+4. Fixed an issue whereby `tj3JPEGBufSize()`, `tj3YUVBufSize()`, and
+`tj3YUVPlaneSize()` threw an error ("Image is too large") on 64-bit Windows
+platforms if the return value would have exceeded 2^32 - 1.
+
 
 3.2.1
 =====
