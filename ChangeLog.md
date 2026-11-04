@@ -119,6 +119,10 @@ error message.
 (non-fatal error) in the same function call, then `tj3GetErrorCode()` returned
 `TJERR_WARNING` instead of `TJERR_FATAL`.
 
+16. Fixed an issue whereby `tj3JPEGBufSize()`, `tj3YUVBufSize()`, and
+`tj3YUVPlaneSize()` threw an error ("Image is too large") on 64-bit Windows
+platforms if the return value would have exceeded 2^32 - 1.
+
 
 3.1.4.1
 =======
