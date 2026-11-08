@@ -46,7 +46,7 @@ strategically important features.
 License
 =======
 
-libjpeg-turbo is covered by three compatible BSD-style open source licenses.
+libjpeg-turbo is covered by two compatible BSD-style open source licenses.
 Refer to [LICENSE.md](LICENSE.md) for a roll-up of license terms.
 
 
