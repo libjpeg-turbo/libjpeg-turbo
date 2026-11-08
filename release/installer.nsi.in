@@ -99,6 +99,7 @@ Section "@CMAKE_PROJECT_NAME@ SDK for @INST_PLATFORM@ (required)"
 	File "@CMAKE_CURRENT_SOURCE_DIR@\src\tjdecomp.c"
 	File "@CMAKE_CURRENT_SOURCE_DIR@\src\tjtran.c"
 	SetOutPath $INSTDIR\doc\jna
+	File "@CMAKE_CURRENT_SOURCE_DIR@\jna\README.md"
 	File "@CMAKE_CURRENT_SOURCE_DIR@\jna\TJ.java"
 	File "@CMAKE_CURRENT_SOURCE_DIR@\jna\TJComp.java"
 	File "@CMAKE_CURRENT_SOURCE_DIR@\jna\TJDecomp.java"
@@ -182,6 +183,7 @@ Section "Uninstall"
 	Delete $INSTDIR\doc\tjcomp.c
 	Delete $INSTDIR\doc\tjdecomp.c
 	Delete $INSTDIR\doc\tjtran.c
+	Delete $INSTDIR\doc\jna\README.md
 	Delete $INSTDIR\doc\jna\TJ.java
 	Delete $INSTDIR\doc\jna\TJComp.java
 	Delete $INSTDIR\doc\jna\TJDecomp.java
