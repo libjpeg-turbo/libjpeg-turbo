@@ -145,7 +145,6 @@
 #    define uncompress_z          z_uncompress_z
 #    define uncompress2_z         z_uncompress2_z
 #  endif
-#  define z_errmsg              z_z_errmsg
 #  define zError                z_zError
 #  ifndef Z_SOLO
 #    define zcalloc               z_zcalloc
@@ -505,6 +504,10 @@ typedef uLong FAR uLongf;
 
 #if defined(_LFS64_LARGEFILE) && _LFS64_LARGEFILE-0
 #  define Z_LFS64
+#elif defined(_WIN32) && !defined(__CYGWIN__) && !defined(__BORLANDC__) && \
+      !defined(UNDER_CE) && (defined(__MINGW32__) || !defined(__GNUC__))
+#  define Z_LFS64       /* native Windows has 64-bit file offsets */
+#  define Z_WINLFS
 #endif
 
 #if defined(_LARGEFILE64_SOURCE) && defined(Z_LFS64)
@@ -522,7 +525,7 @@ typedef uLong FAR uLongf;
 #endif
 
 #ifndef z_off_t
-#  define z_off_t long long
+#  define z_off_t long
 #endif
 
 #if !defined(_WIN32) && defined(Z_LARGE64)
@@ -535,6 +538,11 @@ typedef uLong FAR uLongf;
 #  define z_off64_t offset_t
 #else
 #  define z_off64_t z_off_t
+#endif
+
+#if defined(Z_WINLFS) && defined(Z_WANT64) && !defined(Z_SOLO)
+#  undef z_off_t
+#  define z_off_t z_off64_t
 #endif
 
 /* MVS linker does not support external names larger than 8 bytes */

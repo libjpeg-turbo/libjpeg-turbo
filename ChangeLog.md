@@ -47,6 +47,9 @@ including integer overflow and wraparound, reading from uninitialized memory,
 and buffer overruns.  These issues were confined to TurboJPEG/JNA, which is
 example code, so they did not pose a security risk.
 
+6. libjpeg-turbo's in-tree version of zlib has been upgraded to v1.4, which
+fixes multiple bugs and security issues.
+
 
 3.2.1
 =====
