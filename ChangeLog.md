@@ -12,6 +12,7 @@ greater than 1
 operation failed when testing only decompression without a transform operation
      - A memory leak in the JNA version that occurred when testing tiled
 compression or decompression
+     - Incorrect calculation of lossless transformation performance
 
     These issues were confined to the TJBench application and thus did not pose
 a security risk.
