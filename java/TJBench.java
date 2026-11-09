@@ -714,22 +714,25 @@ final class TJBench {
 
           if (quiet != 0) {
             System.out.format("%-6s%s%-6s%s",
-                              sigFig((double)(w * h) / 1000000. / elapsed, 4),
+                              sigFig((double)(w * h) / 1000000. *
+                                     (double)iter / elapsed, 4),
                               quiet == 2 ? "\n" : "  ",
                               sigFig((double)(w * h * ps) /
                                      (double)totalJpegSize, 4),
                               quiet == 2 ? "\n" : "  ");
           } else {
             System.out.format("Transform     --> Frame rate:         %f fps\n",
-                              1.0 / elapsed);
+                              (double)iter / elapsed);
             System.out.format("                  Output image size:  %d bytes\n",
                               totalJpegSize);
             System.out.format("                  Compression ratio:  %f:1\n",
                               (double)(w * h * ps) / (double)totalJpegSize);
             System.out.format("                  Throughput:         %f Megapixels/sec\n",
-                              (double)(w * h) / 1000000. / elapsed);
+                              (double)(w * h) / 1000000. *
+                              (double)iter / elapsed);
             System.out.format("                  Output bit stream:  %f Megabits/sec\n",
-                              (double)totalJpegSize * 8. / 1000000. / elapsed);
+                              (double)totalJpegSize * 8. / 1000000. *
+                              (double)iter / elapsed);
           }
         } else {  // if (doTile ...)
           if (quiet == 1)

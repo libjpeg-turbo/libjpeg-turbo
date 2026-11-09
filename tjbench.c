@@ -831,22 +831,23 @@ static int decompTest(char *fileName)
 
       if (quiet) {
         printf("%-6s%s%-6s%s",
-               sigfig((double)(w * h) / 1000000. / elapsed, 4, tempStr, 80),
+               sigfig((double)(w * h) / 1000000. * (double)iter / elapsed, 4,
+                      tempStr, 80),
                quiet == 2 ? "\n" : "  ",
                sigfig((double)(w * h * ps) / (double)totalJpegSize, 4,
                       tempStr2, 80),
                quiet == 2 ? "\n" : "  ");
       } else {
         printf("Transform     --> Frame rate:         %f fps\n",
-               1.0 / elapsed);
+               (double)iter / elapsed);
         printf("                  Output image size:  %lu bytes\n",
                (unsigned long)totalJpegSize);
         printf("                  Compression ratio:  %f:1\n",
                (double)(w * h * ps) / (double)totalJpegSize);
         printf("                  Throughput:         %f Megapixels/sec\n",
-               (double)(w * h) / 1000000. / elapsed);
+               (double)(w * h) / 1000000. * (double)iter / elapsed);
         printf("                  Output bit stream:  %f Megabits/sec\n",
-               (double)totalJpegSize * 8. / 1000000. / elapsed);
+               (double)totalJpegSize * 8. / 1000000. * (double)iter / elapsed);
       }
     } else {  /* if (doTransform) */
       if (quiet == 1) printf("N/A     N/A     ");
