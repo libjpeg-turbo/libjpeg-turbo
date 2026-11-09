@@ -123,6 +123,9 @@ error message.
 `tj3YUVPlaneSize()` threw an error ("Image is too large") on 64-bit Windows
 platforms if the return value would have exceeded 2^32 - 1.
 
+17. Fixed an issue whereby TJBench incorrectly calculated lossless
+transformation performance
+
 
 3.1.4.1
 =======
