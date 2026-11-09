@@ -163,7 +163,6 @@ if(WITH_TESTS)
     else()
       target_include_directories(bmpsizetest PRIVATE
         ${CMAKE_SOURCE_DIR}/src/spng/zlib)
-      target_compile_definitions(bmpsizetest PRIVATE Z_PREFIX)
     endif()
   endif()
 endif()

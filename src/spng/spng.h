@@ -2,6 +2,8 @@
 #ifndef SPNG_H
 #define SPNG_H
 
+#include "prefix.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

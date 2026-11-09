@@ -8,7 +8,8 @@
 #ifndef ZCONF_H
 #define ZCONF_H
 
-/* #undef Z_PREFIX */
+#include "prefix.h"
+
 #define HAVE_STDARG_H 1
 #define HAVE_UNISTD_H 0
 #define NO_GZIP

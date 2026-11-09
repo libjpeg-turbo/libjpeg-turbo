@@ -963,7 +963,6 @@ if(ENABLE_STATIC)
       else()
         target_include_directories(bmpsizetest-static PRIVATE
           ${CMAKE_SOURCE_DIR}/src/spng/zlib)
-        target_compile_definitions(bmpsizetest-static PRIVATE Z_PREFIX)
       endif()
     endif()
   endif()
