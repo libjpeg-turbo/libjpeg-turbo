@@ -19,7 +19,7 @@
 
 #include "cmyk.h"
 #include "cdjpeg.h"             /* Common decls for cjpeg/djpeg applications */
-#include "spng/spng.h"
+#include <spng.h>
 
 #if defined(PNG_SUPPORTED) && \
     (BITS_IN_JSAMPLE != 16 || defined(C_LOSSLESS_SUPPORTED))
