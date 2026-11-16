@@ -171,7 +171,7 @@ The best short technical introduction to the JPEG compression algorithm is
 (Adjacent articles in that issue discuss MPEG motion picture compression,
 applications of JPEG, and related topics.)  If you don't have the CACM issue
 handy, a PDF file containing a revised version of Wallace's article is
-available at http://www.ijg.org/files/Wallace.JPEG.pdf.  The file (actually
+available at https://www.ijg.org/files/Wallace.JPEG.pdf.  The file (actually
 a preprint for an article that appeared in IEEE Trans. Consumer Electronics)
 omits the sample images that appeared in CACM, but it includes corrections
 and some added material.  Note: the Wallace article is copyright ACM and IEEE,
@@ -206,17 +206,17 @@ format.  For the omitted details, we follow the "JFIF" conventions, revision
 Recommendation ITU-T T.871 (05/2011): Information technology - Digital
 compression and coding of continuous-tone still images: JPEG File Interchange
 Format (JFIF).  It is available as a free download in PDF file format from
-https://www.iso.org/standard/54989.html and http://www.itu.int/rec/T-REC-T.871.
-A PDF file of the older JFIF 1.02 specification is available at
-http://www.w3.org/Graphics/JPEG/jfif3.pdf.
+https://www.iso.org/standard/54989.html and
+https://www.itu.int/rec/T-REC-T.871.  A PDF file of the older JFIF 1.02
+specification is available at https://www.w3.org/Graphics/JPEG/jfif3.pdf.
 
 The TIFF 6.0 file format specification can be obtained from
-http://mirrors.ctan.org/graphics/tiff/TIFF6.ps.gz.  The JPEG incorporation
+https://mirrors.ctan.org/graphics/tiff/TIFF6.ps.gz.  The JPEG incorporation
 scheme found in the TIFF 6.0 spec of 3-June-92 has a number of serious
 problems.  IJG does not recommend use of the TIFF 6.0 design (TIFF Compression
 tag 6).  Instead, we recommend the JPEG design proposed by TIFF Technical Note
 #2 (Compression tag 7).  Copies of this Note can be obtained from
-http://www.ijg.org/files/.  It is expected that the next revision
+https://www.ijg.org/files/.  It is expected that the next revision
 of the TIFF spec will replace the 6.0 JPEG design with the Note's design.
 Although IJG's own code does not support TIFF/JPEG, the free libtiff library
 uses our library to implement TIFF/JPEG per the Note.
@@ -231,7 +231,7 @@ directory "files".
 
 The JPEG FAQ (Frequently Asked Questions) article is a source of some
 general information about JPEG.  It is available at
-http://www.faqs.org/faqs/jpeg-faq.
+https://www.faqs.org/faqs/jpeg-faq.
 
 
 FILE FORMAT COMPATIBILITY
