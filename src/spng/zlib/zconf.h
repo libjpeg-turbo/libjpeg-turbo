@@ -11,7 +11,11 @@
 #include "prefix.h"
 
 #define HAVE_STDARG_H 1
+#ifdef _WIN32
 #define HAVE_UNISTD_H 0
+#else
+#define HAVE_UNISTD_H 1
+#endif
 #define NO_GZIP
 
 /*

@@ -7,7 +7,9 @@
 #define _tr_stored_block  ljt__tr_stored_block
 #define _tr_tally  ljt__tr_tally
 #define adler32  ljt_adler32
+#ifdef ZLIB_INTERNAL
 #define adler32_combine  ljt_adler32_combine
+#endif
 #define adler32_combine64  ljt_adler32_combine64
 #define adler32_z  ljt_adler32_z
 #define compress  ljt_compress
@@ -17,9 +19,13 @@
 #define compressBound_z  ljt_compressBound_z
 #define compress_z  ljt_compress_z
 #define crc32  ljt_crc32
+#ifdef ZLIB_INTERNAL
 #define crc32_combine  ljt_crc32_combine
+#endif
 #define crc32_combine64  ljt_crc32_combine64
+#ifdef ZLIB_INTERNAL
 #define crc32_combine_gen  ljt_crc32_combine_gen
+#endif
 #define crc32_combine_gen64  ljt_crc32_combine_gen64
 #define crc32_combine_op  ljt_crc32_combine_op
 #define crc32_z  ljt_crc32_z
