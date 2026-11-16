@@ -2624,7 +2624,8 @@ was not able to find jsimdcfg.inc.)
 a JPEG image to a bitmap buffer whose size was not a multiple of 16 bytes.
 This was more of an annoyance than an actual bug, since it did not cause any
 actual run-time problems, but the issue showed up when running libjpeg-turbo in
-valgrind.  See <http://crbug.com/72399> for more information.
+valgrind.  See <https://issues.chromium.org/issues/40087745> for more
+information.
 
 3. Added a compile-time macro (`LIBJPEG_TURBO_VERSION`) that can be used to
 check the version of libjpeg-turbo against which an application was compiled.

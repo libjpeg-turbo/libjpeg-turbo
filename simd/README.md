@@ -125,7 +125,7 @@ SIMD module.)
 
 The most effective way to use the profiling feature is with the TJBench application
 and a suitably large image, such as one of the 8-bit RGB images from
-[imagecompression.info](http://imagecompression.info/test_images).  Use one of
+[imagecompression.info](https://imagecompression.info/test_images).  Use one of
 the following command lines to obtain the performance of specific algorithms.
 (Adjust the warmup and benchmark times to suit your needs.)
 

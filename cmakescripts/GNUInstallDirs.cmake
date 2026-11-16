@@ -248,7 +248,7 @@ if(NOT DEFINED CMAKE_INSTALL_DEFAULT_LIBDIR)
   # For Debian with multiarch, use 'lib/${CMAKE_LIBRARY_ARCHITECTURE}' if
   # CMAKE_LIBRARY_ARCHITECTURE is set (which contains e.g. "i386-linux-gnu"
   # and CMAKE_INSTALL_PREFIX is "/usr"
-  # See http://wiki.debian.org/Multiarch
+  # See https://wiki.debian.org/Multiarch
   if(CMAKE_SYSTEM_NAME MATCHES "^(Linux|kFreeBSD|GNU)$"
       AND NOT CMAKE_CROSSCOMPILING)
     if (EXISTS "/etc/debian_version") # is this a debian system ?
