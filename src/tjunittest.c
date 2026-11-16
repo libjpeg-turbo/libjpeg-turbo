@@ -1702,7 +1702,8 @@ static int doBmpTest(const char *ext, int width, int align, int height, int pf,
   initBitmap(buf, width, pitch, height, pf, bottomUp);
 
   SNPRINTF(filename, 80, "test_bmp%d_%s_%d_%s_%d.%s", precision,
-           pixFormatStr[pf], align, bottomUp ? "bu" : "td", getpid(), ext);
+           pixFormatStr[pf], align, bottomUp ? "bu" : "td", (int)getpid(),
+           ext);
   if (precision <= 8) {
     TRY_TJ(handle, tj3SaveImage8(handle, filename, (unsigned char *)buf, width,
                                  pitch, height, pf));
