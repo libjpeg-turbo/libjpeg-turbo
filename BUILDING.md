@@ -39,8 +39,6 @@ Build Requirements
     from [Oracle](https://oracle.com/java/technologies/downloads) or
     [Adoptium](https://adoptium.net/temurin/releases).
 
-  * If using JDK 11 or later, CMake 3.10.x or later must also be used.
-
 - If building TurboJPEG/JNA, a
   [JNA JAR file](https://central.sonatype.com/artifact/net.java.dev.jna/jna) is
   required.
