@@ -15,7 +15,7 @@
  * will fill a supplied 16-byte array with the digest.
  * ----------------------------------------------------------------------------
  * libjpeg-turbo Modifications:
- * Copyright (C) 2018 D. R. Commander
+ * Copyright (C) 2018, 2026 D. R. Commander
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -46,7 +46,8 @@
 #include <string.h>             /* for memcpy() */
 #include "md5.h"
 
-#if (BYTE_ORDER == LITTLE_ENDIAN)
+#if (defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__) || \
+     defined(__LITTLE_ENDIAN__) || defined(_MSC_VER)
 #define byteReverse(buf, len)   /* Nothing */
 #else
 /*
