@@ -1762,7 +1762,10 @@ term_destination (j_compress_ptr cinfo)
 
 term_destination() is NOT called by jpeg_abort() or jpeg_destroy().  If you
 want the destination manager to be cleaned up during an abort, you must do it
-yourself.
+yourself.  This is particularly important when using the in-memory destination
+manager (jpeg_mem_dest().)  If it reallocates the output buffer, then the
+application's copy of the buffer pointer will not be updated until the
+term_destination() method is called.
 
 You will also need code to create a jpeg_destination_mgr struct, fill in its
 method pointers, and insert a pointer to the struct into the "dest" field of

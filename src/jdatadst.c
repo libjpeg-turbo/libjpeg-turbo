@@ -187,6 +187,15 @@ term_destination(j_compress_ptr cinfo)
     ERREXIT(cinfo, JERR_FILE_WRITE);
 }
 
+/*
+ * VERY IMPORTANT: If empty_mem_output_buffer() reallocates the output buffer,
+ * then the application's copy of the buffer pointer will not be updated until
+ * term_mem_destination() is called.  If the application provides its own error
+ * handler, then it must ensure that jpeg_finish_compress() has completed, or
+ * it must manually call the destination manager's term_destination() method,
+ * before freeing the output buffer.
+ */
+
 METHODDEF(void)
 term_mem_destination(j_compress_ptr cinfo)
 {
