@@ -1666,15 +1666,15 @@ final class TJUnitTest {
           if (ext.equalsIgnoreCase("png")) {
             if (precision <= 8) {
               r = (int)((r * 255 + halfMaxSample) / maxSample);
-              r = (int)((r * ((1 << targetPrecision) - 1) + 127) / 255);
+              r = (r * ((1 << targetPrecision) - 1) + 127) / 255;
               g = (int)((g * 255 + halfMaxSample) / maxSample);
-              g = (int)((g * ((1 << targetPrecision) - 1) + 127) / 255);
+              g = (g * ((1 << targetPrecision) - 1) + 127) / 255;
               b = (int)((b * 255 + halfMaxSample) / maxSample);
-              b = (int)((b * ((1 << targetPrecision) - 1) + 127) / 255);
+              b = (b * ((1 << targetPrecision) - 1) + 127) / 255;
             } else {
-              long rtemp = (long)((r * 65535L + halfMaxSample) / maxSample);
-              long gtemp = (long)((g * 65535L + halfMaxSample) / maxSample);
-              long btemp = (long)((b * 65535L + halfMaxSample) / maxSample);
+              long rtemp = (r * 65535L + halfMaxSample) / maxSample;
+              long gtemp = (g * 65535L + halfMaxSample) / maxSample;
+              long btemp = (b * 65535L + halfMaxSample) / maxSample;
 
               r = (int)((rtemp * ((1 << targetPrecision) - 1) + 32767) /
                         65535);

@@ -1,8 +1,12 @@
 find_package(Java REQUIRED)
 
 # Allow the Java compiler flags to be set using an environment variable
-if(NOT DEFINED CMAKE_JAVA_COMPILE_FLAGS AND DEFINED ENV{JAVAFLAGS})
-  set(CMAKE_JAVA_COMPILE_FLAGS $ENV{JAVAFLAGS})
+if(NOT DEFINED CMAKE_JAVA_COMPILE_FLAGS)
+  if(DEFINED ENV{JAVAFLAGS})
+    set(CMAKE_JAVA_COMPILE_FLAGS $ENV{JAVAFLAGS})
+  else()
+    set(CMAKE_JAVA_COMPILE_FLAGS "-Xlint:all,-serial")
+  endif()
 endif()
 
 include(UseJava)
