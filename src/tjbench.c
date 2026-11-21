@@ -98,7 +98,7 @@ static int stopOnWarning = 0, bottomUp = 0, noRealloc = 1, precision = 8,
   fastUpsample = 0, fastDCT = 0, optimize = 0, progressive = 0, maxScans = 0,
   arithmetic = 0, lossless = 0, restartIntervalBlocks = 0,
   restartIntervalRows = 0, maxMemory = 0, maxPixels = 0, noICC = 0;
-static char *ext = "ppm";
+static const char *ext = "ppm";
 static int sampleSize, compOnly = 0, decompOnly = 0, doWrite = 1,
   pf = TJPF_BGR, quiet = 0, doTile = 0, doYUV = 0, yuvAlign = 1;
 static size_t iccSize = 0;

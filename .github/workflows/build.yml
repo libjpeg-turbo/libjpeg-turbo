@@ -220,7 +220,7 @@ jobs:
       - name: Set up build
         run: |
           sudo apt update
-          sudo apt -y install gcc-14 nasm zlib1g-dev libjna-java
+          sudo apt -y install nasm zlib1g-dev libjna-java
       - name: Build
         env:
           CTEST_OUTPUT_ON_FAILURE: 1
@@ -228,8 +228,7 @@ jobs:
           mkdir build
           pushd build
           cmake -G"Unix Makefiles" -DWITH_JPEG7=1 \
-            -DCMAKE_C_FLAGS='--std=gnu90 -Wall -Werror -Wextra -Wpedantic -pedantic-errors -Wdouble-promotion -Wformat-overflow=2 -Wformat-security -Wformat-signedness -Wformat-truncation=2 -Wformat-y2k -Wmissing-include-dirs -Wshift-overflow=2 -Wswitch-bool -Wno-unused-parameter -Wuninitialized -Wstrict-overflow=2 -Wstringop-overflow=4 -Wstringop-truncation -Wduplicated-branches -Wduplicated-cond -Wdeclaration-after-statement -Wshadow -Wunsafe-loop-optimizations -Wundef -Wcast-align -Wno-clobbered -Wjump-misses-init -Wno-sign-compare -Wlogical-op -Waggregate-return -Wstrict-prototypes -Wold-style-definition -Wmissing-prototypes -Wmissing-declarations -Wpacked -Wredundant-decls -Wnested-externs -Winline -Wno-long-long -Wdisabled-optimization -fcf-protection' \
-            -DCMAKE_C_COMPILER=gcc-14 \
+            -DCMAKE_C_FLAGS='--std=gnu90 -Wall -Werror -Wextra -Wpedantic -pedantic-errors -Waggregate-return -Walloc-zero -Walloca -Warith-conversion -Warray-bounds=2 -Wbidi-chars=any -Wcast-align -Wno-clobbered -Wdeclaration-after-statement -Wdisabled-optimization -Wdouble-promotion -Wduplicated-branches -Wduplicated-cond -Wfloat-conversion -Wformat=2 -Wno-format-nonliteral -Wformat-overflow=2 -Wformat-signedness -Wformat-truncation=2 -Winline -Wjump-misses-init -Wlogical-op -Wno-long-long -Wmissing-declarations -Wmissing-include-dirs -Wmissing-prototypes -Wmissing-variable-declarations -Wnested-externs -Wold-style-definition -Wpacked -Wredundant-decls -Wshadow -Wshift-overflow=2 -Wno-sign-compare -Wstrict-overflow=2 -Wstrict-prototypes -Wstringop-overflow=4 -Wstringop-truncation -Wswitch-bool -Wtrailing-whitespace=any -Wtrampolines -Wundef -Wuninitialized -Wunsafe-loop-optimizations -Wno-unused-parameter -Wuse-after-free=3 -Wwrite-strings -fcf-protection' \
             -DWITH_SYSTEM_ZLIB=1 \
             -DWITH_JNA=/usr/share/java/jna.jar \
             -DFLOATTEST12=fp-contract \

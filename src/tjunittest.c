@@ -396,7 +396,7 @@ bailout:
 
 
 static void compTest(tjhandle handle, unsigned char **dstBuf, size_t *dstSize,
-                     int w, int h, int pf, char *basename)
+                     int w, int h, int pf, const char *basename)
 {
   char tempStr[1024];
   void *srcBuf = NULL;
@@ -529,8 +529,8 @@ bailout:
 
 
 static void _decompTest(tjhandle handle, unsigned char *jpegBuf,
-                        size_t jpegSize, int w, int h, int pf, char *basename,
-                        int subsamp, tjscalingfactor sf)
+                        size_t jpegSize, int w, int h, int pf,
+                        const char *basename, int subsamp, tjscalingfactor sf)
 {
   void *dstBuf = NULL;
   unsigned char *yuvBuf = NULL;
@@ -660,8 +660,8 @@ bailout:
 
 
 static void decompTest(tjhandle handle, unsigned char *jpegBuf,
-                       size_t jpegSize, int w, int h, int pf, char *basename,
-                       int subsamp)
+                       size_t jpegSize, int w, int h, int pf,
+                       const char *basename, int subsamp)
 {
   int i, n = 0;
   tjscalingfactor *sf = NULL;
@@ -694,7 +694,7 @@ bailout:
 
 
 static void doTest(int w, int h, const int *formats, int nformats, int subsamp,
-                   char *basename)
+                   const char *basename)
 {
   tjhandle chandle = NULL, dhandle = NULL;
   unsigned char *dstBuf = NULL;
@@ -1695,8 +1695,8 @@ static int doBmpTest(const char *ext, int width, int align, int height, int pf,
   int ps = tjPixelSize[pf], pitch = PAD(width * ps, align), loadWidth = 0,
     loadHeight = 0, retval = 0, pixelFormat = pf;
   void *buf = NULL;
-  char *md5ref;
-  char *colorPNGRefs[17] = {
+  const char *md5ref;
+  const char *colorPNGRefs[17] = {
     "", "", "17aa360ae532ae6e91b2a28d38bd624a",
     "e2a50ec3401ad862738d6987c6ceb7a1", "463085239d02088e0dc797ec548d8ca2",
     "6568db6ab8cca36e28c49d54a5cf72d2", "7ef966e63e71c9a1d36fc7b063a6b188",
@@ -1706,7 +1706,7 @@ static int doBmpTest(const char *ext, int width, int align, int height, int pf,
     "1ebb0a8fc1d7d1b291f07a1743710427", "b68fd59466d37a4405fef22f50708c3e",
     "06941dae98e471279433de7edb9fe4e5", "8df69d8b7ddd4fc45675c1404f8301df"
   };
-  char *grayPNGRefs[17] = {
+  const char *grayPNGRefs[17] = {
     "", "", "36b39208ebecab7e44d3e7d16540d9dd",
     "a23ea89e91a33e47d487da5e51aaf73c", "9fd24370306a37faab455f8569e364f1",
     "8190d5e4e51adeb7345b735b6dbdc07c", "8842cd8a1d8ee88cdf8f4ee3ec35ef9f",
@@ -1716,7 +1716,7 @@ static int doBmpTest(const char *ext, int width, int align, int height, int pf,
     "8da798e493c3f0d335278dc69004444b", "f7c4aa691f459aef9e9796f2f8b10f3e",
     "7e601698088be2559538efc750b978a5", "0580aea16346e6afb4317399539bf75e"
   };
-  char *colorPPMRefs[17] = {
+  const char *colorPPMRefs[17] = {
     "", "", "0bad09d9ef38eda566848fb7c0b7fd0a",
     "7ef2c87261a8bd6838303b541563cf27", "28a37cf9636ff6bb9ed6b206bdac60db",
     "723307791d42e0b5f9e91625c7636086", "d729c4bcd3addc14abc16b656c6bbc98",
@@ -1726,7 +1726,7 @@ static int doBmpTest(const char *ext, int width, int align, int height, int pf,
     "44ae6cd70c798ea583ab0c8c03621092", "697b2fe03892bc9a75396ad3e73d9203",
     "599732f973eb7c0849a888e783bbe27e", "623f54661b928d170bd2324bc3620565"
   };
-  char *grayPPMRefs[17] = {
+  const char *grayPPMRefs[17] = {
     "", "", "7565be35a2ce909cae016fa282af8efa",
     "e86b9ea57f7d53f6b5497653740992b5", "8924d4d81fe0220c684719294f93407a",
     "e2e69ba70efcfae317528c91651c7ae2", "e6154aafc1eb9e4333d68ce7ad9df051",
