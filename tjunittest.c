@@ -397,7 +397,7 @@ bailout:
 
 
 static void compTest(tjhandle handle, unsigned char **dstBuf, size_t *dstSize,
-                     int w, int h, int pf, char *basename)
+                     int w, int h, int pf, const char *basename)
 {
   char tempStr[1024];
   void *srcBuf = NULL;
@@ -483,8 +483,8 @@ bailout:
 
 
 static void _decompTest(tjhandle handle, unsigned char *jpegBuf,
-                        size_t jpegSize, int w, int h, int pf, char *basename,
-                        int subsamp, tjscalingfactor sf)
+                        size_t jpegSize, int w, int h, int pf,
+                        const char *basename, int subsamp, tjscalingfactor sf)
 {
   void *dstBuf = NULL;
   unsigned char *yuvBuf = NULL;
@@ -578,8 +578,8 @@ bailout:
 
 
 static void decompTest(tjhandle handle, unsigned char *jpegBuf,
-                       size_t jpegSize, int w, int h, int pf, char *basename,
-                       int subsamp)
+                       size_t jpegSize, int w, int h, int pf,
+                       const char *basename, int subsamp)
 {
   int i, n = 0;
   tjscalingfactor *sf = NULL;
@@ -611,7 +611,7 @@ bailout:
 
 
 static void doTest(int w, int h, const int *formats, int nformats, int subsamp,
-                   char *basename)
+                   const char *basename)
 {
   tjhandle chandle = NULL, dhandle = NULL;
   unsigned char *dstBuf = NULL;
@@ -1174,7 +1174,7 @@ static int doBmpTest(const char *ext, int width, int align, int height, int pf,
   int ps = tjPixelSize[pf], pitch = PAD(width * ps, align), loadWidth = 0,
     loadHeight = 0, retval = 0, pixelFormat = pf;
   void *buf = NULL;
-  char *md5ref;
+  const char *md5ref;
   int targetPrecision;
   int maxTargetPrecision = precision == 8 && !strcasecmp(ext, "bmp") ? 8 : 16;
 
