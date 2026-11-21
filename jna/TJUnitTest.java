@@ -1079,14 +1079,14 @@ final class TJUnitTest {
         byteSwap16(jpegBuf, i, markerDataSize + 2);
         i += 2;
         jpegBuf.getValue().setMemory(i, markerDataSize, (byte)'1');
-        i += markerDataSize;
+        i += (int)markerDataSize;
         // Add COM marker
         jpegBuf.getValue().setByte(i++, (byte)0xFF);
         jpegBuf.getValue().setByte(i++, (byte)0xFE);
         byteSwap16(jpegBuf, i, markerDataSize + 2);
         i += 2;
         jpegBuf.getValue().setMemory(i, markerDataSize, (byte)'C');
-        i += markerDataSize;
+        i += (int)markerDataSize;
         jpegSize.setValue(new TJ.SizeT(jpegSize.longValue() + app1HeaderSize +
                                        comHeaderSize + markerDataSize * 2));
 
