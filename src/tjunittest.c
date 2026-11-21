@@ -397,7 +397,7 @@ bailout:
 
 
 static void compTest(tjhandle handle, unsigned char **dstBuf, size_t *dstSize,
-                     int w, int h, int pf, char *basename)
+                     int w, int h, int pf, const char *basename)
 {
   char tempStr[1024];
   void *srcBuf = NULL;
@@ -530,8 +530,8 @@ bailout:
 
 
 static void _decompTest(tjhandle handle, unsigned char *jpegBuf,
-                        size_t jpegSize, int w, int h, int pf, char *basename,
-                        int subsamp, tjscalingfactor sf)
+                        size_t jpegSize, int w, int h, int pf,
+                        const char *basename, int subsamp, tjscalingfactor sf)
 {
   void *dstBuf = NULL;
   unsigned char *yuvBuf = NULL;
@@ -661,8 +661,8 @@ bailout:
 
 
 static void decompTest(tjhandle handle, unsigned char *jpegBuf,
-                       size_t jpegSize, int w, int h, int pf, char *basename,
-                       int subsamp)
+                       size_t jpegSize, int w, int h, int pf,
+                       const char *basename, int subsamp)
 {
   int i, n = 0;
   tjscalingfactor *sf = NULL;
@@ -694,7 +694,7 @@ bailout:
 
 
 static void doTest(int w, int h, const int *formats, int nformats, int subsamp,
-                   char *basename)
+                   const char *basename)
 {
   tjhandle chandle = NULL, dhandle = NULL;
   unsigned char *dstBuf = NULL;
@@ -1661,8 +1661,8 @@ static int doBmpTest(const char *ext, int width, int align, int height, int pf,
   int ps = tjPixelSize[pf], pitch = PAD(width * ps, align), loadWidth = 0,
     loadHeight = 0, retval = 0, pixelFormat = pf;
   void *buf = NULL;
-  char *md5ref;
-  char *colorPPMRefs[17] = {
+  const char *md5ref;
+  const char *colorPPMRefs[17] = {
     "", "", "0bad09d9ef38eda566848fb7c0b7fd0a",
     "7ef2c87261a8bd6838303b541563cf27", "28a37cf9636ff6bb9ed6b206bdac60db",
     "723307791d42e0b5f9e91625c7636086", "d729c4bcd3addc14abc16b656c6bbc98",
@@ -1672,7 +1672,7 @@ static int doBmpTest(const char *ext, int width, int align, int height, int pf,
     "44ae6cd70c798ea583ab0c8c03621092", "697b2fe03892bc9a75396ad3e73d9203",
     "599732f973eb7c0849a888e783bbe27e", "623f54661b928d170bd2324bc3620565"
   };
-  char *grayPPMRefs[17] = {
+  const char *grayPPMRefs[17] = {
     "", "", "7565be35a2ce909cae016fa282af8efa",
     "e86b9ea57f7d53f6b5497653740992b5", "8924d4d81fe0220c684719294f93407a",
     "e2e69ba70efcfae317528c91651c7ae2", "e6154aafc1eb9e4333d68ce7ad9df051",
