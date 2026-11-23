@@ -36,17 +36,6 @@ jobs:
           docker run --security-opt seccomp=unconfined -v $HOME/src/ljt.nightly:/root/src/ljt.nightly -v $HOME/src/buildscripts:/root/src/buildscripts -v $GITHUB_WORKSPACE:/root/src/libjpeg-turbo -v $HOME/.gnupg:/root/.gnupg -v $HOME/rpmkeys:/rpmkeys -t dcommander/buildljt:$BRANCH bash -c "rpm --import /rpmkeys/LJTPR-GPG-KEY && ~/src/buildscripts/buildljt -d /root/src/libjpeg-turbo -v"
           sudo chown -R runner:runner $HOME/src/ljt.nightly
           mv $HOME/src/ljt.nightly/latest/log-${{github.job}}.txt $HOME/src/ljt.nightly/latest/files/
-      - name: Configure AWS
-        if: ${{github.event_name != 'pull_request'}}
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{secrets.AWS_ACCESS_KEY_ID}}
-          aws-secret-access-key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
-          aws-region: ${{secrets.AWS_REGION}}
-      - name: Deploy
-        if: ${{github.event_name != 'pull_request'}}
-        run: |
-          aws s3 sync --acl public-read --delete $HOME/src/ljt.nightly/latest/files/ s3://libjpeg-turbo-pr/${{env.BRANCH}}/${{github.job}}/
   macos:
     if: ${{!contains(github.ref, 'refs/tags/')}}
     runs-on: macos-15
@@ -74,17 +63,6 @@ jobs:
         run: |
           $HOME/src/buildscripts/buildljt -d $GITHUB_WORKSPACE -v
           mv $HOME/src/ljt.nightly/latest/log-${{github.job}}.txt $HOME/src/ljt.nightly/latest/files/
-      - name: Configure AWS
-        if: ${{github.event_name != 'pull_request'}}
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{secrets.AWS_ACCESS_KEY_ID}}
-          aws-secret-access-key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
-          aws-region: ${{secrets.AWS_REGION}}
-      - name: Deploy
-        if: ${{github.event_name != 'pull_request'}}
-        run: |
-          aws s3 sync --acl public-read --delete $HOME/src/ljt.nightly/latest/files/ s3://libjpeg-turbo-pr/${{env.BRANCH}}/${{github.job}}/
   windows:
     runs-on: windows-2025
     steps:
@@ -154,18 +132,6 @@ jobs:
           echo PATH=$PATH
           c:/buildscripts/buildljt -d $GITHUB_WORKSPACE -b /c/ljt.nightly -v
           mv /c/ljt.nightly/log-${{github.job}}.txt /c/ljt.nightly/files/
-      - name: Configure AWS
-        if: ${{github.event_name != 'pull_request' && !contains(github.ref, 'refs/tags/')}}
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{secrets.AWS_ACCESS_KEY_ID}}
-          aws-secret-access-key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
-          aws-region: ${{secrets.AWS_REGION}}
-      - name: Deploy
-        if: ${{github.event_name != 'pull_request' && !contains(github.ref, 'refs/tags/')}}
-        shell: bash
-        run: |
-          aws s3 sync --acl public-read --delete c:/ljt.nightly/files s3://libjpeg-turbo-pr/${{env.BRANCH}}/${{github.job}}/
       - name: Upload unsigned artifact
         if: ${{github.event_name == 'push' && contains(github.ref, 'refs/tags/')}}
         id: upload-unsigned-artifact
