@@ -50,6 +50,13 @@ example code, so they did not pose a security risk.
 6. libjpeg-turbo's in-tree version of zlib has been upgraded to v1.4, which
 fixes multiple bugs and security issues.
 
+7. Fixed an issue whereby the 4:2:0 merged upsampler read from uninitialized
+memory when decompressing a JPEG image with a height of 8 using a scaling
+factor of 9/8, 11/8, 13/8, or 15/8.  It is conceivable that, under certain rare
+circumstances, this might have caused an out-of-bounds array access when
+decompressing to a 12-bit-per-sample output image, but in practice the issue
+was only detectable with ASan or MSan.
+
 
 3.2.1
 =====
