@@ -5,7 +5,7 @@
  * Copyright (C) 1994-1996, Thomas G. Lane.
  * libjpeg-turbo Modifications:
  * Copyright 2009 Pierre Ossman <ossman@cendio.se> for Cendio AB
- * Copyright (C) 2009, 2011, 2014-2015, 2020, 2022, D. R. Commander.
+ * Copyright (C) 2009, 2011, 2014-2015, 2020, 2022, 2026, D. R. Commander.
  * Copyright (C) 2013, Linaro Limited.
  * For conditions of distribution and use, see the accompanying README.ijg
  * file.
@@ -552,6 +552,34 @@ _jinit_merged_upsampler(j_decompress_ptr cinfo)
 
   if (cinfo->max_v_samp_factor == 2) {
     upsample->pub._upsample = merged_2v_upsample;
+    /* With h2v2 upsampling and a scaling factor of M/8, the main buffer will
+     * contain M row groups, where each row group has 2 luminance rows and 1
+     * row for each chrominance component.  The IDCT always processes full 8x8
+     * DCT blocks, so if the JPEG image height is <= 8, then only one upscaled
+     * luminance block row (M rows) will be written into the main buffer,
+     * leaving the second upscaled luminance block row uninitialized.  Since
+     * the h2v2 merged upsampler always reads 2 luminance rows, a JPEG image
+     * height of 8 and a scaling factor of 9/8, 11/8, 13/8, or 15/8 causes the
+     * upsampler to read one more luminance row than the IDCT wrote.  (This
+     * doesn't occur with a JPEG image height > 8, because the IDCT processes
+     * two block rows and fully initializes the main buffer.  It doesn't occur
+     * with a JPEG image height < 8, because the IDCT writes more rows than the
+     * upsampler needs.  It doesn't occur with scaling factors < 1, because
+     * merged upsampling is not used.)
+     *
+     * This is only an issue for 12-bit data precision.  Under certain rare
+     * circumstances, if the main buffer retains data from a previous
+     * allocation, then one of the uninitialized values may exceed the range of
+     * valid indices for the range limit table, causing an out-of-bounds array
+     * access.
+     *
+     * Enabling context rows causes the main controller to feed the last
+     * initialized row into the upsampler twice rather than feeding it the
+     * uninitialized row.
+     */
+    if (cinfo->scale_num * DCTSIZE > cinfo->scale_denom * 8 &&
+        cinfo->scale_num % 2 == 1)
+      upsample->pub.need_context_rows = TRUE;
 #ifdef WITH_SIMD
     if (jsimd_can_h2v2_merged_upsample())
       upsample->upmethod = jsimd_h2v2_merged_upsample;
